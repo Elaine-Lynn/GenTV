@@ -2,6 +2,8 @@
 
 | File | Dimensions | Bytes | SHA-256 |
 |---|---|---:|---|
+| [comparison/01-traditional-tv.png](comparison/01-traditional-tv.png) | 1672 x 941 | 2445325 | `8fe776ead727dd850798ddfd1dc75e9a0340d3c9da8ee3f2e2d54a7091057e43` |
+| [comparison/02-gentv-home.png](comparison/02-gentv-home.png) | 1920 x 1080 | 2732659 | `0214db8de95336717a779dd812dcf04b469141d1f4569f16a5743da7b21cd21d` |
 | [overview/01-project-cover.png](overview/01-project-cover.png) | 2000 x 1250 | 887513 | `aa7752382416fac36d15bb14b168d9f6cb4f6786f1d9712fbea221a99251e491` |
 | [overview/02-wallpaper-gallery.png](overview/02-wallpaper-gallery.png) | 2400 x 1580 | 1792589 | `52beaa95b9c19a70977502c28b2bc880ca9fffd3bbfbfad1e7d99f3561034bfe` |
 | [overview/03-phone-companion.png](overview/03-phone-companion.png) | 1800 x 1400 | 392658 | `e95f15a2bf83eeb5bc4c398bae865311a53913b811db12761e3e1f1fc5be6da5` |

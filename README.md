@@ -1,103 +1,198 @@
-# GenTV
+<p align="center">
+  <a href="https://www.gentv.me/"><img src="docs/media/readme/overview/01-project-cover.png" alt="GenTV: a free, open-source, ad-free home screen for Android TV and Google TV, with a phone app that installs it, cleans up preinstalled apps and works as a remote. No computer, no root, no account." width="800"></a>
+</p>
 
-**A cleaner home screen. Less TV clutter. Fewer annoying ads. Easy to install.**
+<h1 align="center">GenTV — Ad-free Android TV launcher</h1>
 
-English · [简体中文](README.zh-CN.md)
+<p align="center"><b>A clean home screen for your TV, managed from your phone. No computer, no root, no account.</b></p>
 
-[Download GenTV](https://www.gentv.me/) · [Get started](#get-started) · [Screenshots](#screenshots) · [Build from source](#build)
+<p align="center">
+  English · <a href="README.zh-CN.md">简体中文</a>
+</p>
 
-![GenTV TV home screen and phone remote](docs/media/readme/overview/01-project-cover.png)
+<p align="center">
+  <a href="https://www.gentv.me/"><img alt="Download" src="https://img.shields.io/badge/Download-gentv.me-34a853?style=for-the-badge&logo=android&logoColor=white"></a>
+  <a href="#install"><img alt="Install guide" src="https://img.shields.io/badge/Install-guide-1f6feb?style=for-the-badge"></a>
+  <a href="#faq"><img alt="FAQ" src="https://img.shields.io/badge/FAQ-questions-d97757?style=for-the-badge"></a>
+</p>
 
-GenTV helps you tidy up your TV: switch to an **ad-free home screen**, use your phone to **clear storage and remove unwanted apps**, and enable optional DNS filtering to reduce distractions. Install with your phone, help from an AI assistant, or a USB drive.
+<p align="center">
+  <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-555555?style=flat-square"></a>
+  <img alt="Android 8.0 or later" src="https://img.shields.io/badge/Android%20TV-8.0%2B-3ddc84?style=flat-square&logo=android&logoColor=white">
+  <img alt="TV app under 600 KB" src="https://img.shields.io/badge/TV%20app-%3C600%20KB-2997ff?style=flat-square">
+  <img alt="No computer needed" src="https://img.shields.io/badge/computer-not%20needed-555555?style=flat-square">
+  <img alt="No root" src="https://img.shields.io/badge/root-not%20needed-555555?style=flat-square">
+</p>
 
-**No account required · No root required · Free and open source**
+**GenTV is a free, open-source, ad-free launcher (home screen) for Android TV and Google TV, with a companion app for Android phones.** From the phone you can install GenTV on the TV, clean up preinstalled apps, clear storage, restore what you changed, and use the phone as a remote and keyboard. You don't need a computer, root access or a GenTV account.
 
-## Four reasons to try GenTV
+| Traditional TV | GenTV |
+|:---:|:---:|
+| <img src="docs/media/readme/comparison/01-traditional-tv.png" alt="Traditional TV home screen with a sponsored banner, recommendation rows and Premium, New and Free badges"> | <img src="docs/media/readme/comparison/02-gentv-home.png" alt="GenTV home screen: a clock, a misty forest wallpaper and one row of app tiles"> |
 
-- **A clean, quiet home screen.** No promotions or ads in GenTV: just your apps, wallpapers and input shortcuts. Large tiles work with your remote, and the official TV release APK is under 600 KB.
-- **Clear the clutter from your TV.** Inspect storage, clear cache, and review, disable or remove unwanted TV apps, all from your phone. Protected-package checks and recovery records support a backup-first workflow.
-- **Fewer annoying ads.** The GenTV home screen is ad-free. Optional Private DNS filtering on supported TVs can reduce ad and tracker requests; results depend on the app and provider, and do not guarantee removal of boot ads or every in-app ad.
-- **Install your way.** Connect and install from your phone, ask an AI assistant with local tool access to help, or open the TV APK from a USB drive. No root or firmware modification required.
+Official channels are only [gentv.me](https://www.gentv.me/) and this repository.
 
-The phone companion also provides remote controls, keyboard input, file transfer and desktop editing for everyday use.
+## Start here
 
-## Get started
-
-| Installation route | How it works |
+| You have | Go to |
 |---|---|
-| **Phone (recommended)** | Install GenTV Remote, connect to and authorise the TV, then select the GenTV installation action; keep using the phone for cleanup and remote control |
-| **AI-assisted** | Give an assistant with local terminal access the repository URL and intended device; follow the [AI installation guide](docs/getting-started.md#install-with-an-ai-assistant) to check tools, build or choose an APK and install over ADB; approve device prompts yourself |
-| **USB drive** | Copy the TV APK to a USB drive, open it in the TV file manager, and approve installation; see [USB instructions](docs/getting-started.md#install-the-tv-app-from-a-usb-drive) |
+| **An Android TV or Google TV and an Android phone** | [Install from your phone](#install-from-your-phone): no computer needed |
+| **A computer, or an AI assistant that can run commands** | [Install with an AI assistant](#install-with-an-ai-assistant) |
+| **Only a USB drive** | [Install from a USB drive](#install-from-a-usb-drive) |
+| **A Samsung (Tizen), LG (webOS) or Hisense VIDAA TV** | GenTV can't run there: [why](#does-it-work-on-samsung-lg-or-vidaa-tvs) |
+| **You want to see it first** | [Screenshots](#screenshots) |
 
-**To install from your phone:**
+## Why GenTV
 
-1. Install **GenTV Remote** on an Android phone from [gentv.me](https://www.gentv.me/).
-2. Enable developer options and network/wireless debugging on the TV.
-3. Open GenTV Remote, choose the TV and complete the pairing or authorisation prompts shown by the TV.
-4. Use the phone remote, or select the GenTV installation action to try the new home screen. Choose a default Home separately in the TV's settings if you want to switch.
+- **Everything from your phone.** Install GenTV, clean up the TV, use the remote and keyboard, send files and rearrange the home screen from an Android phone on the same network. You don't need a computer or a cable.
+- **A home screen without ads.** GenTV shows no promotions, recommendation rows or ads. You see only your apps, wallpapers and input sources, on large tiles made for a remote. The official TV app is under 600 KB, so it stays light on older TVs.
+- **Clear out the clutter.** Check storage, clear caches, and review, disable or remove preinstalled apps you don't use. System components are protected, and every change is recorded.
+- **Undo what you changed.** Re-enable disabled apps and restore eligible preinstalled apps from the phone. GenTV never changes your default Home by itself.
 
-**Compatibility:** Android 8/API 26 or later on both devices. TV management requires reachable, authorised ADB access. Samsung Tizen and LG webOS do not run Android apps; manufacturer restrictions can also limit installation, Home replacement and input controls on Android devices.
+## Install
 
-For TV-only installation, CLI commands, source builds or an AI-assisted setup, use the [environment and installation guide](docs/getting-started.md).
+Both the TV and the phone need **Android 8.0 (API 26) or later**. Phone management needs the TV's ADB debugging switched on and authorised.
+
+### Install from your phone
+
+Recommended. You need an Android phone on the same Wi-Fi or local network as the TV.
+
+1. Install **GenTV Remote** on the phone from [gentv.me](https://www.gentv.me/).
+2. On the TV, [turn on developer options and network or wireless debugging](#turn-on-adb-debugging-on-the-tv).
+3. Open GenTV Remote, pick the TV and accept the pairing or debugging prompt on the TV.
+4. Select **Install GenTV desktop**. GenTV opens on the TV.
+5. Optional: to make GenTV your default home screen, choose it in the TV's Home settings. GenTV doesn't do this for you.
+
+After that, keep using the phone for cleanup, the remote, the keyboard and home-screen editing.
+
+### Install with an AI assistant
+
+Use an assistant that can run commands on your computer, such as [Claude Code](https://claude.com/product/claude-code), [Codex](https://github.com/openai/codex) or [Gemini CLI](https://github.com/google-gemini/gemini-cli). Chat-only assistants can explain the steps but can't install anything. Copy this request to the assistant:
+
+```text
+Help me install GenTV from https://github.com/Elaine-Lynn/GenTV on my Android TV.
+TV IP address: <TV IP>
+Read docs/getting-started.md first, including "Instructions for an AI assistant".
+Check my local tools, then use a compatible TV APK or build a Debug APK from source.
+Install and open it over authorised ADB and verify the result.
+Keep my current default Home and existing apps. Remind me when I need to approve a prompt on the TV.
+```
+
+You approve the pairing and installation prompts on the TV yourself. Full steps are in the [installation guide](docs/getting-started.md#install-with-an-ai-assistant); rules for assistants are in [AGENTS.md](AGENTS.md).
+
+### Install from a USB drive
+
+Copy the **TV APK** (`com.gentv.tv`, not the phone APK) to a USB drive, open it in the TV's file manager, and allow the installation. This route doesn't include phone cleanup or DNS filtering. Some TVs block USB installation. See the [USB steps](docs/getting-started.md#install-the-tv-app-from-a-usb-drive).
+
+### Turn on ADB debugging on the TV
+
+| TV | Where to look |
+|---|---|
+| **Most Android TV / Google TV** (Sony, Philips, TCL Google TV, TV boxes) | Settings → System (or Device Preferences) → About → press **Android TV OS build** 7 times. Then open Developer options and turn on **USB debugging** and, if listed, **Network debugging** |
+| **Android 11 or later with only "Wireless debugging"** | Developer options → Wireless debugging → **Pair device with pairing code**, and enter the code in GenTV Remote |
+| **Xiaomi, Redmi, TCL, Hisense, Skyworth / Coocaa and other China-market TVs** | Menu names differ by brand and firmware; look for "ADB debugging" or "Developer options" under About or Security. Some firmware hides or removes it |
+
+When the TV asks whether to allow debugging, choose **Always allow** from this device. Turn debugging off again when you're finished.
+
+Brand-by-brand notes for Xiaomi, TCL, FFalcon, Sony, Hisense, Vidda, Skyworth, Coocaa, Philips, Google, Nvidia, Xgimi and Fire TV, each linked to the model it was recorded on: [turn on ADB, by brand](docs/devices/adb-by-brand.md).
 
 ## Screenshots
 
-### A clean home screen for your TV
+<p align="center">
+  <img src="docs/media/readme/overview/05-tv-showcase.png" alt="GenTV home screen on a TV, with app tiles over a landscape wallpaper" width="800">
+</p>
 
-![GenTV TV home screen showcase](docs/media/readme/overview/05-tv-showcase.png)
+<p align="center">
+  <img src="docs/media/readme/screenshots/tv/01-alpine-lake.png" width="49%" alt="GenTV home screen with an alpine lake wallpaper">
+  <img src="docs/media/readme/screenshots/tv/05-milky-way.png" width="49%" alt="GenTV home screen with a Milky Way wallpaper">
+  <img src="docs/media/readme/screenshots/tv/06-autumn.png" width="49%" alt="GenTV home screen with an autumn lake wallpaper">
+  <img src="docs/media/readme/screenshots/tv/08-aurora.png" width="49%" alt="GenTV home screen with an aurora wallpaper">
+</p>
 
-![Four wallpaper styles](docs/media/readme/overview/06-readme-wallpapers.png)
+**Phone companion: maintenance, remote, home-screen editing and app management**
 
-### TV maintenance and app management from your phone
+<p align="center">
+  <img src="docs/media/readme/screenshots/phone/01-home.png" width="24%" alt="GenTV Remote home with storage cleanup, app management and ad filter entries">
+  <img src="docs/media/readme/screenshots/phone/02-remote.png" width="24%" alt="GenTV Remote phone remote control">
+  <img src="docs/media/readme/screenshots/phone/03-desktop-management.png" width="24%" alt="Editing the TV home screen from the phone">
+  <img src="docs/media/readme/screenshots/phone/04-app-management.png" width="24%" alt="Reviewing and disabling TV apps from the phone">
+</p>
 
-Open storage cleanup, app management, recovery and ad-filter settings from the phone homepage. Review the TV state before choosing what to change.
+TV images are Android TV emulator captures. Phone images are UI-test renders with demonstration data. See [all eight wallpapers](docs/media/readme/overview/02-wallpaper-gallery.png) and [all images and source notes](docs/media/readme/README.md).
 
-- [Home and maintenance](docs/media/readme/screenshots/phone/01-home.png)
-- [App management](docs/media/readme/screenshots/phone/04-app-management.png)
+## Features
 
-### All eight full-resolution TV screenshots
-
-![Eight-wallpaper gallery](docs/media/readme/overview/02-wallpaper-gallery.png)
-
-- [Alpine lake](docs/media/readme/screenshots/tv/01-alpine-lake.png)
-- [Abstract silk](docs/media/readme/screenshots/tv/02-abstract-silk.png)
-- [Desert](docs/media/readme/screenshots/tv/03-desert.png)
-- [Forest](docs/media/readme/screenshots/tv/04-forest.png)
-- [Milky Way](docs/media/readme/screenshots/tv/05-milky-way.png)
-- [Autumn](docs/media/readme/screenshots/tv/06-autumn.png)
-- [Winter](docs/media/readme/screenshots/tv/07-winter.png)
-- [Aurora](docs/media/readme/screenshots/tv/08-aurora.png)
-
-### All five phone interface previews
-
-- [Home and maintenance](docs/media/readme/screenshots/phone/01-home.png)
-- [Phone remote](docs/media/readme/screenshots/phone/02-remote.png)
-- [Desktop management](docs/media/readme/screenshots/phone/03-desktop-management.png)
-- [App management](docs/media/readme/screenshots/phone/04-app-management.png)
-- [Welcome](docs/media/readme/screenshots/phone/05-welcome.png)
-
-### View the repository promotional and sharing image
-
-![GenTV GitHub social preview](docs/media/readme/overview/04-github-social-preview.png)
-
-This image can also be selected in the GitHub repository Social preview settings.
-
-TV images are actual Android TV emulator captures. Phone previews are UI-test renders with demonstration data. Promotional images compose those same interfaces. [All assets and source notes](docs/media/readme/README.md).
-
-## More you can do
-
-| Feature | What it provides |
+| Feature | What you get |
 |---|---|
-| Desktop personalisation | Reorder, rename, group apps, choose custom tile pictures, and save or export a desktop profile |
+| Ad-free home screen | Dock and app grid, large tiles for remote navigation, input source shortcuts (including Skyworth / Coocaa sources), and an app library for everything installed |
+| Folders and personalisation | Reorder, rename, hide and group apps into folders, choose tile pictures, and save, import or export a desktop profile, from the phone or the remote |
 | Wallpapers | Local pictures and optional online collections; downloaded images are cached for offline use |
-| App maintenance | Community cleanup references for 252 device models, protected-package checks, backups and operation records; lists are references, not compatibility certification |
-| Recovery | Re-enable disabled apps and restore eligible preinstalled packages removed for the TV user; fully uninstalled user apps need to be installed again |
-| Ad filtering | Optional Private DNS filtering on supported Android 9+ TVs; effectiveness depends on the app and the DNS provider |
-| Updates and privacy | Signed-package and SHA-256 checks; no GenTV account; anonymous usage statistics are off by default |
+| Clock screensaver | A clock and date over a slow ambient glow; no network or images, light enough for a 1 GB TV |
+| Dates and themes | Optional lunar (Chinese / Vietnamese / Korean) and Solar Hijri date lines, and seasonal festival themes; off by default |
+| Phone remote | D-pad, touchpad, keyboard input and file transfer |
+| Storage and app cleanup | Storage overview, cache cleanup, and reviewing, disabling or removing preinstalled apps, with protected-package checks, backups and operation records |
+| Restore | Re-enable disabled apps and restore eligible preinstalled packages removed for the TV user |
+| Ad filtering | Optional Private DNS setup on supported Android 9+ TVs to reduce ad and tracker requests |
+| Game controllers | Optional controller passthrough, so games see the controller's buttons |
+| Languages | TV interface translations for more than 25 languages |
+| Updates and privacy | Signed-package and SHA-256 checks; no account; anonymous usage statistics off by default |
 
-Source builds leave online services unconfigured. Official builds and self-hosted builds can enable them; see [online services](#online-services) and [Privacy](PRIVACY.md).
+### What GenTV can and can't do
 
-## Application IDs
+| Can | Can't |
+|---|---|
+| Replace the ad-filled home screen with an ad-free one, after you choose it as default Home | Remove boot ads, which the TV firmware plays before any home screen starts |
+| Disable or remove preinstalled apps you pick, with records for undoing | Guarantee that every listed app is safe on your exact model; check before you change anything |
+| Reduce ad and tracker requests with Private DNS on supported TVs | Block every in-app or video ad; results depend on the app and the DNS provider |
+| Run on Android TV, Google TV, TV boxes and projectors with Android 8+ | Run on Samsung Tizen, LG webOS or Hisense VIDAA |
+
+## Device references
+
+The phone app includes community cleanup references for **252 TV, box and projector models**. The largest groups are TCL (57), Sony (32), Xiaomi (29), Philips (12), Hisense (10), Skyworth (8) and Amazon Fire TV (7). Models from Redmi, FFalcon, Vidda, Xgimi, Panasonic, OnePlus, Nvidia, Sharp and others are also covered. These lists come from the community. They help you decide what to clean up, but they don't certify that every feature works on your model. Home replacement, input switching and installation can still be limited by the manufacturer. Look up your model in the [device index](docs/devices/README.md).
+
+## FAQ
+
+### Can I install it without a computer?
+
+Yes. Install GenTV Remote on an Android phone, pair it with the TV over the local network and install GenTV from the phone. A computer is only needed if you prefer the command line or want to build from source.
+
+### Does it work with an iPhone?
+
+Not yet. The phone companion is an Android app. With an iPhone, use the [AI assistant](#install-with-an-ai-assistant) or [USB drive](#install-from-a-usb-drive) route.
+
+### Will GenTV become my default home screen automatically?
+
+No. Installing GenTV opens it but leaves your current default Home unchanged. If you want to switch, choose GenTV in the TV's Home settings. Some firmware doesn't offer this choice.
+
+### Could this break my TV? How do I undo changes?
+
+GenTV doesn't root the TV or modify its firmware. Cleanup works on apps you choose; system components are protected, and each change is recorded. From the phone you can re-enable disabled apps and restore eligible preinstalled apps. A user app that was fully uninstalled has to be installed again. Back up first, and change a few apps at a time.
+
+### Can it remove boot ads?
+
+No. Boot ads are played by the TV firmware before any home screen starts. GenTV removes the ads on the home screen itself, and optional Private DNS filtering can reduce some ad requests in apps.
+
+### Will my existing apps, subscriptions and voice assistant still work?
+
+Installing GenTV doesn't remove or disable anything. Your apps, accounts and the original home screen stay on the TV. Only the apps you select during cleanup are changed.
+
+### Does it work on my TV?
+
+GenTV is built for TVs, boxes and projectors running Android TV or Google TV 8.0 or later, for example from Sony, Philips, TCL, Xiaomi, Redmi, Hisense, Skyworth / Coocaa and Nvidia, and Chromecast with Google TV. Some firmware blocks installing apps, replacing Home or using input controls. See [device references](#device-references).
+
+### Does it work on Samsung, LG or VIDAA TVs?
+
+No. Samsung Tizen, LG webOS and Hisense VIDAA aren't Android and can't run Android apps.
+
+### Does GenTV collect my data?
+
+There's no GenTV account, and anonymous usage statistics are off by default. Builds from source never contact the official service. See [Privacy](PRIVACY.md).
+
+### How do I uninstall GenTV?
+
+Choose the original Home in the TV's settings and check that it opens. Export your desktop profile if you want to keep it, then uninstall GenTV from the TV's app settings. Turn off ADB debugging when you're done.
+
+## For developers
 
 | Component | Application ID | Source |
 |---|---|---|
@@ -105,19 +200,15 @@ Source builds leave online services unconfigured. Official builds and self-hoste
 | GenTV Remote | `com.gentv.mobile` | `phone/` |
 | Remote debug build | `com.gentv.mobile.debug` | Isolated test installation |
 
-## Build
+Development builds don't need signing keys or server access. Run these from the repository root.
 
-No signing keys or server access are needed for development builds.
-
-Run the commands below from the repository root.
-
-TV: JDK 17, Android SDK 34 and build-tools 34.0.0.
+TV (JDK 17, Android SDK 34, build-tools 34.0.0):
 
 ```sh
 ./launcher/gradlew -p launcher --no-daemon testDebugUnitTest lintDebug assembleDebug
 ```
 
-Phone: JDK 21 for Gradle, Android SDK 37, and JDK 25 for the ADB unit tests. Set `GENTV_HOME_JAVA_HOME` to a JDK 17 installation; the phone builds the TV app from this repository and embeds it. Without the private release key, the embedded TV app is debug-signed and is for local testing only. See the [phone instructions](phone/README.md).
+Phone (JDK 21 for Gradle, Android SDK 37, JDK 25 for the ADB unit tests). Set `GENTV_HOME_JAVA_HOME` to a JDK 17 installation, because the phone build compiles and embeds the TV app. Without the private release key, the embedded TV app is debug-signed and only for local testing. See the [phone instructions](phone/README.md).
 
 ```sh
 ./phone/gradlew -p phone --no-daemon :core:test :adb:test :app:testDebugUnitTest :app:lintDebug :app:assembleDebug
@@ -133,39 +224,35 @@ python3 -m unittest discover -s server/wallpaper -p 'test_*.py'
 
 ### Online services
 
-Updates, online wallpapers, feedback and anonymous statistics are off unless a GenTV API base is configured at build time. Builds from a fresh clone, including forks, never contact the official service. To point a build at a server you run:
+Updates, online wallpapers, feedback and anonymous statistics stay off unless a GenTV API base is configured at build time. Builds from a fresh clone, including forks, never contact the official service. To point a build at a server you run:
 
 ```sh
 ./launcher/gradlew -p launcher -PgentvApiBaseUrl=https://api.example.com/tv/ assembleDebug
 ```
 
-`GENTV_API_BASE_URL` works the same way. The [wallpaper service](server/wallpaper/README.md) contains the server side.
+`GENTV_API_BASE_URL` works the same way. The server side is the [wallpaper service](server/wallpaper/README.md).
 
 ### Official releases
 
 Official releases are signed with a private key that is never in Git, and release builds never fall back to a debug key. See [release and signing](docs/release.md). Standalone TV redistribution uses `launcher/app/build/outputs/distribution/GenTV-TV-release.zip`, which contains the APK and its licences; keep them together.
 
-## Documentation
+### Documentation
 
-- [Pre-release validation and remaining acceptance](docs/pre-release-validation.md)
-- [Implementation and validation](docs/implementation.md)
-- [Desktop protocol](docs/desktop-protocol.md)
-- [Release and signing](docs/release.md)
-- [Development plan](docs/desktop-optimization-plan.md)
-- [Module-card contract](docs/reference/modules.md)
-- [Performance workflow](docs/reference/perf-ab.md) and [historical emulator measurements](docs/emulator-performance.md)
-- [Wallpaper service](server/wallpaper/README.md)
+- [Environment and installation guide](docs/getting-started.md) · [Contributing](CONTRIBUTING.md)
+- [Implementation and validation](docs/implementation.md) · [Pre-release validation](docs/pre-release-validation.md)
+- [Desktop protocol](docs/desktop-protocol.md) · [Module-card contract](docs/reference/modules.md)
+- [Performance workflow](docs/reference/perf-ab.md) · [Emulator measurements](docs/emulator-performance.md) · [Development plan](docs/desktop-optimization-plan.md)
 
 ## Project origins
 
-GenTV began from three MIT-licensed open-source projects: a native Android TV home screen with community device lists, a phone ADB companion framework, and a TV home-screen installer whose install and undo patterns the framework adopted. Their names, links, baselines and licences are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). GenTV is independent of television manufacturers and third-party applications; their real names remain only where needed for operation and attribution.
+GenTV began from three MIT-licensed open-source projects: a native Android TV home screen with community device lists, a phone ADB companion framework, and a TV home-screen installer whose install and undo patterns the framework adopted. Their names, links, baselines and licences are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). GenTV is independent of television manufacturers and third-party apps. Their names appear only where needed for operation and attribution.
 
 ## Use with care
 
-Source builds and emulator tests do not certify real-TV Home behaviour, HDMI, physical remote keys or recovery. Installation does not authorise disabling the stock Home app. Keep backups, and turn off ADB debugging when maintenance is finished.
+Source builds and emulator tests don't certify real-TV Home behaviour, HDMI, physical remote keys or recovery. Installing GenTV doesn't mean you should disable the stock Home app. Keep backups, and turn off ADB debugging when maintenance is finished.
 
 ## Contact and licence
 
-General reports: [GenTV issues](https://github.com/Elaine-Lynn/GenTV/issues). Sensitive reports: see [SECURITY.md](SECURITY.md).
+Questions and bug reports: [GitHub issues](https://github.com/Elaine-Lynn/GenTV/issues). Security reports: see [SECURITY.md](SECURITY.md).
 
 GenTV is released under the [MIT License](LICENSE). Components from other projects keep their original copyrights and licences; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and `licenses/`.
