@@ -100,6 +100,16 @@ You approve the pairing and installation prompts on the TV yourself. Full steps 
 
 Copy the **TV APK** (`gentv-tv-*.apk` from [GitHub Releases](https://github.com/Elaine-Lynn/GenTV/releases/latest), package `com.gentv.tv`, not the phone APK) to a USB drive, open it in the TV's file manager, and allow the installation. This route doesn't include phone cleanup or DNS filtering. Some TVs block USB installation. See the [USB steps](docs/getting-started.md#install-the-tv-app-from-a-usb-drive).
 
+### Verify a download
+
+Official releases are signed with one certificate, SHA-256 fingerprint:
+
+```text
+8D:5B:53:78:F9:05:68:80:F3:03:6D:44:BC:2F:4A:48:32:21:41:FB:B8:D8:BC:91:95:1D:61:A4:65:2D:99:7F
+```
+
+Each release also lists file checksums in `SHA256SUMS.txt`. The commands to check both are in [verify a download](docs/getting-started.md#verify-a-download).
+
 ### Turn on ADB debugging on the TV
 
 | TV | Where to look |
@@ -164,7 +174,9 @@ TV images are Android TV emulator captures. Phone images are UI-test renders wit
 
 ## Device references
 
-The phone app includes community cleanup references for **252 TV, box and projector models**. The largest groups are TCL (57), Sony (32), Xiaomi (29), Philips (12), Hisense (10), Skyworth (8) and Amazon Fire TV (7). Models from Redmi, FFalcon, Vidda, Xgimi, Panasonic, OnePlus, Nvidia, Sharp and others are also covered. These lists come from the community. They help you decide what to clean up, but they don't certify that every feature works on your model. Home replacement, input switching and installation can still be limited by the manufacturer. Look up your model in the [device index](docs/devices/README.md).
+Real-device results for GenTV are collected in the [verified device table](docs/devices/verified.md), failures included. If you've tried GenTV on a TV, a [works on my TV](https://github.com/Elaine-Lynn/GenTV/issues/new?template=works_on_my_tv.yml) or [device report](https://github.com/Elaine-Lynn/GenTV/issues/new?template=device_report.yml) issue adds it.
+
+The phone app also includes community cleanup references for **252 TV, box and projector models**. The largest groups are TCL (57), Sony (32), Xiaomi (29), Philips (12), Hisense (10), Skyworth (8) and Amazon Fire TV (7). Models from Redmi, FFalcon, Vidda, Xgimi, Panasonic, OnePlus, Nvidia, Sharp and others are also covered. These lists come from the community. They help you decide what to clean up, but they don't certify that every feature works on your model. Home replacement, input switching and installation can still be limited by the manufacturer. Look up your model in the [device index](docs/devices/README.md).
 
 ## FAQ
 
@@ -220,48 +232,7 @@ Choose the original Home in the TV's settings and check that it opens. Export yo
 | GenTV Remote | `com.gentv.mobile` | `phone/` |
 | Remote debug build | `com.gentv.mobile.debug` | Isolated test installation |
 
-Development builds don't need signing keys or server access. Run these from the repository root.
-
-TV (JDK 17, Android SDK 34, build-tools 34.0.0):
-
-```sh
-./launcher/gradlew -p launcher --no-daemon testDebugUnitTest lintDebug assembleDebug
-```
-
-Phone (JDK 21 for Gradle, Android SDK 37, JDK 25 for the ADB unit tests). Set `GENTV_HOME_JAVA_HOME` to a JDK 17 installation, because the phone build compiles and embeds the TV app. Without the private release key, the embedded TV app is debug-signed and only for local testing. See the [phone instructions](phone/README.md).
-
-```sh
-./phone/gradlew -p phone --no-daemon :core:test :adb:test :app:testDebugUnitTest :app:lintDebug :app:assembleDebug
-```
-
-Repository checks:
-
-```sh
-python3 tools/check_branding.py
-python3 tools/check_repository.py
-python3 -m unittest discover -s server/wallpaper -p 'test_*.py'
-```
-
-### Online services
-
-Updates, online wallpapers, feedback and anonymous statistics stay off unless a GenTV API base is configured at build time. Builds from a fresh clone, including forks, never contact the official service. To point a build at a server you run:
-
-```sh
-./launcher/gradlew -p launcher -PgentvApiBaseUrl=https://api.example.com/tv/ assembleDebug
-```
-
-`GENTV_API_BASE_URL` works the same way. The server side is the [wallpaper service](server/wallpaper/README.md).
-
-### Official releases
-
-Official releases are signed with a private key that is never in Git, and release builds never fall back to a debug key. See [release and signing](docs/release.md). Standalone TV redistribution uses `launcher/app/build/outputs/distribution/GenTV-TV-release.zip`, which contains the APK and its licences; keep them together.
-
-### Documentation
-
-- [Releases and changelog](https://github.com/Elaine-Lynn/GenTV/releases) · [Environment and installation guide](docs/getting-started.md) · [Contributing](CONTRIBUTING.md)
-- [Implementation and validation](docs/implementation.md) · [Pre-release validation](docs/pre-release-validation.md)
-- [Desktop protocol](docs/desktop-protocol.md) · [Module-card contract](docs/reference/modules.md)
-- [Performance workflow](docs/reference/perf-ab.md) · [Emulator measurements](docs/emulator-performance.md) · [Development plan](docs/desktop-optimization-plan.md)
+Development builds don't need signing keys or server access, and builds from a fresh clone never contact the official service. Build commands, repository checks, self-hosted services, release signing and the full documentation list are in [CONTRIBUTING.md](CONTRIBUTING.md). Rules for coding assistants are in [AGENTS.md](AGENTS.md).
 
 <a id="origins"></a>
 

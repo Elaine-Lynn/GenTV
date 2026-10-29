@@ -1,0 +1,55 @@
+name: Works on my TV 实测可用
+description: GenTV works on your device and you'd like it listed. 你的设备能正常使用 GenTV，希望登记到已验证机型表。
+title: "[Works] <brand> <model> 品牌 型号"
+labels: [works-on-my-tv]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks! Confirmed models are added to the [verified device table](https://github.com/Elaine-Lynn/GenTV/blob/HEAD/docs/devices/verified.md). If anything didn't work, use the **Device report** form instead.
+        谢谢！确认后的机型会登记到[已验证机型表](https://github.com/Elaine-Lynn/GenTV/blob/HEAD/docs/devices/verified.md)。如果有不正常的地方，请改用「机型报告」表单。
+
+        Do not include TV IP addresses, ADB keys, account details or Wi-Fi names. 请不要填写电视 IP、ADB 密钥、账号或 Wi-Fi 名称。
+  - type: input
+    id: model
+    attributes:
+      label: Brand and model 品牌和型号
+      placeholder: e.g. TCL 55C745 / Chromecast with Google TV
+    validations:
+      required: true
+  - type: input
+    id: system
+    attributes:
+      label: Android version and firmware 系统版本和固件
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: GenTV version GenTV 版本
+      placeholder: e.g. TV 3.7.0, Remote 3.7.1
+    validations:
+      required: true
+  - type: checkboxes
+    id: tested
+    attributes:
+      label: What you checked 你实际检查过的项目
+      options:
+        - label: Install and open 安装并打开
+        - label: Remote navigation on the home screen 遥控器操作桌面
+        - label: Chosen as default Home 设为默认桌面
+        - label: Home button and power-on return to GenTV 按主页键、开机后回到 GenTV
+        - label: Cleanup and restore from the phone 手机清理与恢复
+        - label: HDMI / input sources 信号源
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything else 补充说明
+      description: Optional. A photo of GenTV running on the TV helps. 可选。附一张 GenTV 在电视上运行的照片会很有帮助。
+  - type: checkboxes
+    id: real_device
+    attributes:
+      label: Confirmation 确认
+      options:
+        - label: I tested this on a real device, not an emulator. 我是在真实设备上测试的，不是模拟器。
+          required: true

@@ -1,0 +1,15 @@
+# Groups GitHub's generated release notes. Pull requests are grouped by label.
+changelog:
+  exclude:
+    labels: [duplicate, invalid, wontfix]
+  categories:
+    - title: New 新增
+      labels: [enhancement]
+    - title: Fixes 修复
+      labels: [bug]
+    - title: Devices 机型
+      labels: [device-report, works-on-my-tv]
+    - title: Documentation 文档
+      labels: [documentation]
+    - title: Other 其他
+      labels: ["*"]

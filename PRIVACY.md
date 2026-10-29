@@ -1,5 +1,7 @@
 # Privacy
 
+English · [简体中文](PRIVACY.zh-CN.md)
+
 This page describes the network use of official GenTV builds. Builds made from this source without a configured GenTV API base, including forks, never contact the GenTV service.
 
 GenTV has no accounts, advertising or third-party analytics SDKs.

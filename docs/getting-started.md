@@ -1,5 +1,7 @@
 # Build and install GenTV
 
+English · [简体中文](getting-started.zh-CN.md)
+
 This guide is the entry point for people and AI assistants working from this repository. GenTV consists of Android applications; it is not a desktop Python/Node application or an AI assistant plugin. There is no standalone GenTV CLI package. Command-line installation uses Android SDK Platform Tools (`adb`); the phone app also provides TV installation after an authorised ADB connection.
 
 ## Choose a route
@@ -10,6 +12,23 @@ This guide is the entry point for people and AI assistants working from this rep
 - To contribute or let an AI assistant build locally, follow the same source steps. No server account or signing key is needed for Debug builds.
 
 Both apps require Android 8/API 26 or later. The TV must support Android APK installation and an authorised ADB connection for phone management or CLI installation. Samsung Tizen and LG webOS do not run these Android apps. Manufacturer restrictions may prevent installation, pairing, input switching or Home replacement even on an Android TV.
+
+## Verify a download
+
+Official TV and phone releases are signed with the same certificate. Its SHA-256 fingerprint is:
+
+```text
+8D:5B:53:78:F9:05:68:80:F3:03:6D:44:BC:2F:4A:48:32:21:41:FB:B8:D8:BC:91:95:1D:61:A4:65:2D:99:7F
+```
+
+In the download folder, the first command checks the file contents and the second the signing certificate (`apksigner` is in the Android SDK build-tools):
+
+```sh
+shasum -a 256 -c SHA256SUMS.txt --ignore-missing
+apksigner verify --print-certs gentv-tv-3.7.0.apk
+```
+
+The `certificate SHA-256 digest` that `apksigner` prints must match the fingerprint above, ignoring colons and case. If it doesn't, don't install the file.
 
 ## Local environment
 
@@ -151,7 +170,7 @@ Before removing GenTV, choose the original Home in system settings and confirm i
 
 ## Community device references
 
-Device lists under `phone/framework/data/devices/` are inherited community records. Some comments refer to upstream device documents or tools that are not shipped here; these are historical references, not executable GenTV instructions or a promise that every model is supported. Do not run a referenced cleanup command or disable a package without checking the current GenTV protection rules and the actual device/firmware.
+Device lists under `phone/framework/data/devices/` are inherited community records. Some comments refer to upstream device documents or tools that are not shipped here; these are historical references, not executable GenTV instructions or a promise that every model is supported. Do not run a referenced cleanup command or disable a package without checking the current GenTV protection rules and the actual device/firmware. Real-device results for GenTV itself are in [verified devices](devices/verified.md).
 
 ## Instructions for an AI assistant
 

@@ -102,13 +102,23 @@ GenTV 的电视桌面和机型清单来自电脑脚本方案（见[项目来源]
 保留我当前的默认桌面和已有应用。需要我在电视上确认时提醒我。
 ```
 
-电视上的配对和安装提示需要你自己确认。完整步骤见[安装指南](docs/getting-started.md#install-with-an-ai-assistant)（英文），给 AI 助手的规则见 [AGENTS.md](AGENTS.md)。
+电视上的配对和安装提示需要你自己确认。完整步骤见[安装指南](docs/getting-started.zh-CN.md#install-with-an-ai-assistant)，给 AI 助手的规则见 [AGENTS.md](AGENTS.md)（英文）。
 
 <a id="install-usb"></a>
 
 ### U 盘安装
 
-把**电视版 APK**（[GitHub Releases](https://github.com/Elaine-Lynn/GenTV/releases/latest) 里的 `gentv-tv-*.apk`，包名 `com.gentv.tv`，不是手机版）拷进 U 盘，在电视的文件管理器里打开，按提示允许安装。这种方式不含手机清理和 DNS 过滤功能。有些电视不允许从 U 盘安装。详见 [U 盘步骤](docs/getting-started.md#install-the-tv-app-from-a-usb-drive)（英文）。
+把**电视版 APK**（[GitHub Releases](https://github.com/Elaine-Lynn/GenTV/releases/latest) 里的 `gentv-tv-*.apk`，包名 `com.gentv.tv`，不是手机版）拷进 U 盘，在电视的文件管理器里打开，按提示允许安装。这种方式不含手机清理和 DNS 过滤功能。有些电视不允许从 U 盘安装。详见 [U 盘步骤](docs/getting-started.zh-CN.md#install-the-tv-app-from-a-usb-drive)。
+
+### 校验安装包
+
+正式版都用同一张证书签名，证书 SHA-256 指纹：
+
+```text
+8D:5B:53:78:F9:05:68:80:F3:03:6D:44:BC:2F:4A:48:32:21:41:FB:B8:D8:BC:91:95:1D:61:A4:65:2D:99:7F
+```
+
+每个 Release 还附有文件校验值 `SHA256SUMS.txt`。两项的核对命令见[校验下载的安装包](docs/getting-started.zh-CN.md#verify-a-download)。
 
 <a id="adb"></a>
 
@@ -180,7 +190,9 @@ GenTV 的电视桌面和机型清单来自电脑脚本方案（见[项目来源]
 
 ## 机型参考
 
-手机 App 内置 **252 款电视、盒子和投影仪**的社区清理参考，数量最多的是 TCL（57）、索尼（32）、小米（29）、飞利浦（12）、海信（10）、创维（8）、亚马逊 Fire TV（7），也覆盖 Redmi、雷鸟、Vidda、极米、松下、一加、Nvidia、夏普等品牌。这些清单来自社区，用来帮你判断哪些应用可以清理，不代表每台机型都已通过兼容认证。能不能安装、更换默认桌面、切换信号源，仍可能受厂商限制。到[机型索引](docs/devices/README.md)里查你的型号。
+GenTV 在真实设备上的测试结果汇总在[已验证机型表](docs/devices/verified.md)里，失败的也会列出。如果你在电视上试过 GenTV，欢迎提交[实测可用](https://github.com/Elaine-Lynn/GenTV/issues/new?template=works_on_my_tv.yml)或[机型报告](https://github.com/Elaine-Lynn/GenTV/issues/new?template=device_report.yml)。
+
+另外，手机 App 内置 **252 款电视、盒子和投影仪**的社区清理参考，数量最多的是 TCL（57）、索尼（32）、小米（29）、飞利浦（12）、海信（10）、创维（8）、亚马逊 Fire TV（7），也覆盖 Redmi、雷鸟、Vidda、极米、松下、一加、Nvidia、夏普等品牌。这些清单来自社区，用来帮你判断哪些应用可以清理，不代表每台机型都已通过兼容认证。能不能安装、更换默认桌面、切换信号源，仍可能受厂商限制。到[机型索引](docs/devices/README.md)里查你的型号。
 
 <a id="faq"></a>
 
@@ -226,7 +238,7 @@ GenTV 面向 Android TV / Google TV 8.0 及以上的电视、盒子和投影仪�
 
 ### GenTV 会收集我的数据吗？
 
-没有 GenTV 账号，匿名统计默认关闭。从源码构建的版本不会连接官方服务。详见[隐私说明](PRIVACY.md)（英文）。
+没有 GenTV 账号，匿名统计默认关闭。从源码构建的版本不会连接官方服务。详见[隐私说明](PRIVACY.zh-CN.md)。
 
 ### 怎么卸载？
 
@@ -240,48 +252,7 @@ GenTV 面向 Android TV / Google TV 8.0 及以上的电视、盒子和投影仪�
 | GenTV Remote 手机版 | `com.gentv.mobile` | `phone/` |
 | 手机调试版 | `com.gentv.mobile.debug` | 独立的测试安装 |
 
-开发构建不需要签名密钥，也不需要服务器权限。以下命令在仓库根目录运行。
-
-电视版（JDK 17、Android SDK 34、build-tools 34.0.0）：
-
-```sh
-./launcher/gradlew -p launcher --no-daemon testDebugUnitTest lintDebug assembleDebug
-```
-
-手机版（Gradle 用 JDK 21，Android SDK 37，ADB 单元测试用 JDK 25）。手机版构建时会编译并内嵌电视版，所以要把 `GENTV_HOME_JAVA_HOME` 设为 JDK 17 的路径。没有私有发布密钥时，内嵌的电视版是调试签名，只能本地测试。详见[手机端说明](phone/README.md)。
-
-```sh
-./phone/gradlew -p phone --no-daemon :core:test :adb:test :app:testDebugUnitTest :app:lintDebug :app:assembleDebug
-```
-
-仓库检查：
-
-```sh
-python3 tools/check_branding.py
-python3 tools/check_repository.py
-python3 -m unittest discover -s server/wallpaper -p 'test_*.py'
-```
-
-### 在线服务
-
-更新、在线壁纸、反馈和匿名统计，只有在构建时配置了 GenTV API 地址才会启用。直接克隆的源码（包括各种 Fork）都不会连接官方服务。要连接你自己部署的服务器：
-
-```sh
-./launcher/gradlew -p launcher -PgentvApiBaseUrl=https://api.example.com/tv/ assembleDebug
-```
-
-也可以用环境变量 `GENTV_API_BASE_URL`。服务端代码见[壁纸服务](server/wallpaper/README.md)。
-
-### 正式版本
-
-正式版用不进 Git 的私有密钥签名，发布构建不会退回调试签名。详见[发布与签名](docs/release.md)。单独分发电视版时使用 `launcher/app/build/outputs/distribution/GenTV-TV-release.zip`，里面有 APK 和许可文件，请一起分发。
-
-### 文档（英文）
-
-- [版本与更新记录](https://github.com/Elaine-Lynn/GenTV/releases) · [环境与安装指南](docs/getting-started.md) · [参与贡献](CONTRIBUTING.md)
-- [实现与验证](docs/implementation.md) · [发布前验证](docs/pre-release-validation.md)
-- [桌面协议](docs/desktop-protocol.md) · [模块卡片约定](docs/reference/modules.md)
-- [性能流程](docs/reference/perf-ab.md) · [模拟器性能记录](docs/emulator-performance.md) · [开发计划](docs/desktop-optimization-plan.md)
+开发构建不需要签名密钥，也不需要服务器权限；直接克隆的源码不会连接官方服务。构建命令、仓库检查、自建服务、正式签名和完整文档列表见 [CONTRIBUTING.md](CONTRIBUTING.md)（英文），环境准备见[安装指南](docs/getting-started.zh-CN.md)，给 AI 助手的规则见 [AGENTS.md](AGENTS.md)。
 
 <a id="origins"></a>
 
