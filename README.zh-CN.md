@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://www.gentv.me/"><img src="docs/media/readme/overview/01-project-cover.png" alt="GenTV：免费开源、没有广告的 Android TV / Google TV 电视桌面，配套手机 App，可以安装桌面、清理预装应用、当遥控器用。不用电脑、不用 Root、不用账号。" width="800"></a>
+  <a href="https://www.gentv.me/"><img src="docs/media/readme/overview/01-project-cover-zh.png" alt="GenTV：免费开源、没有广告的 Android TV / Google TV 电视桌面，配套手机 App，可以安装桌面、清理预装应用、当遥控器用。不用电脑、不用 Root、不用账号。" width="800"></a>
 </p>
 
 <h1 align="center">GenTV — 无广告的 Android TV 电视桌面</h1>
@@ -12,11 +12,13 @@
 
 <p align="center">
   <a href="https://www.gentv.me/"><img alt="下载" src="https://img.shields.io/badge/%E4%B8%8B%E8%BD%BD-gentv.me-34a853?style=for-the-badge&logo=android&logoColor=white"></a>
+  <a href="https://github.com/Elaine-Lynn/GenTV/releases/latest"><img alt="GitHub Releases" src="https://img.shields.io/badge/GitHub-Releases-24292f?style=for-the-badge&logo=github&logoColor=white"></a>
   <a href="#install"><img alt="安装指南" src="https://img.shields.io/badge/%E5%AE%89%E8%A3%85-%E6%8C%87%E5%8D%97-1f6feb?style=for-the-badge"></a>
   <a href="#faq"><img alt="常见问题" src="https://img.shields.io/badge/%E5%B8%B8%E8%A7%81-%E9%97%AE%E9%A2%98-d97757?style=for-the-badge"></a>
 </p>
 
 <p align="center">
+  <a href="https://github.com/Elaine-Lynn/GenTV/releases/latest"><img alt="最新版本" src="https://img.shields.io/github/v/release/Elaine-Lynn/GenTV?style=flat-square&label=%E7%89%88%E6%9C%AC"></a>
   <a href="LICENSE"><img alt="MIT 许可证" src="https://img.shields.io/badge/%E8%AE%B8%E5%8F%AF%E8%AF%81-MIT-555555?style=flat-square"></a>
   <img alt="Android 8.0 及以上" src="https://img.shields.io/badge/Android%20TV-8.0%2B-3ddc84?style=flat-square&logo=android&logoColor=white">
   <img alt="电视安装包不到 600 KB" src="https://img.shields.io/badge/%E7%94%B5%E8%A7%86%E5%AE%89%E8%A3%85%E5%8C%85-%3C600%20KB-2997ff?style=flat-square">
@@ -49,7 +51,21 @@
 - **全程手机操作。** 安装桌面、清理电视、遥控、打字、传文件、整理桌面，都在同一网络下的 Android 手机上完成，不用电脑，也不用数据线。
 - **没有广告的桌面。** 不塞推广，不放推荐流，只有你的应用、壁纸和信号源。大磁贴方便用遥控器操作。正式电视安装包不到 600 KB，老电视也带得动。
 - **把电视里的垃圾清一清。** 查看存储空间，清理缓存，检查并停用或移除用不上的预装应用。系统组件受保护，每一步都有记录。
-- **改了也能恢复。** 在手机上就能重新启用停用的应用，恢复符合条件的预装应用。GenTV 不会自作主张改你的默认桌面。
+- **改了也能恢复。** 在手机上就能重新启用停用的应用，恢复符合条件的预装应用。
+- **默认桌面你说了算。** 安装只会打开 GenTV，不改默认桌面，也不停用原厂桌面。想换就在系统设置里选它；国产电视上的情况见[常见问题](#default-home)。
+
+<a id="compare"></a>
+
+## 和其他去广告方案有什么不同
+
+| | GenTV | 电脑脚本方案 | 守护型桌面 |
+|---|---|---|---|
+| **需要准备** | 一部 Android 手机 | 一台电脑，通常还要 AI 编程助手和 Android SDK | 一台电脑，或 U 盘 |
+| **预装应用清理** | 在手机上逐个选择停用或移除，可恢复 | 按机型清单批量停用，用脚本恢复 | 一般不处理 |
+| **默认桌面** | 不改，由你在系统设置里选 | 通常直接设为默认，并停用原厂桌面 | 用无障碍服务强制接管，开机和按主页键都回到新桌面 |
+| **适合谁** | 想不用电脑，一次搞定桌面、清理和遥控 | 熟悉命令行，想按机型深度清理 | 国产电视用户，最在意开机就进新桌面 |
+
+GenTV 的电视桌面和机型清单来自电脑脚本方案（见[项目来源](#origins)），区别在于把安装、清理和恢复都搬到了手机上，并且不替你改默认桌面。
 
 <a id="install"></a>
 
@@ -63,7 +79,7 @@
 
 只要一部 Android 手机，和电视连在同一个 Wi-Fi 或局域网里。
 
-1. 在手机上从 [gentv.me](https://www.gentv.me/) 安装 **GenTV Remote**。
+1. 在手机上从 [gentv.me](https://www.gentv.me/) 或 [GitHub Releases](https://github.com/Elaine-Lynn/GenTV/releases/latest)（`gentv-mobile-*.apk`）安装 **GenTV Remote**。
 2. 在电视上[打开开发者选项和网络调试或无线调试](#adb)。
 3. 打开 GenTV Remote，选择电视，在电视上确认配对或调试授权。
 4. 选择 **安装 GenTV 桌面**，电视上会打开 GenTV。
@@ -86,13 +102,23 @@
 保留我当前的默认桌面和已有应用。需要我在电视上确认时提醒我。
 ```
 
-电视上的配对和安装提示需要你自己确认。完整步骤见[安装指南](docs/getting-started.md#install-with-an-ai-assistant)（英文），给 AI 助手的规则见 [AGENTS.md](AGENTS.md)。
+电视上的配对和安装提示需要你自己确认。完整步骤见[安装指南](docs/getting-started.zh-CN.md#install-with-an-ai-assistant)，给 AI 助手的规则见 [AGENTS.md](AGENTS.md)（英文）。
 
 <a id="install-usb"></a>
 
 ### U 盘安装
 
-把**电视版 APK**（`com.gentv.tv`，不是手机版）拷进 U 盘，在电视的文件管理器里打开，按提示允许安装。这种方式不含手机清理和 DNS 过滤功能。有些电视不允许从 U 盘安装。详见 [U 盘步骤](docs/getting-started.md#install-the-tv-app-from-a-usb-drive)（英文）。
+把**电视版 APK**（[GitHub Releases](https://github.com/Elaine-Lynn/GenTV/releases/latest) 里的 `gentv-tv-*.apk`，包名 `com.gentv.tv`，不是手机版）拷进 U 盘，在电视的文件管理器里打开，按提示允许安装。这种方式不含手机清理和 DNS 过滤功能。有些电视不允许从 U 盘安装。详见 [U 盘步骤](docs/getting-started.zh-CN.md#install-the-tv-app-from-a-usb-drive)。
+
+### 校验安装包
+
+正式版都用同一张证书签名，证书 SHA-256 指纹：
+
+```text
+8D:5B:53:78:F9:05:68:80:F3:03:6D:44:BC:2F:4A:48:32:21:41:FB:B8:D8:BC:91:95:1D:61:A4:65:2D:99:7F
+```
+
+每个 Release 还附有文件校验值 `SHA256SUMS.txt`。两项的核对命令见[校验下载的安装包](docs/getting-started.zh-CN.md#verify-a-download)。
 
 <a id="adb"></a>
 
@@ -178,9 +204,13 @@
 
 暂时不能，手机端目前只有 Android 版。用 iPhone 的话，可以选 [AI 助手安装](#install-ai)或 [U 盘安装](#install-usb)。
 
+<a id="default-home"></a>
+
 ### 装好后会自动变成默认桌面吗？
 
-不会。安装后会打开 GenTV，但不会改你现在的默认桌面。想换的话，在电视系统的主屏幕设置里选择 GenTV。有些固件没有这个选项。
+不会。安装后会打开 GenTV，但不会改你现在的默认桌面。想换的话，在电视系统的主屏幕设置里选择 GenTV。
+
+小米、TCL 等国产电视的固件常常没有这个选项，或者开机、按主页键后会回到原厂桌面。这种情况下可以从「我的应用」打开 GenTV 使用，清理、遥控和整理桌面不受影响。GenTV 目前不会用无障碍服务强制接管主页键；如果你最在意开机就进新桌面，守护型桌面更合适（见[对比](#compare)）。不要为了让 GenTV 当默认桌面去停用原厂桌面，部分电视停用后可能开机黑屏，只能用 ADB 恢复。
 
 ### 会不会把电视弄坏？改错了怎么恢复？
 
@@ -206,7 +236,7 @@ GenTV 面向 Android TV / Google TV 8.0 及以上的电视、盒子和投影仪�
 
 ### GenTV 会收集我的数据吗？
 
-没有 GenTV 账号，匿名统计默认关闭。从源码构建的版本不会连接官方服务。详见[隐私说明](PRIVACY.md)（英文）。
+没有 GenTV 账号，匿名统计默认关闭。从源码构建的版本不会连接官方服务。详见[隐私说明](PRIVACY.zh-CN.md)。
 
 ### 怎么卸载？
 
@@ -220,52 +250,15 @@ GenTV 面向 Android TV / Google TV 8.0 及以上的电视、盒子和投影仪�
 | GenTV Remote 手机版 | `com.gentv.mobile` | `phone/` |
 | 手机调试版 | `com.gentv.mobile.debug` | 独立的测试安装 |
 
-开发构建不需要签名密钥，也不需要服务器权限。以下命令在仓库根目录运行。
+开发构建不需要签名密钥，也不需要服务器权限；直接克隆的源码不会连接官方服务。构建命令、仓库检查、自建服务、正式签名和完整文档列表见 [CONTRIBUTING.md](CONTRIBUTING.md)（英文），环境准备见[安装指南](docs/getting-started.zh-CN.md)，给 AI 助手的规则见 [AGENTS.md](AGENTS.md)。
 
-电视版（JDK 17、Android SDK 34、build-tools 34.0.0）：
-
-```sh
-./launcher/gradlew -p launcher --no-daemon testDebugUnitTest lintDebug assembleDebug
-```
-
-手机版（Gradle 用 JDK 21，Android SDK 37，ADB 单元测试用 JDK 25）。手机版构建时会编译并内嵌电视版，所以要把 `GENTV_HOME_JAVA_HOME` 设为 JDK 17 的路径。没有私有发布密钥时，内嵌的电视版是调试签名，只能本地测试。详见[手机端说明](phone/README.md)。
-
-```sh
-./phone/gradlew -p phone --no-daemon :core:test :adb:test :app:testDebugUnitTest :app:lintDebug :app:assembleDebug
-```
-
-仓库检查：
-
-```sh
-python3 tools/check_branding.py
-python3 tools/check_repository.py
-python3 -m unittest discover -s server/wallpaper -p 'test_*.py'
-```
-
-### 在线服务
-
-更新、在线壁纸、反馈和匿名统计，只有在构建时配置了 GenTV API 地址才会启用。直接克隆的源码（包括各种 Fork）都不会连接官方服务。要连接你自己部署的服务器：
-
-```sh
-./launcher/gradlew -p launcher -PgentvApiBaseUrl=https://api.example.com/tv/ assembleDebug
-```
-
-也可以用环境变量 `GENTV_API_BASE_URL`。服务端代码见[壁纸服务](server/wallpaper/README.md)。
-
-### 正式版本
-
-正式版用不进 Git 的私有密钥签名，发布构建不会退回调试签名。详见[发布与签名](docs/release.md)。单独分发电视版时使用 `launcher/app/build/outputs/distribution/GenTV-TV-release.zip`，里面有 APK 和许可文件，请一起分发。
-
-### 文档（英文）
-
-- [环境与安装指南](docs/getting-started.md) · [参与贡献](CONTRIBUTING.md)
-- [实现与验证](docs/implementation.md) · [发布前验证](docs/pre-release-validation.md)
-- [桌面协议](docs/desktop-protocol.md) · [模块卡片约定](docs/reference/modules.md)
-- [性能流程](docs/reference/perf-ab.md) · [模拟器性能记录](docs/emulator-performance.md) · [开发计划](docs/desktop-optimization-plan.md)
+<a id="origins"></a>
 
 ## 项目来源
 
 GenTV 基于三个 MIT 许可的开源项目：一个带社区机型清单的原生 Android TV 桌面、一个手机 ADB 伴侣框架，以及一个电视桌面安装器（框架沿用了它的安装和撤销方式）。它们的名称、链接、基线版本和许可证见[第三方声明](THIRD_PARTY_NOTICES.md)。GenTV 与电视厂商及第三方应用均无关联，文中出现它们的名称只是为了说明用途和来源。
+
+**为什么第一个公开版本就是 v3.7.0？** 开源之前，3.0 到 3.6.x 作为开发版分发过，用的是调试签名。v3.7.0 是第一个开源版本，也是第一个用正式密钥签名的版本；开源时整理了提交历史，所以仓库从这一版开始。从开发版升级的注意事项见[发布与签名](docs/release.md)。
 
 ## 使用提醒
 

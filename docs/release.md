@@ -2,6 +2,14 @@
 
 电视包 `com.gentv.tv`，正式候选 3.7.0 / code22；手机版 `com.gentv.mobile`。两者使用同一正式证书，但应用身份与更新清单独立。
 
+正式证书 SHA-256 指纹（已用 v3.7.0 发布的 `gentv-tv-3.7.0.apk` 和 `gentv-mobile-3.7.1.apk` 核对）：
+
+```text
+8D:5B:53:78:F9:05:68:80:F3:03:6D:44:BC:2F:4A:48:32:21:41:FB:B8:D8:BC:91:95:1D:61:A4:65:2D:99:7F
+```
+
+每次发布后用 `apksigner verify --print-certs` 核对公网 APK 的证书与此一致。更换证书时必须同步更新本文件、README 和安装指南中的指纹。
+
 ## 构建
 
 在私有环境提供 `phone/keys/signing.properties` 及其引用的 keystore，字段与手机版一致：storeFile、storePassword、keyAlias、keyPassword；正式构建另加 `apiBaseUrl=https://api.gentv.app/tv/`，否则更新、在线壁纸、反馈与统计均关闭。文件均在忽略目录，禁止提交、上传服务器或写入日志。正式构建缺配置或发现 Android Debug 证书会失败。

@@ -1,6 +1,6 @@
 # GenTV README 素材包
 
-生成日期：2026-10-29。共 21 张 PNG，按用途组织；可随仓库提交。
+生成日期：2026-10-29。共 22 张 PNG，按用途组织；可随仓库提交。
 
 ## 桌面对比图
 
@@ -16,6 +16,7 @@
 | 文件 | 用途 |
 |---|---|
 | [01-project-cover.png](overview/01-project-cover.png) | README 首屏：电视桌面 + 手机遥控器 |
+| [01-project-cover-zh.png](overview/01-project-cover-zh.png) | 中文 README 首图：按用户参考图替换为哔哩哔哩、云视听极光、奇异果 TV |
 | [02-wallpaper-gallery.png](overview/02-wallpaper-gallery.png) | 八种壁纸桌面总览 |
 | [03-phone-companion.png](overview/03-phone-companion.png) | 手机首页、遥控器、桌面管理三场景拼图 |
 | [04-github-social-preview.png](overview/04-github-social-preview.png) | GitHub 仓库 Social preview，1280 × 640 |
@@ -62,3 +63,7 @@
 ```
 
 社交预览图需要在 GitHub 仓库设置中手动选择；本次没有修改远端设置。
+
+## 中文首图编辑说明
+
+`overview/01-project-cover-zh.png` 使用 imagegen 按用户提供的图标参考编辑，替换电视程序坞中的最后三个图标，去除标注框，作为中文 README 首图。它是编辑后的宣传效果图，不是未经编辑的模拟器原始截图；英文首图与 screenshots/ 中的原始截图保留。编辑指令：仅替换指定三个应用图标，保留其余布局、文案与手机画面。图片左下角的标注已改为「Promotional image: edited TV emulator capture + phone UI test render」，与编辑情况一致。

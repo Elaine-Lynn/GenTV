@@ -1,0 +1,104 @@
+name: Device report 机型报告
+description: Tell us how GenTV behaves on your TV, box or projector, including what didn't work. 报告 GenTV 在你的电视、盒子或投影仪上的表现，包括不正常的地方。
+title: "[Device] <brand> <model> 品牌 型号"
+labels: [device-report]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Failures are as useful as successes.
+        失败的结果和成功的一样有用。
+
+        Do not include TV IP addresses, ADB keys, backups, account details or Wi-Fi names. 请不要填写电视 IP、ADB 密钥、备份、账号或 Wi-Fi 名称。
+  - type: input
+    id: model
+    attributes:
+      label: Brand and model 品牌和型号
+      description: As shown in the TV's About page. 以电视「关于」页面显示的为准。
+      placeholder: e.g. Xiaomi MiTV-MFTR0 / Sony KD-55X85J
+    validations:
+      required: true
+  - type: input
+    id: system
+    attributes:
+      label: Android version and firmware 系统版本和固件
+      placeholder: e.g. Android 11, firmware 1.2.3 / Google TV (Android 12)
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: GenTV version GenTV 版本
+      placeholder: e.g. TV 3.7.0, Remote 3.7.1
+    validations:
+      required: true
+  - type: dropdown
+    id: route
+    attributes:
+      label: How did you install? 安装方式
+      options:
+        - Phone app 手机 App
+        - AI assistant / ADB 命令行
+        - USB drive U 盘
+    validations:
+      required: true
+  - type: dropdown
+    id: install
+    attributes:
+      label: Install and open 安装并打开
+      options: [Works 正常, Works with limits 有限制, Fails 失败, Not tested 未测试]
+    validations:
+      required: true
+  - type: dropdown
+    id: remote
+    attributes:
+      label: Remote navigation on the home screen 遥控器操作桌面
+      options: [Works 正常, Works with limits 有限制, Fails 失败, Not tested 未测试]
+    validations:
+      required: true
+  - type: dropdown
+    id: default_home
+    attributes:
+      label: Choosing GenTV as default Home 设为默认桌面
+      description: Whether the system Home setting lets you pick GenTV. 系统主屏幕设置里能否选择 GenTV。
+      options: [Works 正常, Works with limits 有限制, Fails 失败, Option not available 系统没有该选项, Not tested 未测试]
+    validations:
+      required: true
+  - type: dropdown
+    id: home_key
+    attributes:
+      label: Home button and power-on return to GenTV 按主页键、开机后回到 GenTV
+      options: [Works 正常, Works with limits 有限制, Fails 失败, Not tested 未测试]
+    validations:
+      required: true
+  - type: dropdown
+    id: cleanup
+    attributes:
+      label: Cleanup and restore from the phone 手机清理与恢复
+      options: [Works 正常, Works with limits 有限制, Fails 失败, Not tested 未测试]
+    validations:
+      required: true
+  - type: dropdown
+    id: inputs
+    attributes:
+      label: HDMI / input sources 信号源
+      options: [Works 正常, Works with limits 有限制, Fails 失败, Not tested 未测试]
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Details 详细说明
+      description: What was limited or failed, and what you tried. 哪里有限制或失败，你试过什么。
+  - type: textarea
+    id: report
+    attributes:
+      label: Redacted report or screenshot 脱敏报告或截图
+      description: Optional. Use the phone app's redacted report export where possible. 可选。尽量使用手机 App 导出的脱敏报告。
+  - type: checkboxes
+    id: real_device
+    attributes:
+      label: Confirmation 确认
+      options:
+        - label: I tested this on a real device, not an emulator. 我是在真实设备上测试的，不是模拟器。
+          required: true

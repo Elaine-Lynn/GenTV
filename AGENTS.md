@@ -19,7 +19,7 @@ Read [docs/getting-started.md](docs/getting-started.md) first, including its "In
 
 1. Ask for the TV's IP address or serial if it isn't given. Never guess a device, port, pairing code, key or server.
 2. If ADB isn't reachable yet, point the user to [turning on ADB](docs/devices/adb-by-brand.md) for their brand. The user turns it on and accepts every prompt on the TV.
-3. Check local tools (`adb version`, JDKs, SDK) before building. Use an official TV APK from [gentv.me](https://www.gentv.me/) if the user has one, otherwise build a Debug APK from source (see below).
+3. Check local tools (`adb version`, JDKs, SDK) before building. Use an official TV APK from [GitHub Releases](https://github.com/Elaine-Lynn/GenTV/releases/latest) (check it against `SHA256SUMS.txt`) or [gentv.me](https://www.gentv.me/) if available, otherwise build a Debug APK from source (see below).
 4. Record the current Home before installing:
    `adb -s <serial> shell cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.HOME`
 5. Install and open:

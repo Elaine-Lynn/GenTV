@@ -12,11 +12,13 @@
 
 <p align="center">
   <a href="https://www.gentv.me/"><img alt="Download" src="https://img.shields.io/badge/Download-gentv.me-34a853?style=for-the-badge&logo=android&logoColor=white"></a>
+  <a href="https://github.com/Elaine-Lynn/GenTV/releases/latest"><img alt="GitHub Releases" src="https://img.shields.io/badge/GitHub-Releases-24292f?style=for-the-badge&logo=github&logoColor=white"></a>
   <a href="#install"><img alt="Install guide" src="https://img.shields.io/badge/Install-guide-1f6feb?style=for-the-badge"></a>
   <a href="#faq"><img alt="FAQ" src="https://img.shields.io/badge/FAQ-questions-d97757?style=for-the-badge"></a>
 </p>
 
 <p align="center">
+  <a href="https://github.com/Elaine-Lynn/GenTV/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/Elaine-Lynn/GenTV?style=flat-square&label=release"></a>
   <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-555555?style=flat-square"></a>
   <img alt="Android 8.0 or later" src="https://img.shields.io/badge/Android%20TV-8.0%2B-3ddc84?style=flat-square&logo=android&logoColor=white">
   <img alt="TV app under 600 KB" src="https://img.shields.io/badge/TV%20app-%3C600%20KB-2997ff?style=flat-square">
@@ -47,7 +49,21 @@ Official channels are only [gentv.me](https://www.gentv.me/) and this repository
 - **Everything from your phone.** Install GenTV, clean up the TV, use the remote and keyboard, send files and rearrange the home screen from an Android phone on the same network. You don't need a computer or a cable.
 - **A home screen without ads.** GenTV shows no promotions, recommendation rows or ads. You see only your apps, wallpapers and input sources, on large tiles made for a remote. The official TV app is under 600 KB, so it stays light on older TVs.
 - **Clear out the clutter.** Check storage, clear caches, and review, disable or remove preinstalled apps you don't use. System components are protected, and every change is recorded.
-- **Undo what you changed.** Re-enable disabled apps and restore eligible preinstalled apps from the phone. GenTV never changes your default Home by itself.
+- **Undo what you changed.** Re-enable disabled apps and restore eligible preinstalled apps from the phone.
+- **You choose the default Home.** Installing opens GenTV without changing your default Home or disabling the stock launcher. Pick GenTV in the system settings if you want it; for China-market TVs, see the [FAQ](#default-home).
+
+<a id="compare"></a>
+
+## How GenTV differs from other ad-removal approaches
+
+| | GenTV | Computer scripts | Guarded launchers |
+|---|---|---|---|
+| **You need** | An Android phone | A computer, usually with an AI coding assistant and the Android SDK | A computer or a USB drive |
+| **Preinstalled app cleanup** | Pick apps to disable or remove on the phone, with restore | Disable a per-model list in bulk, restore with a script | Usually none |
+| **Default Home** | Unchanged; you choose it in system settings | Usually set as default, with the stock launcher disabled | Taken over with an accessibility service, so power-on and Home return to the new launcher |
+| **Best for** | Doing the home screen, cleanup and remote without a computer | Command-line users who want a deep per-model cleanup | China-market TVs where booting straight into the new launcher matters most |
+
+GenTV's TV home screen and device lists come from the computer-script approach (see [Project origins](#origins)). The difference is that installing, cleaning up and restoring all happen on the phone, and GenTV leaves your default Home alone.
 
 ## Install
 
@@ -57,7 +73,7 @@ Both the TV and the phone need **Android 8.0 (API 26) or later**. Phone manageme
 
 Recommended. You need an Android phone on the same Wi-Fi or local network as the TV.
 
-1. Install **GenTV Remote** on the phone from [gentv.me](https://www.gentv.me/).
+1. Install **GenTV Remote** on the phone from [gentv.me](https://www.gentv.me/) or [GitHub Releases](https://github.com/Elaine-Lynn/GenTV/releases/latest) (`gentv-mobile-*.apk`).
 2. On the TV, [turn on developer options and network or wireless debugging](#turn-on-adb-debugging-on-the-tv).
 3. Open GenTV Remote, pick the TV and accept the pairing or debugging prompt on the TV.
 4. Select **Install GenTV desktop**. GenTV opens on the TV.
@@ -82,7 +98,17 @@ You approve the pairing and installation prompts on the TV yourself. Full steps 
 
 ### Install from a USB drive
 
-Copy the **TV APK** (`com.gentv.tv`, not the phone APK) to a USB drive, open it in the TV's file manager, and allow the installation. This route doesn't include phone cleanup or DNS filtering. Some TVs block USB installation. See the [USB steps](docs/getting-started.md#install-the-tv-app-from-a-usb-drive).
+Copy the **TV APK** (`gentv-tv-*.apk` from [GitHub Releases](https://github.com/Elaine-Lynn/GenTV/releases/latest), package `com.gentv.tv`, not the phone APK) to a USB drive, open it in the TV's file manager, and allow the installation. This route doesn't include phone cleanup or DNS filtering. Some TVs block USB installation. See the [USB steps](docs/getting-started.md#install-the-tv-app-from-a-usb-drive).
+
+### Verify a download
+
+Official releases are signed with one certificate, SHA-256 fingerprint:
+
+```text
+8D:5B:53:78:F9:05:68:80:F3:03:6D:44:BC:2F:4A:48:32:21:41:FB:B8:D8:BC:91:95:1D:61:A4:65:2D:99:7F
+```
+
+Each release also lists file checksums in `SHA256SUMS.txt`. The commands to check both are in [verify a download](docs/getting-started.md#verify-a-download).
 
 ### Turn on ADB debugging on the TV
 
@@ -160,9 +186,13 @@ Yes. Install GenTV Remote on an Android phone, pair it with the TV over the loca
 
 Not yet. The phone companion is an Android app. With an iPhone, use the [AI assistant](#install-with-an-ai-assistant) or [USB drive](#install-from-a-usb-drive) route.
 
+<a id="default-home"></a>
+
 ### Will GenTV become my default home screen automatically?
 
-No. Installing GenTV opens it but leaves your current default Home unchanged. If you want to switch, choose GenTV in the TV's Home settings. Some firmware doesn't offer this choice.
+No. Installing GenTV opens it but leaves your current default Home unchanged. If you want to switch, choose GenTV in the TV's Home settings.
+
+Firmware on Xiaomi, TCL and other China-market TVs often has no such setting, or returns to the stock home screen at power-on or when you press Home. There you can open GenTV from the app list; cleanup, the remote and home-screen editing still work. GenTV doesn't currently force a Home takeover with an accessibility service. If booting straight into the new launcher matters most to you, a guarded launcher fits better (see the [comparison](#compare)). Don't disable the stock launcher to make GenTV the default: on some TVs that can leave a black screen at boot that only ADB can fix.
 
 ### Could this break my TV? How do I undo changes?
 
@@ -200,52 +230,15 @@ Choose the original Home in the TV's settings and check that it opens. Export yo
 | GenTV Remote | `com.gentv.mobile` | `phone/` |
 | Remote debug build | `com.gentv.mobile.debug` | Isolated test installation |
 
-Development builds don't need signing keys or server access. Run these from the repository root.
+Development builds don't need signing keys or server access, and builds from a fresh clone never contact the official service. Build commands, repository checks, self-hosted services, release signing and the full documentation list are in [CONTRIBUTING.md](CONTRIBUTING.md). Rules for coding assistants are in [AGENTS.md](AGENTS.md).
 
-TV (JDK 17, Android SDK 34, build-tools 34.0.0):
-
-```sh
-./launcher/gradlew -p launcher --no-daemon testDebugUnitTest lintDebug assembleDebug
-```
-
-Phone (JDK 21 for Gradle, Android SDK 37, JDK 25 for the ADB unit tests). Set `GENTV_HOME_JAVA_HOME` to a JDK 17 installation, because the phone build compiles and embeds the TV app. Without the private release key, the embedded TV app is debug-signed and only for local testing. See the [phone instructions](phone/README.md).
-
-```sh
-./phone/gradlew -p phone --no-daemon :core:test :adb:test :app:testDebugUnitTest :app:lintDebug :app:assembleDebug
-```
-
-Repository checks:
-
-```sh
-python3 tools/check_branding.py
-python3 tools/check_repository.py
-python3 -m unittest discover -s server/wallpaper -p 'test_*.py'
-```
-
-### Online services
-
-Updates, online wallpapers, feedback and anonymous statistics stay off unless a GenTV API base is configured at build time. Builds from a fresh clone, including forks, never contact the official service. To point a build at a server you run:
-
-```sh
-./launcher/gradlew -p launcher -PgentvApiBaseUrl=https://api.example.com/tv/ assembleDebug
-```
-
-`GENTV_API_BASE_URL` works the same way. The server side is the [wallpaper service](server/wallpaper/README.md).
-
-### Official releases
-
-Official releases are signed with a private key that is never in Git, and release builds never fall back to a debug key. See [release and signing](docs/release.md). Standalone TV redistribution uses `launcher/app/build/outputs/distribution/GenTV-TV-release.zip`, which contains the APK and its licences; keep them together.
-
-### Documentation
-
-- [Environment and installation guide](docs/getting-started.md) · [Contributing](CONTRIBUTING.md)
-- [Implementation and validation](docs/implementation.md) · [Pre-release validation](docs/pre-release-validation.md)
-- [Desktop protocol](docs/desktop-protocol.md) · [Module-card contract](docs/reference/modules.md)
-- [Performance workflow](docs/reference/perf-ab.md) · [Emulator measurements](docs/emulator-performance.md) · [Development plan](docs/desktop-optimization-plan.md)
+<a id="origins"></a>
 
 ## Project origins
 
 GenTV began from three MIT-licensed open-source projects: a native Android TV home screen with community device lists, a phone ADB companion framework, and a TV home-screen installer whose install and undo patterns the framework adopted. Their names, links, baselines and licences are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). GenTV is independent of television manufacturers and third-party apps. Their names appear only where needed for operation and attribution.
+
+**Why is the first public release v3.7.0?** Versions 3.0 to 3.6.x were distributed as debug-signed development builds before the source was opened. v3.7.0 is the first open-source release and the first signed with the release key. The commit history was consolidated when the repository opened, so it starts at this version. For upgrading from a development build, see [release and signing](docs/release.md).
 
 ## Use with care
 
