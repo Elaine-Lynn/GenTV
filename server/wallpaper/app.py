@@ -1,6 +1,7 @@
 """GenTV TV API: read-only wallpaper/releases and anonymous aggregate session counters."""
 import mobile
 from rate_limit import limited
+from functools import lru_cache
 import hashlib
 import json
 import mimetypes
@@ -22,6 +23,15 @@ def pictures():
         return []
     return [p for p in sorted(MEDIA.iterdir()) if not p.name.startswith('.') and p.suffix.lower() in ALLOWED
             and p.is_file() and not p.is_symlink() and 0 < p.stat().st_size <= MAX_BYTES][:100]
+
+@lru_cache(maxsize=128)
+def content_version(path, signature):
+    # Stat values only invalidate the server's hash memo; public versions depend on bytes alone.
+    with path.open('rb') as source:
+        data = source.read(MAX_BYTES + 1)
+    if not 0 < len(data) <= MAX_BYTES:
+        raise ValueError('Invalid wallpaper size')
+    return hashlib.sha256(data).hexdigest()
 
 def app(environ, start_response):
     method = environ.get('REQUEST_METHOD', 'GET')
@@ -75,7 +85,11 @@ def app(environ, start_response):
     elif path == '/tv/wallpaper':
         items = []
         for p in pictures():
-            version = hashlib.sha256(f'{p.name}:{p.stat().st_mtime_ns}:{p.stat().st_size}'.encode()).hexdigest()[:20]
+            try:
+                stat = p.stat()
+                version = content_version(p, (stat.st_ino, stat.st_size, stat.st_mtime_ns, stat.st_ctime_ns))
+            except (OSError, ValueError):
+                continue
             items.append({'id': version, 'url': f'{BASE}/wallpapers/{quote(p.name)}?v={version}'})
         body = json.dumps({'wallpapers': items, 'intervalSeconds': 120}, separators=(',', ':')).encode()
         kind = 'application/json; charset=utf-8'; cache = 'public, max-age=60'
