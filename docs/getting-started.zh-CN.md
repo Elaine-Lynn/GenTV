@@ -29,7 +29,7 @@ GenTV 由 Android 应用组成，不是电脑上的 Python / Node 程序，也�
 
 ```sh
 shasum -a 256 -c SHA256SUMS.txt --ignore-missing
-apksigner verify --print-certs gentv-tv-3.7.0.apk
+apksigner verify --print-certs gentv-tv-3.7.1.apk
 ```
 
 `apksigner` 输出的 `certificate SHA-256 digest` 去掉冒号、不分大小写后应与上面的指纹一致。不一致就不要安装。
