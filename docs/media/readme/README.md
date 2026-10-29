@@ -66,4 +66,4 @@
 
 ## 中文首图编辑说明
 
-`overview/01-project-cover-zh.png` 使用 imagegen 按用户提供的图标参考编辑，替换电视程序坞中的最后三个图标，去除标注框，作为中文 README 首图。它是编辑后的宣传效果图，不是未经编辑的模拟器原始截图；英文首图与 screenshots/ 中的原始截图保留。编辑指令：仅替换指定三个应用图标，保留其余布局、文案与手机画面。
+`overview/01-project-cover-zh.png` 使用 imagegen 按用户提供的图标参考编辑，替换电视程序坞中的最后三个图标，去除标注框，作为中文 README 首图。它是编辑后的宣传效果图，不是未经编辑的模拟器原始截图；英文首图与 screenshots/ 中的原始截图保留。编辑指令：仅替换指定三个应用图标，保留其余布局、文案与手机画面。图片左下角的标注已改为「Promotional image: edited TV emulator capture + phone UI test render」，与编辑情况一致。
