@@ -25,7 +25,7 @@ In the download folder, the first command checks the file contents and the secon
 
 ```sh
 shasum -a 256 -c SHA256SUMS.txt --ignore-missing
-apksigner verify --print-certs gentv-tv-3.7.0.apk
+apksigner verify --print-certs gentv-tv-3.7.1.apk
 ```
 
 The `certificate SHA-256 digest` that `apksigner` prints must match the fingerprint above, ignoring colons and case. If it doesn't, don't install the file.

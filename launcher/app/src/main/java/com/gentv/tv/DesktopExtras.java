@@ -21,7 +21,7 @@ final class DesktopExtras {
         @Override protected int sizeOf(String key, Bitmap value) { return value.getAllocationByteCount(); }
     };
     static void clearImages() { images.evictAll(); }
-    static boolean folder(String key) { return key != null && key.matches("com\\.gentv\\.home/Folder\\.[a-f0-9]{32}"); }
+    static boolean folder(String key) { return key != null && key.matches("com\\.gentv\\.(?:tv|home)/Folder\\.[a-f0-9]{32}"); }
     static String newFolderKey() { return "com.gentv.tv/Folder." + java.util.UUID.randomUUID().toString().replace("-", ""); }
     static void name(String text) {
         if(text.trim().isEmpty() || text.length()>60) throw new IllegalArgumentException("Invalid folder name");

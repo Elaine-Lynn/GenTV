@@ -1,0 +1,2563 @@
+{
+  "source": "https://sylvan.apple.com/Aerials/resources-16.tar",
+  "videos": [
+    {
+      "id": "83C65C90-270C-4490-9C69-F51FE03D7F06",
+      "label": "Seals",
+      "url": "https://sylvan.apple.com/Videos/SE_A016_C009_SDR_20190717_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "南非开普半岛海岸的非洲毛皮海狮",
+          "Cape Fur Seals off the coast of Cape Peninsula, South Africa"
+        ]
+      ]
+    },
+    {
+      "id": "7719B48A-2005-4011-9280-2F64EEC6FD91",
+      "label": "Southern California to Baja",
+      "url": "https://sylvan.apple.com/Videos/comp_A114_C001_0305OT_v10_SDR_FINAL_22062018_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "途经太平洋上空俯瞰美国",
+          "Over the Pacific Ocean heading toward the United States"
+        ],
+        [
+          20,
+          "途经加州海岸前往南方",
+          "Traveling south down the coast of California"
+        ],
+        [
+          50,
+          "在南加州上空俯瞰墨西哥",
+          "Over southern California moving toward Mexico"
+        ],
+        [
+          65,
+          "俯瞰加利福尼亚州莫哈韦沙漠，墨西哥遥遥可见",
+          "Approaching the Mojave Desert in southern California with Mexico beyond"
+        ],
+        [
+          95,
+          "加利福尼亚湾，两侧是索诺兰沙漠和下加利福尼亚半岛",
+          "The Gulf of California flanked by the Sonoran Desert and the Baja California Peninsula"
+        ],
+        [
+          130,
+          "墨西哥西岸的西马德雷山脉",
+          "The Sierra Madre Occidental mountains on the west coast of Mexico"
+        ],
+        [
+          185,
+          "沿着西马德雷山脉俯瞰墨西哥西海岸",
+          "Over the Sierra Madre Occidental mountains moving toward the west coast of Mexico"
+        ],
+        [
+          225,
+          "沿着墨西哥南马德雷山脉南望太平洋",
+          "Looking south to the Pacific Ocean over the Sierra Madre del Sur in Mexico"
+        ],
+        [
+          280,
+          "墨西哥海岸外的太平洋",
+          "The Pacific Ocean off the coast of Mexico"
+        ],
+        [
+          290,
+          "墨西哥和危地马拉海岸外的太平洋",
+          "The Pacific Ocean off the coast of Mexico and Guatemala"
+        ]
+      ]
+    },
+    {
+      "id": "2F52E34C-39D4-4AB1-9025-8F7141FAA720",
+      "label": "Greenland",
+      "url": "https://sylvan.apple.com/Videos/comp_GL_G002_C002_PSNK_v03_SDR_PS_20180925_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "格林兰岛海岸外的伊卢利萨特冰峡湾",
+          "The Ilulissat Icefjord off the coast of Greenland"
+        ]
+      ]
+    },
+    {
+      "id": "009BA758-7060-4479-8EE8-FB9B40C8FB97",
+      "label": "Korea and Japan Night",
+      "url": "https://sylvan.apple.com/Videos/comp_GMT026_363A_103NC_E1027_KOREA_JAPAN_NIGHT_v18_SDR_PS_20180907_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "途径西伯利亚和蒙古往东南方向移动",
+          "Moving southeast over Siberia and Mongolia"
+        ],
+        [
+          22,
+          "俯瞰内蒙古",
+          "Heading toward Inner Mongolia"
+        ],
+        [
+          32,
+          "在蒙古上空俯瞰中国",
+          "Over Mongolia traveling toward China"
+        ],
+        [
+          60,
+          "在中国北方上空俯瞰朝鲜半岛",
+          "Over northern China moving toward the Korean Peninsula"
+        ],
+        [
+          110,
+          "在中国上空俯瞰朝鲜半岛",
+          "Over China heading toward the Korean Peninsula"
+        ],
+        [
+          150,
+          "朝鲜半岛，日本遥遥可见",
+          "The Korean Peninsula with Japan in the distance"
+        ],
+        [
+          180,
+          "在韩国上空俯瞰日本",
+          "Over South Korea traveling toward Japan"
+        ],
+        [
+          195,
+          "在日本上空俯瞰太平洋",
+          "Over Japan looking toward the Pacific Ocean"
+        ],
+        [
+          260,
+          "途经太平洋上空俯瞰日本东南部",
+          "Over the Pacific Ocean southeast of Japan"
+        ]
+      ]
+    },
+    {
+      "id": "BA4ECA11-592F-4727-9221-D2A32A16EB28",
+      "label": "Palau Jellies",
+      "url": "https://sylvan.apple.com/Videos/PA_A001_C007_SDR_20190717_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "帕劳海域的金色水母",
+          "Golden Jellyfish in the waters of Palau"
+        ],
+        [
+          282,
+          "围着海月水母的金色水母",
+          "Golden Jellyfish with a Moon Jellyfish\nin their midst"
+        ],
+        [
+          348,
+          "帕劳海域的金色水母",
+          "Golden Jellyfish in the waters of Palau"
+        ]
+      ]
+    },
+    {
+      "id": "92E48DE9-13A1-4172-B560-29B4668A87EE",
+      "label": "Los Angeles",
+      "url": "https://sylvan.apple.com/Videos/comp_LA_A008_C004_ALTB_ED_FROM_FLAME_RETIME_v46_SDR_PS_20180917_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "俯瞰洛杉矶附近的圣莫尼卡海滩",
+          "Over Santa Monica State Beach near Los Angeles"
+        ],
+        [
+          365,
+          "俯瞰洛杉矶附近的圣莫尼卡码头",
+          "Passing over Santa Monica Pier near Los Angeles"
+        ],
+        [
+          430,
+          "俯瞰洛杉矶附近的圣莫尼卡海滩",
+          "Over Santa Monica State Beach near Los Angeles"
+        ]
+      ]
+    },
+    {
+      "id": "A5AAFF5D-8887-42BB-8AFD-867EF557ED85",
+      "label": "London",
+      "url": "https://sylvan.apple.com/Videos/comp_L007_C007_PS_v01_SDR_PS_20180925_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "俯瞰伦敦白金汉宫空地",
+          "Passing over the grounds of Buckingham Palace, London"
+        ],
+        [
+          24,
+          "俯瞰伦敦白金汉宫",
+          "Over Buckingham Palace in London"
+        ],
+        [
+          49,
+          "在圣詹姆斯公园上空俯瞰伦敦泰晤士河",
+          "Over St James’s Park heading toward the River Thames, London"
+        ],
+        [
+          104,
+          "俯瞰泰晤士河和伦敦眼",
+          "Crossing the River Thames and passing over the London Eye"
+        ],
+        [
+          149,
+          "俯瞰南伦敦",
+          "Passing over South London"
+        ],
+        [
+          279,
+          "俯瞰南伦敦碎片大厦",
+          "Passing by The Shard in South London"
+        ],
+        [
+          299,
+          "俯瞰伦敦泰晤士河",
+          "Crossing the River Thames in London"
+        ],
+        [
+          324,
+          "俯瞰伦敦塔桥下的泰晤士河",
+          "Crossing the River Thames at Tower Bridge in London"
+        ]
+      ]
+    },
+    {
+      "id": "A837FA8C-C643-4705-AE92-074EFDD067F7",
+      "label": "Africa Night",
+      "url": "https://sylvan.apple.com/Videos/comp_GMT312_162NC_139M_1041_AFRICA_NIGHT_v14_SDR_FINAL_20180706_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "沿着东北方向俯瞰夜色中的撒哈拉",
+          "Traveling northeast over the Sahara at night"
+        ],
+        [
+          70,
+          "在东部大尔格沙漠上空俯瞰地中海",
+          "Over the Grand Erg Oriental heading toward the Mediterranean Sea"
+        ],
+        [
+          100,
+          "突尼斯地中海海岸和利比亚",
+          "The Mediterranean coast of Tunisia and Libya"
+        ],
+        [
+          120,
+          "途经地中海上空俯瞰意大利",
+          "Moving over the Mediterranean Sea toward Italy"
+        ],
+        [
+          140,
+          "在意大利南部上空俯瞰巴尔干半岛，土耳其遥遥可见",
+          "Over southern Italy approaching the Balkan Peninsula with Turkey in the distance"
+        ],
+        [
+          165,
+          "在巴尔干半岛上空俯瞰黑海",
+          "Over the Balkan Peninsula moving toward the Black Sea"
+        ],
+        [
+          180,
+          "在巴尔干半岛上空俯瞰黑海",
+          "Over the Balkan Peninsula approaching the Black Sea"
+        ],
+        [
+          210,
+          "途径黑海到乌克兰",
+          "Traveling over the Black Sea toward Ukraine"
+        ],
+        [
+          230,
+          "途经乌克兰到俄罗斯",
+          "Traveling over Ukraine toward Russia"
+        ]
+      ]
+    },
+    {
+      "id": "9CCB8297-E9F5-4699-AE1F-890CFBD5E29C",
+      "label": "China",
+      "url": "https://sylvan.apple.com/Videos/comp_CH_C002_C005_PSNK_v05_SDR_PS_FINAL_20180709_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "俯瞰中国广西省龙脊梯田",
+          "Passing over the Longji rice terraces in Guangxi Province, China"
+        ]
+      ]
+    },
+    {
+      "id": "B8F204CE-6024-49AB-85F9-7CA2F6DCD226",
+      "label": "Greenland",
+      "url": "https://sylvan.apple.com/Videos/comp_GL_G004_C010_PSNK_v04_SDR_PS_FINAL_20180709_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "俯瞰格陵兰努苏阿克半岛",
+          "Traveling along the Nuussuaq Peninsula in Greenland"
+        ]
+      ]
+    },
+    {
+      "id": "F07CC61B-30FC-4614-BDAD-3240B61F6793",
+      "label": "Palau Coral",
+      "url": "https://sylvan.apple.com/Videos/PA_A004_C003_SDR_20190719_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "帕劳附近的珊瑚礁",
+          "Coral reef near Palau"
+        ]
+      ]
+    },
+    {
+      "id": "35693AEA-F8C4-4A80-B77D-C94B20A68956",
+      "label": "Los Angeles",
+      "url": "https://sylvan.apple.com/Videos/comp_LA_A005_C009_PSNK_ALT_v09_SDR_PS_201809134_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "沿 110 号洲际公路北段穿过洛杉矶",
+          "Following Interstate 110 north through Los Angeles"
+        ]
+      ]
+    },
+    {
+      "id": "E556BBC5-D0A0-4DB1-AC77-BC76E4A526F4",
+      "label": "Sahara and Italy",
+      "url": "https://sylvan.apple.com/Videos/comp_A009_C001_010181A_v09_SDR_PS_FINAL_20180725_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "在西非洲上空俯瞰撒哈拉",
+          "Over western Africa moving toward the Sahara"
+        ],
+        [
+          30,
+          "俯瞰北非撒哈拉沙漠",
+          "Crossing the Sahara in North Africa"
+        ],
+        [
+          110,
+          "俯瞰北非撒哈拉地区的阿哈加尔山脉",
+          "Passing over the Ahaggar Mountains in the Sahara, North Africa"
+        ],
+        [
+          155,
+          "在北非洲的东部大尔格沙漠上空俯瞰地中海",
+          "Over the Grand Erg Oriental in North Africa moving toward the Mediterranean Sea"
+        ],
+        [
+          195,
+          "突尼斯海岸和地中海",
+          "The coast of Tunisia and the Mediterranean Sea"
+        ],
+        [
+          210,
+          "途经突尼斯海岸俯瞰意大利",
+          "Over the coast of Tunisia traveling toward Italy"
+        ],
+        [
+          230,
+          "穿过地中海俯瞰意大利",
+          "Approaching Italy in the Mediterranean Sea"
+        ],
+        [
+          245,
+          "在意大利上空俯瞰巴尔干半岛",
+          "Over Italy traveling toward the Balkan Peninsula"
+        ],
+        [
+          285,
+          "在巴尔干半岛上空俯瞰喀尔巴阡山脉",
+          "Over the Balkan Peninsula heading toward the Carpathian Mountains"
+        ],
+        [
+          310,
+          "喀尔巴阡山脉和黑海",
+          "The Carpathian Mountains and the Black Sea"
+        ]
+      ]
+    },
+    {
+      "id": "F5804DD6-5963-40DA-9FA0-39C0C6E6DEF9",
+      "label": "Los Angeles",
+      "url": "https://sylvan.apple.com/Videos/comp_LA_A011_C003_DGRN_LNFIX_STAB_v57_SDR_PS_20181002_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "俯瞰洛杉矶市中心",
+          "Passing Downtown Los Angeles"
+        ]
+      ]
+    },
+    {
+      "id": "6143116D-03BB-485E-864E-A8CF58ACF6F1",
+      "label": "Kelp",
+      "url": "https://sylvan.apple.com/Videos/KP_A010_C002_SDR_20190717_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "在南非开普半岛附近的海藻林穿梭",
+          "Drifting through a kelp forest near Cape Peninsula, South Africa"
+        ]
+      ]
+    },
+    {
+      "id": "44166C39-8566-4ECA-BD16-43159429B52F",
+      "label": "New York",
+      "url": "https://sylvan.apple.com/Videos/comp_N013_C004_PS_v01_SDR_PS_20180925_F1970F7193_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "沿着纽约时代广场俯瞰第七大道",
+          "Heading down 7th Avenue toward Times Square, New York"
+        ],
+        [
+          40,
+          "俯瞰纽约时代广场",
+          "Over Times Square in New York"
+        ],
+        [
+          120,
+          "俯瞰纽约曼哈顿中城第七大道",
+          "Heading down 7th Avenue in Midtown Manhattan, New York"
+        ]
+      ]
+    },
+    {
+      "id": "E5DB138A-F04E-4619-B896-DE5CB538C534",
+      "label": "Italy to Asia",
+      "url": "https://sylvan.apple.com/Videos/comp_GMT329_113NC_396B_1105_ITALY_v03_SDR_FINAL_20180706_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "途径突尼斯俯瞰意大利",
+          "Over Tunisia heading toward Italy"
+        ],
+        [
+          5,
+          "在地中海上空俯瞰西西里和意大利半岛",
+          "Over the Mediterranean Sea looking toward Sicily and the Italian Peninsula"
+        ],
+        [
+          15,
+          "俯瞰意大利南部，巴尔干半岛遥遥可见",
+          "Over southern Italy with the Balkan Peninsula beyond"
+        ],
+        [
+          25,
+          "在巴尔干半岛上空俯瞰中亚洲",
+          "Over the Balkan Peninsula moving toward central Asia"
+        ],
+        [
+          40,
+          "在巴尔干半岛上空俯瞰黑海",
+          "Over the Balkan Peninsula passing by the Black Sea"
+        ],
+        [
+          55,
+          "俯瞰乌克兰，俄罗斯遥遥可见",
+          "Over Ukraine with Russia beyond"
+        ],
+        [
+          75,
+          "途径哈萨克斯坦俯瞰俄罗斯西南部",
+          "Over southwest Russia passing by Kazakhstan"
+        ]
+      ]
+    },
+    {
+      "id": "EC67726A-8212-4C5E-83CF-8412932740D2",
+      "label": "Los Angeles",
+      "url": "https://sylvan.apple.com/Videos/comp_LA_A006_C004_v01_SDR_FINAL_PS_20180730_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "洛杉矶好莱坞标志",
+          "The Hollywood Sign in Los Angeles"
+        ],
+        [
+          250,
+          "在好莱坞山上空俯瞰加利福利亚州伯班克",
+          "Over the Hollywood Hills approaching Burbank, California"
+        ]
+      ]
+    },
+    {
+      "id": "1088217C-1410-4CF7-BDE9-8F573A4DBCD9",
+      "label": "Caribbean",
+      "url": "https://sylvan.apple.com/Videos/comp_A105_C002_v06_SDR_FINAL_25062018_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "途经太平洋上空俯瞰中美洲",
+          "Over the Pacific Ocean moving toward Central America"
+        ],
+        [
+          70,
+          "沿着中美洲西南海岸前往加勒比海",
+          "The southwest coast of Central America heading toward the Caribbean Sea"
+        ],
+        [
+          100,
+          "穿越中美洲俯瞰加勒比海",
+          "Crossing Central America toward the Caribbean Sea"
+        ],
+        [
+          150,
+          "在加勒比海上空俯瞰古巴",
+          "Over the Caribbean Sea moving toward Cuba"
+        ],
+        [
+          240,
+          "俯瞰古巴，佛罗里达和巴哈马遥遥可见",
+          "Over Cuba with Florida and the Bahamas beyond"
+        ],
+        [
+          300,
+          "途径佛罗里达和巴哈马俯瞰马尾藻海",
+          "Over Florida and the Bahamas traveling toward the Sargasso Sea"
+        ],
+        [
+          350,
+          "沿着马尾藻海上空俯瞰大西洋",
+          "Over the Sargasso Sea heading out into the Atlantic Ocean"
+        ]
+      ]
+    },
+    {
+      "id": "72B4390D-DF1D-4D51-B179-229BBAEFFF2C",
+      "label": "San Francisco",
+      "url": "https://sylvan.apple.com/Videos/comp_A013_C012_0122D6_CC_v01_SDR_PS_FINAL_20180709_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "俯瞰旧金山金门大桥",
+          "Approaching the Golden Gate Bridge from San Francisco"
+        ],
+        [
+          60,
+          "沿着金门大桥逐渐靠近马林岬",
+          "Alongside the Golden Gate Bridge heading toward the Marin Headlands"
+        ],
+        [
+          140,
+          "俯瞰金门大桥",
+          "Crossing over the Golden Gate Bridge"
+        ],
+        [
+          230,
+          "俯瞰金门大桥北塔",
+          "Passing by the North Tower of the Golden Gate Bridge"
+        ],
+        [
+          260,
+          "在旧金山湾上空，沿着金门大桥游览",
+          "Over San Francisco Bay traveling alongside the Golden Gate Bridge"
+        ]
+      ]
+    },
+    {
+      "id": "2B30E324-E4FF-4CC1-BA45-A958C2D2B2EC",
+      "label": "Barracuda",
+      "url": "https://sylvan.apple.com/Videos/BO_A018_C029_SDR_20190812_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "婆罗洲附近海域的一群金梭鱼",
+          "A school of Chevron Barracuda\nin the waters near Borneo"
+        ]
+      ]
+    },
+    {
+      "id": "D5E76230-81A3-4F65-A1BA-51B8CADED625",
+      "label": "China",
+      "url": "https://sylvan.apple.com/Videos/comp_CH_C007_C004_PSNK_v02_SDR_PS_FINAL_20180709_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "探索中国武陵源国家公园",
+          "Exploring Wulingyuan National Park in China"
+        ]
+      ]
+    },
+    {
+      "id": "737E9E24-49BE-4104-9B72-F352DE1AD2BF",
+      "label": "North America Aurora",
+      "url": "https://sylvan.apple.com/Videos/comp_GMT314_139M_170NC_NORTH_AMERICA_AURORA__COMP_v22_SDR_20181206_v12CC_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "途经太平洋上空俯瞰下加利福尼亚州",
+          "Over the Pacific Ocean moving toward Baja California"
+        ],
+        [
+          45,
+          "在下加利福尼亚州上空俯瞰美国北方",
+          "Over Baja California looking north toward the United States"
+        ],
+        [
+          55,
+          "在墨西哥上空俯瞰美国西南方",
+          "Over Mexico heading toward the southwest United States"
+        ],
+        [
+          75,
+          "俯瞰美国西南部",
+          "Over the southwest United States"
+        ],
+        [
+          110,
+          "在落基山脉上空俯瞰丹佛",
+          "Over the Rocky Mountains approaching Denver"
+        ],
+        [
+          125,
+          "俯瞰北美大平原",
+          "Traveling over the Great Plains of the United States"
+        ],
+        [
+          185,
+          "俯瞰五大湖，加拿大安大略省遥遥可见",
+          "Approaching the Great Lakes with Ontario, Canada beyond"
+        ],
+        [
+          200,
+          "在五大湖上空俯瞰加拿大安大略省",
+          "Over the Great Lakes approaching Ontario, Canada"
+        ],
+        [
+          210,
+          "北极光笼罩下的加拿大安大略省西部",
+          "The Aurora Borealis over western Ontario, Canada"
+        ],
+        [
+          235,
+          "北极光笼罩下的加拿大安大略省北部",
+          "The Aurora Borealis over northern Ontario, Canada"
+        ],
+        [
+          250,
+          "北极光笼罩下的加拿大魁北克省",
+          "The Aurora Borealis over northern Quebec, Canada"
+        ],
+        [
+          300,
+          "沿着北大西洋前行，俯瞰北极光笼罩下的加拿大拉布拉多",
+          "Heading toward the North Atlantic with the Aurora Borealis over Labrador, Canada"
+        ]
+      ]
+    },
+    {
+      "id": "CE279831-1CA7-4A83-A97B-FF1E20234396",
+      "label": "Los Angeles",
+      "url": "https://sylvan.apple.com/Videos/comp_LA_A006_C008_PSNK_ALL_LOGOS_v10_SDR_PS_FINAL_20180801_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "俯瞰洛杉矶国际机场",
+          "Flying over Los Angeles International Airport"
+        ]
+      ]
+    },
+    {
+      "id": "9680B8EB-CE2A-4395-AF41-402801F4D6A6",
+      "label": "Dubai",
+      "url": "https://sylvan.apple.com/Videos/comp_DB_D011_C010_PSNK_DENOISE_v19_SDR_PS_20180914_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "俯瞰阿拉伯联合酋长国迪拜市中心哈利法塔",
+          "Approaching Burj Khalifa in Downtown Dubai, United Arab Emirates"
+        ],
+        [
+          280,
+          "俯瞰阿拉伯联合酋长国迪拜市中心哈利法塔",
+          "Passing by Burj Khalifa in Downtown Dubai, United Arab Emirates"
+        ],
+        [
+          330,
+          "在迪拜市中心上空俯瞰海岸",
+          "Over Downtown Dubai approaching the coast"
+        ]
+      ]
+    },
+    {
+      "id": "63C042F0-90EF-4A95-B7CC-CC9A64BF8421",
+      "label": "West Africa to the Alps",
+      "url": "https://sylvan.apple.com/Videos/comp_A001_C004_1207W5_v23_SDR_FINAL_20180706_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "加纳利群岛、大西洋和非洲海岸",
+          "The Canary Islands, Atlantic Ocean, and coast of Africa"
+        ],
+        [
+          45,
+          "沿着摩洛哥海岸往东北方向移动",
+          "Moving northeast along the coast of Morocco"
+        ],
+        [
+          75,
+          "俯瞰摩洛哥阿特拉斯山脉",
+          "Passing over the Atlas Mountains in Morocco"
+        ],
+        [
+          105,
+          "在摩洛哥上空俯瞰地中海",
+          "Over Morocco approaching the Mediterranean Sea"
+        ],
+        [
+          125,
+          "地中海和西班牙南部",
+          "The Mediterranean Sea and southern Spain"
+        ],
+        [
+          145,
+          "沿着东北方向俯瞰西班牙白色海岸",
+          "Traveling northeast over Spain’s Costa Blanca"
+        ],
+        [
+          165,
+          "沿着东北方向俯瞰西班牙巴利阿里群岛",
+          "Traveling northeast over Spain’s Balearic Islands"
+        ],
+        [
+          185,
+          "俯瞰地中海西部，阿尔卑斯山脉遥遥可见",
+          "Over the western Mediterranean Sea with the Alps beyond"
+        ],
+        [
+          220,
+          "沿着阿尔卑斯山脉上空前往东北方向",
+          "Moving northeast over the Alps"
+        ]
+      ]
+    },
+    {
+      "id": "F439B0A7-D18C-4B14-9681-6520E6A74FE9",
+      "label": "Iran and Afghanistan",
+      "url": "https://sylvan.apple.com/Videos/comp_A083_C002_1130KZ_v04_SDR_PS_FINAL_20180725_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "伊朗海岸沿岸的日光剪影",
+          "The reflection of the sun along the coast of Iran"
+        ],
+        [
+          15,
+          "自夜向昼，俯瞰伊朗",
+          "Moving from day to night over Iran"
+        ],
+        [
+          60,
+          "自夜向昼，俯瞰中亚洲",
+          "Moving from day to night over central Asia"
+        ]
+      ]
+    },
+    {
+      "id": "E580E5A5-0888-4BE8-A4CA-F74A18A643C3",
+      "label": "Palau Jellies",
+      "url": "https://sylvan.apple.com/Videos/PA_A002_C009_SDR_20190730_ALT01_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "帕劳海域的金色水母",
+          "Golden Jellyfish in the waters of Palau"
+        ]
+      ]
+    },
+    {
+      "id": "4F881F8B-A7D9-4FDB-A917-17BF6AC5A589",
+      "label": "Caribbean Day",
+      "url": "https://sylvan.apple.com/Videos/comp_GMT308_139K_142NC_CARIBBEAN_DAY_v09_SDR_FINAL_22062018_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "沿着东南方向俯瞰北美大平原",
+          "Heading southeast over the Great Plains of the United States"
+        ],
+        [
+          90,
+          "沿着东南方向俯瞰美国中西部地区",
+          "Heading southeast over the Midwest United States"
+        ],
+        [
+          120,
+          "在美国东南部上空俯瞰佛罗里达",
+          "Over the southeast United States heading toward Florida"
+        ],
+        [
+          220,
+          "在佛罗里达上空俯瞰巴哈马",
+          "Over Florida traveling toward the Bahamas"
+        ],
+        [
+          240,
+          "沿着巴哈马上空前往东南方向",
+          "Moving southeast over the Bahamas"
+        ],
+        [
+          285,
+          "穿过巴哈马俯瞰多米尼加共和国和海地",
+          "Over the Bahamas approaching the Dominican Republic and Haiti"
+        ],
+        [
+          300,
+          "在多米尼加共和国和海地上空俯瞰加勒比海",
+          "Over the Dominican Republic and Haiti approaching the Caribbean Sea"
+        ],
+        [
+          315,
+          "沿着加勒比海南行，俯瞰委内瑞拉",
+          "Over the Caribbean Sea heading south toward Venezuela"
+        ]
+      ]
+    },
+    {
+      "id": "3D729CFC-9000-48D3-A052-C5BD5B7A6842",
+      "label": "Hawaii",
+      "url": "https://sylvan.apple.com/Videos/comp_H012_C009_PS_v01_SDR_PS_20180925_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "沿着夏威夷岛的科哈拉海岸线前行",
+          "Following the Kohala coastline on the island of Hawai‘i"
+        ]
+      ]
+    },
+    {
+      "id": "EE01F02D-1413-436C-AB05-410F224A5B7B",
+      "label": "Greenland",
+      "url": "https://sylvan.apple.com/Videos/comp_GL_G010_C006_PSNK_NOSUN_v12_SDR_PS_FINAL_20180709_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "格林兰岛海岸外的伊卢利萨特冰峡湾",
+          "The Ilulissat Icefjord off the coast of Greenland"
+        ]
+      ]
+    },
+    {
+      "id": "12318CCB-3F78-43B7-A854-EFDCCE5312CD",
+      "label": "California to Vegas",
+      "url": "https://sylvan.apple.com/Videos/comp_GMT306_139NC_139J_3066_CALI_TO_VEGAS_v08_SDR_PS_20180824_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "途经太平洋上空俯瞰加州海岸",
+          "Over the Pacific Ocean moving toward the California coast"
+        ],
+        [
+          70,
+          "途经加州沿岸俯瞰内陆",
+          "Over the California coast traveling inland"
+        ],
+        [
+          85,
+          "俯瞰美国西岸洛杉矶市",
+          "Passing over Los Angeles on the west coast of the United States"
+        ],
+        [
+          95,
+          "在美国洛杉矶上空俯瞰拉斯维加斯",
+          "Over Los Angeles approaching Las Vegas in the United States"
+        ],
+        [
+          110,
+          "在美国拉斯维加斯上空俯瞰盐湖城",
+          "Over Las Vegas heading toward Salt Lake City in the United States"
+        ],
+        [
+          120,
+          "在美国西部上空俯瞰盐湖城",
+          "Over the western United States approaching Salt Lake City"
+        ],
+        [
+          155,
+          "在美国盐湖城和丹佛之间徜徉",
+          "Passing between Salt Lake City and Denver in the United States"
+        ],
+        [
+          170,
+          "俯瞰美国落基山脉",
+          "Over the Rocky Mountains in the United States"
+        ]
+      ]
+    },
+    {
+      "id": "3BA0CFC7-E460-4B59-A817-B97F9EBB9B89",
+      "label": "New York",
+      "url": "https://sylvan.apple.com/Videos/comp_N008_C009_PS_v01_SDR_PS_20180925_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "沿着中央公园俯瞰纽约曼哈顿中城",
+          "Over Central Park traveling toward Midtown Manhattan in New York"
+        ],
+        [
+          246,
+          "俯瞰纽约曼哈顿中城",
+          "Over Midtown Manhattan in New York"
+        ]
+      ]
+    },
+    {
+      "id": "89B1643B-06DD-4DEC-B1B0-774493B0F7B7",
+      "label": "Los Angeles",
+      "url": "https://sylvan.apple.com/Videos/comp_LA_A009_C009_PSNK_v02_SDR_PS_FINAL_20180709_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "洛杉矶格里菲斯天文台和好莱坞山",
+          "Griffith Observatory and the Hollywood Hills in Los Angeles"
+        ]
+      ]
+    },
+    {
+      "id": "F604AF56-EA77-4960-AEF7-82533CC1A8B3",
+      "label": "London",
+      "url": "https://sylvan.apple.com/Videos/comp_L012_c002_PS_v01_SDR_PS_20180925_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "俯瞰伦敦泰晤士河上的伦敦塔桥",
+          "Approaching Tower Bridge on the River Thames, London"
+        ],
+        [
+          20,
+          "俯瞰伦敦泰晤士河",
+          "Crossing the River Thames in London"
+        ],
+        [
+          60,
+          "俯瞰南伦敦碎片大厦",
+          "Passing The Shard in South London"
+        ],
+        [
+          92,
+          "途经泰晤士河南岸俯瞰伦敦眼",
+          "South of the River Thames heading toward the London Eye"
+        ],
+        [
+          200,
+          "途经泰晤士河俯瞰伦敦威斯敏斯特市",
+          "Crossing the River Thames toward Westminster, London"
+        ],
+        [
+          270,
+          "俯瞰伦敦威斯敏斯特",
+          "Over Westminster, London"
+        ]
+      ]
+    },
+    {
+      "id": "258A6797-CC13-4C3A-AB35-4F25CA3BF474",
+      "label": "Hawaii",
+      "url": "https://sylvan.apple.com/Videos/comp_H004_C009_PS_v01_SDR_PS_20180925_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "俯瞰夏威夷岛 Pu‘u O ‘Umi 自然保护区",
+          "Above the Pu‘u O ‘Umi Natural Area Reserve, on the island of Hawai‘i"
+        ]
+      ]
+    },
+    {
+      "id": "D5CFB2FF-5F8C-4637-816B-3E42FC1229B8",
+      "label": "Caribbean",
+      "url": "https://sylvan.apple.com/Videos/comp_A108_C001_v09_SDR_FINAL_22062018_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "途径太平洋上空前往中美洲",
+          "Traveling over the Pacific Ocean toward Central America"
+        ],
+        [
+          35,
+          "与尼加拉瓜、哥斯达黎加和巴拿马相接的太平洋海岸",
+          "The Pacific coasts of Nicaragua, Costa Rica, and Panama"
+        ],
+        [
+          50,
+          "俯瞰中美洲，南美洲遥遥可见",
+          "Passing over Central America with South America in the distance"
+        ],
+        [
+          65,
+          "尼加拉瓜蚊子海岸",
+          "The Mosquito Coast of Nicaragua"
+        ],
+        [
+          85,
+          "在加勒比海上空俯瞰古巴",
+          "Over the Caribbean Sea traveling toward Cuba"
+        ],
+        [
+          110,
+          "在地中海上空俯瞰云山雾罩的牙买加",
+          "Passing by a cloud-covered Jamaica in the Caribbean Sea"
+        ],
+        [
+          125,
+          "穿越古巴俯瞰海地和多米尼加共和国",
+          "Crossing over Cuba looking toward Haiti and the Dominican Republic"
+        ],
+        [
+          170,
+          "途经巴哈马上空俯瞰海地和多米尼加共和国",
+          "Traveling over the Bahamas looking toward Haiti and the Dominican Republic"
+        ],
+        [
+          190,
+          "大西洋特克斯和凯科斯群岛",
+          "Turks and Caicos Islands in the Atlantic Ocean"
+        ]
+      ]
+    },
+    {
+      "id": "7C643A39-C0B2-4BA0-8BC2-2EAA47CC580E",
+      "label": "Ireland to Asia",
+      "url": "https://sylvan.apple.com/Videos/comp_GMT329_117NC_401C_1037_IRELAND_TO_ASIA_v48_SDR_PS_FINAL_20180725_F0F6300_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "在北大西洋上空俯瞰爱尔兰岛和大不列颠岛",
+          "Over the North Atlantic approaching Ireland and Great Britain"
+        ],
+        [
+          15,
+          "爱尔兰和英国",
+          "Ireland and Great Britain"
+        ],
+        [
+          45,
+          "在英国上空俯瞰欧洲大陆",
+          "Over Great Britain traveling toward mainland Europe"
+        ],
+        [
+          65,
+          "在欧洲西北部上空俯瞰俄罗斯",
+          "Over northwestern Europe heading toward Russia"
+        ],
+        [
+          105,
+          "在中欧洲上空俯瞰俄罗斯",
+          "Over central Europe heading toward Russia"
+        ],
+        [
+          150,
+          "俯瞰东欧洲，莫斯科遥遥可见",
+          "Over eastern Europe with Moscow in the distance"
+        ],
+        [
+          165,
+          "在东欧洲上空俯瞰莫斯科",
+          "Over eastern Europe looking toward Moscow"
+        ],
+        [
+          185,
+          "途径莫斯科俯瞰俄罗斯西部",
+          "Over western Russia passing Moscow"
+        ],
+        [
+          195,
+          "在俄罗斯上空俯瞰中亚洲",
+          "Over Russia traveling toward central Asia"
+        ]
+      ]
+    },
+    {
+      "id": "876D51F4-3D78-4221-8AD2-F9E78C0FD9B9",
+      "label": "Dubai",
+      "url": "https://sylvan.apple.com/Videos/comp_DB_D008_C010_PSNK_v21_SDR_PS_20180914_F0F16157_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "俯瞰阿拉伯联合酋长国迪拜谢赫扎耶德路",
+          "Traveling along Sheikh Zayed Road in Dubai, United Arab Emirates"
+        ]
+      ]
+    },
+    {
+      "id": "044AD56C-A107-41B2-90CC-E60CCACFBCF5",
+      "label": "China",
+      "url": "https://sylvan.apple.com/Videos/comp_C003_C003_PS_v01_SDR_PS_20180925_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "中国北京怀柔区慕田峪长城",
+          "The Mutianyu section of the Great Wall in Huairou District, China"
+        ]
+      ]
+    },
+    {
+      "id": "EC3DC957-D4C2-4732-AACE-7D0C0F390EC8",
+      "label": "Palau Jellies",
+      "url": "https://sylvan.apple.com/Videos/PA_A010_C007_SDR_20190717_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "帕劳海域的金色水母",
+          "Golden Jellyfish in the waters of Palau"
+        ]
+      ]
+    },
+    {
+      "id": "E99FA658-A59A-4A2D-9F3B-58E7BDC71A9A",
+      "label": "Hong Kong",
+      "url": "https://sylvan.apple.com/Videos/comp_HK_B005_C011_PSNK_v16_SDR_PS_20180914_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "在维多利亚港上空俯瞰香港中环",
+          "Over Victoria Harbour heading toward Central Hong Kong"
+        ]
+      ]
+    },
+    {
+      "id": "499995FA-E51A-4ACE-8DFD-BDF8AFF6C943",
+      "label": "Hawaii",
+      "url": "https://sylvan.apple.com/Videos/comp_H005_C012_PS_v01_SDR_PS_20180925_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "夏威夷岛科哈拉森林保护区的威马奴山谷",
+          "The Waimanu Valley in the Kohala Forest Reserve on the island of Hawai‘i"
+        ]
+      ]
+    },
+    {
+      "id": "6324F6EB-E0F1-468F-AC2E-A983EBDDD53B",
+      "label": "China",
+      "url": "https://sylvan.apple.com/Videos/comp_GMT329_113NC_396B_1105_CHINA_v04_SDR_FINAL_20180706_F900F2700_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "在中亚洲上空俯瞰中国沿海",
+          "Over central Asia traveling toward coastal China"
+        ],
+        [
+          10,
+          "在中国中部上空俯瞰上海",
+          "Over central China traveling toward Shanghai"
+        ],
+        [
+          30,
+          "在中国东部上空俯瞰上海",
+          "Heading over eastern China approaching Shanghai"
+        ],
+        [
+          45,
+          "穿过中国东海俯瞰上海",
+          "Approaching Shanghai heading toward the East China Sea"
+        ],
+        [
+          50,
+          "在上海上空俯瞰中国东海",
+          "Over Shanghai moving toward the East China Sea"
+        ]
+      ]
+    },
+    {
+      "id": "3E94AE98-EAF2-4B09-96E3-452F46BC114E",
+      "label": "San Francisco",
+      "url": "https://sylvan.apple.com/Videos/comp_A015_C018_0128ZS_v03_SDR_PS_FINAL_20180709__SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "俯瞰海湾大桥和旧金山市中心",
+          "Approaching the Bay Bridge and downtown San Francisco"
+        ],
+        [
+          80,
+          "俯瞰海湾大桥，渐渐靠近旧金山市中心",
+          "Crossing over the Bay Bridge heading toward downtown San Francisco"
+        ],
+        [
+          116,
+          "沿着旧金山湾俯瞰市中心",
+          "Over San Francisco Bay heading toward downtown"
+        ]
+      ]
+    },
+    {
+      "id": "3C4678E4-4D3D-4A40-8817-77752AEA62EB",
+      "label": "Nile Delta",
+      "url": "https://sylvan.apple.com/Videos/comp_A050_C004_1027V8_v16_SDR_FINAL_20180706_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "在西欧上空徜徉，大不列颠岛和爱尔兰岛遥遥可见",
+          "Traveling over Western Europe with Great Britain and Ireland in the distance"
+        ],
+        [
+          20,
+          "沿着东南方向俯瞰阿尔卑斯山脉和波河河谷",
+          "Heading southeast over the Alps and the Po River Valley"
+        ],
+        [
+          50,
+          "沿着意大利半岛和亚得里亚海下行",
+          "Moving down the Italian Peninsula and the Adriatic Sea"
+        ],
+        [
+          100,
+          "希腊，两侧是爱奥尼亚海和爱琴海",
+          "Greece flanked by the Ionian and Aegean Seas"
+        ],
+        [
+          160,
+          "沿着东南方向俯瞰地中海",
+          "Traveling southeast over the Mediterranean Sea"
+        ],
+        [
+          185,
+          "地中海和尼罗河三角洲",
+          "The Mediterranean Sea and the Nile River Delta"
+        ],
+        [
+          205,
+          "流经埃及撒哈拉沙漠的尼罗河",
+          "The Nile River flowing through the Sahara in Egypt"
+        ],
+        [
+          220,
+          "东部沙漠，两侧是尼罗河和苏伊士湾",
+          "The Eastern Desert flanked by the Nile River and the Gulf of Suez"
+        ],
+        [
+          240,
+          "沿着东南方向俯瞰红海",
+          "Heading southeast over the Red Sea"
+        ]
+      ]
+    },
+    {
+      "id": "00BA71CD-2C54-415A-A68A-8358E677D750",
+      "label": "Dubai",
+      "url": "https://sylvan.apple.com/Videos/comp_DB_D002_C003_PSNK_v04_SDR_PS_20180914_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "俯瞰阿拉伯联合酋长国迪拜市中心",
+          "Approaching Downtown Dubai in the United Arab Emirates"
+        ],
+        [
+          210,
+          "俯瞰阿拉伯联合酋长国迪拜市中心",
+          "Heading over Downtown Dubai in the United Arab Emirates"
+        ]
+      ]
+    },
+    {
+      "id": "B876B645-3955-420E-99DF-60139E451CF3",
+      "label": "China",
+      "url": "https://sylvan.apple.com/Videos/comp_CH_C007_C011_PSNK_v02_SDR_PS_FINAL_20180709_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "俯瞰中国武陵源国家公园",
+          "Traveling through Wulingyuan National Park in China"
+        ]
+      ]
+    },
+    {
+      "id": "581A4F1A-2B6D-468C-A1BE-6F473F06D10B",
+      "label": "Sea Stars",
+      "url": "https://sylvan.apple.com/Videos/BO_A012_C031_SDR_20190726_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "婆罗洲附近海底的角海星",
+          "Horned Sea Stars on the\nocean floor near Borneo"
+        ]
+      ]
+    },
+    {
+      "id": "78911B7E-3C69-47AD-B635-9C2486F6301D",
+      "label": "New Zealand",
+      "url": "https://sylvan.apple.com/Videos/comp_A105_C003_0212CT_FLARE_v10_SDR_PS_FINAL_20180711_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "自夜向昼，俯瞰南太平洋",
+          "Crossing from night to day over the South Pacific Ocean"
+        ],
+        [
+          70,
+          "自夜向昼，俯瞰新西兰",
+          "Crossing from night to day over New Zealand"
+        ],
+        [
+          110,
+          "在新西兰上空拥抱日出",
+          "Approaching sunrise over New Zealand"
+        ],
+        [
+          170,
+          "离开新西兰，越过太平洋前往东北方向",
+          "Leaving New Zealand heading northeast over the Pacific Ocean"
+        ]
+      ]
+    },
+    {
+      "id": "AFA22C08-A486-4CE8-9A13-E355B6C38559",
+      "label": "Liwa",
+      "url": "https://sylvan.apple.com/Videos/comp_LW_L001_C003__PSNK_DENOISE_v04_SDR_PS_FINAL_20180803_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "俯瞰阿拉伯联合酋长国利瓦绿洲",
+          "Flying over Liwa Oasis in the United Arab Emirates"
+        ]
+      ]
+    },
+    {
+      "id": "C8559883-6F3E-4AF2-8960-903710CD47B7",
+      "label": "Hong Kong",
+      "url": "https://sylvan.apple.com/Videos/comp_HK_H004_C010_PSNK_v08_SDR_PS_20181009_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "飞越香港太平山",
+          "Flying over Victoria Peak in Hong Kong"
+        ],
+        [
+          150,
+          "飞越香港维多利亚港",
+          "Flying over Hong Kong toward Victoria Harbour"
+        ],
+        [
+          330,
+          "在维多利亚港上空俯瞰九龙半岛",
+          "Over Victoria Harbour approaching the Kowloon Peninsula"
+        ]
+      ]
+    },
+    {
+      "id": "87060EC2-D006-4102-98CC-3005C68BB343",
+      "label": "South Africa to North Asia",
+      "url": "https://sylvan.apple.com/Videos/comp_A351_C001_v06_SDR_PS_20180725_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "沿着东北方向俯瞰埃塞俄比亚高原",
+          "Traveling northeast over the Ethiopian Highlands"
+        ],
+        [
+          45,
+          "途经红海上空徐徐前往阿拉伯半岛",
+          "Traveling over the Red Sea into the Arabian Peninsula"
+        ],
+        [
+          100,
+          "沿着东北方向俯瞰阿拉伯半岛",
+          "Heading northeast over the Arabian Peninsula"
+        ],
+        [
+          130,
+          "在阿拉伯半岛上空俯瞰伊朗",
+          "Over the Arabian Peninsula moving toward Iran"
+        ],
+        [
+          165,
+          "在阿拉伯半岛上空俯瞰伊朗",
+          "Over the Arabian Peninsula approaching Iran"
+        ],
+        [
+          190,
+          "俯瞰伊朗海岸，扎格罗斯山脉遥遥可见",
+          "Approaching the coast of Iran with the Zagros Mountains beyond"
+        ],
+        [
+          210,
+          "俯瞰伊朗扎格罗斯山脉",
+          "Over the Zagros Mountains in Iran"
+        ],
+        [
+          240,
+          "俯瞰伊朗卢特沙漠",
+          "Over the Dasht-e Lut desert in Iran"
+        ],
+        [
+          265,
+          "俯瞰土库曼斯坦和卡拉库姆沙漠",
+          "Moving toward Turkmenistan and the Garagum desert"
+        ],
+        [
+          305,
+          "中亚洲，阿姆河和帕米尔-阿莱山脉",
+          "The Amu Darya River and the Pamir-Alay Mountains in central Asia"
+        ],
+        [
+          322,
+          "中亚洲，帕米尔-阿莱山脉和费尔干纳山谷",
+          "The Pamir-Alay Mountains and the Fergana Valley in central Asia"
+        ],
+        [
+          360,
+          "途经吉尔吉斯斯坦前往哈萨克斯坦东南部",
+          "Heading into southeastern Kazakhstan from Kyrgyzstan"
+        ],
+        [
+          400,
+          "途经哈萨克斯坦向北方移动",
+          "Traveling north over Kazakhstan"
+        ],
+        [
+          450,
+          "在阿尔泰山脉上空俯瞰蒙古",
+          "Over the Altai Mountains moving into Mongolia"
+        ]
+      ]
+    },
+    {
+      "id": "687D03A2-18A5-4181-8E85-38F3A13409B9",
+      "label": "Bumpheads",
+      "url": "https://sylvan.apple.com/Videos/BO_A014_C008_SDR_20190719_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "婆罗洲海岸珊瑚礁上的隆头鹦嘴鱼",
+          "Bumphead Parrotfish over the\ncoral reefs off Borneo"
+        ]
+      ]
+    },
+    {
+      "id": "64D11DAB-3B57-4F14-AD2F-E59A9282FA44",
+      "label": "Atlantic Ocean to Spain and France",
+      "url": "https://sylvan.apple.com/Videos/comp_A001_C001_120530_v04_SDR_FINAL_20180706_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "途经北大西洋上空前往葡萄牙",
+          "Over the North Atlantic Ocean heading toward Portugal"
+        ],
+        [
+          115,
+          "俯瞰葡萄牙和西班牙",
+          "Over Portugal and Spain"
+        ],
+        [
+          150,
+          "离开伊比利亚半岛，俯瞰比斯开湾和法国",
+          "Moving away from the Iberian Peninsula and passing over the Bay of Biscay and France"
+        ],
+        [
+          180,
+          "俯瞰西欧洲，北大西洋遥遥可见",
+          "Over Western Europe with the North Atlantic Ocean in the distance"
+        ]
+      ]
+    },
+    {
+      "id": "DE851E6D-C2BE-4D9F-AB54-0F9CE994DC51",
+      "label": "San Francisco",
+      "url": "https://sylvan.apple.com/Videos/comp_A006_C003_1219EE_CC_v01_SDR_PS_FINAL_20180709_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "旧金山湾和金门大桥",
+          "San Francisco Bay and the Golden Gate Bridge"
+        ],
+        [
+          140,
+          "沿金门大桥北塔俯瞰旧金山",
+          "Heading over the north tower of the Golden Gate Bridge toward San Francisco"
+        ],
+        [
+          191,
+          "俯瞰旧金山湾",
+          "Over San Francisco Bay"
+        ]
+      ]
+    },
+    {
+      "id": "E991AC0C-F272-44D8-88F3-05F44EDFE3AE",
+      "label": "Dubai",
+      "url": "https://sylvan.apple.com/Videos/comp_DB_D001_C001_PSNK_v06_SDR_PS_20180824_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "飞越阿拉伯联合酋长国迪拜码头",
+          "Flying over Dubai Marina in the United Arab Emirates"
+        ]
+      ]
+    },
+    {
+      "id": "537A4DAB-83B0-4B66-BCD1-05E5DBB4A268",
+      "label": "Jacks",
+      "url": "https://sylvan.apple.com/Videos/BO_A014_C023_SDR_20190717_F240F3709_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "婆罗洲海岸的一群六带鲹",
+          "A school of Bigeye Jacks\noff the coast of Borneo"
+        ]
+      ]
+    },
+    {
+      "id": "640DFB00-FBB9-45DA-9444-9F663859F4BC",
+      "label": "New York",
+      "url": "https://sylvan.apple.com/Videos/comp_N008_C003_PS_v01_SDR_PS_20180925_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "沿着纽约港俯瞰曼哈顿下城",
+          "Approaching Lower Manhattan from New York Harbor"
+        ],
+        [
+          110,
+          "沿着曼哈顿下城俯瞰世界贸易中心一号大楼",
+          "Alongside Lower Manhattan approaching One World Trade Center"
+        ],
+        [
+          180,
+          "途经世界贸易中心一号大楼俯瞰曼哈顿中城",
+          "Passing One World Trade Center toward Midtown Manhattan"
+        ],
+        [
+          210,
+          "沿着纽约曼哈顿下城前往中城",
+          "Over Lower Manhattan in New York moving toward Midtown"
+        ]
+      ]
+    },
+    {
+      "id": "03EC0F5E-CCA8-4E0A-9FEC-5BD1CE151182",
+      "label": "Antarctica",
+      "url": "https://sylvan.apple.com/Videos/comp_GMT110_112NC_364D_1054_AURORA_ANTARTICA__COMP_FINAL_v34_PS_SDR_20181107_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "南极洲，南极光",
+          "Aurora Australis over Antarctica"
+        ]
+      ]
+    },
+    {
+      "id": "58754319-8709-4AB0-8674-B34F04E7FFE2",
+      "label": "London",
+      "url": "https://sylvan.apple.com/Videos/comp_L010_C006_PS_v01_SDR_PS_20180925_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "俯瞰伦敦泰晤士河上的伦敦塔桥",
+          "Approaching Tower Bridge on the River Thames, London"
+        ],
+        [
+          78,
+          "沿着伦敦泰晤士河前行",
+          "Following the River Thames in London"
+        ],
+        [
+          178,
+          "伦敦泰晤士河南岸",
+          "South of the River Thames in London"
+        ],
+        [
+          258,
+          "俯瞰伦敦泰晤士河",
+          "Crossing the River Thames in London"
+        ]
+      ]
+    },
+    {
+      "id": "4AD99907-9E76-408D-A7FC-8429FF014201",
+      "label": "San Francisco",
+      "url": "https://sylvan.apple.com/Videos/comp_1223LV_FLARE_v21_SDR_PS_FINAL_20180709_F0F5700_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "沿着旧金山湾俯瞰内河码头",
+          "Over the San Francisco Bay moving toward the Embarcadero"
+        ],
+        [
+          90,
+          "在内河码头上空俯瞰旧金山市场街",
+          "Over the Embarcadero looking down Market Street in San Francisco"
+        ],
+        [
+          150,
+          "沿着市场街穿过旧金山市中心",
+          "Following Market Street through downtown San Francisco"
+        ],
+        [
+          360,
+          "沿着市场街俯瞰旧金山",
+          "Following Market Street through San Francisco"
+        ]
+      ]
+    },
+    {
+      "id": "2F72BC1E-3D76-456C-81EB-842EBA488C27",
+      "label": "Africa and the Middle East",
+      "url": "https://sylvan.apple.com/Videos/comp_A103_C002_0205DG_v12_SDR_FINAL_20180706_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "途径非洲好望角俯瞰亚丁湾",
+          "Over the Horn of Africa traveling toward the Gulf of Aden"
+        ],
+        [
+          45,
+          "阿拉伯半岛东南部",
+          "The southeastern Arabian Peninsula"
+        ],
+        [
+          115,
+          "穿过阿曼湾俯瞰莫克兰海岸",
+          "The Gulf of Oman approaching the Makran Coast"
+        ],
+        [
+          145,
+          "伊朗和巴基斯坦的莫克兰海岸",
+          "The Makran Coast of Iran and Pakistan"
+        ],
+        [
+          160,
+          "在伊朗上空俯瞰阿富汗和巴基斯坦",
+          "Over Iran moving toward Afghanistan and Pakistan"
+        ],
+        [
+          180,
+          "在阿富汗和巴基斯坦上空俯瞰喀拉昆仑山脉",
+          "Over Afghanistan and Pakistan moving toward the Karakoram Range"
+        ],
+        [
+          235,
+          "途经喀喇昆仑山脉俯瞰中国",
+          "Over the Karakoram Range traveling into China"
+        ],
+        [
+          280,
+          "中国西部地区塔克拉玛干沙漠",
+          "The Takla Makan Desert in western China"
+        ],
+        [
+          315,
+          "中亚洲，天山",
+          "The Tian Shan mountains in Central Asia"
+        ]
+      ]
+    },
+    {
+      "id": "840FE8E4-D952-4680-B1A7-AC5BACA2C1F8",
+      "label": "New York",
+      "url": "https://sylvan.apple.com/Videos/comp_N003_C006_PS_v01_SDR_PS_20180925_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "俯瞰纽约上东城和中央公园",
+          "Over the Upper East Side and Central Park in New York"
+        ],
+        [
+          50,
+          "俯瞰曼哈顿中城，渐渐靠近帝国大厦",
+          "Over Midtown Manhattan heading downtown toward the Empire State Building"
+        ],
+        [
+          160,
+          "俯瞰纽约帝国大厦",
+          "Approaching the Empire State Building in New York"
+        ],
+        [
+          205,
+          "途经帝国大厦俯瞰曼哈顿下城",
+          "Passing the Empire State Building moving toward Lower Manhattan"
+        ]
+      ]
+    },
+    {
+      "id": "F0236EC5-EE72-4058-A6CE-1F7D2E8253BF",
+      "label": "China",
+      "url": "https://sylvan.apple.com/Videos/comp_C001_C005_PS_v01_SDR_PS_20180925_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "中国北京怀柔区慕田峪长城",
+          "The Mutianyu section of the Great Wall in Huairou District, China"
+        ]
+      ]
+    },
+    {
+      "id": "EE533FBD-90AE-419A-AD13-D7A60E2015D6",
+      "label": "San Francisco",
+      "url": "https://sylvan.apple.com/Videos/comp_A008_C007_011550_CC_v01_SDR_PS_FINAL_20180709_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "在马林岬上空俯瞰金门大桥",
+          "Over the Marin Headlands looking toward the Golden Gate Bridge"
+        ],
+        [
+          150,
+          "穿过旧金山金门大桥俯瞰要塞公园",
+          "Crossing the Golden Gate Bridge toward the Presidio of San Francisco"
+        ]
+      ]
+    },
+    {
+      "id": "B1B5DDC5-73C8-4920-8133-BACCE38A08DE",
+      "label": "New York Night",
+      "url": "https://sylvan.apple.com/Videos/comp_GMT307_136NC_134K_8277_NY_NIGHT_01_v25_SDR_PS_20180907_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "途经太平洋上空俯瞰墨西哥",
+          "Over the Pacific Ocean heading toward Mexico"
+        ],
+        [
+          105,
+          "途经墨西哥城俯瞰墨西哥湾",
+          "Passing over Mexico City toward the Gulf of Mexico"
+        ],
+        [
+          122,
+          "途经墨西哥湾俯瞰美国",
+          "Flying over the Gulf of Mexico toward the United States"
+        ],
+        [
+          180,
+          "途经休斯顿渐渐靠近美国新奥尔良",
+          "Passing by Houston and approaching New Orleans in the United States"
+        ],
+        [
+          190,
+          "俯瞰美国新奥尔良和墨西哥湾",
+          "Heading over New Orleans and the Gulf Coast of the United States"
+        ],
+        [
+          215,
+          "俯瞰美国东南部",
+          "Moving over the southeastern United States"
+        ],
+        [
+          280,
+          "在美国东部上空俯瞰纽约",
+          "Over the eastern United States traveling toward New York"
+        ],
+        [
+          320,
+          "在美国东部上空俯瞰纽约市",
+          "Over the eastern United States approaching New York City"
+        ]
+      ]
+    },
+    {
+      "id": "7F4C26C2-67C2-4C3A-8F07-8A7BF6148C97",
+      "label": "London",
+      "url": "https://sylvan.apple.com/Videos/comp_L004_C011_PS_v01_SDR_PS_20180925_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "俯瞰伦敦泰晤士河上的伦敦塔桥",
+          "Approaching Tower Bridge on the River Thames, London"
+        ],
+        [
+          20,
+          "沿着伦敦泰晤士河前行",
+          "Following the River Thames in London"
+        ],
+        [
+          130,
+          "沿着泰晤士河前往伦敦眼",
+          "Following the River Thames toward the London Eye"
+        ],
+        [
+          210,
+          "俯瞰泰晤士河畔伦敦眼",
+          "Approaching the London Eye on the River Thames"
+        ],
+        [
+          310,
+          "途经伦敦眼，俯瞰泰晤士河",
+          "Following the River Thames past the London Eye"
+        ],
+        [
+          325,
+          "俯瞰伦敦泰晤士河畔的国会大厦",
+          "Passing the Houses of Parliament on the River Thames in London"
+        ]
+      ]
+    },
+    {
+      "id": "82BD33C9-B6D2-47E7-9C42-AA3B7758921A",
+      "label": "Hawaii",
+      "url": "https://sylvan.apple.com/Videos/comp_H004_C007_PS_v02_SDR_PS_20180925_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "俯瞰夏威夷岛 Pu‘u O ‘Umi 自然保护区",
+          "Above the Pu‘u O ‘Umi Natural Area Reserve, on the island of Hawai‘i"
+        ]
+      ]
+    },
+    {
+      "id": "024891DE-B7F6-4187-BFE0-E6D237702EF0",
+      "label": "Hong Kong",
+      "url": "https://sylvan.apple.com/Videos/comp_HK_H004_C013_t9_6M_HB_tag0.mov",
+      "captions": [
+        [
+          0,
+          "在湾仔上空俯瞰香港中环",
+          "Over Wan Chai approaching Central Hong Kong"
+        ],
+        [
+          150,
+          "俯瞰香港中环",
+          "Over Central Hong Kong"
+        ],
+        [
+          270,
+          "俯瞰香港岛",
+          "Over Hong Kong Island"
+        ]
+      ]
+    },
+    {
+      "id": "3FFA2A97-7D28-49EA-AA39-5BC9051B2745",
+      "label": "Dubai",
+      "url": "https://sylvan.apple.com/Videos/comp_DB_D001_C005_COMP_PSNK_v12_SDR_PS_20180912_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "俯瞰阿拉伯联合酋长国迪拜码头",
+          "Flying along Dubai Marina in the United Arab Emirates"
+        ]
+      ]
+    },
+    {
+      "id": "85CE77BF-3413-4A7B-9B0F-732E96229A73",
+      "label": "San Francisco",
+      "url": "https://sylvan.apple.com/Videos/comp_A012_C014_1223PT_v53_SDR_PS_FINAL_20180709_F0F8700_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "沿着旧金山湾俯瞰内河码头",
+          "Over San Francisco Bay moving toward the Embarcadero"
+        ],
+        [
+          208,
+          "沿着市场街俯瞰旧金山",
+          "Following Market Street through San Francisco"
+        ]
+      ]
+    },
+    {
+      "id": "12E0343D-2CD9-48EA-AB57-4D680FB6D0C7",
+      "label": "Hawaii",
+      "url": "https://sylvan.apple.com/Videos/comp_H007_C003_PS_v01_SDR_PS_20180925_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "俯瞰夏威夷岛科哈拉森林保护区的 Laupāhoehoe Nui 海岬",
+          "Flying over Laupāhoehoe Nui in the Kohala Forest Reserve on the island of Hawai‘i"
+        ]
+      ]
+    },
+    {
+      "id": "FE8E1F9D-59BA-4207-B626-28E34D810D0A",
+      "label": "Hong Kong",
+      "url": "https://sylvan.apple.com/Videos/comp_HK_H004_C008_PSNK_v19_SDR_PS_20180914_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "从维多利亚港上空俯瞰，对面为香港岛",
+          "Over Victoria Harbour facing Hong Kong Island"
+        ]
+      ]
+    },
+    {
+      "id": "29BDF297-EB43-403A-8719-A78DA11A2948",
+      "label": "San Francisco",
+      "url": "https://sylvan.apple.com/Videos/comp_A007_C017_01156B_v02_SDR_PS_20180925_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "在渔人码头上空俯瞰旧金山市中心",
+          "Over Fisherman’s Wharf heading toward downtown San Francisco"
+        ],
+        [
+          80,
+          "俯瞰科伊特塔，旧金山市中心和海湾大桥若隐若现",
+          "Approaching Coit Tower with downtown San Francisco and the Bay Bridge\nin the background"
+        ],
+        [
+          150,
+          "途经科伊特塔俯瞰旧金山市中心和海湾大桥",
+          "Passing Coit Tower toward downtown San Francisco and the Bay Bridge"
+        ],
+        [
+          196,
+          "旧金山市中心",
+          "Downtown San Francisco"
+        ]
+      ]
+    },
+    {
+      "id": "001C94AE-2BA4-4E77-A202-F7DE60E8B1C8",
+      "label": "Liwa",
+      "url": "https://sylvan.apple.com/Videos/comp_LW_L001_C006_PSNK_DENOISE_v02_SDR_PS_FINAL_20180709_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "俯瞰阿拉伯联合酋长国利瓦绿洲",
+          "Flying over Liwa Oasis in the United Arab Emirates"
+        ]
+      ]
+    },
+    {
+      "id": "81337355-E156-4242-AAF4-711768D30A54",
+      "label": "Australia",
+      "url": "https://sylvan.apple.com/Videos/comp_GMT060_117NC_363D_1034_AUSTRALIA_v35_SDR_PS_FINAL_20180731_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "途经印度洋上空前往澳大利亚珀斯",
+          "Over the Indian Ocean heading toward Perth, Australia"
+        ],
+        [
+          50,
+          "穿过西澳洲前往东北方向",
+          "Traveling northeast across Western Australia"
+        ],
+        [
+          170,
+          "在西澳洲上空俯瞰北领地",
+          "Over Western Australia approaching Northern Territory"
+        ],
+        [
+          220,
+          "沿着澳大利亚北领地俯瞰新几内亚",
+          "Over Northern Territory, Australia moving toward New Guinea"
+        ],
+        [
+          335,
+          "在阿拉弗拉海上空俯瞰新几内亚",
+          "Over the Arafura Sea traveling toward New Guinea"
+        ]
+      ]
+    },
+    {
+      "id": "22162A9B-DB90-4517-867C-C676BC3E8E95",
+      "label": "China",
+      "url": "https://sylvan.apple.com/Videos/comp_C004_C003_PS_v01_SDR_PS_20180925_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "中国北京怀柔区慕田峪长城",
+          "The Mutianyu section of the Great Wall in Huairou District, China"
+        ]
+      ]
+    },
+    {
+      "id": "DD47D8E1-CB66-4C12-BFEA-2ADB0D8D1E2E",
+      "label": "Humpback Whale",
+      "url": "https://sylvan.apple.com/Videos/g201_WH_D004_L014_SDR_20191031_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "法属波利尼西亚的座头鲸",
+          "A Humpback Whale off of French Polynesia"
+        ]
+      ]
+    },
+    {
+      "id": "27A37B0F-738D-4644-A7A4-E33E7A6C1175",
+      "label": "California Dolphins",
+      "url": "https://sylvan.apple.com/Videos/DL_B002_C011_SDR_20191122_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "美国加利福尼亚海岸的短吻真海豚",
+          "Short-beaked Common Dolphins off the California coast, United States"
+        ]
+      ]
+    },
+    {
+      "id": "149E7795-DBDA-4F5D-B39A-14712F841118",
+      "label": "Tahiti Waves",
+      "url": "https://sylvan.apple.com/Videos/g201_TH_803_A001_8_SDR_20191031_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "海浪拍打着大溪地海岸",
+          "Waves breaking on the shores of Tahiti"
+        ]
+      ]
+    },
+    {
+      "id": "8C31B06F-91A4-4F7C-93ED-56146D7F48B9",
+      "label": "Tahiti Waves",
+      "url": "https://sylvan.apple.com/Videos/g201_TH_804_A001_8_SDR_20191031_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "海浪拍打着大溪地海岸",
+          "Waves breaking on the shores of Tahiti"
+        ]
+      ]
+    },
+    {
+      "id": "82175C1F-153C-4EC8-AE37-2860EA828004",
+      "label": "Red Sea Coral",
+      "url": "https://sylvan.apple.com/Videos/RS_A008_C010_SDR_20191218_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "埃及附近红海里的珊瑚礁",
+          "Coral reef in the Red Sea near Egypt"
+        ]
+      ]
+    },
+    {
+      "id": "58C75C62-3290-47B8-849C-56A583173570",
+      "label": "Cownose Rays",
+      "url": "https://sylvan.apple.com/Videos/MEX_A006_C008_SDR_20190923_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "墨西哥海岸的金色牛鼻鲼",
+          "Golden Cownose Rays off the\ncoast of Mexico"
+        ]
+      ]
+    },
+    {
+      "id": "EB3F48E7-D30F-4079-858F-1A61331D5026",
+      "label": "California Kelp Forest",
+      "url": "https://sylvan.apple.com/Videos/g201_CA_A016_C002_SDR_20191114_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "在美国加利福尼亚海岸的海藻林穿梭",
+          "Moving through a kelp forest off of the California coast, United States"
+        ]
+      ]
+    },
+    {
+      "id": "C7AD3D0A-7EDF-412C-A237-B3C9D27381A1",
+      "label": "Alaskan Jellies",
+      "url": "https://sylvan.apple.com/Videos/g201_AK_A003_C014_SDR_20191113_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "在美国阿拉斯加海岸附近随着海月水母漂浮",
+          "Drifting over Moon Jellyfish near the coast of Alaska, United States"
+        ]
+      ]
+    },
+    {
+      "id": "3716DD4B-01C0-4F5B-8DD6-DB771EC472FB",
+      "label": "Gray Reef Sharks",
+      "url": "https://sylvan.apple.com/Videos/FK_U009_C004_SDR_20191220_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "在法属波利尼西亚附近遨游的黑尾真鲨",
+          "Gray Reef Sharks swimming near French Polynesia"
+        ]
+      ]
+    },
+    {
+      "id": "CE9B5D5B-B6E7-47C5-8C04-59BF182E98FB",
+      "label": "Costa Rica Dolphins",
+      "url": "https://sylvan.apple.com/Videos/CR_A009_C007_SDR_20191113_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "哥斯达黎加海域的飞旋海豚",
+          "Spinner Dolphins in the waters off\nof Costa Rica"
+        ]
+      ]
+    },
+    {
+      "id": "C6DC4E54-1130-44F8-AF6F-A551D8E8A181",
+      "label": "Alaskan Jellies",
+      "url": "https://sylvan.apple.com/Videos/AK_A004_C012_SDR_20191217_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "美国阿拉斯加海岸附近的海月水母",
+          "Moon Jellyfish near the coast of Alaska, United States"
+        ]
+      ]
+    },
+    {
+      "id": "E334A6D2-7145-47C8-9B00-C20DED08B2D5",
+      "label": "Grand Canyon",
+      "url": "https://sylvan.apple.com/Videos/G007_C004_UHD_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "沿着科罗拉多河俯瞰美国大峡谷",
+          "Following the Colorado River through the Grand Canyon in the United States"
+        ]
+      ]
+    },
+    {
+      "id": "DD266E1F-5DF2-4CDB-A2EB-26CE35664657",
+      "label": "Grand Canyon",
+      "url": "https://sylvan.apple.com/Videos/G008_C015_UHD_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "飞越美国 Burnt Canyon 区域",
+          "Flying over the Burnt Canyon area of the Grand Canyon, United States"
+        ]
+      ]
+    },
+    {
+      "id": "F9F918CD-E15F-4F01-A326-84A44650C5C9",
+      "label": "Grand Canyon",
+      "url": "https://sylvan.apple.com/Videos/G009_C003_UHD_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "俯瞰美国大峡谷",
+          "Traveling over the Grand Canyon\nin the United States"
+        ]
+      ]
+    },
+    {
+      "id": "AE0115AE-C53B-4DB9-B12F-CA4B7B630CC9",
+      "label": "Grand Canyon",
+      "url": "https://sylvan.apple.com/Videos/G009_C014_UHD_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "俯瞰美国大峡谷",
+          "Traveling through the Grand Canyon\nin the United States"
+        ]
+      ]
+    },
+    {
+      "id": "8002C4C8-C611-4894-A068-3D3A3C03472A",
+      "label": "Grand Canyon",
+      "url": "https://sylvan.apple.com/Videos/G010_C026_UHD_SDR_v02_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "俯瞰美国大峡谷的科罗拉多河",
+          "Traveling along the Colorado River\nin the Grand Canyon, United States"
+        ]
+      ]
+    },
+    {
+      "id": "5C987900-AD53-469C-8210-CABBCCDDFCAE",
+      "label": "Patagonia",
+      "url": "https://sylvan.apple.com/Videos/P001_C005_UHD_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "俯瞰智利百内国家公园的百内角山",
+          "Moving along Cuernos del Paine in\nTorres del Paine National Park, Chile"
+        ]
+      ]
+    },
+    {
+      "id": "B004358B-5A27-42E5-B49E-93FC100B2371",
+      "label": "Patagonia",
+      "url": "https://sylvan.apple.com/Videos/P005_C002_UHD_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "俯瞰智利百内国家公园的\n诺登舍尔德湖",
+          "Traveling along Lago Nordenskjöld in\nTorres del Paine National Park, Chile"
+        ]
+      ]
+    },
+    {
+      "id": "25A6CFB2-3570-4448-B114-244A4E454B7A",
+      "label": "Patagonia",
+      "url": "https://sylvan.apple.com/Videos/P006_C002_UHD_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "俯瞰智利百内国家公园的\n诺登舍尔德湖",
+          "Over Lago Nordenskjöld in\nTorres del Paine National Park, Chile"
+        ]
+      ]
+    },
+    {
+      "id": "E5D58CC2-3C52-4206-9DA2-427DC88B5896",
+      "label": "Patagonia",
+      "url": "https://sylvan.apple.com/Videos/P007_C027_UHD_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "俯瞰智利百内国家公园",
+          "Traveling over Torres del Paine\nNational Park in Chile"
+        ]
+      ]
+    },
+    {
+      "id": "E5799A24-1949-4E66-A17B-B5EB05F28C5D",
+      "label": "Yosemite",
+      "url": "https://sylvan.apple.com/Videos/Y004_C015_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "美国优胜美地国家公园的半穹顶",
+          "Half Dome in Yosemite National Park, United States"
+        ],
+        [
+          124,
+          "途经半穹顶，俯瞰优胜美地国家公园的内华达瀑布",
+          "Passing by Half Dome and approaching Nevada Fall in Yosemite National Park"
+        ],
+        [
+          146,
+          "美国优胜美地国家公园的半穹顶和内华达瀑布",
+          "Half Dome and Nevada Fall in Yosemite National Park, United States"
+        ]
+      ]
+    },
+    {
+      "id": "E487C6EF-B3FB-427B-A2BE-8CBA60F902F0",
+      "label": "Yosemite",
+      "url": "https://sylvan.apple.com/Videos/Y005_C003_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "俯瞰美国优胜美地国家公园",
+          "Over Yosemite National Park\nin the United States"
+        ],
+        [
+          40,
+          "俯瞰美国优胜美地国家公园的半穹顶",
+          "Traveling toward Half Dome in\nYosemite National Park, United States"
+        ],
+        [
+          60,
+          "美国优胜美地国家公园的半穹顶",
+          "Half Dome in Yosemite National Park, United States"
+        ],
+        [
+          155,
+          "俯瞰优胜美地国家公园，\n内华达瀑布遥遥可见",
+          "Over Yosemite National Park with\nNevada Fall in the distance"
+        ],
+        [
+          255,
+          "美国优胜美地国家公园的\n内华达和伊利路易特瀑布",
+          "Nevada and Illilouette Falls in\nYosemite National Park, United States"
+        ],
+        [
+          285,
+          "美国优胜美地国家公园的\n内华达、韦纳尔和伊利路易特瀑布",
+          "Nevada, Vernal, and Illilouette Falls in\nYosemite National Park, United States"
+        ]
+      ]
+    },
+    {
+      "id": "E540DEE6-4C40-42C8-9CCC-D4CB0FAD7D7B",
+      "label": "Yosemite",
+      "url": "https://sylvan.apple.com/Videos/Y002_C013_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "俯瞰美国优胜美地国家公园",
+          "Over Yosemite National Park\nin the United States"
+        ],
+        [
+          70,
+          "俯瞰美国优胜美地国家公园的半穹顶",
+          "Approaching Half Dome in Yosemite National Park, United States"
+        ],
+        [
+          87,
+          "美国优胜美地国家公园的半穹顶",
+          "Half Dome in Yosemite National Park, United States"
+        ],
+        [
+          210,
+          "俯瞰美国优胜美地国家公园",
+          "Over Yosemite National Park\nin the United States"
+        ]
+      ]
+    },
+    {
+      "id": "81CA5ACD-E682-4D8B-A948-0F147EB6ED4F",
+      "label": "Yosemite",
+      "url": "https://sylvan.apple.com/Videos/Y003_C009_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "俯瞰美国优胜美地国家公园",
+          "Over Yosemite National Park, United States"
+        ],
+        [
+          93,
+          "俯瞰美国优胜美地国家公园的默塞德峰",
+          "Traveling toward Merced Peak in\nYosemite National Park, United States"
+        ],
+        [
+          130,
+          "美国优胜美地国家公园的默塞德峰",
+          "Merced Peak in Yosemite National Park, United States"
+        ],
+        [
+          221,
+          "途经美国优胜美地国家公园的默塞德峰",
+          "Passing by Merced Peak in Yosemite National Park, United States"
+        ],
+        [
+          244,
+          "俯瞰美国优胜美地国家公园",
+          "Traveling over Yosemite National Park, United States"
+        ]
+      ]
+    },
+    {
+      "id": "4109D42A-D717-46A7-A9A2-FE53A82B25C0",
+      "label": "Yosemite",
+      "url": "https://sylvan.apple.com/Videos/Y011_C001_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "俯瞰优胜美地国家公园的\n布里达尔维尔瀑布和酋长岩",
+          "Traveling toward Bridalveil Fall and\nEl Capitan in Yosemite National Park"
+        ],
+        [
+          44,
+          "向东前往美国优胜美地国家公园的酋长岩",
+          "Traveling east toward El Capitan in\nYosemite National Park, United States"
+        ],
+        [
+          87,
+          "途经美国优胜美地国家公园的酋长岩",
+          "Passing El Capitan, Yosemite National Park, United States"
+        ],
+        [
+          120,
+          "向东前往美国优胜美地国家公园的半穹顶",
+          "Traveling east toward Half Dome in\nYosemite National Park, United States"
+        ],
+        [
+          390,
+          "美国优胜美地国家公园的半穹顶",
+          "Half Dome in Yosemite National Park, United States"
+        ],
+        [
+          470,
+          "途经美国优胜美地谷的半穹顶",
+          "Traveling past Half Dome in\nYosemite Valley, United States"
+        ],
+        [
+          585,
+          "在美国优胜美地谷向东前行",
+          "Traveling east over Yosemite Valley, United States"
+        ]
+      ]
+    },
+    {
+      "id": "DAD82DCE-F3AE-4AEC-8A79-1694D412FC0A",
+      "label": "Yosemite",
+      "url": "https://sylvan.apple.com/Videos/Y009_C015_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "途经美国优胜美地国家公园的图奥勒米牧场",
+          "Passing over Tuolumne Meadows in\nYosemite National Park, United States"
+        ]
+      ]
+    },
+    {
+      "id": "8D04D70F-738B-441D-8D43-AF46B2BF8062",
+      "label": "Yosemite",
+      "url": "https://sylvan.apple.com/Videos/Y011_C008_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "俯瞰美国优胜美地国家公园的马特斯峰",
+          "Traveling toward Matthes Crest in\nYosemite National Park, United States"
+        ],
+        [
+          75,
+          "飞越美国优胜美地国家公园的马特斯峰",
+          "Flying over Matthes Crest in\nYosemite National Park, United States"
+        ],
+        [
+          124,
+          "飞越美国优胜美地国家公园的马特斯峰",
+          "Flying through Matthes Crest in\nYosemite National Park, United States"
+        ],
+        [
+          215,
+          "飞越美国优胜美地国家公园的马特斯峰",
+          "Flying over Matthes Crest in\nYosemite National Park, United States"
+        ],
+        [
+          396,
+          "俯瞰美国优胜美地国家公园的图奥勒米牧场",
+          "Moving toward Tuolumne Meadows in\nYosemite National Park, United States"
+        ]
+      ]
+    },
+    {
+      "id": "DDE50C77-B7CB-4488-9EB1-D1B13BF21FFE",
+      "label": "Iceland",
+      "url": "https://sylvan.apple.com/Videos/I003_C008_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "俯瞰冰岛高地通纳河",
+          "Traveling over Tungnaá in the Icelandic highlands"
+        ]
+      ]
+    },
+    {
+      "id": "0C747C29-4BF8-43F6-A5CC-2E012E555341",
+      "label": "Scotland",
+      "url": "https://sylvan.apple.com/Videos/S003_C020_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "沿着苏格兰天空岛海岸前行",
+          "Traveling along the coast of the\nIsle of Skye, Scotland"
+        ],
+        [
+          338,
+          "苏格兰天空岛奈斯特角灯塔",
+          "Neist Point Lighthouse, Isle of Skye, Scotland"
+        ],
+        [
+          372,
+          "苏格兰天空岛",
+          "Isle of Skye, Scotland"
+        ]
+      ]
+    },
+    {
+      "id": "E54D5AFE-F362-4D48-A20D-F2C21D2B5330",
+      "label": "Iceland",
+      "url": "https://sylvan.apple.com/Videos/I003_C011_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "沿着冰岛兰德曼纳劳卡地区的冰河湖前行",
+          "Following the Jökulgilskvísl river in Landmannalaugar, Iceland"
+        ],
+        [
+          308,
+          "俯瞰冰岛高地",
+          "Traveling over the Icelandic highlands"
+        ]
+      ]
+    },
+    {
+      "id": "8ACF5D77-B22C-416F-B12A-72FB35E2834F",
+      "label": "Iceland",
+      "url": "https://sylvan.apple.com/Videos/I004_C014_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "俯瞰冰岛兰德曼纳劳卡",
+          "Traveling over Landmannalaugar in Iceland"
+        ]
+      ]
+    },
+    {
+      "id": "F9518D54-04A7-4793-8666-CFC114D73CE5",
+      "label": "Iceland",
+      "url": "https://sylvan.apple.com/Videos/I003_C015_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "俯瞰冰岛兰德曼纳劳卡地区的冰川谷",
+          "Traveling through Jökulgil in Landmannalaugar, Iceland"
+        ]
+      ]
+    },
+    {
+      "id": "8590D0C5-E344-4FAC-A39A-FD7BC652AEDA",
+      "label": "Iceland",
+      "url": "https://sylvan.apple.com/Videos/I003_C004_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "飞越冰岛朗吉湖",
+          "Flying over Langisjór in Iceland"
+        ]
+      ]
+    },
+    {
+      "id": "E161929C-0819-4BC2-8359-550C081C7D54",
+      "label": "Scotland",
+      "url": "https://sylvan.apple.com/Videos/S006_C007_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "苏格兰西海岸莫达特湖",
+          "Loch Moidart on the west coast of Scotland"
+        ],
+        [
+          139,
+          "俯瞰苏格兰西海岸奇兰姆城堡",
+          "Approaching Castle Tioram on the\nwest coast of Scotland"
+        ],
+        [
+          181,
+          "苏格兰西海岸奇兰姆城堡",
+          "Castle Tioram on the west coast of Scotland"
+        ],
+        [
+          214,
+          "俯瞰苏格兰西海岸",
+          "Traveling over the west coast of Scotland"
+        ]
+      ]
+    },
+    {
+      "id": "3954A7C4-51EC-4ABC-ABA3-6757AC91C7CF",
+      "label": "Scotland",
+      "url": "https://sylvan.apple.com/Videos/S005_C015_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "途经苏格兰西海岸莫达特湖",
+          "Over Loch Moidart on the\nwest coast of Scotland"
+        ],
+        [
+          252,
+          "俯瞰苏格兰赫布里底海",
+          "Approaching the Sea of Hebrides, Scotland"
+        ]
+      ]
+    },
+    {
+      "id": "2F17FCCE-6CCA-4AFA-A08A-C50BF9812DA5",
+      "label": "Iceland",
+      "url": "https://sylvan.apple.com/Videos/I005_C008_CROP_SDR_2K_AVC.mov",
+      "captions": [
+        [
+          0,
+          "向冰岛米尔达斯冰原前行",
+          "Moving toward Mýrdalsjökull glacier in Iceland"
+        ],
+        [
+          150,
+          "俯瞰冰岛米尔达斯冰原",
+          "Approaching Mýrdalsjökull glacier in Iceland"
+        ],
+        [
+          225,
+          "冰岛米尔达斯冰原",
+          "Mýrdalsjökull glacier in Iceland"
+        ],
+        [
+          324,
+          "在冰岛米尔达斯冰原上空前行",
+          "Traveling over Mýrdalsjökull glacier in Iceland"
+        ]
+      ]
+    }
+  ]
+}

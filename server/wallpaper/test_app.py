@@ -42,6 +42,29 @@ class WallpaperApiTest(unittest.TestCase):
         r,b=self.get();items=json.loads(b)['wallpapers'];self.assertEqual(len(items),1)
         self.assertTrue(items[0]['url'].startswith('https://api.gentv.app/tv/wallpapers/one.jpg?v='))
         self.assertEqual(self.get('/tv/wallpapers/one.jpg')[1],b'fixture')
+    def test_redeploy_with_same_bytes_keeps_version_and_etag(self):
+        import os
+        image = app.MEDIA / 'one.jpg'
+        image.write_bytes(b'fixture')
+        first, body = self.get()
+        stat = image.stat()
+        os.utime(image, ns=(stat.st_atime_ns, stat.st_mtime_ns + 1_000_000_000))
+        second, again = self.get()
+        self.assertEqual(body, again)
+        self.assertEqual(first['headers']['ETag'], second['headers']['ETag'])
+        self.assertEqual(self.get(etag=first['headers']['ETag'])[0]['status'], '304 Not Modified')
+
+    def test_same_length_content_change_changes_version_even_with_restored_mtime(self):
+        import os
+        image = app.MEDIA / 'one.jpg'
+        image.write_bytes(b'first')
+        stat = image.stat()
+        first = json.loads(self.get()[1])['wallpapers'][0]['id']
+        image.write_bytes(b'other')
+        os.utime(image, ns=(stat.st_atime_ns, stat.st_mtime_ns))
+        second = json.loads(self.get()[1])['wallpapers'][0]['id']
+        self.assertNotEqual(first, second)
+
     def test_utf8_filenames(self):
         (app.MEDIA/'海岸.jpg').write_bytes(b'fixture')
         self.assertIn('%E6%B5%B7',json.loads(self.get()[1])['wallpapers'][0]['url'])

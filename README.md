@@ -21,7 +21,7 @@
   <a href="https://github.com/Elaine-Lynn/GenTV/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/Elaine-Lynn/GenTV?style=flat-square&label=release"></a>
   <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-555555?style=flat-square"></a>
   <img alt="Android 8.0 or later" src="https://img.shields.io/badge/Android%20TV-8.0%2B-3ddc84?style=flat-square&logo=android&logoColor=white">
-  <img alt="TV app under 600 KB" src="https://img.shields.io/badge/TV%20app-%3C600%20KB-2997ff?style=flat-square">
+  <img alt="TV app no larger than 1 MB" src="https://img.shields.io/badge/TV%20app-%E2%89%A41%20MB-2997ff?style=flat-square">
   <img alt="No computer needed" src="https://img.shields.io/badge/computer-not%20needed-555555?style=flat-square">
   <img alt="No root" src="https://img.shields.io/badge/root-not%20needed-555555?style=flat-square">
 </p>
@@ -47,7 +47,7 @@ Official channels are only [gentv.me](https://www.gentv.me/) and this repository
 ## Why GenTV
 
 - **Everything from your phone.** Install GenTV, clean up the TV, use the remote and keyboard, send files and rearrange the home screen from an Android phone on the same network. You don't need a computer or a cable.
-- **A home screen without ads.** GenTV shows no promotions, recommendation rows or ads. You see only your apps, wallpapers and input sources, on large tiles made for a remote. The official TV app is under 600 KB, so it stays light on older TVs.
+- **A home screen without ads.** GenTV shows no promotions, recommendation rows or ads. You see only your apps, wallpapers and input sources, on large tiles made for a remote. The official TV app is no larger than 1 MB, so it stays light on older TVs.
 - **Clear out the clutter.** Check storage, clear caches, and review, disable or remove preinstalled apps you don't use. System components are protected, and every change is recorded.
 - **Undo what you changed.** Re-enable disabled apps and restore eligible preinstalled apps from the phone.
 - **You choose the default Home.** Installing opens GenTV without changing your default Home or disabling the stock launcher. Pick GenTV in the system settings if you want it; for China-market TVs, see the [FAQ](#default-home).

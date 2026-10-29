@@ -47,3 +47,7 @@ The [server source](server/wallpaper/) shows exactly what is stored.
 ## Contact
 
 For questions or deletion requests, email [support@gentv.me](mailto:support@gentv.me). Email is the only way to reach GenTV about data. Feedback is not linked to an account, so a deletion request should include enough detail (for example the email address you entered) to find it.
+
+The aerial screensaver downloads videos directly from sylvan.apple.com (Apple), which receives normal network request metadata including your IP address. It opens when you press Back on Home or leave Home idle for the selected interval (2 minutes by default). Video requests stop when the screensaver closes; the desktop uses image wallpapers. No video files are bundled. Complete videos and interrupted downloads are stored privately on the TV. Up to five complete videos are cached; downloads stop when disk space is insufficient. Cached videos play locally in shuffled rounds. Later entries resume interrupted downloads and fill unused cache slots. Settings includes Clear screensaver cache; after clearing, downloads restart the next time the screensaver opens.
+
+Online wallpaper images are cached privately up to 64 MiB. Rotation reads local images; new image response bodies have a 16 MiB budget per 24-hour window, including failed transfers. Manifest checks use ETag at six-hour intervals after success. Download history, failure cooldowns and traffic budgets are stored only on the TV and survive app restarts.

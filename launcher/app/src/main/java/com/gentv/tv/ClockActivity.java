@@ -7,9 +7,8 @@ import android.view.MotionEvent;
 import android.view.View;
 
 /**
- * The clock screensaver shown by Home itself after home_idle_clock_minutes without input. Some TVs' own
- * screens (CVTE's live TV) do not keep the screen on, so the system screensaver would cut into programmes;
- * this one only ever starts from Home. Any key returns to Home.
+ * Clock fallback for the configured remote-key screensaver action when the system dream is unavailable.
+ * Home's idle and Back-key screensaver is AerialScreensaverActivity. Any delivered key closes this clock.
  */
 public class ClockActivity extends Activity {
     @Override

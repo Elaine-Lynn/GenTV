@@ -8,7 +8,10 @@ from pathlib import Path
 p=argparse.ArgumentParser(description=__doc__);p.add_argument('--host',required=True);p.add_argument('--ssh-option',action='append',default=[])
 a=p.parse_args();root=Path(__file__).resolve().parents[1]
 sdk=Path(os.environ['ANDROID_HOME']);apk=root/'launcher/app/build/outputs/apk/release/app-release.apk'
-assert apk.stat().st_size<589824,'APK exceeds size budget'
+# Match the repository's 1 MB (decimal) Release APK budget.
+size = apk.stat().st_size
+print(f'TV release APK size: {size:,} / 1,000,000 bytes')
+assert size <= 1_000_000, f'APK exceeds the 1 MB size budget: {size:,} bytes'
 certs=subprocess.check_output([str(sdk/'build-tools/34.0.0/apksigner'),'verify','--print-certs',str(apk)],text=True)
 assert 'Android Debug' not in certs,'Refusing debug-signed release'
 cert=re.search(r'Signer #1 certificate SHA-256 digest: ([0-9a-f]{64})',certs)[1]

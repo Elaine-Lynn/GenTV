@@ -152,5 +152,18 @@
     <!-- Cinematic top shelf (cinematic_home): the line under the focused dock app's name; %1$s is when it was
          last opened, e.g. "5 minutes ago" or "yesterday, 9:40 pm". -->
     <string name="last_opened">Last opened %1$s</string>
-    <string name="more_apps" translatable="false">更多APP</string>
+    <string name="more_apps">More apps</string>
+    <string name="screensaver_delay_label">Screensaver delay</string>
+    <string name="screensaver_delay_state">Screensaver delay: %1$s</string>
+    <string name="screensaver_hint">Press Back on Home to open aerial screensaver. Any key returns to Home.</string>
+    <string-array name="screensaver_times">
+        <item>2 minutes</item>
+        <item>10 minutes</item>
+        <item>60 minutes</item>
+        <item>Never</item>
+    </string-array>
+    <string name="screensaver_clear_cache">Clear screensaver cache</string>
+    <string name="screensaver_cache_cleared">Screensaver cache cleared. Videos will download again next time you open the screensaver.</string>
+    <string name="screensaver_cache_clear_failed">Could not clear screensaver cache.</string>
+    <string name="screensaver_cache_hint">Up to 5 videos. Cached videos play in random order. After clearing, videos download again the next time the screensaver opens.</string>
 </resources>

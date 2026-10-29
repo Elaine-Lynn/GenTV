@@ -21,7 +21,7 @@
   <a href="https://github.com/Elaine-Lynn/GenTV/releases/latest"><img alt="最新版本" src="https://img.shields.io/github/v/release/Elaine-Lynn/GenTV?style=flat-square&label=%E7%89%88%E6%9C%AC"></a>
   <a href="LICENSE"><img alt="MIT 许可证" src="https://img.shields.io/badge/%E8%AE%B8%E5%8F%AF%E8%AF%81-MIT-555555?style=flat-square"></a>
   <img alt="Android 8.0 及以上" src="https://img.shields.io/badge/Android%20TV-8.0%2B-3ddc84?style=flat-square&logo=android&logoColor=white">
-  <img alt="电视安装包不到 600 KB" src="https://img.shields.io/badge/%E7%94%B5%E8%A7%86%E5%AE%89%E8%A3%85%E5%8C%85-%3C600%20KB-2997ff?style=flat-square">
+  <img alt="电视安装包不超过 1 MB" src="https://img.shields.io/badge/%E7%94%B5%E8%A7%86%E5%AE%89%E8%A3%85%E5%8C%85-%E2%89%A41%20MB-2997ff?style=flat-square">
   <img alt="不用电脑" src="https://img.shields.io/badge/%E7%94%B5%E8%84%91-%E4%B8%8D%E9%9C%80%E8%A6%81-555555?style=flat-square">
   <img alt="无需 Root" src="https://img.shields.io/badge/Root-%E4%B8%8D%E9%9C%80%E8%A6%81-555555?style=flat-square">
 </p>
@@ -49,7 +49,7 @@
 ## 为什么用 GenTV
 
 - **全程手机操作。** 安装桌面、清理电视、遥控、打字、传文件、整理桌面，都在同一网络下的 Android 手机上完成，不用电脑，也不用数据线。
-- **没有广告的桌面。** 不塞推广，不放推荐流，只有你的应用、壁纸和信号源。大磁贴方便用遥控器操作。正式电视安装包不到 600 KB，老电视也带得动。
+- **没有广告的桌面。** 不塞推广，不放推荐流，只有你的应用、壁纸和信号源。大磁贴方便用遥控器操作。正式电视安装包不超过 1 MB，老电视也带得动。
 - **把电视里的垃圾清一清。** 查看存储空间，清理缓存，检查并停用或移除用不上的预装应用。系统组件受保护，每一步都有记录。
 - **改了也能恢复。** 在手机上就能重新启用停用的应用，恢复符合条件的预装应用。
 - **默认桌面你说了算。** 安装只会打开 GenTV，不改默认桌面，也不停用原厂桌面。想换就在系统设置里选它；国产电视上的情况见[常见问题](#default-home)。

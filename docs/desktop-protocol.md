@@ -57,4 +57,92 @@ The phone decodes bounded local input (8 MiB source limit), downsamples and JPEG
 
 ## Online wallpaper scope (3.2)
 
-The online wallpaper feed is separate from the desktop layout protocol: https://api.gentv.app/tv/wallpaper, metadata `wallpapers: [{id, url}]`, fixed120-second foreground rotation. Runtime feed data and the last downloaded image do not enter schema2 exports or undo. User desktop layout, local theme settings and their revisions remain authoritative as before. Empty feeds restore the underlying theme; network failures retain the last good background. Only the independentGenTV app gains INTERNET; no device identifiers, HTTP server or background service is introduced. See the server README for endpoint and deployment details.
+The online wallpaper feed is separate from the desktop layout protocol: https://api.gentv.app/tv/wallpaper, metadata `wallpapers: [{id, url}]`, fixed120-second foreground rotation. Runtime feed data and the last downloaded image do not enter schema2 exports or undo. User desktop layout, local theme settings and their revisions remain authoritative as before. The APK bundles the original 1672×941 blue abstract JPEG (`wallpaper_default.jpg`), without recompression as the first-frame/offline fallback. Empty feeds restore a valid local theme wallpaper or the bundled abstract image; network failures retain the last good background. After a hidden-UI memory trim, returning Home restores the local fallback before any network work. Online images still crossfade normally. Only the independentGenTV app gains INTERNET; no device identifiers, HTTP server or background service is introduced. See the server README for endpoint and deployment details.
+
+
+### Aerial screensaver
+
+Home uses the existing local/online image wallpaper rotation. It never creates a
+video player. Pressing Back on Home first returns focus to the first app tile if
+another control or tile is focused, scrolling to the beginning as needed. Back
+while the first tile is focused opens `AerialScreensaverActivity`. The saver
+also opens after Home remains idle for the interval selected in Launcher settings:
+2 minutes (default), 10 minutes, 60 minutes, or Never. The TV preference
+`launcher_settings.screensaver_minutes` stores 2, 10, 60 or 0 (Never). Invalid values, including the retired 30-minute setting, fall
+back to 2 minutes; restoring theme defaults restores 2 minutes. The older
+`background_mode` video/image preference no longer affects Home. The legacy
+`home_idle_clock_minutes` theme property no longer controls Home idle behavior;
+the separate system clock dream remains available.
+
+Never disables automatic entry but still permits Back to open the saver manually.
+Input resets the deadline. Losing Home focus or leaving Home cancels it; returning
+starts a full new interval. Menus, settings, other apps and reorder mode do not
+launch the saver over their content. A waking key is consumed through key-up so
+it neither launches the selected app nor immediately reopens the saver. Touch and
+pointer input also exit. Home/power keys reserved by Android retain system behavior.
+
+The fullscreen saver downloads H.264 SDR films directly from Apple's
+`sylvan.apple.com`, independently of the configured GenTV API. The catalogue is
+bundled; there is no separate screensaver catalogue endpoint. Complete files and
+partial transfers live in `files/aerial-cache`, with at most five completed videos.
+Only completed files are passed to the `TextureView`/`MediaPlayer`. They play in
+shuffled rounds, without immediate repeats across rounds when multiple films exist.
+
+Each entry resumes a serial fill pass while fewer than five films are cached. The first
+completed film starts local playback while subsequent films download. A film that
+does not fit is refused before reading its body; playable films are never evicted
+to fetch more. On later entries, existing films play locally while unfinished
+downloads resume and unused slots are filled. The previous entry's film is avoided
+when another complete film is available. Clear screensaver cache in Settings
+removes complete files, partials and validators on a worker thread. The next saver
+entry starts a fresh fill pass, rather than downloading from the settings page.
+
+Exit cancels the transfer and retains the partial file. Resume uses Range and a
+strong ETag in If-Range, checks Content-Range, and appends only matching bytes.
+A full 200 response replaces the partial; without a strong validator the transfer
+must restart to avoid mixing versions. Unknown lengths and files larger than the
+available budget are not downloaded. Low disk space also stops filling. Download
+failures retry at most twice per entry, one minute apart. Undecodable local files
+are skipped for the session without automatic redownload.
+
+The desktop frame is captured locally on entry and held until the first local
+video frame fades in over 900 ms. The first download can take time; offline errors
+retain the entry frame. Playback pauses and network requests stop on exit; the
+decoder is retained until activity destruction after the window alpha falls linearly
+from 1 to 0 over 1000 ms. Home remains visible underneath the translucent window;
+the activity finishes only at zero alpha, with no additional system transition.
+Stopping or losing the video surface during exit does not restore the entry image.
+System-disabled animations
+are respected. Video files are not bundled.
+
+Catalogue provenance: `pengchujin/aerial-tv` commit
+`269e928057b492ce698c0d36df6bde9ef8b2a9b5`,
+`app/src/main/assets/aerials.json`, derived from Apple's
+`https://sylvan.apple.com/Aerials/resources-16.tar`. The reduced catalogue retains
+114 IDs, labels, H.264 URLs and timestamped Chinese/English place captions. See `licenses/aerial-tv-MIT.txt`. Video rights
+remain with their respective owners. Real-TV decoder compatibility remains to be
+verified; emulator playback is a separate check.
+
+Apple's CDN uses Apple Root CA, absent from Android's system trust store.
+`res/raw/apple_root_ca.cer` is the public DER certificate downloaded from
+`https://www.apple.com/appleca/AppleIncRootCertificate.cer`, SHA-256
+`B0B1730ECBC7FF4505142C49F1295E6EDA6BCAED7E2C68C5BE91B5A11001F024`,
+valid through 2035-02-09. Network Security Config adds this anchor only for
+`sylvan.apple.com`; hostname and certificate validation remain enabled and HTTP
+is refused for this domain. Other domains keep platform trust.
+
+The screensaver shows a lower-left 24-hour clock and the current film's localized
+place description on each entry. At the reference 16:9 layout, left margin is
+5.5% of width; clock and caption baselines are at 83.5% and 91% of height, with
+font sizes 12.5% and 3.2% of height. Descriptions follow playback timestamps and
+use Chinese for Chinese launcher locales, English otherwise. The overlay appears
+with the first video frame, starts a 600 ms fade-out eight seconds later, and
+stays hidden until the next screensaver entry. Loading time does not consume
+those eight seconds. No additional network requests are needed for captions.
+
+Fresh TV settings default to 5 apps per row, 0 rows below the dock and 30% dock
+band opacity. Saved user choices and explicit theme settings retain precedence.
+
+Launcher settings no longer expose the legacy local wallpaper picker. Its stored
+theme override remains compatible, while desktop online rotation and the bundled
+offline wallpaper keep their existing behavior.

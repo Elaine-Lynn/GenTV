@@ -14,7 +14,6 @@ import android.widget.TextView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -32,7 +31,7 @@ public final class LauncherSettingsActivity extends Activity {
     private final TextView[] rowChoices = new TextView[4];
     private static final int[] DOCK_OPACITIES = {100, 70, 50, 30};
     private final TextView[] dockChoices = new TextView[DOCK_OPACITIES.length];
-    private TextView wallpaperChoice;
+    private TextView screensaverChoice;
     private TextView animationsChoice;
     private TextView advancedChoice;
     private TextView followThemeChoice;
@@ -106,8 +105,36 @@ public final class LauncherSettingsActivity extends Activity {
             reverseRow(rowChoices);
             reverseRow(dockChoices);
         }
-        wallpaperChoice = findViewById(R.id.wallpaperChoice);
-        wallpaperChoice.setOnClickListener(v -> showWallpaperPicker());
+        screensaverChoice = findViewById(R.id.screensaverChoice);
+        screensaverChoice.setOnClickListener(v -> {
+            int[] minutes = {2, 10, 60, 0};
+            String[] labels = getResources().getStringArray(R.array.screensaver_times);
+            int current = ScreensaverIdle.minutes(choices.getInt(ScreensaverIdle.MINUTES_KEY, ScreensaverIdle.DEFAULT_MINUTES));
+            int checked = 0;
+            for (int i = 0; i < minutes.length; i++) if (minutes[i] == current) checked = i;
+            new AlertDialog.Builder(this).setTitle(R.string.screensaver_delay_label)
+                    .setSingleChoiceItems(labels, checked, (dialog, which) -> {
+                        choices.edit().putInt(ScreensaverIdle.MINUTES_KEY, minutes[which]).apply();
+                        changed(); refresh(); dialog.dismiss();
+                    }).setNegativeButton(android.R.string.cancel, null).show();
+        });
+        findViewById(R.id.clearScreensaverCacheChoice).setOnClickListener(v -> {
+            v.setEnabled(false);
+            new Thread(() -> {
+                boolean cleared;
+                try {
+                    new AerialCache(new java.io.File(getFilesDir(), "aerial-cache")).clear();
+                    cleared = true;
+                } catch (java.io.IOException error) { cleared = false; }
+                final boolean success = cleared;
+                runOnUiThread(() -> {
+                    v.setEnabled(true);
+                    if (!isFinishing() && !isDestroyed()) Toast.makeText(this,
+                            success ? R.string.screensaver_cache_cleared : R.string.screensaver_cache_clear_failed,
+                            Toast.LENGTH_LONG).show();
+                });
+            }, "clear-aerial-cache").start();
+        });
         animationsChoice = findViewById(R.id.animationsChoice);
         animationsChoice.setOnClickListener(v -> {
             animations = !animations;
@@ -140,7 +167,7 @@ public final class LauncherSettingsActivity extends Activity {
             if (!hasOnTvChoices()) return;
             choices.edit().remove("columns").remove(Config.ROWS_BELOW_DOCK_KEY).remove("animations")
                     .remove("advanced_effects").remove(Config.WALLPAPER_CHOICE_KEY)
-                    .remove(Config.DOCK_OPACITY_KEY).remove(OpenOnStart.KEY).commit();
+                    .remove(Config.DOCK_OPACITY_KEY).remove(ScreensaverIdle.MINUTES_KEY).remove(OpenOnStart.KEY).commit();
             Config current = Config.load(this);
             columns = current.columns;
             rowsBelowDock = current.rowsBelowDock;
@@ -165,42 +192,6 @@ public final class LauncherSettingsActivity extends Activity {
         LinearLayout row = (LinearLayout) views[0].getParent();
         row.removeAllViews();
         for (int i = views.length - 1; i >= 0; i--) row.addView(views[i]);
-    }
-
-    private void showWallpaperPicker() {
-        File dir = Config.dir(this);
-        List<File> images = new java.util.ArrayList<>(WallpaperRotation.images(
-                dir == null ? null : new File(dir, "wallpapers")));
-        // A theme with a single wallpaper.jpg offers that picture too (Config maps the choice back to it).
-        File single = dir == null ? null : new File(dir, Config.WALLPAPER_NAME);
-        if (single != null && single.isFile()) images.add(0, single);
-        String[] labels = new String[images.size() + 1];
-        for (int i = 0; i < images.size(); i++) labels[i] = images.get(i).getName();
-        labels[images.size()] = getString(R.string.wallpaper_none);
-        String current = choices.getString(Config.WALLPAPER_CHOICE_KEY, null);
-        int checked = "none".equals(current) ? images.size()
-                : indexOf(images, current);
-        new AlertDialog.Builder(this)
-                .setTitle(R.string.wallpaper_label)
-                .setSingleChoiceItems(labels, checked, (dialog, which) -> {
-                    dialog.dismiss();
-                    if (which == images.size()) {
-                        choices.edit().putString(Config.WALLPAPER_CHOICE_KEY, "none").apply();
-                    } else {
-                        choices.edit().putString(Config.WALLPAPER_CHOICE_KEY,
-                                images.get(which).getName()).apply();
-                    }
-                    changed();
-                    Toast.makeText(this, R.string.wallpaper_applied, Toast.LENGTH_SHORT).show();
-                    refresh();
-                })
-                .setNeutralButton(R.string.wallpaper_theme_default, (dialog, which) -> {
-                    choices.edit().remove(Config.WALLPAPER_CHOICE_KEY).apply();
-                    changed();
-                    refresh();
-                })
-                .setNegativeButton(android.R.string.cancel, null)
-                .show();
     }
 
     /** Off, then every app with a TV entry point by name. Saved at once; it is read on the next boot. */
@@ -251,14 +242,6 @@ public final class LauncherSettingsActivity extends Activity {
         }
     }
 
-    private static int indexOf(List<File> images, String name) {
-        if (name == null) return -1;
-        for (int i = 0; i < images.size(); i++) {
-            if (images.get(i).getName().equals(name)) return i;
-        }
-        return -1;
-    }
-
     /**
      * A choice was saved. Home rebuilds when it next resumes because the change count moved, whether these
      * settings are left with Back or with the remote's Home button (which cancels the activity result).
@@ -293,11 +276,10 @@ public final class LauncherSettingsActivity extends Activity {
                 getString(advancedEffects ? R.string.on : R.string.off)));
         advancedChoice.setEnabled(animations);
         advancedChoice.setAlpha(animations ? 1f : 0.5f);
-        String wallpaperCurrent = choices.getString(Config.WALLPAPER_CHOICE_KEY, null);
-        wallpaperChoice.setText(getString(R.string.wallpaper_state,
-                "none".equals(wallpaperCurrent) ? getString(R.string.wallpaper_none)
-                        : wallpaperCurrent != null ? wallpaperCurrent
-                        : getString(R.string.wallpaper_theme_default)));
+        int minutes = ScreensaverIdle.minutes(choices.getInt(ScreensaverIdle.MINUTES_KEY, ScreensaverIdle.DEFAULT_MINUTES));
+        int index = minutes == 10 ? 1 : minutes == 60 ? 2 : minutes == 0 ? 3 : 0;
+        screensaverChoice.setText(getString(R.string.screensaver_delay_state,
+                getResources().getStringArray(R.array.screensaver_times)[index]));
         openOnStartChoice.setText(getString(R.string.open_on_start_state, openOnStartLabel()));
         followThemeChoice.setSelected(!hasOnTvChoices());
     }
@@ -306,7 +288,7 @@ public final class LauncherSettingsActivity extends Activity {
         return choices.contains("columns") || choices.contains(Config.ROWS_BELOW_DOCK_KEY)
                 || choices.contains("animations") || choices.contains("advanced_effects")
                 || choices.contains(Config.WALLPAPER_CHOICE_KEY) || choices.contains(Config.DOCK_OPACITY_KEY)
-                || choices.contains(OpenOnStart.KEY);
+                || choices.contains(OpenOnStart.KEY) || choices.contains(ScreensaverIdle.MINUTES_KEY);
     }
 
     private void open(Intent intent) {
