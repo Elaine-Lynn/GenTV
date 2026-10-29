@@ -4,7 +4,7 @@
 
 <h1 align="center">GenTV — Ad-free Android TV launcher</h1>
 
-<p align="center"><b>A clean home screen for your TV, managed from your phone. No computer, no root, no account.</b></p>
+<p align="center"><b>An ad-free home screen for your Android TV, set up with nothing but your phone.</b><br>Install it, clean up preinstalled apps, undo changes and use the phone as a remote. No computer, no root, no account.</p>
 
 <p align="center">
   English · <a href="README.zh-CN.md">简体中文</a>
@@ -49,7 +49,21 @@ Official channels are only [gentv.me](https://www.gentv.me/) and this repository
 - **Everything from your phone.** Install GenTV, clean up the TV, use the remote and keyboard, send files and rearrange the home screen from an Android phone on the same network. You don't need a computer or a cable.
 - **A home screen without ads.** GenTV shows no promotions, recommendation rows or ads. You see only your apps, wallpapers and input sources, on large tiles made for a remote. The official TV app is under 600 KB, so it stays light on older TVs.
 - **Clear out the clutter.** Check storage, clear caches, and review, disable or remove preinstalled apps you don't use. System components are protected, and every change is recorded.
-- **Undo what you changed.** Re-enable disabled apps and restore eligible preinstalled apps from the phone. GenTV never changes your default Home by itself.
+- **Undo what you changed.** Re-enable disabled apps and restore eligible preinstalled apps from the phone.
+- **You choose the default Home.** Installing opens GenTV without changing your default Home or disabling the stock launcher. Pick GenTV in the system settings if you want it; for China-market TVs, see the [FAQ](#default-home).
+
+<a id="compare"></a>
+
+## How GenTV differs from other ad-removal approaches
+
+| | GenTV | Computer scripts | Guarded launchers |
+|---|---|---|---|
+| **You need** | An Android phone | A computer, usually with an AI coding assistant and the Android SDK | A computer or a USB drive |
+| **Preinstalled app cleanup** | Pick apps to disable or remove on the phone, with restore | Disable a per-model list in bulk, restore with a script | Usually none |
+| **Default Home** | Unchanged; you choose it in system settings | Usually set as default, with the stock launcher disabled | Taken over with an accessibility service, so power-on and Home return to the new launcher |
+| **Best for** | Doing the home screen, cleanup and remote without a computer | Command-line users who want a deep per-model cleanup | China-market TVs where booting straight into the new launcher matters most |
+
+GenTV's TV home screen and device lists come from the computer-script approach (see [Project origins](#origins)). The difference is that installing, cleaning up and restoring all happen on the phone, and GenTV leaves your default Home alone.
 
 ## Install
 
@@ -162,9 +176,13 @@ Yes. Install GenTV Remote on an Android phone, pair it with the TV over the loca
 
 Not yet. The phone companion is an Android app. With an iPhone, use the [AI assistant](#install-with-an-ai-assistant) or [USB drive](#install-from-a-usb-drive) route.
 
+<a id="default-home"></a>
+
 ### Will GenTV become my default home screen automatically?
 
-No. Installing GenTV opens it but leaves your current default Home unchanged. If you want to switch, choose GenTV in the TV's Home settings. Some firmware doesn't offer this choice.
+No. Installing GenTV opens it but leaves your current default Home unchanged. If you want to switch, choose GenTV in the TV's Home settings.
+
+Firmware on Xiaomi, TCL and other China-market TVs often has no such setting, or returns to the stock home screen at power-on or when you press Home. There you can open GenTV from the app list; cleanup, the remote and home-screen editing still work. GenTV doesn't currently force a Home takeover with an accessibility service. If booting straight into the new launcher matters most to you, a guarded launcher fits better (see the [comparison](#compare)). Don't disable the stock launcher to make GenTV the default: on some TVs that can leave a black screen at boot that only ADB can fix.
 
 ### Could this break my TV? How do I undo changes?
 
@@ -245,9 +263,13 @@ Official releases are signed with a private key that is never in Git, and releas
 - [Desktop protocol](docs/desktop-protocol.md) · [Module-card contract](docs/reference/modules.md)
 - [Performance workflow](docs/reference/perf-ab.md) · [Emulator measurements](docs/emulator-performance.md) · [Development plan](docs/desktop-optimization-plan.md)
 
+<a id="origins"></a>
+
 ## Project origins
 
 GenTV began from three MIT-licensed open-source projects: a native Android TV home screen with community device lists, a phone ADB companion framework, and a TV home-screen installer whose install and undo patterns the framework adopted. Their names, links, baselines and licences are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). GenTV is independent of television manufacturers and third-party apps. Their names appear only where needed for operation and attribution.
+
+**Why is the first public release v3.7.0?** Versions 3.0 to 3.6.x were distributed as debug-signed development builds before the source was opened. v3.7.0 is the first open-source release and the first signed with the release key. The commit history was consolidated when the repository opened, so it starts at this version. For upgrading from a development build, see [release and signing](docs/release.md).
 
 ## Use with care
 
