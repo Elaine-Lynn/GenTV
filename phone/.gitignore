@@ -1,0 +1,18 @@
+.gradle/
+.kotlin/
+**/build/
+local.properties
+.idea/
+*.iml
+.DS_Store
+keys/
+*.jks
+*.keystore
+*.apk
+*.aab
+
+# Generated screenshot recordings and local device material
+app/src/test/screenshots/
+shots/
+backup/
+work/

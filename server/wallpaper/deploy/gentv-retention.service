@@ -1,0 +1,11 @@
+[Unit]
+Description=GenTV mobile data retention
+[Service]
+Type=oneshot
+User=www-data
+Group=www-data
+ExecStart=/usr/bin/python3 /srv/gentv/wallpaper/current/retention.py
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+StateDirectory=gentv-tv

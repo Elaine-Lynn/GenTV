@@ -1,0 +1,45 @@
+name: Bug report
+description: Something in GenTV TV or GenTV Remote does not work as expected.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Do not include TV IP addresses, ADB keys, backups, account details or other private information.
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      options: [GenTV TV, GenTV Remote, Both, Server]
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: GenTV version
+      placeholder: e.g. TV 3.7.0, Remote 3.7.1
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: TV and phone
+      description: TV brand, model and Android version; phone model and Android version.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected and actual result
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Redacted log or screenshot
+      description: Optional. Use the app's redacted report export where possible.

@@ -1,0 +1,111 @@
+plugins {
+    id 'com.android.application'
+}
+
+def releaseSecrets = new Properties()
+def signingFile = rootProject.file('../phone/keys/signing.properties')
+if (signingFile.exists()) signingFile.withInputStream { releaseSecrets.load(it) }
+// Updates, online wallpapers and statistics stay off unless a GenTV API base is configured:
+// -PgentvApiBaseUrl=..., GENTV_API_BASE_URL, or apiBaseUrl in the private phone/keys/signing.properties.
+def apiBaseUrl = (findProperty('gentvApiBaseUrl') ?: System.getenv('GENTV_API_BASE_URL') ?: releaseSecrets.getProperty('apiBaseUrl') ?: '').trim()
+if (apiBaseUrl && !(apiBaseUrl ==~ /https:\/\/[A-Za-z0-9.-]+(:[0-9]+)?\/([A-Za-z0-9._~-]+\/)*/)) {
+    throw new GradleException('gentvApiBaseUrl must be an https URL ending in /')
+}
+
+android {
+    namespace 'com.gentv.tv'
+    compileSdk 34
+    buildFeatures { buildConfig true }
+
+    defaultConfig {
+        applicationId 'com.gentv.tv'
+        minSdk 26
+        targetSdk 34
+        versionCode 22
+        versionName '3.7.0'
+        testInstrumentationRunner 'com.gentv.tv.DesktopIntegration'
+        buildConfigField 'String', 'API_BASE_URL', '"' + apiBaseUrl + '"'
+    }
+
+    signingConfigs {
+        production {
+            if (!releaseSecrets.isEmpty()) {
+                storeFile rootProject.file('../phone/keys/' + releaseSecrets.getProperty('storeFile'))
+                storePassword releaseSecrets.getProperty('storePassword')
+                keyAlias releaseSecrets.getProperty('keyAlias')
+                keyPassword releaseSecrets.getProperty('keyPassword')
+            }
+        }
+    }
+    buildTypes {
+        release {
+            // R8 strips and optimises the code (AndroidX included): smaller APK, faster start on a slow TV CPU.
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.production
+        }
+    }
+
+    packagingOptions {
+        resources {
+            // Kotlin metadata pulled in by AndroidX's dependencies. This launcher is plain Java and never reads it;
+            // leaving it out saves about 14 KB of every install.
+            excludes += ['kotlin/**', 'META-INF/*.version', 'META-INF/*.kotlin_module', 'DebugProbesKt.bin']
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    implementation 'androidx.recyclerview:recyclerview:1.3.2'
+    implementation 'androidx.dynamicanimation:dynamicanimation:1.0.0'
+    // Test only (never in the APK): plain JVM tests for the module card validators, src/test.
+    testImplementation 'junit:junit:4.13.2'
+}
+
+// A release must never silently fall back to an Android debug certificate.
+gradle.taskGraph.whenReady { graph ->
+    if (graph.allTasks.any { it.name.toLowerCase().contains('release') && (it.name.startsWith('package') || it.name.startsWith('validateSigning')) } && releaseSecrets.isEmpty()) {
+        throw new GradleException('Formal signing is missing: provision phone/keys/signing.properties securely.')
+    }
+}
+
+tasks.register('releaseCertificateSha256') {
+    doLast {
+        if (releaseSecrets.isEmpty()) throw new GradleException('Formal signing is missing')
+        def store = java.security.KeyStore.getInstance(java.security.KeyStore.getDefaultType())
+        def file = rootProject.file('../phone/keys/' + releaseSecrets.getProperty('storeFile'))
+        file.withInputStream { store.load(it, releaseSecrets.getProperty('storePassword').toCharArray()) }
+        def certificate = store.getCertificate(releaseSecrets.getProperty('keyAlias'))
+        if (certificate == null || certificate.subjectX500Principal.name.contains('Android Debug')) {
+            throw new GradleException('A formal certificate is required')
+        }
+        println 'GENTV_RELEASE_CERT=' + java.security.MessageDigest.getInstance('SHA-256').digest(certificate.encoded).encodeHex().toString()
+    }
+}
+tasks.configureEach {
+    if (name == 'validateSigningRelease') dependsOn('releaseCertificateSha256')
+}
+
+// Standalone TV redistribution includes the complete applicable notices next to the APK.
+// The phone distribution also includes these texts in its own assets/licenses/.
+def prepareReleaseNotices = tasks.register('prepareReleaseNotices', Sync) {
+    from(rootProject.file('../LICENSE'))
+    from(rootProject.file('../licenses/Outfit-OFL.txt'))
+    from(rootProject.file('../licenses/Apache-2.0.txt'))
+    from(rootProject.file('../licenses/TV-NOTICE.txt'))
+    into(layout.buildDirectory.dir('outputs/licenses/release'))
+}
+def packageReleaseDistribution = tasks.register('packageReleaseDistribution', Zip) {
+    dependsOn('packageRelease', prepareReleaseNotices)
+    from(layout.buildDirectory.file('outputs/apk/release/app-release.apk'))
+    from(layout.buildDirectory.dir('outputs/licenses/release')) { into('licenses') }
+    archiveFileName = 'GenTV-TV-release.zip'
+    destinationDirectory = layout.buildDirectory.dir('outputs/distribution')
+}
+tasks.matching { it.name == 'assembleRelease' }.configureEach { finalizedBy(packageReleaseDistribution) }

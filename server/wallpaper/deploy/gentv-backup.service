@@ -1,0 +1,11 @@
+[Unit]
+Description=GenTV private backup and restore verification
+[Service]
+Type=oneshot
+UMask=0077
+ExecStart=/usr/bin/python3 /srv/gentv/wallpaper/current/backup.py
+ProtectSystem=strict
+ReadWritePaths=/var/backups/gentv-tv
+ReadOnlyPaths=/var/lib/gentv-tv
+PrivateTmp=true
+NoNewPrivileges=true

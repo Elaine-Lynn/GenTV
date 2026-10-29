@@ -1,0 +1,6 @@
+{
+  "baseline_commit": "57733360177173c880a023380a864114a03feb25",
+  "includes_local_integration_changes": true,
+  "original_manifest_sha256": "a0075e986cc6e41566317064ddcef6c1414d803a7e89edb0eb9d03b855339692",
+  "notices": "../THIRD_PARTY_NOTICES.md"
+}

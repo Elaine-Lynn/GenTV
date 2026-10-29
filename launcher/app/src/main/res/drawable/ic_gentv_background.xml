@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generated from the approved TV-only artwork by tools/generate_tv_branding.py. -->
+<vector xmlns:aapt="http://schemas.android.com/aapt" xmlns:android="http://schemas.android.com/apk/res/android" android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+    <path android:pathData="M0.0,0.0h108.0v108.0h-108.0Z" android:strokeColor="#00000000">
+        <aapt:attr name="android:fillColor">
+            <gradient android:startX="0.0" android:startY="0.0" android:endX="75.6" android:endY="108.0" android:type="linear">
+                <item android:offset="0" android:color="#30343a" />
+                <item android:offset="1" android:color="#111316" />
+            </gradient>
+        </aapt:attr>
+    </path>
+</vector>

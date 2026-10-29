@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generated from the approved TV-only artwork by tools/generate_tv_branding.py. -->
+<vector xmlns:aapt="http://schemas.android.com/aapt" xmlns:android="http://schemas.android.com/apk/res/android" android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+    <path android:pathData="M27.0,3.0 H81.0 Q105.0,3.0 105.0,27.0 V81.0 Q105.0,105.0 81.0,105.0 H27.0 Q3.0,105.0 3.0,81.0 V27.0 Q3.0,3.0 27.0,3.0 Z" android:strokeColor="#00000000">
+        <aapt:attr name="android:fillColor">
+            <gradient android:startX="3.0" android:startY="3.0" android:endX="74.39999999999999" android:endY="105.0" android:type="linear">
+                <item android:offset="0" android:color="#30343a" />
+                <item android:offset="1" android:color="#111316" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <path android:pathData="M35,34 H73 Q82,34 82,43 V65 Q82,74 73,74 H35 Q26,74 26,65 V43 Q26,34 35,34 Z" android:strokeColor="#00000000">
+        <aapt:attr name="android:fillColor">
+            <gradient android:startX="26.0" android:startY="34.0" android:endX="59.6" android:endY="74.0" android:type="linear">
+                <item android:offset="0" android:color="#f5f7fa" />
+                <item android:offset="1" android:color="#7d8795" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <path android:pathData="M35,37 H73 Q79,37 79,43 V65 Q79,71 73,71 H35 Q29,71 29,65 V43 Q29,37 35,37 Z" android:strokeColor="#00000000">
+        <aapt:attr name="android:fillColor">
+            <gradient android:startX="29.0" android:startY="37.0" android:endX="79.0" android:endY="71.0" android:type="linear">
+                <item android:offset="0" android:color="#123d62" />
+                <item android:offset="1" android:color="#081522" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <path android:pathData="M29,61 C42,62 46,48 58,49 C67,49 71,55 79,51 V65 Q79,71 73,71 H35 Q29,71 29,65 Z" android:strokeColor="#00000000">
+        <aapt:attr name="android:fillColor">
+            <gradient android:startX="29.0" android:startY="49.0" android:endX="69.0" android:endY="71.0" android:type="linear">
+                <item android:offset="0" android:color="#6fcdf0" />
+                <item android:offset="1" android:color="#2465a4" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <path android:pathData="M35,38 H73 Q78,38 78,43 V47 C63,42 45,43 30,51 V43 Q30,38 35,38 Z" android:fillColor="#FFFFFF" android:strokeColor="#00000000" android:fillAlpha=".078" />
+    <path android:pathData="M47,80 H61" android:fillColor="#00000000" android:strokeColor="#788592" android:strokeWidth="1.8" android:strokeLineCap="round" />
+</vector>

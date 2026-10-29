@@ -1,0 +1,5 @@
+GenTV shared mobile framework
+
+This directory contains modified MIT-licensed work. Original copyright and licence text are retained in LICENSE and ../../licenses/; see the repository's THIRD_PARTY_NOTICES.md for origins and dependency notices.
+
+Namespace and source-layout changes do not change the package protection, backup or restore rules. Legacy installed-package identities remain recognised for recovery compatibility. This source is not an unmodified upstream checkout.

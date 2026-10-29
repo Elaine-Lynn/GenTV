@@ -1,0 +1,22 @@
+[Unit]
+Description=GenTV TV API
+After=network.target
+
+[Service]
+User=www-data
+Group=www-data
+WorkingDirectory=/srv/gentv/wallpaper/current
+EnvironmentFile=/etc/gentv-wallpaper.env
+Environment=PYTHONDONTWRITEBYTECODE=1
+ExecStart=/srv/gentv/wallpaper/current/venv/bin/gunicorn --bind 127.0.0.1:18765 --workers 1 --threads 2 --timeout 30 --max-requests 500 --access-logfile - app:app
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+StateDirectory=gentv-tv
+ProtectHome=true
+MemoryMax=128M
+
+[Install]
+WantedBy=multi-user.target

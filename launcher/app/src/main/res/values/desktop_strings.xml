@@ -1,0 +1,38 @@
+<resources>
+    <string name="desktop_rename">Rename on Home</string>
+    <string name="desktop_control_center">Control center</string>
+    <string name="desktop_volume_down">Volume down</string>
+    <string name="desktop_volume_up">Volume up</string>
+    <string name="desktop_move_folder">Move to folder</string>
+    <string name="desktop_folder_new">New folder</string>
+    <string name="desktop_folder_rename">Rename folder</string>
+    <string name="desktop_folder_edit">Choose apps</string>
+    <string name="desktop_folder_dissolve">Dissolve folder</string>
+    <string name="desktop_folder_empty">No available apps. Hold OK on the folder to add apps.</string>
+    <string name="desktop_original_image">Use original app image</string>
+
+    <string name="cloud_settings">Updates &amp; usage statistics</string>
+    <string name="cloud_statistics">Share anonymous usage statistics</string>
+    <string name="cloud_statistics_hint">Optional: session count, foreground duration and GenTV version only. No device identifiers or app lists. Off by default.</string>
+    <string name="cloud_check_update">Check for updates</string>
+    <string name="cloud_checking">Checking…</string>
+    <string name="cloud_latest">GenTV is up to date.</string>
+    <string name="cloud_update_available">New GenTV version available</string>
+    <string name="cloud_download">Download update</string>
+    <string name="cloud_downloading">Downloading and verifying…</string>
+    <string name="cloud_failed">Service unavailable or verification failed. Please try again later.</string>
+    <string name="cloud_install_permission">Allow GenTV to install updates, then return and select Install.</string>
+    <string name="cloud_install">Install verified update</string>
+    <string name="cloud_install_confirm">Confirm installation in the Android installer.</string>
+
+    <string name="cloud_current_version">Current %1$s</string>
+    <string name="cloud_update_title">Software update</string>
+    <string name="cloud_update_intro">Keep GenTV running smoothly with the latest improvements.</string>
+    <string name="cloud_later">Later</string>
+    <string name="cloud_upgrade_now">Upgrade now</string>
+    <string name="cloud_version_ready">GenTV %1$s is ready. Download and verify the update, then confirm installation on your TV.</string>
+    <string name="cloud_unconfigured">This build has no GenTV update service configured.</string>
+    <string name="cloud_required">This version requires an update to continue.</string>
+    <string name="cloud_stats_on">Anonymous usage statistics · On</string>
+    <string name="cloud_stats_off">Anonymous usage statistics · Off</string>
+</resources>

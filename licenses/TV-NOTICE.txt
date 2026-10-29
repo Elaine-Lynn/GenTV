@@ -1,0 +1,9 @@
+GenTV TV third-party notices
+
+GenTV TV is copyright (c) 2026 Elaine-Lynn and the GenTV contributors and contains modified MIT-licensed work from cleanyourtv (https://github.com/Gathin23/cleanyourtv), copyright (c) 2026 Gathin. See LICENSE.
+
+AndroidX components are distributed under the Apache License 2.0. See Apache-2.0.txt.
+
+Outfit is copyright The Outfit Project Authors, under SIL Open Font License 1.1. See Outfit-OFL.txt.
+
+Redistribute the standalone TV APK with these notice and licence files. The GenTV phone application includes the notices for its embedded TV APK in its own assets/licenses directory.

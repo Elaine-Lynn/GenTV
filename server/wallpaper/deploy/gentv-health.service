@@ -1,0 +1,10 @@
+[Unit]
+Description=GenTV API and verified backup health check
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /srv/gentv/wallpaper/current/health.py
+UMask=0077
+ProtectSystem=strict
+ReadWritePaths=/var/lib/gentv-tv
+PrivateTmp=true
+NoNewPrivileges=true

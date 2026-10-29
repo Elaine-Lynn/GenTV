@@ -1,0 +1,2 @@
+# Only for desktop_extras_smoke.py; not a launcher or phone runtime dependency.
+Pillow
