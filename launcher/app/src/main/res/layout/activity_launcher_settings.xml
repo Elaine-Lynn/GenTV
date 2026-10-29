@@ -45,7 +45,11 @@
         </LinearLayout>
 
 
-<TextView xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/wallpaperChoice" style="@style/GenSettingsRow" android:layout_marginTop="12dp" />
+<TextView android:id="@+id/screensaverChoice" style="@style/GenSettingsRow" android:layout_marginTop="12dp" />
+<TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/screensaver_hint" android:textColor="#FFA6B3C4" android:textSize="13sp" />
+<TextView android:id="@+id/clearScreensaverCacheChoice" style="@style/GenSettingsRow" android:text="@string/screensaver_clear_cache" android:layout_marginTop="12dp" />
+<TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/screensaver_cache_hint" android:textColor="#FFA6B3C4" android:textSize="13sp" />
+
 
 
 <TextView xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/animationsChoice" style="@style/GenSettingsRow" android:layout_marginTop="12dp" />

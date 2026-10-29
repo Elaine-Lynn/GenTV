@@ -7,3 +7,5 @@ AndroidX components are distributed under the Apache License 2.0. See Apache-2.0
 Outfit is copyright The Outfit Project Authors, under SIL Open Font License 1.1. See Outfit-OFL.txt.
 
 Redistribute the standalone TV APK with these notice and licence files. The GenTV phone application includes the notices for its embedded TV APK in its own assets/licenses directory.
+
+Aerial video catalogue URLs and labels are derived from aerial-tv (https://github.com/pengchujin/aerial-tv), copyright (c) 2026 pengchujin, MIT licence (licenses/aerial-tv-MIT.txt). Videos are streamed from Apple, are not bundled, and remain the property of their respective rights holders.

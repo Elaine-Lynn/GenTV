@@ -364,6 +364,8 @@
     <!-- Tiles per row in the grid; the dock always has this many slots. Tiles are 180dp wide at 4 columns and
          shrink to fit from 5 up (about 144dp at 5, 117dp at 6 on a 1080p TV). -->
     <integer name="columns">5</integer>
+    <!-- Dock band opacity when neither the theme nor a saved TV choice overrides it. -->
+    <integer name="dock_opacity">30</integer>
 
     <!-- Basic motion is on; advanced effects are opt-in in the launcher's own Settings screen. -->
     <bool name="animations">true</bool>
@@ -456,10 +458,8 @@
          The grid then draws into a hardware layer, about 6 MB of graphics memory at 1080p, so it is off by default.
          Can also be set with "fade_rows": true in a theme's config.json. -->
     <bool name="fade_rows">false</bool>
-    <!-- Minutes Home may sit untouched before it shows the clock screensaver (ClockActivity); 0 turns it off.
-         Unlike the system screensaver this never starts over live TV or an app, which matters on TVs whose
-         Live TV window does not keep the screen on (CVTE): there the system screensaver would start in the
-         middle of a programme. Can also be set with "home_idle_clock_minutes": 10 in a theme's config.json. -->
+    <!-- Legacy theme property retained for compatibility. Home now uses the screensaver delay selected
+         in Launcher settings (2, 10 or 60 minutes, or Never), independently of this value. -->
     <integer name="home_idle_clock_minutes">0</integer>
     <!-- The clock screensaver (Home idle clock and the system screensaver) over Home's wallpaper instead of black with
          a coloured glow. The clock still moves every minute. Can also be set with "clock_wallpaper" in a theme. -->

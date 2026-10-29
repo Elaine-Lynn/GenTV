@@ -146,4 +146,18 @@
     <string name="tile_add_to_dock">添加到程序坞</string>
     <string name="tile_move">移动</string>
     <string name="tile_replace_in_dock">替换为其他应用</string>
+    <string name="more_apps">更多应用</string>
+    <string name="screensaver_delay_label">进入屏保时间</string>
+    <string name="screensaver_delay_state">进入屏保时间：%1$s</string>
+    <string name="screensaver_hint">桌面首页按返回键进入航拍屏保；屏保中按任意键返回桌面。</string>
+    <string-array name="screensaver_times">
+        <item>2分钟</item>
+        <item>10分钟</item>
+        <item>60分钟</item>
+        <item>永不</item>
+    </string-array>
+    <string name="screensaver_clear_cache">清除屏保缓存</string>
+    <string name="screensaver_cache_cleared">屏保缓存已清除，下次进入屏保时重新下载。</string>
+    <string name="screensaver_cache_clear_failed">屏保缓存清除失败。</string>
+    <string name="screensaver_cache_hint">最多缓存 5 段视频，已缓存视频随机轮播。清除后，下次进入屏保时重新下载。</string>
 </resources>

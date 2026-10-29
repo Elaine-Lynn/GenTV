@@ -120,9 +120,12 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private String liveTvPkg;
     /** Launcher settings' change count this Home was built with (see onResume). */
     private long settingsRevision;
-    /** Idle time on Home before ClockActivity; 0 is off (config.xml, home_idle_clock_minutes). */
-    private long idleClockMs;
-    private final Runnable showIdleClock = () -> startActivity(new Intent(this, ClockActivity.class));
+    private final ScreensaverIdle screensaverIdle = new ScreensaverIdle();
+    private int screensaverMinutes;
+    private boolean screensaverOpening;
+    private final Runnable showIdleScreensaver = () -> {
+        if (screensaverIdle.due(android.os.SystemClock.elapsedRealtime())) openScreensaver();
+    };
     private String liveTvAction;
     private String liveTvInputId;
     /** The app library is on (config.xml, app_library): only then can the tile menu take an app off Home. */
@@ -418,7 +421,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         festival = cfg.festival;
         festive = festival.active(LocalDate.now());
         liveTvPkg = cfg.liveTvPackage;
-        idleClockMs = cfg.homeIdleClockMinutes * MINUTE_MS;
+        screensaverMinutes = ScreensaverIdle.minutes(getSharedPreferences(Config.SETTINGS_NAME, MODE_PRIVATE)
+                .getInt(ScreensaverIdle.MINUTES_KEY, ScreensaverIdle.DEFAULT_MINUTES));
         bootToLiveTv = cfg.bootToLiveTv;
         openOnStartChoice = cfg.openOnStartChoice;
         liveTvAction = cfg.liveTvAction;
@@ -450,7 +454,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             wallpaperEndpoint=getIntent().getStringExtra("gentv.wallpaper.test_endpoint");
             wallpaperInterval=5000;wallpaperTest=true;
         }
-        remoteWallpaper=new RemoteWallpaper(this,root,cfg,wallpaperEndpoint,wallpaperInterval,wallpaperTest);
+        remoteWallpaper=new RemoteWallpaper(this,root,cfg,wallpaperEndpoint,wallpaperInterval,wallpaperTest,wallpaperPlayer::hasImage);
+        wallpaperPlayer.setOnImageChanged(remoteWallpaper::localWallpaperReady);
         glass = findViewById(R.id.glass);
         glass.setStyle(cfg.glassStyle);
         if (festive) glass.setAccent(festival.accentColor());
@@ -1032,10 +1037,11 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             return;
         }
         headerResumed = true;
+        screensaverOpening = false;
         IntentFilter signalFilter = new IntentFilter(WifiManager.RSSI_CHANGED_ACTION);
         if (android.os.Build.VERSION.SDK_INT >= 33) registerReceiver(signalReceiver,signalFilter,Context.RECEIVER_NOT_EXPORTED);
         else registerReceiver(signalReceiver,signalFilter);
-        restartIdleClock();
+        restartIdleScreensaver();
         promptsPaused = false;
         if (grid.getAdapter() == null) grid.setAdapter(adapter);   // dropped by onTrimMemory
         switch (tileRefresh.onResume(packagesChangedSinceRebuild())) {
@@ -1221,16 +1227,20 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         });
     }
 
-    /** Any key on Home restarts the countdown to the idle clock. */
+    /** Input on Home restarts its screensaver deadline. */
     @Override
     public void onUserInteraction() {
         super.onUserInteraction();
-        restartIdleClock();
+        restartIdleScreensaver();
     }
 
-    private void restartIdleClock() {
-        root.removeCallbacks(showIdleClock);
-        if (idleClockMs > 0) root.postDelayed(showIdleClock, idleClockMs);
+    private void restartIdleScreensaver() {
+        if (root == null) return;
+        root.removeCallbacks(showIdleScreensaver);
+        if (!headerResumed || !hasWindowFocus()) { screensaverIdle.pause(); return; }
+        screensaverIdle.restart(android.os.SystemClock.elapsedRealtime(), screensaverMinutes);
+        long remaining = screensaverIdle.remaining(android.os.SystemClock.elapsedRealtime());
+        if (remaining >= 0) root.postDelayed(showIdleScreensaver, remaining);
     }
 
     @Override
@@ -1240,7 +1250,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         if(headerResumed) unregisterReceiver(signalReceiver);
         headerResumed=false;
         if(inputSignal!=null)inputSignal.stop();
-        root.removeCallbacks(showIdleClock);
+        root.removeCallbacks(showIdleScreensaver);
+        screensaverIdle.pause();
         endReorder();   // Home or another app while reordering keeps the order so far
         wallpaperPlayer.stop();
         remoteWallpaper.stop();
@@ -1295,6 +1306,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
+        restartIdleScreensaver();
         if (hasFocus) {
             startPendingSettingsReorder();
             if (libraryFocusPending && appLibrary == null) focusLibrary();
@@ -1349,6 +1361,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
      */
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
+        restartIdleScreensaver();
         // Vendor keys (TCL Netflix button, 4062) never reach the key services, only the focused window.
         if (event.getKeyCode() >= 1000 && RemoteKeys.handle(this, event, homeAppKeys.get(event.getKeyCode()), null)) return true;
         if (handleSettingsKey(event)) return true;
@@ -1680,7 +1693,44 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
     @Override
     public void onBackPressed() {
-        // Home screen: Back goes nowhere.
+        // Back first returns focus to the first tile, then opens the screensaver.
+        GridLayoutManager layout = (GridLayoutManager) grid.getLayoutManager();
+        if (!reordering && appLibrary == null && layout != null && adapter.appCount() > 0
+                && focusedTilePosition() != 0) {
+            libraryFocusPending = false;
+            cancelPendingFocusScroll();
+            layout.scrollToPositionWithOffset(0, 0);
+            lastFocused = 0;
+            lastFocusedKey = adapter.getItemCount() > 0 ? adapter.keyAt(0) : null;
+            grid.post(() -> focusTile(0));
+            return;
+        }
+        openScreensaver();
+    }
+
+    private void openScreensaver() {
+        if (!headerResumed || !hasWindowFocus() || screensaverOpening || reordering
+                || appLibrary != null
+                || (openPopup != null && openPopup.isShowing())
+                || (cardPrompt != null && cardPrompt.isShowing())) return;
+        screensaverOpening = true;
+        root.removeCallbacks(showIdleScreensaver);
+        screensaverIdle.pause();
+        android.graphics.Bitmap frame = android.graphics.Bitmap.createBitmap(
+                Math.max(1, root.getWidth()), Math.max(1, root.getHeight()), android.graphics.Bitmap.Config.ARGB_8888);
+        try {
+            android.view.PixelCopy.request(getWindow(), frame, result -> {
+                if (!headerResumed || !hasWindowFocus() || isFinishing() || isDestroyed()) {
+                    frame.recycle(); screensaverOpening = false; return;
+                }
+                if (result == android.view.PixelCopy.SUCCESS) AerialScreensaverActivity.setEntryFrame(frame);
+                else { frame.recycle(); AerialScreensaverActivity.setEntryFrame(null); }
+                startActivity(new Intent(this, AerialScreensaverActivity.class));
+                AerialScreensaverActivity.enterTransition(this);
+            }, handler);
+        } catch (IllegalArgumentException unavailable) {
+            frame.recycle(); screensaverOpening = false; restartIdleScreensaver();
+        }
     }
 
     // ---- glass highlight -------------------------------------------------------------------------

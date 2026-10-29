@@ -21,8 +21,8 @@ android {
         applicationId 'com.gentv.tv'
         minSdk 26
         targetSdk 34
-        versionCode 22
-        versionName '3.7.0'
+        versionCode 23
+        versionName '3.7.1'
         testInstrumentationRunner 'com.gentv.tv.DesktopIntegration'
         buildConfigField 'String', 'API_BASE_URL', '"' + apiBaseUrl + '"'
     }
@@ -99,6 +99,7 @@ def prepareReleaseNotices = tasks.register('prepareReleaseNotices', Sync) {
     from(rootProject.file('../licenses/Outfit-OFL.txt'))
     from(rootProject.file('../licenses/Apache-2.0.txt'))
     from(rootProject.file('../licenses/TV-NOTICE.txt'))
+    from(rootProject.file('../licenses/aerial-tv-MIT.txt'))
     into(layout.buildDirectory.dir('outputs/licenses/release'))
 }
 def packageReleaseDistribution = tasks.register('packageReleaseDistribution', Zip) {

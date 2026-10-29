@@ -48,6 +48,7 @@ final class WallpaperPlayer {
     private final int dimColor;
     /** The picture on screen, released once the next one has been drawn. */
     private Bitmap current;
+    private Runnable onImageChanged;
     private boolean active;
     private boolean closed;
     private boolean loading;
@@ -127,6 +128,9 @@ final class WallpaperPlayer {
             first = WallpaperRotation.pick(playable, previous, order, random);
         }
     }
+
+    boolean hasImage() { return current != null; }
+    void setOnImageChanged(Runnable listener) { onImageChanged=listener; }
 
     void start() {
         active = true;
@@ -266,6 +270,7 @@ final class WallpaperPlayer {
         // The wallpaper covers the whole root; avoid drawing the fallback colour under it.
         root.setBackground(null);
         image.setImageBitmap(bitmap);
+        if(onImageChanged!=null) onImageChanged.run();
         if (old != null && old != bitmap) image.postDelayed(old::recycle, 500);
     }
 

@@ -14,6 +14,9 @@ public final class DesktopIntegration extends Instrumentation {
     private boolean cloudUiOnly;
     private boolean resetCloudPolicy;
     private boolean recoveryFixture;
+    private boolean wallpaperFallbackOnly;
+    private boolean aerialSourceOnly;
+    private boolean screensaverInfoOnly;
     private void check(boolean value, String message) { if (!value) throw new AssertionError(message); checks++; }
     private List<String> originalOrder(JSONArray order) { List<String> result=new ArrayList<>();for(int i=0;i<order.length();i++)result.add(order.optString(i));return result; }
     private android.graphics.Bitmap renderNetwork(boolean ethernet,boolean online,boolean validated,int level) {
@@ -21,7 +24,7 @@ public final class DesktopIntegration extends Instrumentation {
         NetworkStatusDrawable glyph=new NetworkStatusDrawable(2,ethernet,online,validated,level);
         glyph.setBounds(0,0,56,56);glyph.draw(new android.graphics.Canvas(bitmap));return bitmap;
     }
-    @Override public void onCreate(Bundle args) { super.onCreate(args); cloudUiOnly=args!=null && "true".equals(args.getString("cloud_ui_only")); resetCloudPolicy=args!=null && "true".equals(args.getString("reset_cloud_policy")); recoveryFixture=args!=null && "true".equals(args.getString("recovery_fixture")); start(); }
+    @Override public void onCreate(Bundle args) { super.onCreate(args); cloudUiOnly=args!=null && "true".equals(args.getString("cloud_ui_only")); resetCloudPolicy=args!=null && "true".equals(args.getString("reset_cloud_policy")); recoveryFixture=args!=null && "true".equals(args.getString("recovery_fixture")); wallpaperFallbackOnly=args!=null && "true".equals(args.getString("wallpaper_fallback_only")); aerialSourceOnly=args!=null && "true".equals(args.getString("aerial_source_only")); screensaverInfoOnly=args!=null && "true".equals(args.getString("screensaver_info_only")); start(); }
     private android.view.View findCloudText(android.view.View view,CharSequence text) {
         if(view instanceof android.widget.TextView && text.equals(((android.widget.TextView)view).getText()))return view;
         if(view instanceof android.view.ViewGroup) {android.view.ViewGroup group=(android.view.ViewGroup)view;for(int i=0;i<group.getChildCount();i++){android.view.View found=findCloudText(group.getChildAt(i),text);if(found!=null)return found;}}
@@ -118,7 +121,160 @@ public final class DesktopIntegration extends Instrumentation {
         finish(status,result);
     }
 
+    private void checkWallpaperFallback() {
+        Bundle result=new Bundle();int status=0;
+        try {
+            if(!(android.os.Build.HARDWARE.contains("ranchu") || android.os.Build.HARDWARE.contains("goldfish"))) throw new IllegalStateException("Emulator only");
+            runCloudUi(()->{
+                android.content.Context context=getTargetContext();
+                android.content.SharedPreferences preferences=context.getSharedPreferences(Config.SETTINGS_NAME,0);
+                boolean hadMinutes=preferences.contains(ScreensaverIdle.MINUTES_KEY);
+                int saved=preferences.getInt(ScreensaverIdle.MINUTES_KEY,2);
+                try {
+                    preferences.edit().remove(ScreensaverIdle.MINUTES_KEY).commit();
+                    check(preferences.getInt(ScreensaverIdle.MINUTES_KEY,ScreensaverIdle.DEFAULT_MINUTES)==2,"two minute screensaver default");
+                    for(int minutes:new int[]{2,10,60,0}) {
+                        preferences.edit().putInt(ScreensaverIdle.MINUTES_KEY,minutes).commit();
+                        check(ScreensaverIdle.minutes(preferences.getInt(ScreensaverIdle.MINUTES_KEY,2))==minutes,"screensaver choice persists");
+                    }
+                } finally {
+                    if(!hadMinutes) preferences.edit().remove(ScreensaverIdle.MINUTES_KEY).commit();
+                    else preferences.edit().putInt(ScreensaverIdle.MINUTES_KEY,saved).commit();
+                }
+                java.util.Map<String,?> originalSettings=preferences.getAll();
+                String[] keys={"columns",Config.ROWS_BELOW_DOCK_KEY,Config.DOCK_OPACITY_KEY};
+                try {
+                    android.content.SharedPreferences.Editor editor=preferences.edit();
+                    for(String key:keys)editor.remove(key);editor.commit();
+                    check(context.getResources().getInteger(R.integer.columns)==5,"packaged default: five columns");
+                    check(context.getResources().getInteger(R.integer.rows_below_dock)==0,"packaged default: zero rows below dock");
+                    check(context.getResources().getInteger(R.integer.dock_opacity)==30,"packaged default: thirty percent dock opacity");
+                    Config defaults=Config.load(context);
+                    if(!defaults.overlayApplied) {
+                        check(defaults.columns==5 && defaults.rowsBelowDock==0 && defaults.dockOpacity==30,"fresh settings resolve to 5, 0, 30 percent");
+                    }
+                } finally {
+                    android.content.SharedPreferences.Editor editor=preferences.edit();
+                    for(String key:keys) {
+                        if(originalSettings.containsKey(key))editor.putInt(key,((Number)originalSettings.get(key)).intValue());
+                        else editor.remove(key);
+                    }
+                    editor.commit();
+                }
+                android.widget.FrameLayout root=new android.widget.FrameLayout(context);
+                android.view.View ambient=new android.view.View(context);ambient.setId(R.id.ambient);root.addView(ambient);
+                boolean[] local={false};
+                RemoteWallpaper player=new RemoteWallpaper(context,root,Config.load(context),"",120000,false,()->local[0]);
+                try {
+                    android.widget.ImageView image=(android.widget.ImageView)root.getChildAt(root.getChildCount()-1);
+                    check(image.getDrawable() instanceof android.graphics.drawable.BitmapDrawable,"bundled abstract wallpaper on first frame without API");
+                    android.graphics.Bitmap bitmap=((android.graphics.drawable.BitmapDrawable)image.getDrawable()).getBitmap();
+                    check(bitmap.getWidth()>0 && bitmap.getHeight()>0,"bundled image decodes");
+                    android.graphics.BitmapFactory.Options source=new android.graphics.BitmapFactory.Options();source.inJustDecodeBounds=true;
+                    android.graphics.BitmapFactory.decodeResource(context.getResources(),R.raw.wallpaper_default,source);
+                    check(source.outWidth>=1600 && source.outHeight>=900,"bundled source retains high-resolution artwork");
+                    player.start();check(image.getDrawable()!=null,"disabled or offline API retains fallback");
+                    player.releaseForMemoryPressure();check(image.getDrawable()==null,"hidden wallpaper releases texture");
+                    player.start();check(image.getDrawable()!=null,"resume restores fallback without network");
+                    local[0]=true;player.localWallpaperReady();check(image.getDrawable()==null,"local theme wallpaper takes precedence over fallback");
+                    android.view.View panel=new android.view.View(context);panel.setId(R.id.racePanel);root.addView(panel);
+                    AerialPlayer aerial=new AerialPlayer(context,root,image);
+                    try {
+                        android.view.View video=root.getChildAt(0);
+                        check(video instanceof android.view.TextureView && root.indexOfChild(video)<root.indexOfChild(image),
+                                "screensaver video surface sits behind loading image");
+                        aerial.start();aerial.stop();
+                        check(image.getVisibility()==android.view.View.VISIBLE,"paused screensaver reveals fallback");
+                    } finally {aerial.close();}
+                } finally {player.close();}
+            });
+            result.putString("result","PASS "+checks+" offline wallpaper checks");status=-1;
+        }catch(Throwable error){result.putString("error",error.toString());}
+        finish(status,result);
+    }
+    private ScreensaverInfo findScreensaverInfo(android.view.View view) {
+        if(view instanceof ScreensaverInfo)return (ScreensaverInfo)view;
+        if(view instanceof android.view.ViewGroup) {
+            android.view.ViewGroup group=(android.view.ViewGroup)view;
+            for(int i=0;i<group.getChildCount();i++) {
+                ScreensaverInfo found=findScreensaverInfo(group.getChildAt(i));if(found!=null)return found;
+            }
+        }
+        return null;
+    }
+    private void saveScreensaverShot(String name) throws Exception {
+        android.graphics.Bitmap shot=getUiAutomation().takeScreenshot();
+        java.io.File file=new java.io.File(getTargetContext().getExternalFilesDir(null),name);
+        try(java.io.FileOutputStream out=new java.io.FileOutputStream(file)) {
+            shot.compress(android.graphics.Bitmap.CompressFormat.PNG,100,out);
+        }
+        shot.recycle();
+    }
+    private void checkScreensaverInfo() {
+        Bundle result=new Bundle();android.app.Activity opened=null;
+        try {
+            if(!(android.os.Build.HARDWARE.contains("ranchu") || android.os.Build.HARDWARE.contains("goldfish")))throw new IllegalStateException("Emulator only");
+            for(int entry=0;entry<2;entry++) {
+                opened=startActivitySync(new android.content.Intent(getTargetContext(),AerialScreensaverActivity.class)
+                        .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK));
+                android.app.Activity activity=opened;
+                ScreensaverInfo[] info={null};
+                runCloudUi(()->info[0]=findScreensaverInfo(activity.findViewById(android.R.id.content)));
+                check(info[0]!=null,"screensaver has info overlay");
+                long end=android.os.SystemClock.uptimeMillis()+30000;
+                boolean[] visible={false};
+                while(android.os.SystemClock.uptimeMillis()<end) {
+                    runCloudUi(()->visible[0]=info[0].getVisibility()==android.view.View.VISIBLE);
+                    if(visible[0])break;
+                    android.os.SystemClock.sleep(100);
+                }
+                check(visible[0],"info appears after video first frame on every entry");
+                android.os.SystemClock.sleep(1200);
+                runCloudUi(()->{
+                    check(info[0].getContentDescription()!=null && info[0].getContentDescription().toString().matches("(?s).+\\n.+"),"time and localized place caption are populated");
+                    check(info[0].getAlpha()>.99f,"info fades in fully");
+                });
+                if(entry==0) {
+                    saveScreensaverShot("screensaver-info-visible.png");
+                    android.os.SystemClock.sleep(3000);
+                    runCloudUi(()->check(info[0].getVisibility()==android.view.View.VISIBLE,"info remains visible before eight seconds"));
+                    android.os.SystemClock.sleep(5000);
+                    runCloudUi(()->{
+                        check(info[0].getVisibility()==android.view.View.INVISIBLE,"info is hidden after eight seconds and fade");
+                        info[0].onFrame(new AerialCaptions("Next film",java.util.Collections.emptyList()),0);
+                        check(info[0].getVisibility()==android.view.View.INVISIBLE,"next film does not reopen info in same entry");
+                    });
+                    saveScreensaverShot("screensaver-info-hidden.png");
+                }
+                runCloudUi(activity::finish);opened=null;
+                android.os.SystemClock.sleep(1100);
+            }
+            result.putString("result","PASS "+checks+" screensaver info checks");finish(-1,result);
+        } catch(Throwable error) {result.putString("error",error.toString());finish(0,result);}
+        finally {if(opened!=null){android.app.Activity activity=opened;runCloudUi(activity::finish);}}
+    }
     @Override public void onStart() {
+        if(screensaverInfoOnly) {checkScreensaverInfo();return;}
+        if(aerialSourceOnly) {
+            Bundle result=new Bundle();
+            java.net.HttpURLConnection connection=null;
+            try(java.io.InputStream in=getTargetContext().getAssets().open("aerials.json")) {
+                java.io.ByteArrayOutputStream out=new java.io.ByteArrayOutputStream();
+                byte[] bytes=new byte[4096];int n;while((n=in.read(bytes))!=-1)out.write(bytes,0,n);
+                String url=new JSONObject(out.toString("UTF-8")).getJSONArray("videos").getJSONObject(0).getString("url");
+                connection=(java.net.HttpURLConnection)new java.net.URL(url).openConnection();
+                connection.setConnectTimeout(8000);connection.setReadTimeout(8000);
+                connection.setRequestProperty("Range","bytes=0-4095");
+                int code=connection.getResponseCode();
+                try(java.io.InputStream video=connection.getInputStream()) {
+                    check(code==206 && video.read()!=-1,"Apple video range request");
+                }
+                result.putString("result","PASS aerial HTTPS range request");finish(-1,result);
+            } catch(Throwable error) {result.putString("error",error.toString());finish(0,result);}
+            finally {if(connection!=null)connection.disconnect();}
+            return;
+        }
+        if(wallpaperFallbackOnly) {checkWallpaperFallback();return;}
         if(cloudUiOnly) {checkCloudUi();return;}
         Bundle result = new Bundle();
         JSONObject original = null;
@@ -244,7 +400,12 @@ public final class DesktopIntegration extends Instrumentation {
             check(restarted.state().getString("selected").equals(url),"playlist selection persisted");
             check(restarted.read(newUrl)==null,"versioned URL invalidates image cache");
             restarted.prune(java.util.Collections.emptyList());
-            check(restarted.read(url)==null,"removed image cache pruned");
+            check(restarted.read(url)!=null,"ordinary playlist refresh retains usable cached image");
+            restarted.saveState(java.util.Collections.emptyList(),456,url);
+            WallpaperCache retained=new WallpaperCache(cacheDir,"https://api.gentv.app/tv/wallpaper");
+            retained.state();
+            check(retained.available(java.util.Collections.emptyList()).contains(url),"unlisted cached image survives restart");
+            retained.remove(url);
             new android.util.AtomicFile(new java.io.File(cacheDir,"playlist.json")).delete();cacheDir.delete();
             android.graphics.Bitmap weak=renderNetwork(false,true,true,1),strong=renderNetwork(false,true,true,4);
             android.graphics.Bitmap wired=renderNetwork(true,true,true,4),offline=renderNetwork(false,false,false,0);

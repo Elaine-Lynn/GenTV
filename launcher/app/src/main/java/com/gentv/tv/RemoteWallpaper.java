@@ -29,12 +29,17 @@ final class RemoteWallpaper {
     static final long INTERVAL_MS = 120_000L;
     private static final int MAX_IMAGE = 8*1024*1024;
     private final ImageView image, previousImage;
+    private final android.content.res.Resources resources;
+    private final java.util.function.BooleanSupplier localWallpaperPresent;
     private final boolean reducedMotion;
     private final Handler main = new Handler(Looper.getMainLooper());
     private final ExecutorService worker = Executors.newSingleThreadExecutor();
     private final WallpaperCache cache;
     private List<String> playlist=new ArrayList<>();
     private long refreshedAt;
+    private WallpaperPolicy policy;
+    private String receivedEtag="";
+    private int imageBytes;
     private boolean restored;
     private final String endpoint;
     private final boolean localTest;
@@ -45,12 +50,14 @@ final class RemoteWallpaper {
     private volatile HttpURLConnection connection;
     private volatile boolean active, closed;
     private boolean loading;
+    private boolean showingFallback;
     private int generation;
     private String displayed = "";
     private long shownAt;
 
-    RemoteWallpaper(Context ctx,FrameLayout root,Config cfg,String endpoint,long interval,boolean localTest) {
+    RemoteWallpaper(Context ctx,FrameLayout root,Config cfg,String endpoint,long interval,boolean localTest,java.util.function.BooleanSupplier localWallpaperPresent) {
         this.endpoint=endpoint;this.interval=interval;this.localTest=localTest;
+        resources=ctx.getResources();this.localWallpaperPresent=localWallpaperPresent;
         android.app.ActivityManager memory=ctx.getSystemService(android.app.ActivityManager.class);
         boolean lowRam=memory!=null && memory.isLowRamDevice();
         bitmapConfig=lowRam?Bitmap.Config.RGB_565:Bitmap.Config.ARGB_8888;
@@ -68,9 +75,29 @@ final class RemoteWallpaper {
                 new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.MATCH_PARENT));
         root.addView(image,root.indexOfChild(previousImage)+1,
                 new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.MATCH_PARENT));
+        showFallback();
+    }
+    /** Draw the bundled abstract wallpaper before the first frame; never wait for a network response. */
+    private void showFallback() {
+        showingFallback=true;
+        finishTransition();
+        if(localWallpaperPresent.getAsBoolean()) { image.setImageDrawable(null); return; }
+        try {
+            Bitmap bitmap=decode(TvCloud.read(resources.openRawResource(R.raw.wallpaper_default),MAX_IMAGE));
+            if(bitmap!=null) image.setImageBitmap(bitmap);
+        } catch(java.io.IOException failure) {
+            android.util.Log.e("GenTV.Wallpaper","Bundled wallpaper unavailable",failure);
+        }
+    }
+    void localWallpaperReady() {
+        if(showingFallback && localWallpaperPresent.getAsBoolean()) {
+            finishTransition();image.setImageDrawable(null);
+        }
     }
     void start() {
-        if(closed || active || endpoint.isEmpty())return;
+        if(closed || active)return;
+        if(image.getDrawable()==null) showFallback();
+        if(endpoint.isEmpty())return;
         active=true;generation++;
         load(shownAt!=0 && SystemClock.elapsedRealtime()-shownAt>=interval);
     }
@@ -84,6 +111,7 @@ final class RemoteWallpaper {
         image.animate().cancel(); image.setAlpha(1f); previousImage.setImageDrawable(null);
     }
     private void show(Bitmap bitmap) {
+        showingFallback=false;
         finishTransition();
         if (!reducedMotion) previousImage.setImageDrawable(image.getDrawable());
         image.setImageBitmap(bitmap);
@@ -105,6 +133,7 @@ final class RemoteWallpaper {
             String previous=previousDisplay;
             Bitmap bitmap=null;String next=previous;boolean empty=false;boolean networkAllowed=true;
             try {
+                if(policy==null)policy=new WallpaperPolicy(cache.policy());
                 boolean cold=!restored;
                 if(cold) {
                     restored=true;
@@ -115,42 +144,72 @@ final class RemoteWallpaper {
                         if(previous.isEmpty()) previous=state.optString("selected","");
                     }catch(Exception ignored) { }
                 }
-                // A persisted playlist gets the first frame from disk, even when its refresh is due.
                 long now=System.currentTimeMillis();
-                boolean refresh=playlist.isEmpty() || !cold && (now<refreshedAt || now-refreshedAt>=(localTest?1000:6*60*60*1000L));
+                long refreshInterval=localTest?1000:WallpaperPolicy.REFRESH;
+                policy.seedManifest(refreshedAt,refreshInterval);
+                boolean refresh=policy.manifestDue(now,refreshInterval) && (!cold || playlist.isEmpty());
                 if(refresh)try {
-                    List<String> updated=parse(new String(fetch(endpoint,256*1024),java.nio.charset.StandardCharsets.UTF_8),localTest);
-                    playlist=updated;refreshedAt=now;
+                    // Persist a failed-attempt cooldown before opening the connection, including across restarts.
+                    policy.manifestFailure(now);cache.savePolicy(policy);
+                    byte[] body=fetch(endpoint,256*1024,cache.etag);
+                    if(body!=null) {
+                        List<String> updated=parse(new String(body,java.nio.charset.StandardCharsets.UTF_8),localTest);
+                        playlist=updated;cache.etag=receivedEtag;
+                    }
+                    refreshedAt=now;policy.manifestSuccess(now,refreshInterval);
                     cache.saveState(playlist,refreshedAt,previous);cache.prune(playlist);
                 }catch(Exception failure) {
                     networkAllowed=false;
-                    // Keep rotating the saved playlist offline; retry the small manifest after an interval.
-                    if(playlist.isEmpty())throw failure;
                 }
-                empty=playlist.isEmpty();
+                List<String> local=cache.available(playlist);
+                for(String url:local)policy.downloaded(url,now);
+                // One new image per tick; ordinary rotation reads only complete local images.
+                if(networkAllowed && active && !closed)for(String candidate:playlist) {
+                    if(local.contains(candidate) || !policy.mayDownload(candidate,now))continue;
+                    if(cache.needsReplacement(MAX_IMAGE) && !policy.mayReplace(now))break;
+                    if(!policy.reserve(now))break;
+                    imageBytes=0;
+                    try {
+                        cache.savePolicy(policy); // Reserve worst-case traffic before GET.
+                        byte[] data=fetch(candidate,MAX_IMAGE,"");
+                        Bitmap validated=decode(data);
+                        if(validated==null)throw new IllegalArgumentException("Unreadable wallpaper");
+                        validated.recycle();
+                        boolean replacement=cache.needsReplacement(data.length);
+                        // Spend the replacement allowance before evicting, including across process death.
+                        boolean allowed=policy.mayReplace(now);
+                        if(replacement && allowed){policy.replaced(now);cache.savePolicy(policy);}
+                        if(cache.store(candidate,data,previousDisplay,allowed))policy.downloaded(candidate,now);
+                        else policy.failed(candidate,now);
+                    }catch(Exception | OutOfMemoryError failure) {policy.failed(candidate,now);}
+                    finally {policy.finish(imageBytes);cache.savePolicy(policy);}
+                    break;
+                }
+                local=cache.available(playlist);
+                List<String> known=new ArrayList<>(playlist);known.addAll(local);policy.retain(known);
+                cache.savePolicy(policy);
+                empty=playlist.isEmpty() && local.isEmpty();
                 if(!empty) {
-                    int index=playlist.indexOf(previous);
-                    int start=index<0?0:advance?(index+1)%playlist.size():index;
+                    int index=local.indexOf(previous);
+                    int start=index<0?0:advance?(index+1)%Math.max(1,local.size()):index;
                     Exception last=null;boolean ready=false;
-                    for(int offset=0;offset<playlist.size();offset++) {
-                        String candidate=playlist.get((start+offset)%playlist.size());
+                    for(int offset=0;offset<local.size();offset++) {
+                        String candidate=local.get((start+offset)%local.size());
                         try {
                             if(!candidate.equals(previousDisplay) || shownAt==0) {
                                 byte[] data=cache.read(candidate);
                                 Bitmap decoded=data==null?null:decode(data);
                                 if(decoded==null) {
-                                    if(!networkAllowed)throw new java.io.IOException("No cached image");
-                                    try {data=fetch(candidate,MAX_IMAGE);}catch(Exception failure) {networkAllowed=false;throw failure;}
-                                    decoded=decode(data);
-                                    if(decoded==null)throw new IllegalArgumentException("Unreadable wallpaper");
-                                    cache.write(candidate,data);cache.prune(playlist);
+                                    policy.failed(candidate,now);
+                                    cache.remove(candidate);cache.savePolicy(policy);
+                                    throw new IllegalArgumentException("Unreadable cached image");
                                 }
                                 bitmap=decoded;
                             }
                             next=candidate;ready=true;break;
                         }catch(Exception badImage) {last=badImage;}
                     }
-                    if(!ready)throw last;
+                    if(!ready && last!=null)throw last;
                     cache.saveState(playlist,refreshedAt,next);
                 }
             }catch(Exception | OutOfMemoryError failure) {
@@ -165,7 +224,7 @@ final class RemoteWallpaper {
                     if(active && !closed)load(false);
                     return;
                 }
-                if(clear) {finishTransition();image.setImageDrawable(null);displayed="";shownAt=0;}
+                if(clear) {showFallback();displayed="";shownAt=0;}
                 else if(result!=null) {show(result);displayed=selected;}
                 shownAt=SystemClock.elapsedRealtime();schedule();
             });
@@ -188,21 +247,31 @@ final class RemoteWallpaper {
             throw new IllegalArgumentException("HTTPS wallpaper required");
         return uri;
     }
-    private byte[] fetch(String value,int limit) throws Exception {
+    private byte[] fetch(String value,int limit,String etag) throws Exception {
         URI uri=checked(value,localTest);
         for(int hop=0;hop<5;hop++) {
             if(!active || closed)throw new java.io.InterruptedIOException("Home is hidden");
             HttpURLConnection c=(HttpURLConnection)uri.toURL().openConnection();connection=c;
             c.setInstanceFollowRedirects(false);c.setConnectTimeout(8000);c.setReadTimeout(10000);
             c.setRequestProperty("User-Agent","GenTV-Wallpaper/1");
+            c.setRequestProperty("Accept-Encoding","identity");
+            if(!etag.isEmpty())c.setRequestProperty("If-None-Match",etag);
             c.setRequestProperty("Accept",limit==MAX_IMAGE?"image/jpeg,image/png,image/webp":"application/json");
             try {
                 int code=c.getResponseCode();
+                if(code==304 && limit!=MAX_IMAGE && !etag.isEmpty())return null;
                 if(code>=300 && code<400) {uri=checked(uri.resolve(c.getHeaderField("Location")).toString(),localTest);continue;}
                 if(code!=200 || c.getContentLengthLong()>limit)throw new IllegalArgumentException("Wallpaper response refused");
+                receivedEtag=c.getHeaderField("ETag");if(receivedEtag==null)receivedEtag="";
                 try(InputStream in=c.getInputStream();ByteArrayOutputStream out=new ByteArrayOutputStream()) {
                     byte[] buffer=new byte[8192];int n;
-                    while((n=in.read(buffer))!=-1) {if(out.size()+n>limit)throw new IllegalArgumentException("Wallpaper too large");out.write(buffer,0,n);}
+                    while(out.size()<limit && (n=in.read(buffer,0,Math.min(buffer.length,limit-out.size())))!=-1) {
+                        if(limit==MAX_IMAGE)imageBytes+=n;
+                        if(!active || closed)throw new java.io.InterruptedIOException("Home is hidden");
+                        out.write(buffer,0,n);
+                    }
+                    if(out.size()==limit && c.getContentLengthLong()!=limit)throw new IllegalArgumentException("Wallpaper too large");
+                    if(c.getContentLengthLong()>=0 && out.size()!=c.getContentLengthLong())throw new java.io.IOException("Incomplete wallpaper");
                     return out.toByteArray();
                 }
             }finally {c.disconnect();connection=null;}

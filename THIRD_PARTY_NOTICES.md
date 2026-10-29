@@ -27,3 +27,5 @@ GenTV has since changed package namespaces, integration, UI, delivery, updates a
 Television manufacturers, system services, streaming apps and their package identifiers appear where GenTV must recognise, protect or display them. These names and trademarks belong to their owners. The device lists are inherited community records, not GenTV compatibility certification.
 
 Online wallpapers served by the GenTV wallpaper service are not part of this repository.
+
+Aerial video catalogue URLs and labels are derived from aerial-tv (https://github.com/pengchujin/aerial-tv), copyright (c) 2026 pengchujin, MIT licence (licenses/aerial-tv-MIT.txt). Videos are streamed from Apple, are not bundled, and remain the property of their respective rights holders.

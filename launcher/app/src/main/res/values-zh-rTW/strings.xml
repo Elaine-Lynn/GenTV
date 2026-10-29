@@ -93,4 +93,18 @@
         <item quantity="other">%1$d 個應用程式</item>
     </plurals>
     <string name="greeting_with_name">%1$s，%2$s</string>
+    <string name="more_apps">更多應用</string>
+    <string name="screensaver_delay_label">進入螢幕保護程式時間</string>
+    <string name="screensaver_delay_state">進入螢幕保護程式時間：%1$s</string>
+    <string name="screensaver_hint">桌面首頁按返回鍵進入航拍螢幕保護程式；按任意鍵返回桌面。</string>
+    <string-array name="screensaver_times">
+        <item>2分鐘</item>
+        <item>10分鐘</item>
+        <item>60分鐘</item>
+        <item>永不</item>
+    </string-array>
+    <string name="screensaver_clear_cache">清除螢幕保護程式快取</string>
+    <string name="screensaver_cache_cleared">快取已清除，下次進入螢幕保護程式時重新下載。</string>
+    <string name="screensaver_cache_clear_failed">快取清除失敗。</string>
+    <string name="screensaver_cache_hint">最多快取 5 段影片，已快取影片隨機輪播。清除後，下次進入螢幕保護程式時重新下載。</string>
 </resources>
