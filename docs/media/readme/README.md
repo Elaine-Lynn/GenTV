@@ -1,6 +1,15 @@
 # GenTV README 素材包
 
-生成日期：2026-10-29。共 19 张 PNG，按用途组织；可随仓库提交。
+生成日期：2026-10-29。共 21 张 PNG，按用途组织；可随仓库提交。
+
+## 桌面对比图
+
+两张图取自 [gentv.me](https://www.gentv.me/) 首页的桌面对比模块，由官网的 WebP 原图无损转换为 PNG，没有裁切或改动像素。README 首屏把它们并排展示。
+
+| 文件 | 内容 |
+|---|---|
+| [01-traditional-tv.png](comparison/01-traditional-tv.png) | 传统电视桌面（生成图，片名、海报和人物均为虚构，不对应任何厂商） |
+| [02-gentv-home.png](comparison/02-gentv-home.png) | GenTV 桌面（森林晨雾壁纸，Play 商店获得焦点） |
 
 ## 项目介绍图
 

@@ -12,7 +12,7 @@ Thanks for helping. Bug reports, device reports and pull requests are welcome.
 
 Start with the [environment and installation guide](docs/getting-started.md), including the instructions for AI assistants.
 
-You need JDK 17 for the TV app, JDK 21 for the phone build (with `GENTV_HOME_JAVA_HOME` pointing to JDK 17), JDK 25 for the ADB unit tests, and Android SDKs 34 and 37. No signing keys or server access are needed. See the [README](README.md#build) for the build commands.
+You need JDK 17 for the TV app, JDK 21 for the phone build (with `GENTV_HOME_JAVA_HOME` pointing to JDK 17), JDK 25 for the ADB unit tests, and Android SDKs 34 and 37. No signing keys or server access are needed. See the [README](README.md#for-developers) for the build commands, and [AGENTS.md](AGENTS.md) if you work with a coding assistant.
 
 Development builds do not contact the GenTV service. To test online features against your own server, pass `-PgentvApiBaseUrl=https://your-server/tv/` (see [server/wallpaper](server/wallpaper/README.md)).
 
