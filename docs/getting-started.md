@@ -4,7 +4,7 @@ This guide is the entry point for people and AI assistants working from this rep
 
 ## Choose a route
 
-- To use an official build, start at [the GenTV website](https://www.gentv.me/). Availability of downloadable releases must be checked there; this repository stores no APKs.
+- To use an official build, download it from [GitHub Releases](https://github.com/Elaine-Lynn/GenTV/releases/latest) or [the GenTV website](https://www.gentv.me/). Each GitHub release lists SHA-256 checksums in `SHA256SUMS.txt`; the repository itself stores no APKs.
 - To build the TV application only, use the TV steps below. The phone application is optional.
 - To build the phone companion, install both Android SDK platforms and both build JDKs below. Its build generates and embeds the TV APK from source.
 - To contribute or let an AI assistant build locally, follow the same source steps. No server account or signing key is needed for Debug builds.

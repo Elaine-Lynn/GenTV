@@ -12,11 +12,13 @@
 
 <p align="center">
   <a href="https://www.gentv.me/"><img alt="下载" src="https://img.shields.io/badge/%E4%B8%8B%E8%BD%BD-gentv.me-34a853?style=for-the-badge&logo=android&logoColor=white"></a>
+  <a href="https://github.com/Elaine-Lynn/GenTV/releases/latest"><img alt="GitHub Releases" src="https://img.shields.io/badge/GitHub-Releases-24292f?style=for-the-badge&logo=github&logoColor=white"></a>
   <a href="#install"><img alt="安装指南" src="https://img.shields.io/badge/%E5%AE%89%E8%A3%85-%E6%8C%87%E5%8D%97-1f6feb?style=for-the-badge"></a>
   <a href="#faq"><img alt="常见问题" src="https://img.shields.io/badge/%E5%B8%B8%E8%A7%81-%E9%97%AE%E9%A2%98-d97757?style=for-the-badge"></a>
 </p>
 
 <p align="center">
+  <a href="https://github.com/Elaine-Lynn/GenTV/releases/latest"><img alt="最新版本" src="https://img.shields.io/github/v/release/Elaine-Lynn/GenTV?style=flat-square&label=%E7%89%88%E6%9C%AC"></a>
   <a href="LICENSE"><img alt="MIT 许可证" src="https://img.shields.io/badge/%E8%AE%B8%E5%8F%AF%E8%AF%81-MIT-555555?style=flat-square"></a>
   <img alt="Android 8.0 及以上" src="https://img.shields.io/badge/Android%20TV-8.0%2B-3ddc84?style=flat-square&logo=android&logoColor=white">
   <img alt="电视安装包不到 600 KB" src="https://img.shields.io/badge/%E7%94%B5%E8%A7%86%E5%AE%89%E8%A3%85%E5%8C%85-%3C600%20KB-2997ff?style=flat-square">
@@ -63,7 +65,7 @@
 
 只要一部 Android 手机，和电视连在同一个 Wi-Fi 或局域网里。
 
-1. 在手机上从 [gentv.me](https://www.gentv.me/) 安装 **GenTV Remote**。
+1. 在手机上从 [gentv.me](https://www.gentv.me/) 或 [GitHub Releases](https://github.com/Elaine-Lynn/GenTV/releases/latest)（`gentv-mobile-*.apk`）安装 **GenTV Remote**。
 2. 在电视上[打开开发者选项和网络调试或无线调试](#adb)。
 3. 打开 GenTV Remote，选择电视，在电视上确认配对或调试授权。
 4. 选择 **安装 GenTV 桌面**，电视上会打开 GenTV。
@@ -92,7 +94,7 @@
 
 ### U 盘安装
 
-把**电视版 APK**（`com.gentv.tv`，不是手机版）拷进 U 盘，在电视的文件管理器里打开，按提示允许安装。这种方式不含手机清理和 DNS 过滤功能。有些电视不允许从 U 盘安装。详见 [U 盘步骤](docs/getting-started.md#install-the-tv-app-from-a-usb-drive)（英文）。
+把**电视版 APK**（[GitHub Releases](https://github.com/Elaine-Lynn/GenTV/releases/latest) 里的 `gentv-tv-*.apk`，包名 `com.gentv.tv`，不是手机版）拷进 U 盘，在电视的文件管理器里打开，按提示允许安装。这种方式不含手机清理和 DNS 过滤功能。有些电视不允许从 U 盘安装。详见 [U 盘步骤](docs/getting-started.md#install-the-tv-app-from-a-usb-drive)（英文）。
 
 <a id="adb"></a>
 
@@ -258,7 +260,7 @@ python3 -m unittest discover -s server/wallpaper -p 'test_*.py'
 
 ### 文档（英文）
 
-- [环境与安装指南](docs/getting-started.md) · [参与贡献](CONTRIBUTING.md)
+- [版本与更新记录](https://github.com/Elaine-Lynn/GenTV/releases) · [环境与安装指南](docs/getting-started.md) · [参与贡献](CONTRIBUTING.md)
 - [实现与验证](docs/implementation.md) · [发布前验证](docs/pre-release-validation.md)
 - [桌面协议](docs/desktop-protocol.md) · [模块卡片约定](docs/reference/modules.md)
 - [性能流程](docs/reference/perf-ab.md) · [模拟器性能记录](docs/emulator-performance.md) · [开发计划](docs/desktop-optimization-plan.md)

@@ -12,11 +12,13 @@
 
 <p align="center">
   <a href="https://www.gentv.me/"><img alt="Download" src="https://img.shields.io/badge/Download-gentv.me-34a853?style=for-the-badge&logo=android&logoColor=white"></a>
+  <a href="https://github.com/Elaine-Lynn/GenTV/releases/latest"><img alt="GitHub Releases" src="https://img.shields.io/badge/GitHub-Releases-24292f?style=for-the-badge&logo=github&logoColor=white"></a>
   <a href="#install"><img alt="Install guide" src="https://img.shields.io/badge/Install-guide-1f6feb?style=for-the-badge"></a>
   <a href="#faq"><img alt="FAQ" src="https://img.shields.io/badge/FAQ-questions-d97757?style=for-the-badge"></a>
 </p>
 
 <p align="center">
+  <a href="https://github.com/Elaine-Lynn/GenTV/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/Elaine-Lynn/GenTV?style=flat-square&label=release"></a>
   <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-555555?style=flat-square"></a>
   <img alt="Android 8.0 or later" src="https://img.shields.io/badge/Android%20TV-8.0%2B-3ddc84?style=flat-square&logo=android&logoColor=white">
   <img alt="TV app under 600 KB" src="https://img.shields.io/badge/TV%20app-%3C600%20KB-2997ff?style=flat-square">
@@ -57,7 +59,7 @@ Both the TV and the phone need **Android 8.0 (API 26) or later**. Phone manageme
 
 Recommended. You need an Android phone on the same Wi-Fi or local network as the TV.
 
-1. Install **GenTV Remote** on the phone from [gentv.me](https://www.gentv.me/).
+1. Install **GenTV Remote** on the phone from [gentv.me](https://www.gentv.me/) or [GitHub Releases](https://github.com/Elaine-Lynn/GenTV/releases/latest) (`gentv-mobile-*.apk`).
 2. On the TV, [turn on developer options and network or wireless debugging](#turn-on-adb-debugging-on-the-tv).
 3. Open GenTV Remote, pick the TV and accept the pairing or debugging prompt on the TV.
 4. Select **Install GenTV desktop**. GenTV opens on the TV.
@@ -82,7 +84,7 @@ You approve the pairing and installation prompts on the TV yourself. Full steps 
 
 ### Install from a USB drive
 
-Copy the **TV APK** (`com.gentv.tv`, not the phone APK) to a USB drive, open it in the TV's file manager, and allow the installation. This route doesn't include phone cleanup or DNS filtering. Some TVs block USB installation. See the [USB steps](docs/getting-started.md#install-the-tv-app-from-a-usb-drive).
+Copy the **TV APK** (`gentv-tv-*.apk` from [GitHub Releases](https://github.com/Elaine-Lynn/GenTV/releases/latest), package `com.gentv.tv`, not the phone APK) to a USB drive, open it in the TV's file manager, and allow the installation. This route doesn't include phone cleanup or DNS filtering. Some TVs block USB installation. See the [USB steps](docs/getting-started.md#install-the-tv-app-from-a-usb-drive).
 
 ### Turn on ADB debugging on the TV
 
@@ -238,7 +240,7 @@ Official releases are signed with a private key that is never in Git, and releas
 
 ### Documentation
 
-- [Environment and installation guide](docs/getting-started.md) · [Contributing](CONTRIBUTING.md)
+- [Releases and changelog](https://github.com/Elaine-Lynn/GenTV/releases) · [Environment and installation guide](docs/getting-started.md) · [Contributing](CONTRIBUTING.md)
 - [Implementation and validation](docs/implementation.md) · [Pre-release validation](docs/pre-release-validation.md)
 - [Desktop protocol](docs/desktop-protocol.md) · [Module-card contract](docs/reference/modules.md)
 - [Performance workflow](docs/reference/perf-ab.md) · [Emulator measurements](docs/emulator-performance.md) · [Development plan](docs/desktop-optimization-plan.md)
