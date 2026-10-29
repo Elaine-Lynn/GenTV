@@ -170,7 +170,7 @@ Before removing GenTV, choose the original Home in system settings and confirm i
 
 ## Community device references
 
-Device lists under `phone/framework/data/devices/` are inherited community records. Some comments refer to upstream device documents or tools that are not shipped here; these are historical references, not executable GenTV instructions or a promise that every model is supported. Do not run a referenced cleanup command or disable a package without checking the current GenTV protection rules and the actual device/firmware. Real-device results for GenTV itself are in [verified devices](devices/verified.md).
+Device lists under `phone/framework/data/devices/` are inherited community records. Some comments refer to upstream device documents or tools that are not shipped here; these are historical references, not executable GenTV instructions or a promise that every model is supported. Do not run a referenced cleanup command or disable a package without checking the current GenTV protection rules and the actual device/firmware.
 
 ## Instructions for an AI assistant
 

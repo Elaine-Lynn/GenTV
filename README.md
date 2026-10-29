@@ -4,7 +4,7 @@
 
 <h1 align="center">GenTV — Ad-free Android TV launcher</h1>
 
-<p align="center"><b>An ad-free home screen for your Android TV, set up with nothing but your phone.</b><br>Install it, clean up preinstalled apps, undo changes and use the phone as a remote. No computer, no root, no account.</p>
+<p align="center"><b>A clean home screen for your TV, managed from your phone. No computer, no root, no account.</b></p>
 
 <p align="center">
   English · <a href="README.zh-CN.md">简体中文</a>
@@ -174,9 +174,7 @@ TV images are Android TV emulator captures. Phone images are UI-test renders wit
 
 ## Device references
 
-Real-device results for GenTV are collected in the [verified device table](docs/devices/verified.md), failures included. If you've tried GenTV on a TV, a [works on my TV](https://github.com/Elaine-Lynn/GenTV/issues/new?template=works_on_my_tv.yml) or [device report](https://github.com/Elaine-Lynn/GenTV/issues/new?template=device_report.yml) issue adds it.
-
-The phone app also includes community cleanup references for **252 TV, box and projector models**. The largest groups are TCL (57), Sony (32), Xiaomi (29), Philips (12), Hisense (10), Skyworth (8) and Amazon Fire TV (7). Models from Redmi, FFalcon, Vidda, Xgimi, Panasonic, OnePlus, Nvidia, Sharp and others are also covered. These lists come from the community. They help you decide what to clean up, but they don't certify that every feature works on your model. Home replacement, input switching and installation can still be limited by the manufacturer. Look up your model in the [device index](docs/devices/README.md).
+The phone app includes community cleanup references for **252 TV, box and projector models**. The largest groups are TCL (57), Sony (32), Xiaomi (29), Philips (12), Hisense (10), Skyworth (8) and Amazon Fire TV (7). Models from Redmi, FFalcon, Vidda, Xgimi, Panasonic, OnePlus, Nvidia, Sharp and others are also covered. These lists come from the community. They help you decide what to clean up, but they don't certify that every feature works on your model. Home replacement, input switching and installation can still be limited by the manufacturer. Look up your model in the [device index](docs/devices/README.md).
 
 ## FAQ
 

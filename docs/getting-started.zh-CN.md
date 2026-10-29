@@ -180,7 +180,7 @@ adb -s PHONE_SERIAL shell am start -W -n com.gentv.mobile.debug/com.gentv.mobile
 
 ## 社区机型参考
 
-`phone/framework/data/devices/` 下的机型清单是继承来的社区记录。部分注释提到了上游的设备文档或工具，这些没有随本仓库提供；它们是历史参考，不是可执行的 GenTV 操作步骤，也不代表每个机型都受支持。不要在没有核对当前 GenTV 保护规则和实际设备、固件的情况下运行其中提到的清理命令或停用任何应用。GenTV 本身的真机结果见[已验证机型](devices/verified.md)。
+`phone/framework/data/devices/` 下的机型清单是继承来的社区记录。部分注释提到了上游的设备文档或工具，这些没有随本仓库提供；它们是历史参考，不是可执行的 GenTV 操作步骤，也不代表每个机型都受支持。不要在没有核对当前 GenTV 保护规则和实际设备、固件的情况下运行其中提到的清理命令或停用任何应用。
 
 <a id="instructions-for-an-ai-assistant"></a>
 

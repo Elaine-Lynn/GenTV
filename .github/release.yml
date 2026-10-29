@@ -8,7 +8,7 @@ changelog:
     - title: Fixes 修复
       labels: [bug]
     - title: Devices 机型
-      labels: [device-report, works-on-my-tv]
+      labels: [device-report]
     - title: Documentation 文档
       labels: [documentation]
     - title: Other 其他

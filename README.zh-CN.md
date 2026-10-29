@@ -4,7 +4,7 @@
 
 <h1 align="center">GenTV — 无广告的 Android TV 电视桌面</h1>
 
-<p align="center"><b>只用一部手机，给 Android 电视换一块没广告的桌面。</b><br>装桌面、清理预装应用、恢复改动、当遥控器，都在手机上完成。不用电脑，不用 Root，不用账号。</p>
+<p align="center"><b>给电视换一块干净的桌面，用手机就能装、能清理、能遥控。不用电脑，不用 Root，不用账号。</b></p>
 
 <p align="center">
   <a href="README.md">English</a> · 简体中文
@@ -190,9 +190,7 @@ GenTV 的电视桌面和机型清单来自电脑脚本方案（见[项目来源]
 
 ## 机型参考
 
-GenTV 在真实设备上的测试结果汇总在[已验证机型表](docs/devices/verified.md)里，失败的也会列出。如果你在电视上试过 GenTV，欢迎提交[实测可用](https://github.com/Elaine-Lynn/GenTV/issues/new?template=works_on_my_tv.yml)或[机型报告](https://github.com/Elaine-Lynn/GenTV/issues/new?template=device_report.yml)。
-
-另外，手机 App 内置 **252 款电视、盒子和投影仪**的社区清理参考，数量最多的是 TCL（57）、索尼（32）、小米（29）、飞利浦（12）、海信（10）、创维（8）、亚马逊 Fire TV（7），也覆盖 Redmi、雷鸟、Vidda、极米、松下、一加、Nvidia、夏普等品牌。这些清单来自社区，用来帮你判断哪些应用可以清理，不代表每台机型都已通过兼容认证。能不能安装、更换默认桌面、切换信号源，仍可能受厂商限制。到[机型索引](docs/devices/README.md)里查你的型号。
+手机 App 内置 **252 款电视、盒子和投影仪**的社区清理参考，数量最多的是 TCL（57）、索尼（32）、小米（29）、飞利浦（12）、海信（10）、创维（8）、亚马逊 Fire TV（7），也覆盖 Redmi、雷鸟、Vidda、极米、松下、一加、Nvidia、夏普等品牌。这些清单来自社区，用来帮你判断哪些应用可以清理，不代表每台机型都已通过兼容认证。能不能安装、更换默认桌面、切换信号源，仍可能受厂商限制。到[机型索引](docs/devices/README.md)里查你的型号。
 
 <a id="faq"></a>
 

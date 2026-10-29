@@ -6,8 +6,8 @@ body:
   - type: markdown
     attributes:
       value: |
-        Each report helps build the [verified device table](https://github.com/Elaine-Lynn/GenTV/blob/HEAD/docs/devices/verified.md). Failures are as useful as successes.
-        每份报告都会用来完善[已验证机型表](https://github.com/Elaine-Lynn/GenTV/blob/HEAD/docs/devices/verified.md)，失败的结果和成功的一样有用。
+        Failures are as useful as successes.
+        失败的结果和成功的一样有用。
 
         Do not include TV IP addresses, ADB keys, backups, account details or Wi-Fi names. 请不要填写电视 IP、ADB 密钥、备份、账号或 Wi-Fi 名称。
   - type: input

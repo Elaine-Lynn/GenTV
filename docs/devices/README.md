@@ -6,8 +6,6 @@ Each entry is a cleanup reference used by the GenTV phone app: the model and fir
 
 每份清单记录了机型和固件、停用了哪些应用、哪些刻意保留以及原因，还有 ADB、桌面和信号源方面的笔记。它们**不是**兼容认证，里面的命令是历史记录，不是 GenTV 的操作步骤。动手前请先核对自己的型号和固件。
 
-Real-device results for GenTV itself: [verified devices 已验证机型](verified.md)
-
 How to turn on ADB: [by brand](adb-by-brand.md) · [分品牌打开 ADB](adb-by-brand.zh-CN.md)
 
 Found a model that isn't listed, or a note that is wrong? See [CONTRIBUTING.md](../../CONTRIBUTING.md); say which model and firmware you checked.

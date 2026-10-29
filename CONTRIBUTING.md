@@ -6,7 +6,7 @@ Please follow the [code of conduct](CODE_OF_CONDUCT.md).
 
 ## Report a device
 
-Real-device results are the most useful contribution and need no code. If GenTV works on your TV, open a [works on my TV](https://github.com/Elaine-Lynn/GenTV/issues/new?template=works_on_my_tv.yml) issue; if something was limited or failed, open a [device report](https://github.com/Elaine-Lynn/GenTV/issues/new?template=device_report.yml). Confirmed results go into the [verified device table](docs/devices/verified.md).
+Real-device results are the most useful contribution and need no code. Open a [device report](https://github.com/Elaine-Lynn/GenTV/issues/new?template=device_report.yml) with what worked on your TV and what didn't.
 
 ## Before you start
 
@@ -54,7 +54,7 @@ Official releases are signed with a private key that is never in Git, and releas
 - [Implementation and validation](docs/implementation.md) · [Pre-release validation](docs/pre-release-validation.md)
 - [Desktop protocol](docs/desktop-protocol.md) · [Module-card contract](docs/reference/modules.md)
 - [Performance workflow](docs/reference/perf-ab.md) · [Emulator measurements](docs/emulator-performance.md) · [Development plan](docs/desktop-optimization-plan.md)
-- [Device references](docs/devices/README.md) · [Verified devices](docs/devices/verified.md)
+- [Device references](docs/devices/README.md)
 
 ## Before opening a pull request
 
