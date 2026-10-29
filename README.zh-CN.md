@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://www.gentv.me/"><img src="docs/media/readme/overview/01-project-cover.png" alt="GenTV：免费开源、没有广告的 Android TV / Google TV 电视桌面，配套手机 App，可以安装桌面、清理预装应用、当遥控器用。不用电脑、不用 Root、不用账号。" width="800"></a>
+  <a href="https://www.gentv.me/"><img src="docs/media/readme/overview/01-project-cover-zh.png" alt="GenTV：免费开源、没有广告的 Android TV / Google TV 电视桌面，配套手机 App，可以安装桌面、清理预装应用、当遥控器用。不用电脑、不用 Root、不用账号。" width="800"></a>
 </p>
 
 <h1 align="center">GenTV — 无广告的 Android TV 电视桌面</h1>

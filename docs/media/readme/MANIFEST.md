@@ -23,3 +23,4 @@
 | [screenshots/tv/06-autumn.png](screenshots/tv/06-autumn.png) | 1920 x 1080 | 2461950 | `e37a1d919589a980183a54e38c120c21827202dbeb5294efd6e1bb114ef9ef1a` |
 | [screenshots/tv/07-winter.png](screenshots/tv/07-winter.png) | 1920 x 1080 | 1886522 | `19bc29c09fb48b1ff506a9e0c58c541381f10661b4a42189d353f82ad3e9e0b9` |
 | [screenshots/tv/08-aurora.png](screenshots/tv/08-aurora.png) | 1920 x 1080 | 394018 | `e4eb350c061258640b9d0ff59e53a89529f583488815db417ae4421d1272164d` |
+| [overview/01-project-cover-zh.png](overview/01-project-cover-zh.png) | 1586 x 992 | 1500345 | `1fd9c0f4b16cf3bad3e7735d2a3f4acb531ce4fc272dc3ee4a34ea4ae0d18c1f` |
