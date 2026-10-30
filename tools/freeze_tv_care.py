@@ -27,5 +27,5 @@ def freeze(root, output):
         args = [sys.executable, '-m', 'PyInstaller', '--noconfirm', '--clean', '--onefile', '--name', name,
                 '--distpath', str(output / 'bin'), '--workpath', str(work / name), '--specpath', str(work),
                 '--paths', str(root / 'tools')]
-        if name == 'gentv-transport': args += ['--collect-all', 'adb_shell']
+        if name == 'gentv-transport': args += ['--collect-all', 'adb_shell', '--collect-all', 'cryptography', '--hidden-import', '_cffi_backend']
         subprocess.run(args + [str(root / 'tools' / source)], check=True, stdout=sys.stderr)

@@ -86,7 +86,9 @@ def main():
 if __name__ == '__main__':
     try:
         main()
-    except ImportError:
+    except ImportError as error:
+        if sys.argv[1:] == ['--self-test']:
+            raise SystemExit('Frozen dependency self-test failed: ' + str(error))
         raise SystemExit('Python ADB dependency unavailable; run tools/tv_care.py --setup-transport')
     except Exception as error:
         # Third-party exception strings may include endpoint/authentication details.
