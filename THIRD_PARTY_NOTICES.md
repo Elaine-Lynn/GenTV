@@ -10,6 +10,8 @@ GenTV is built on modified open-source projects. GenTV's own work is copyright (
 | [TidyTV](https://github.com/jolan94/tidytv) | MIT, copyright (c) 2026 Winkle Studios and the tidytv contributors — [mobile-framework-MIT.txt](licenses/mobile-framework-MIT.txt), [phone/framework/LICENSE](phone/framework/LICENSE) | The phone framework in `phone/framework/` (ADB connection, list parsing, package protection, backup and restore) and parts of the phone app | `309515d209106715fa86aa3f07468bd59da3e3aa` (0.9.0) |
 | [tv-detox](https://github.com/Ansub/tv-detox) | MIT, copyright (c) 2026 Ansub Khan — [legacy-integration-MIT.txt](licenses/legacy-integration-MIT.txt) | Install, undo and check patterns carried into the phone framework through TidyTV. Its home-screen application and artwork are not included. | — |
 
+Signal-source configuration records in `phone/framework/data/source-profiles.json` and `phone/framework/data/input-profiles/` additionally include records from [cleanyourtv](https://github.com/Gathin23/cleanyourtv) v3.2.0 (`42fe7b09d61fb9175cb03b8c659cd63c9c1dd9a4`), MIT, copyright (c) 2026 Gathin. These are configuration references, not additional device-validation claims.
+
 GenTV has since changed package namespaces, integration, UI, delivery, updates and the server. The current code is not an unchanged checkout of any of these projects.
 
 ## Libraries, fonts and icons
@@ -29,3 +31,7 @@ Television manufacturers, system services, streaming apps and their package iden
 Online wallpapers served by the GenTV wallpaper service are not part of this repository.
 
 Aerial video catalogue URLs and labels are derived from aerial-tv (https://github.com/pengchujin/aerial-tv), copyright (c) 2026 pengchujin, MIT licence (licenses/aerial-tv-MIT.txt). Videos are streamed from Apple, are not bundled, and remain the property of their respective rights holders.
+
+## Additional TV care device references
+
+The local supplemental device records in `skills/gentv-tv-care/references/device-supplements.json` retain their source commit and are covered by `licenses/tv-care-device-references-LICENSE.txt`. They supplement the existing GenTV records; they are reference data, not executable cleanup scripts or a guarantee for every firmware.

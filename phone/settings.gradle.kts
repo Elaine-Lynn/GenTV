@@ -13,3 +13,6 @@ include(":app", ":core", ":adb")
 // Original modules, without copying or rewriting protection, parsing or ADB code.
 project(":core").projectDir = file("framework/core")
 project(":adb").projectDir = file("framework/adb")
+
+// Local computer maintenance adapter reuses the Android-independent core.
+include(":tv-care")

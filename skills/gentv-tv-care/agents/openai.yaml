@@ -1,0 +1,4 @@
+interface:
+  display_name: "GenTV 电视管家"
+  short_description: "备份、清理广告与预装应用、切换 GenTV 桌面并验证恢复"
+  default_prompt: "使用 $gentv-tv-care，识别我指定的电视并备份，按我的偏好清理预装与广告服务，安装 GenTV、切换默认桌面并验证可恢复性。"
