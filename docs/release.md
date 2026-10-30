@@ -1,6 +1,6 @@
 # GenTV 正式签名与发布
 
-电视包 `com.gentv.tv`，正式候选 3.7.1 / code23；手机版 `com.gentv.mobile`。两者使用同一正式证书，但应用身份与更新清单独立。
+电视包 `com.gentv.tv`，官网与升级接口已发布 3.7.2 / code24；手机版 `com.gentv.mobile`。两者使用同一正式证书，但应用身份与更新清单独立。
 
 正式证书 SHA-256 指纹（已用 v3.7.0 发布的 `gentv-tv-3.7.0.apk` 和 `gentv-mobile-3.7.1.apk` 核对）：
 
