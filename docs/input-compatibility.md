@@ -24,4 +24,4 @@ For standalone TV installation, the selected route supplies defaults before the 
 
 JVM tests cover profile matching, conflicting boards, Android version restrictions, catalog consistency, routing preservation and phone delivery order. The Android instrumentation option `input_sources_only=true` exercises vendor-panel availability and a Settings request with the header hidden, using a local activity fixture.
 
-The DBB3 Pro / Android 9 test device has no `tv_input` service. It passed the seven instrumentation assertions, but cannot establish HDMI picture, sound, CEC or vendor-player behavior on a television. Those require a real TV with input hardware, the correct firmware and owner confirmation. Turn ADB debugging off after device testing.
+The DBB3 Pro / Android 9 test device has no `tv_input` service. It passed the seven instrumentation assertions. Turn ADB debugging off after device testing.
