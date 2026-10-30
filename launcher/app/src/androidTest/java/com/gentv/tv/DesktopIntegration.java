@@ -17,6 +17,9 @@ public final class DesktopIntegration extends Instrumentation {
     private boolean wallpaperFallbackOnly;
     private boolean aerialSourceOnly;
     private boolean screensaverInfoOnly;
+    private boolean inputSourcesOnly;
+    private boolean cloudFocusOnly;
+    private boolean hdmiPreview;
     private void check(boolean value, String message) { if (!value) throw new AssertionError(message); checks++; }
     private List<String> originalOrder(JSONArray order) { List<String> result=new ArrayList<>();for(int i=0;i<order.length();i++)result.add(order.optString(i));return result; }
     private android.graphics.Bitmap renderNetwork(boolean ethernet,boolean online,boolean validated,int level) {
@@ -24,7 +27,7 @@ public final class DesktopIntegration extends Instrumentation {
         NetworkStatusDrawable glyph=new NetworkStatusDrawable(2,ethernet,online,validated,level);
         glyph.setBounds(0,0,56,56);glyph.draw(new android.graphics.Canvas(bitmap));return bitmap;
     }
-    @Override public void onCreate(Bundle args) { super.onCreate(args); cloudUiOnly=args!=null && "true".equals(args.getString("cloud_ui_only")); resetCloudPolicy=args!=null && "true".equals(args.getString("reset_cloud_policy")); recoveryFixture=args!=null && "true".equals(args.getString("recovery_fixture")); wallpaperFallbackOnly=args!=null && "true".equals(args.getString("wallpaper_fallback_only")); aerialSourceOnly=args!=null && "true".equals(args.getString("aerial_source_only")); screensaverInfoOnly=args!=null && "true".equals(args.getString("screensaver_info_only")); start(); }
+    @Override public void onCreate(Bundle args) { super.onCreate(args); hdmiPreview=args!=null && "true".equals(args.getString("hdmi_preview")); cloudFocusOnly=args!=null && "true".equals(args.getString("cloud_focus_only")); inputSourcesOnly=args!=null && "true".equals(args.getString("input_sources_only")); cloudUiOnly=args!=null && "true".equals(args.getString("cloud_ui_only")); resetCloudPolicy=args!=null && "true".equals(args.getString("reset_cloud_policy")); recoveryFixture=args!=null && "true".equals(args.getString("recovery_fixture")); wallpaperFallbackOnly=args!=null && "true".equals(args.getString("wallpaper_fallback_only")); aerialSourceOnly=args!=null && "true".equals(args.getString("aerial_source_only")); screensaverInfoOnly=args!=null && "true".equals(args.getString("screensaver_info_only")); start(); }
     private android.view.View findCloudText(android.view.View view,CharSequence text) {
         if(view instanceof android.widget.TextView && text.equals(((android.widget.TextView)view).getText()))return view;
         if(view instanceof android.view.ViewGroup) {android.view.ViewGroup group=(android.view.ViewGroup)view;for(int i=0;i<group.getChildCount();i++){android.view.View found=findCloudText(group.getChildAt(i),text);if(found!=null)return found;}}
@@ -253,7 +256,136 @@ public final class DesktopIntegration extends Instrumentation {
         } catch(Throwable error) {result.putString("error",error.toString());finish(0,result);}
         finally {if(opened!=null){android.app.Activity activity=opened;runCloudUi(activity::finish);}}
     }
+    /** Real Android lifecycle test: a hidden optional header must still open a vendor input panel. */
+    private void checkInputSources() {
+        Bundle result = new Bundle();
+        android.app.Activity opened = null;
+        android.app.Activity panel = null;
+        ActivityMonitor monitor = null;
+        try {
+            MainActivity home = (MainActivity)startActivitySync(new android.content.Intent(getTargetContext(), MainActivity.class)
+                    .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK));
+            opened = home;
+            java.lang.reflect.Field panelField = MainActivity.class.getDeclaredField("sourcePanelService");
+            java.lang.reflect.Field liveField = MainActivity.class.getDeclaredField("liveTvPkg");
+            java.lang.reflect.Field showField = MainActivity.class.getDeclaredField("showInputsPill");
+            panelField.setAccessible(true); liveField.setAccessible(true); showField.setAccessible(true);
+            java.lang.reflect.Method update = MainActivity.class.getDeclaredMethod("updateInputsButton");
+            java.lang.reflect.Method request = MainActivity.class.getDeclaredMethod("openInputsIfAsked", android.content.Intent.class);
+            update.setAccessible(true); request.setAccessible(true);
+            runCloudUi(() -> {
+                try {
+                panelField.set(home, new android.content.ComponentName(getTargetContext(), QuickSettingsActivity.class).flattenToString());
+                liveField.set(home, "");
+                showField.setBoolean(home, true);
+                update.invoke(home);
+                check(home.findViewById(R.id.btnInputs).getVisibility() == android.view.View.GONE,
+                        "vendor panel alone does not claim an HDMI connection");
+                java.lang.reflect.Method indicator = MainActivity.class.getDeclaredMethod("updateInputIndicator", boolean.class, boolean.class);
+                indicator.setAccessible(true);
+                indicator.invoke(home, true, true);
+                check(home.findViewById(R.id.btnInputs).getVisibility() == android.view.View.VISIBLE,
+                        "connected HDMI fixture shows header reminder");
+                check(home.getString(R.string.hdmi_connected).contentEquals(home.findViewById(R.id.btnInputs).getContentDescription()),
+                        "reminder announces HDMI connection");
+                indicator.invoke(home, true, false);
+                check(home.findViewById(R.id.btnInputs).getVisibility() == android.view.View.GONE,
+                        "HDMI disconnect fixture hides reminder without removing Inputs support");
+                showField.setBoolean(home, false);
+                update.invoke(home);
+                check(home.findViewById(R.id.btnInputs).getVisibility() == android.view.View.GONE, "optional header is hidden");
+                } catch (ReflectiveOperationException error) { throw new AssertionError(error); }
+            });
+            monitor = addMonitor(QuickSettingsActivity.class.getName(), null, false);
+            runCloudUi(() -> {
+                try {
+                    check(Boolean.TRUE.equals(request.invoke(home, new android.content.Intent(MainActivity.ACTION_VIEW_INPUTS))),
+                            "settings request handled");
+                } catch (ReflectiveOperationException error) { throw new AssertionError(error); }
+            });
+            panel = waitForMonitorWithTimeout(monitor, 5000);
+            check(panel instanceof QuickSettingsActivity, "hidden header still opens the configured source activity");
+            if (hdmiPreview) {
+                android.app.Activity fixturePanel = panel;
+                runCloudUi(fixturePanel::finish); panel = null;
+                getTargetContext().startActivity(new android.content.Intent(getTargetContext(), MainActivity.class)
+                        .setAction(android.content.Intent.ACTION_MAIN)
+                        .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK | android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP));
+                waitForIdleSync(); android.os.SystemClock.sleep(350);
+                runCloudUi(() -> {
+                    try {
+                        showField.setBoolean(home, true);
+                        java.lang.reflect.Method indicator = MainActivity.class.getDeclaredMethod("updateInputIndicator", boolean.class, boolean.class);
+                        indicator.setAccessible(true); indicator.invoke(home, true, true);
+                    } catch (ReflectiveOperationException error) { throw new AssertionError(error); }
+                });
+                waitForIdleSync();
+                android.os.SystemClock.sleep(250);
+                android.graphics.Bitmap preview = getUiAutomation().takeScreenshot();
+                java.io.File file = new java.io.File(getTargetContext().getExternalFilesDir(null), "hdmi-connected-fixture.png");
+                try (java.io.FileOutputStream out = new java.io.FileOutputStream(file)) {
+                    preview.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, out);
+                }
+            }
+            result.putString("result", "PASS input sources: " + checks + " checks; vendor panel fixture, not HDMI picture verification");
+            finish(-1, result);
+        } catch (Throwable error) {
+            result.putString("error", error.toString()); finish(0, result);
+        } finally {
+            if (monitor != null) removeMonitor(monitor);
+            if (panel != null) { android.app.Activity screen = panel; runCloudUi(screen::finish); }
+            if (opened != null) { android.app.Activity screen = opened; runCloudUi(screen::finish); }
+        }
+    }
+
+    private void checkCloudFocus() {
+        Bundle result = new Bundle();
+        android.app.Activity opened = null;
+        try {
+            setInTouchMode(true);
+            CloudSettingsActivity screen = (CloudSettingsActivity)startActivitySync(
+                    new android.content.Intent(getTargetContext(), CloudSettingsActivity.class)
+                            .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK));
+            opened = screen;
+            java.lang.reflect.Field mainField = CloudSettingsActivity.class.getDeclaredField("check");
+            java.lang.reflect.Field laterField = CloudSettingsActivity.class.getDeclaredField("later");
+            mainField.setAccessible(true); laterField.setAccessible(true);
+            android.view.View primary = (android.view.View)mainField.get(screen);
+            android.view.View later = (android.view.View)laterField.get(screen);
+            java.lang.reflect.Method checking = CloudSettingsActivity.class.getDeclaredMethod("checking", int.class);
+            java.lang.reflect.Method message = CloudSettingsActivity.class.getDeclaredMethod("message", int.class);
+            java.lang.reflect.Method mandatory = CloudSettingsActivity.class.getDeclaredMethod("mandatory", boolean.class);
+            checking.setAccessible(true); message.setAccessible(true); mandatory.setAccessible(true);
+            waitForIdleSync();
+            runCloudUi(() -> {
+                try {
+                    check(primary.hasFocus(), "update button focused in touch mode on open");
+                    checking.invoke(screen, R.string.cloud_checking);
+                    check(!primary.isEnabled() && later.hasFocus(), "optional checking moves focus to Later");
+                    message.invoke(screen, R.string.cloud_update_available);
+                    check(primary.isEnabled() && primary.hasFocus(), "ready update restores primary focus");
+                    later.requestFocus(); screen.onWindowFocusChanged(true);
+                    check(later.hasFocus(), "window focus does not steal the owner's Later selection");
+                    primary.requestFocus(); mandatory.invoke(screen, true);
+                    checking.invoke(screen, R.string.cloud_checking);
+                    message.invoke(screen, R.string.cloud_update_available);
+                    check(primary.hasFocus() && later.getVisibility() == android.view.View.GONE,
+                            "mandatory update restores its only button");
+                    check(findCloudText(screen.findViewById(android.R.id.content), getTargetContext().getString(R.string.cloud_stats_off)) == null,
+                            "statistics control absent");
+                } catch (ReflectiveOperationException error) { throw new AssertionError(error); }
+            });
+            result.putString("result", "PASS " + checks + " update focus checks"); finish(-1, result);
+        } catch (Throwable error) {
+            result.putString("error", error.toString()); finish(0, result);
+        } finally {
+            if (opened != null) { android.app.Activity screen = opened; runCloudUi(screen::finish); }
+        }
+    }
+
     @Override public void onStart() {
+        if(cloudFocusOnly) {checkCloudFocus();return;}
+        if(inputSourcesOnly) {checkInputSources();return;}
         if(screensaverInfoOnly) {checkScreensaverInfo();return;}
         if(aerialSourceOnly) {
             Bundle result=new Bundle();

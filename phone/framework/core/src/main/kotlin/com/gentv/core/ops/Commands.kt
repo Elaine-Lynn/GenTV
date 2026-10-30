@@ -103,7 +103,12 @@ object Commands {
 
     /** Where the compatible desktop home screen reads config.json and theme_revision. */
     fun configDir(pkg: String) = "/sdcard/Android/data/${PackageName.require(pkg)}/files"
-    fun makeConfigDir(pkg: String) = "mkdir -p ${configDir(pkg)} && echo ok"
+    fun makeConfigDir(pkg: String): String {
+        val p = PackageName.require(pkg)
+        return "mkdir -p ${configDir(p)} 2>/dev/null && echo ok || { " +
+            "o=\$(content call --uri content://$p.theme --method read_config 2>/dev/null); " +
+            "case \"\$o\" in *config_base64=*) echo ok ;; *) echo CONFIG_UNAVAILABLE ;; esac; }"
+    }
     fun writeRevision(pkg: String, revision: Long) = "printf '%s' '$revision' > ${configDir(pkg)}/theme_revision && echo ok"
     // Looks for the compatible desktop home screen (see LauncherLook).
     private val LOOK_FILE = Regex("^(wallpapers/)?[A-Za-z0-9_][A-Za-z0-9_.-]{0,63}$")
@@ -132,7 +137,15 @@ object Commands {
             "content delete --uri content://${PackageName.require(pkg)}.theme/wallpapers 2>/dev/null; echo cleared"
     }
 
-    fun lookReadConfig(pkg: String) = "cat ${configDir(pkg)}/config.json 2>/dev/null; echo"
+    fun lookReadConfig(pkg: String): String {
+        val p = PackageName.require(pkg)
+        val dir = configDir(p)
+        return "r=\$(content call --uri content://$p.theme --method read_config 2>/dev/null); " +
+            "case \"\$r\" in *config_base64=*) printf '%s\\n' \"\$r\" ;; *) " +
+            "cat $dir/config.json 2>/dev/null || { " +
+            "if [ -d $dir ] && [ -r $dir ] && [ ! -e $dir/config.json ]; then echo; " +
+            "else echo INPUT_CONFIG_READ_FAILED; fi; } ;; esac"
+    }
 
     /**
      * Restarts the home screen so it rereads its look. A force-stop drops the

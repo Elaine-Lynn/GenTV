@@ -4,7 +4,7 @@ This file is for coding assistants (Claude Code, Codex, Gemini CLI and similar) 
 
 ## What GenTV is
 
-GenTV is a free, open-source, ad-free home screen (launcher) for Android TV and Google TV, plus an Android phone companion that installs it, cleans up preinstalled apps, restores changes and works as a remote. It is two Android apps; there is no GenTV CLI, desktop app or assistant plugin.
+GenTV is a free, open-source, ad-free home screen (launcher) for Android TV and Google TV, plus an Android phone companion that installs it, cleans up preinstalled apps, restores changes and works as a remote. It is two Android apps; the repository also provides a local maintenance adapter for assistants (see docs/tv-care.md), not a standalone desktop app or assistant plugin.
 
 | Component | Application ID | Source | Minimum |
 |---|---|---|---|
@@ -25,17 +25,21 @@ Read [docs/getting-started.md](docs/getting-started.md) first, including its "In
 5. Install and open:
    `adb -s <serial> install -r launcher/app/build/outputs/apk/debug/app-debug.apk`
    `adb -s <serial> shell am start -W -n com.gentv.tv/.MainActivity`
-6. Verify `Success`, `Status: ok`, and ask the user to confirm the GenTV screen on the TV. Re-run the Home command from step 4 and confirm it is unchanged.
+6. Verify `Success`, `Status: ok`, and ask the user to confirm the GenTV screen on the TV. After confirming GenTV works, set it as default Home with `adb -s <serial> shell cmd package set-home-activity com.gentv.tv/.MainActivity`. Re-run the Home command from step 4, press the physical Home button and confirm GenTV opens; reboot and verify again. A command reporting success alone is not proof. If handover fails, restore the recorded Home and report the limitation. If the user explicitly requests preview/install only, preserve the existing Home instead.
 7. Report what you ran and its raw output. Report build or emulator results separately from what was seen on the real TV.
 
 Do not:
 
-- change the default Home, disable the stock launcher or disable any package just to install GenTV;
+- treat CVTE, an unfamiliar Home or unclear Wi-Fi ownership as unsupported without investigation. A full GenTV setup authorises the necessary reversible Home handover: install and verify GenTV first, try normal selection, identify the actual Home, prepare recovery and continue the local staged flow in `docs/tv-care.md`. Resolve network ownership or verify actual Ethernet before disabling setupwraith; CVTE uses a separate reboot checkpoint. Never uninstall the stock launcher or disable Android/TV core services;
 - run cleanup lists from `phone/framework/data/devices/` on a device; they are community references for the phone app, not scripts;
 - uninstall an existing GenTV or clear its data after `INSTALL_FAILED_UPDATE_INCOMPATIBLE` or `INSTALL_FAILED_VERSION_DOWNGRADE`; stop and follow [docs/release.md](docs/release.md);
 - expose ADB beyond the local network, or print keys, pairing codes or signing material.
 
 When the work is finished, remind the user to turn ADB debugging off.
+
+## AI TV care skill
+
+For assistant-driven cleanup, ad-service reduction, GenTV installation, default Home handover and recovery, use [GenTV TV Care](skills/gentv-tv-care/SKILL.md). The local computer adapter and its checks are documented in [TV care](docs/tv-care.md). It prioritises the current local implementations, device records and environment; external references are only for comparison or missing device notes. Compatibility labels do not replace the real-device checks above.
 
 ## Building from source
 
@@ -46,7 +50,7 @@ No signing keys or server access are needed for Debug builds. Run from the repos
 ./launcher/gradlew -p launcher --no-daemon testDebugUnitTest lintDebug assembleDebug
 
 # Phone: JDK 21 for Gradle, JDK 25 for ADB tests, Android SDK 37; GENTV_HOME_JAVA_HOME = JDK 17
-./phone/gradlew -p phone --no-daemon :core:test :adb:test :app:testDebugUnitTest :app:lintDebug :app:assembleDebug
+./phone/gradlew -p phone --no-daemon :core:test :adb:test :tv-care:test :app:testDebugUnitTest :app:lintDebug :app:assembleDebug
 ```
 
 Outputs: `launcher/app/build/outputs/apk/debug/app-debug.apk` and `phone/app/build/outputs/apk/debug/app-debug.apk`. The phone build compiles and embeds the TV app; without the private key it is debug-signed and for local testing only.
@@ -59,6 +63,8 @@ Follow [CONTRIBUTING.md](CONTRIBUTING.md). Before you finish, run the checks for
 python3 tools/check_branding.py
 python3 tools/check_repository.py
 python3 -m unittest discover -s server/wallpaper -p 'test_*.py'
+python3 -m unittest discover -s tools -p 'test_*.py'
+python3 -m unittest discover -s skills/gentv-tv-care/scripts -p 'test_*.py'
 git diff --check
 ```
 

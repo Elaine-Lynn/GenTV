@@ -1,0 +1,4 @@
+{
+  "live_tv_package": "com.mediatek.wwtv.tvcenter",
+  "live_tv_action": "android.mtk.intent.action.ACTION_REQUEST_TOP_RESUME"
+}

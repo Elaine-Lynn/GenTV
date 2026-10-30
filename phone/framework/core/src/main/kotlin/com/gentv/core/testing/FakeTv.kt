@@ -357,7 +357,7 @@ class FakeTv(
                 val dir = c.substringAfter("mkdir -p ").substringBefore(" 2>/dev/null")
                 pushed.keys.removeAll { it.startsWith("$dir/") }; "cleared\n"
             }
-            c.startsWith("cat /sdcard/Android/data/") && c.contains("config.json") ->
+            (c.startsWith("cat /sdcard/Android/data/") || c.startsWith("r=\$(content call")) && c.contains("config.json") ->
                 (pushed[c.substringAfter("cat ").substringBefore(" 2>/dev/null")]?.let { String(it) } ?: "") + "\n"
             c.contains("am force-stop ") && c.endsWith("echo restarted") -> { lookRestarts++; "restarted\n" }
             c.startsWith("mkdir -p /sdcard/Android/data/") -> "ok\n"

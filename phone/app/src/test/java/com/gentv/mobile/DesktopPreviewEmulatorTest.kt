@@ -41,7 +41,7 @@ class DesktopPreviewEmulatorTest {
         val before=DesktopClient(shell).read().getJSONObject("config").toString()
         val assets=File("build/generated/homes/launcher")
         val manifest=JSONObject(File(assets,"build-manifest.json").readText())
-        val preview=DesktopPreviewApk(File(assets,"gentv-home-preview.apk").readBytes(),manifest.getJSONObject("sha256").getString("gentv-home-preview.apk"))
+        val preview=DesktopPreviewApk(File(assets,"gentv-home.apk").readBytes(),manifest.getJSONObject("sha256").getString("gentv-home.apk"))
         val result=DesktopPreviewInstaller(shell).install(preview)
         assertEquals(2,result.getJSONObject("config").getInt("schema"))
         assertEquals(before,result.getJSONObject("config").toString())

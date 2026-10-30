@@ -18,7 +18,8 @@ class DesktopDeliveryTest {
     private class Shell:TvShell {
         var sdk="36";var install="Success";var pushes=0
         val commands=mutableListOf<String>()
-        override suspend fun push(bytes:ByteArray,remotePath:String) { pushes++ }
+        val configuration = com.gentv.core.testing.FakeTv.googleTv()
+        override suspend fun push(bytes:ByteArray,remotePath:String) { pushes++; configuration.push(bytes, remotePath) }
         override suspend fun run(command:String):String {
             commands+=command
             return when {
@@ -27,7 +28,7 @@ class DesktopDeliveryTest {
                 command=="pm path com.gentv.tv"->"package:/data/app/com.gentv.tv/base.apk"
                 command.startsWith("am start -W ")->"Status: ok"
                 command.startsWith("am broadcast ")->"GENTV1:"+Base64.encodeToString(JSONObject().put("protocol",1).put("ok",true).put("backend","gentv").put("config",JSONObject().put("schema",2)).toString().toByteArray(),Base64.NO_WRAP)
-                else->""
+                else->configuration.run(command)
             }
         }
     }
@@ -59,4 +60,16 @@ class DesktopDeliveryTest {
         assertTrue(runCatching { DesktopPreviewInstaller(shell).install(apk().copy(sha256="0".repeat(64))) }.isFailure)
         assertTrue(shell.commands.isEmpty());assertEquals(0,shell.pushes)
     }
+    @Test fun matchedInputProfileIsPersistedBeforeOpeningHome()=runBlocking {
+        val shell=Shell()
+        val routes="""{"input_action":"vendor.HDMI","input_sources":["HW5=23"]}"""
+        DesktopPreviewInstaller(shell, routes).install(apk())
+        val config=shell.configuration.pushed["/sdcard/Android/data/com.gentv.tv/files/config.json"]!!.decodeToString()
+        assertEquals("vendor.HDMI", JSONObject(config).getString("input_action"))
+        val write=shell.commands.indexOfFirst { "content write" in it && "config.json" in it }
+        val start=shell.commands.indexOfFirst { it.startsWith("am start -W") }
+        assertTrue(write in 0 until start)
+        assertFalse(shell.commands.any { "set-home" in it || "disable-user" in it || "pm grant" in it })
+    }
+
 }

@@ -7,7 +7,7 @@ import java.security.MessageDigest
 /** Source-built, hash-checked preview. Deliberately does not hand over Home or grant permissions. */
 data class DesktopPreviewApk(val bytes: ByteArray, val sha256: String)
 
-class DesktopPreviewInstaller(private val shell: TvShell) {
+class DesktopPreviewInstaller(private val shell: TvShell, private val sourceConfig: String? = null) {
     suspend fun install(apk: DesktopPreviewApk): JSONObject {
         require(apk.bytes.size in 4..2_000_000 && apk.bytes[0] == 'P'.code.toByte() && apk.bytes[1] == 'K'.code.toByte()) { "Invalid preview APK" }
         val digest = MessageDigest.getInstance("SHA-256").digest(apk.bytes).joinToString("") { "%02x".format(it) }
@@ -22,6 +22,7 @@ class DesktopPreviewInstaller(private val shell: TvShell) {
                 "The TV refused the preview installation. No retry or uninstall was performed. Check signature compatibility and the TV's installation settings."
             }
             check(shell.run("pm path com.gentv.tv").lineSequence().any { it.startsWith("package:") }) { "Preview installation was not confirmed." }
+            com.gentv.core.ops.LauncherLook(shell).configureSources(sourceConfig)
             val started = shell.run("am start -W -n com.gentv.tv/.MainActivity")
             check(started.lineSequence().any { it.trim() == "Status: ok" }) { "Preview was installed but opening it was not confirmed." }
             return DesktopClient(shell).read().also { snapshot ->

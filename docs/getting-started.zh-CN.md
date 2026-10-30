@@ -80,6 +80,8 @@ cd GenTV
 python3 tools/check_branding.py
 python3 tools/check_repository.py
 python3 -m unittest discover -s server/wallpaper -p 'test_*.py'
+python3 -m unittest discover -s tools -p 'test_*.py'
+python3 -m unittest discover -s skills/gentv-tv-care/scripts -p 'test_*.py'
 ```
 
 电视版，在仓库根目录运行：
@@ -93,7 +95,7 @@ JAVA_HOME="$GENTV_HOME_JAVA_HOME" ./launcher/gradlew -p launcher --no-daemon tes
 手机版，`JAVA_HOME` 设为 JDK 21，`GENTV_HOME_JAVA_HOME` 设为 JDK 17：
 
 ```sh
-./phone/gradlew -p phone --no-daemon :core:test :adb:test :app:testDebugUnitTest :app:lintDebug :app:assembleDebug
+./phone/gradlew -p phone --no-daemon :core:test :adb:test :tv-care:test :app:testDebugUnitTest :app:lintDebug :app:assembleDebug
 ```
 
 输出：`phone/app/build/outputs/apk/debug/app-debug.apk`，包名 `com.gentv.mobile.debug`。没有私有签名配置时，内嵌的电视版 APK 使用调试签名。不同开发机的 Android Debug 证书可能不同。Debug 电视版不能覆盖签名不同的正式版。
@@ -109,7 +111,7 @@ JAVA_HOME="$GENTV_HOME_JAVA_HOME" ./launcher/gradlew -p launcher --no-daemon tes
 1. 从官方下载入口获取**电视版 APK**（`com.gentv.tv`），或按上面的电视版步骤自己构建。不要用手机版 APK。如果下载的是电视版分发 ZIP，先解压，再分发时请保留其中的许可文件。
 2. 把 APK 拷到电视支持的文件系统格式的 U 盘里，插到电视上。
 3. 在电视的文件管理器里打开 U 盘，选择 APK。如有提示，允许该文件管理器安装未知应用，再确认 Android 的安装对话框。
-4. 从电视的应用列表打开 GenTV，确认遥控器操作正常。设为默认桌面是系统设置里的另一步操作。
+4. 从电视的应用列表打开 GenTV，确认遥控器操作正常。随后按下文的默认桌面交接步骤，将 GenTV 设为默认桌面。
 
 有些厂商会禁止从 U 盘安装 APK，或者没有合适的文件管理器，这时如果条件允许，请改用手机或 ADB 安装。签名冲突或降级错误不代表可以卸载现有应用；请保留数据，按[发布与签名](release.md)里的迁移步骤处理。只用 U 盘安装电视版，不包含手机端的清理和 DNS 配置功能，这些需要手机获得授权连接后才能用。U 盘安装已写入文档，但在这次审核中还没有在真实电视上实际操作过。
 
@@ -121,9 +123,9 @@ JAVA_HOME="$GENTV_HOME_JAVA_HOME" ./launcher/gradlew -p launcher --no-daemon tes
 
 可以把下面这段话发给它：
 
-> 请帮我从 https://github.com/Elaine-Lynn/GenTV 安装 GenTV。先读 docs/getting-started.md。检查我的本地环境，必要时让我确认要装的是哪台电视。使用兼容的电视版 APK，或从源码构建 Debug APK。通过已授权的 ADB 安装并打开，验证结果，保留当前的默认桌面和已有应用。设备上的配对和安装提示由我来确认。
+> 请帮我从 https://github.com/Elaine-Lynn/GenTV 安装 GenTV。先读 docs/getting-started.md。检查我的本地环境，必要时让我确认要装的是哪台电视。使用兼容的电视版 APK，或从源码构建 Debug APK。通过已授权的 ADB 安装并打开，验证结果，并将 GenTV 设为默认桌面，同时保留原厂桌面和已有应用以便恢复。设备上的配对和安装提示由我来确认。
 
-助手应按照[命令行安装步骤](#connect-and-install-with-the-cli)和[给 AI 助手的说明](#instructions-for-an-ai-assistant)操作。要装哪台设备必须由用户指定，设备上的提示必须由用户确认；不能编造签名凭据、悄悄卸载不兼容的应用，或停用原厂桌面。这是有人参与的辅助安装流程，不是无人值守的一键安装。
+助手应按照[命令行安装步骤](#connect-and-install-with-the-cli)和[给 AI 助手的说明](#instructions-for-an-ai-assistant)操作。要装哪台设备必须由用户指定，设备上的提示必须由用户确认；不能编造签名凭据、悄悄卸载不兼容的应用，或在分阶段交接流程之外停用原厂桌面。这是有人参与的辅助安装流程，不是无人值守的一键安装。
 
 <a id="connect-and-install-with-the-cli"></a>
 
@@ -150,7 +152,7 @@ adb -s TV_SERIAL shell pm path com.gentv.tv
 adb -s TV_SERIAL shell am start -W -n com.gentv.tv/.MainActivity
 ```
 
-确认安装输出 `Success`、启动输出 `Status: ok`，再在电视上看到 GenTV 的界面。重新运行查询默认桌面的命令，确认原来的默认桌面没有变。`pm path` 能查到 APK，并不代表界面和遥控器都能正常使用。
+确认安装输出 `Success`、启动输出 `Status: ok`，再在电视上看到 GenTV 的界面。随后完成下文的默认桌面交接；如果用户明确只想预览或安装，则保留原默认桌面。`pm path` 能查到 APK，并不代表界面和遥控器都能正常使用。
 
 ```sh
 # 手机：把 PHONE_SERIAL 换成已授权手机的准确序列号。
@@ -160,7 +162,22 @@ adb -s PHONE_SERIAL shell am start -W -n com.gentv.mobile.debug/com.gentv.mobile
 
 正式版手机 APK 的包名是 `com.gentv.mobile`，不是 `.debug`。打开手机 App 后，让手机和电视处在同一个可互通的局域网里，连接或配对并在电视上确认，然后选择安装 GenTV。目前的安装器会安装并打开 GenTV、检查桌面通信是否正常；它会保留默认桌面，也不会自动授予可选权限。
 
-安装和选择默认桌面是两件事。只有电视主人想把 GenTV 设为默认时，才去系统的主屏幕设置里选择。有些固件没有这个选项。无障碍辅助功能和各机型的 HDMI / 信号源功能需要单独设置和验收；不要为了绕过被锁定的设置去停用原厂桌面。
+手机安装器的 APK 安装步骤本身不完成默认桌面交接。完整安装 GenTV 时，还应按下文完成交接和验证。有些固件会限制切换。无障碍辅助功能和各机型的 HDMI / 信号源功能需要单独设置和验收；普通安装不通过停用原厂桌面绕过限制。完整安装需要继续兼容接管时，按[电脑端维护流程](tv-care.md)的保护检查执行。
+
+## 将 GenTV 设为默认桌面
+
+完整的电视安装包含将 GenTV 设为默认桌面；用户明确只想预览或安装时，保留原默认桌面。切换前，将前面命令查到的原默认桌面完整组件名保存到本地恢复记录。如果返回的是选择器或没有具体桌面，先识别原桌面，不要猜测恢复组件。保留原厂桌面，保持其已安装、已启用。
+
+确认 GenTV 安装成功、电视画面和导航正常后，执行：
+
+```sh
+adb -s TV_SERIAL shell cmd package set-home-activity com.gentv.tv/.MainActivity
+adb -s TV_SERIAL shell cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.HOME
+```
+
+查询结果必须是 `com.gentv.tv/.MainActivity`（Activity 全限定名也等效）。请用户按实体遥控器的 Home 键，确认打开 GenTV，并用 `adb -s TV_SERIAL shell dumpsys activity activities` 核对前台 Activity。重启电视，等待重新连接后，再次查询默认桌面并验证实体 Home 键。命令返回 `Success` 本身不代表交接成功。
+
+如果命令不支持或被拒绝，可通过电视系统的默认桌面选择器切换，再做相同验证。交接失败时，用 `adb -s TV_SERIAL shell cmd package set-home-activity ORIGINAL_HOME_COMPONENT` 或系统选择器恢复原桌面，再验证 Home 键；将 `ORIGINAL_HOME_COMPONENT` 替换为已记录的组件名。明确报告固件限制，区分 APK 安装成功和桌面交接失败，完整安装继续按[本地分阶段交接流程](tv-care.md)查证实际 Home、修复网络条件后接管，不因品牌或未知信息直接判定不兼容。可选无障碍辅助功能需要单独设置和验收。验证结束后关闭 ADB 调试。
 
 ## 错误与恢复
 
@@ -172,7 +189,7 @@ adb -s PHONE_SERIAL shell am start -W -n com.gentv.mobile.debug/com.gentv.mobile
 | 依赖解析失败 | 检查仓库连通性、代理和首次构建的网络访问；去掉 `--offline` |
 | `INSTALL_FAILED_UPDATE_INCOMPATIBLE` | 证书冲突：停下来；保留用户数据，按 release.md 里的迁移步骤处理 |
 | `INSTALL_FAILED_VERSION_DOWNGRADE` | 使用兼容的新版本；不要自动卸载或强制降级 |
-| 应用装好了，但默认桌面没变 | 正常安装就是这样；选择默认桌面是用户单独的操作 |
+| 应用装好了，但默认桌面没变 | 按下文完成默认桌面交接；固件阻止切换时，分别报告安装和交接结果 |
 | 在线功能不可用 | 没有配置 API 时属于正常；已运行的服务器还需要有效的清单和素材 |
 | ADB 能连上，但某个功能失败 | 检查机型和固件的支持情况，以及该功能本身；能连上不等于兼容认证 |
 
@@ -188,4 +205,4 @@ adb -s PHONE_SERIAL shell am start -W -n com.gentv.mobile.debug/com.gentv.mobile
 
 先阅读本指南、README.md、CONTRIBUTING.md 和相关组件的文档。检查本地工具版本和 Git 状态，先构建并运行检查，再尝试安装。占位符就是占位符：不要猜设备序列号、私钥、服务器地址或配对码。不要输出签名材料，也不要提交密钥、备份、截图或设备记录。
 
-如果只是构建，验证完构建产物就停下。如果要安装到设备，先确定用户指定的已授权设备，记录当前默认桌面，安装选定的兼容 APK，再验证包、启动结果和设备界面。设备上的提示需要用户操作。签名或版本被拒绝是阻断性结果，不代表可以卸载。不要仅仅为了安装就更改默认桌面、停用应用或执行清理。构建和测试结果要和模拟器或真机验收结果分开报告。
+如果只是构建，验证完构建产物就停下。如果要安装到设备，先确定用户指定的已授权设备，记录当前默认桌面，安装选定的兼容 APK，再验证包、启动结果和设备界面。设备上的提示需要用户操作。签名或版本被拒绝是阻断性结果，不代表可以卸载。完整的电视安装包含下文的默认桌面交接；用户明确只想预览或安装时保留原默认桌面。不要为了安装或强行切换桌面而停用应用或执行清理。构建和测试结果要和模拟器或真机验收结果分开报告。
