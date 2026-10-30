@@ -61,6 +61,13 @@ def dispatch(device, operation):
 
 
 def main():
+    if sys.argv[1:] == ['--self-test']:
+        from adb_shell.adb_device import AdbDeviceTcp
+        from adb_shell.auth.keygen import keygen
+        from adb_shell.auth.sign_pythonrsa import PythonRSASigner
+        assert callable(AdbDeviceTcp) and callable(keygen) and callable(PythonRSASigner.FromRSAKeyPath)
+        print('Independent ADB dependencies ready; no keys or connections created')
+        return
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('-s', '--serial', required=True)
     parser.add_argument('operation', nargs=argparse.REMAINDER)

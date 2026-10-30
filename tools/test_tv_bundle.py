@@ -22,6 +22,7 @@ def verify(release):
         env=os.environ.copy();env['JAVA_HOME']='/not-installed';env['PATH']=str(temp)
         subprocess.run([str(workspace/'bin'/('gentv-care'+suffix)), '--help'],env=env,check=True,timeout=120)
         subprocess.run([str(workspace/'bin'/('gentv-care'+suffix)), '--setup-transport'],env=env,check=True,timeout=120)
+        subprocess.run([str(workspace/'bin'/('gentv-transport'+suffix)), '--self-test'],env=env,check=True,timeout=120)
         # Invalid endpoint is rejected before network or key generation; proves frozen client starts.
         proxy=subprocess.run([str(workspace/'bin'/('gentv-transport'+suffix)), '-s','8.8.8.8:5555','get-state'],env=env,capture_output=True,text=True,timeout=120)
         if proxy.returncode == 0 or 'Traceback' in proxy.stderr or 'Failed to execute' in proxy.stderr: raise ValueError('Frozen transport failed startup validation')
