@@ -1,17 +1,20 @@
 # 首次使用
 
-此 skill 需要本地终端和用户指定电视的网络访问权限。云端聊天环境通常无法直接操作家庭电视。
+Skill 需要本地终端及用户指定电视的网络访问权限。云端聊天通常无法直接操作家庭电视。
 
-1. 将 `gentv-tv-care` 文件夹安装到目标助手的技能目录，按该助手要求重新加载。
-2. 已有 GenTV 工作区时，运行 `python3 SKILL_DIR/scripts/setup.py --repo GENTV_REPO`，检查此发布所需文件是否一致。
-3. 没有匹配工作区时，获取与 skill 同一发布附带的维护 ZIP。当前候选包仅含 macOS ARM64；不要在其他系统运行它。运行：
+发布包中 release-lock.json 绑定源码依赖与平台运行包，不得用 latest 代替。已有工作区可用 `python3 SKILL_DIR/scripts/setup.py --repo GENTV_REPO` 检查；开发副本没有锁时按仓库指南运行。
 
-   `python3 SKILL_DIR/scripts/setup.py --bundle DOWNLOADED_RUNTIME.zip --destination NEW_DIRECTORY`
+没有匹配工作区时，使用系统原生准备脚本，不需要系统 Python：
 
-   脚本按 skill 中的 release-lock.json 校验压缩包 SHA-256，安全解压到新目录，检查依赖并输出工作区路径；不覆盖已有目录、不联网、不连接电视。
-4. 在输出工作区运行 `python3 tools/tv_care.py --help`。维护包自带 Java，无需 JDK/Gradle；仍需要 Python 3。原生 ADB 或独立客户端的依赖、安装 APK 所需 aapt 见 `docs/tv-care.md`。
-5. 告诉助手指定电视地址和目标，例如：“使用 GenTV 电视管家，给我这台电视安装并切换 GenTV 桌面，先备份。”调试端口和授权提示由用户提供或确认。
+- macOS / Linux：`sh SKILL_DIR/scripts/prepare.sh NEW_DIRECTORY`
+- Windows：`powershell -File SKILL_DIR/scripts/prepare.ps1 -Destination NEW_DIRECTORY`
 
-源码分发里的 setup.py 需要打包时生成的 release-lock.json；开发 checkout 按仓库文档运行，不把当前 HEAD 或 latest 当成此 skill 的固定版本。版本不匹配时使用对应运行包或对应源码发布，不跳过检查。
+脚本识别平台，下载固定 tag 附件并核对内置 SHA-256，解压到新目录，不覆盖已有环境。离线时 macOS/Linux 第二参数传本地 ZIP，Windows 使用 `-Bundle LOCAL_RUNTIME.zip`。不修改脚本执行策略；缺少系统 curl、unzip、哈希工具或 PowerShell 时明确报告。
 
-当前 release.json 标记为 local-candidate / published=false，表示尚未公开发布。不要宣称远端已存在下载或商店已收录。发布者完成公开上传后才更新发布状态。
+若已有 Python，可用 `python3 SKILL_DIR/scripts/setup.py --download --destination NEW_DIRECTORY`；本地 ZIP 使用 `--bundle ZIP --destination NEW_DIRECTORY`。Python 下载限制 HTTPS 和文件大小。
+
+准备后运行输出目录的 `bin/gentv-care --help`（Windows 为 bin/gentv-care.exe）。冻结运行包自带 Python、Java 和传统 TCP ADB 客户端，不需手动安装 Python、JDK、Gradle、aapt。USB 或加密无线调试仍需原生 adb；不切换调试模式迁就备用客户端。源码入口仍需 Python 和构建环境。
+
+向助手提供准确电视地址、已知端口和需求。调试由用户开启，电视提示由用户接受。准备脚本不连接电视，不安装 APK，不改 Home。
+
+单平台本地候选包只含本机平台，CI 合并包才含矩阵通过的平台。固定 tag 附件未真实发布前，下载将失败，请使用本地 ZIP，不能宣称远端已发布或商店已收录。

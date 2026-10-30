@@ -5,7 +5,7 @@ import os
 import re
 
 root = Path(__file__).resolve().parents[1]
-skip = {'.git', '.gradle', '.kotlin', 'build', 'out', 'work', 'shots', 'keys', '.idea', '__pycache__'}
+skip = {'.claude', '.git', '.gradle', '.kotlin', 'build', 'out', 'work', 'shots', 'keys', '.idea', '__pycache__'}
 legal = {'LICENSE', 'THIRD_PARTY_NOTICES.md', 'phone/framework/LICENSE'}
 # These skill sources explicitly identify pinned third-party compatibility references.
 # The exemption does not apply to Android app branding or any retired identity checks.

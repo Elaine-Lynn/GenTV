@@ -35,3 +35,7 @@ Aerial video catalogue URLs and labels are derived from aerial-tv (https://githu
 ## Additional TV care device references
 
 The local supplemental device records in `skills/gentv-tv-care/references/device-supplements.json` retain their source commit and are covered by `licenses/tv-care-device-references-LICENSE.txt`. They supplement the existing GenTV records; they are reference data, not executable cleanup scripts or a guarantee for every firmware.
+
+## Frozen TV Care maintenance bundles
+
+Frozen maintenance bundles include a Python runtime and adb-shell dependencies. Python licence text is retained in `licenses/python-runtime-LICENSE.txt`; the exact interpreter licence and installed dependency licence files are copied under `licenses/frozen-python/` in the bundle. PyInstaller licence files, including its distribution exception, are retained there. Java runtime legal files remain under `runtime/legal/`. This concerns maintenance distribution, not Android APKs.

@@ -11,7 +11,7 @@ description: 用 GenTV 管理 Android TV / Google TV：通过已授权 ADB 识�
 
 找到用户的 GenTV 工作区，先读 `AGENTS.md`、`docs/getting-started.md`、`CONTRIBUTING.md`。工作区未知时可在用户指定目录克隆 `https://github.com/Elaine-Lynn/GenTV`，不要覆盖已有目录。技能路径不等于仓库路径，运行辅助脚本时使用技能内的绝对路径。
 
-商店分发首次使用先读 [安装说明](INSTALL.md)，用 `scripts/setup.py` 核对当前工作区或解压同版本维护包。发布包的 `release-lock.json` 是依赖绑定；不得用浮动 latest 或旧 HEAD 替代。源码开发副本未带锁时按仓库文档运行，不能称为固定发布版本。
+商店分发首次使用先读 [安装说明](INSTALL.md)，优先用系统原生 `scripts/prepare.sh` / `scripts/prepare.ps1` 准备同版本维护包，或用 `scripts/setup.py` 核对已有工作区。发布包的 `release-lock.json` 是依赖绑定；不得用浮动 latest 或旧 HEAD 替代。源码开发副本未带锁时按仓库文档运行，不能称为固定发布版本。
 
 根据请求执行安装、清理、恢复或完整设置。完整设置包括默认 Home 交接；明确预览/仅安装则不改 Home。清理、DNS、应用与功能取舍须由用户请求或偏好清单明确覆盖；已有授权不要反复询问。只改设置与用户选择的桌面配置，不把日常设备管理变成修改源码或提交 PR。
 
@@ -44,7 +44,7 @@ python3 SKILL_DIR/scripts/compat.py --repo GENTV_REPO search '电视型号或主
 
 ## 连接、诊断与配置
 
-优先用本地 `tools/tv_care.py`，详情见仓库 `docs/tv-care.md`。源码运行时缓存构建，预构建维护包包含匹配系统/架构的 Java 运行时，使用者不需 Gradle/JDK，但保留 Python、安装时 aapt 等实际依赖。连接可选 `--transport auto/native/python`；独立客户端只支持传统 TCP，不绕过授权或降级 TLS。分块续传以长度和哈希为准，不重放状态不明的安装或修改。
+优先用本地 `tools/tv_care.py`，详情见仓库 `docs/tv-care.md`。源码运行时缓存构建，预构建维护包包含匹配系统/架构的 Java 运行时，使用者不需 Gradle/JDK，但保留 Python、实际运行方式的依赖。连接可选 `--transport auto/native/python`；独立客户端只支持传统 TCP，不绕过授权或降级 TLS。分块续传以长度和哈希为准，不重放状态不明的安装或修改。
 
 老系统使用真实 Home 查询降级链；序列号缺失时用户确认设备后以 `backup --device-confirmed` 建立随机设备标记，构建属性不足仍停止。不能按 IP 或型号认定同一物理电视。
 

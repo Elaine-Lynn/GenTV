@@ -1,0 +1,2 @@
+-r requirements-tv-transport.txt
+PyInstaller==6.16.0
