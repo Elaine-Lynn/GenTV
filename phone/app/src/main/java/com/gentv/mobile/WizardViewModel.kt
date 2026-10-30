@@ -36,8 +36,10 @@ import com.gentv.core.ops.DebloatOutcome
 import com.gentv.core.ops.Debloater
 import com.gentv.core.ops.Finisher
 import com.gentv.core.ops.HandoverOutcome
+import com.gentv.core.ops.HomeStages
 import com.gentv.core.ops.LauncherHandover
 import com.gentv.core.ops.PkgResult
+import com.gentv.core.ops.disabledByUs
 import com.gentv.core.ops.isOff
 import com.gentv.core.ops.removedByUs
 import com.gentv.core.ops.RestoreOutcome
@@ -159,7 +161,13 @@ data class TidyState(
 
 data class DockApp(val pkg: String, val label: String)
 
-enum class HomeAction { REPLACE_COPY, TURN_OFF_SETUP_APP, RETRY }
+enum class HomeAction {
+    REPLACE_COPY, TURN_OFF_SETUP_APP, RETRY,
+    /** After Home went back to the original launcher: turn off only the identified Home blockers and try again. */
+    COMPAT_HANDOVER,
+    /** CVTE: the owner restarted the TV with GenTV installed and saw the TV, ADB and Home come back. */
+    CONFIRM_REBOOT,
+}
 
 sealed interface HomeState {
     data class Offer(
@@ -173,10 +181,19 @@ sealed interface HomeState {
         /** The TV's home app is one GenTV hasn't tested: no change is offered, only a one-line card. */
         val untested: Boolean = false,
     ) : HomeState
-    data class GenTVResult(val installed: Boolean, val message: String? = null) : HomeState
+    /**
+     * GenTV was installed and opened. A full install then asks the owner to check it on the TV before Home is
+     * handed over; [previewOnly] keeps the current Home.
+     */
+    data class GenTVResult(val installed: Boolean, val message: String? = null, val previewOnly: Boolean = false) : HomeState
     data object Running : HomeState
-    data class Problem(val message: String, val worried: Boolean, val action: HomeAction? = null, val rescue: List<String> = emptyList()) : HomeState
-    data class Installed(val app: HomeApp = HomeApp.GENTV) : HomeState
+    /** [installed]: GenTV is on the TV and works; only the Home switch is what didn't happen. */
+    data class Problem(
+        val message: String, val worried: Boolean, val action: HomeAction? = null, val rescue: List<String> = emptyList(),
+        val installed: Boolean = false,
+    ) : HomeState
+    /** [note]: what happened to the original home screen, after a full install's handover. */
+    data class Installed(val app: HomeApp = HomeApp.GENTV, val note: String? = null) : HomeState
     /** Projectivy's Play Store page is open on the TV; waiting for the owner to press Install. */
     data class WaitingForPlayStore(val app: HomeApp) : HomeState
     /** Picking a look for the compatible desktop home screen; [back] is where Back returns. */
@@ -394,9 +411,15 @@ class WizardViewModel(
 
     private fun inputProfile(): String? = snapshot?.info?.let { sourceProfiles().select(it) }
 
-    fun installGenTVHome() {
+    /**
+     * Installs and opens GenTV without touching Home. A full install goes on to [makeGenTVHome] once the owner
+     * confirms GenTV on the TV; [previewOnly] stops here and keeps the current Home.
+     */
+    fun installGenTVHome(previewOnly: Boolean = false) {
         if (_ui.value.home == HomeState.Running) return
         _ui.update { it.copy(home = HomeState.Running) }
+        staged = false
+        rebootConfirmed = false
         viewModelScope.launch {
             try {
                 tvLock.withLock {
@@ -404,12 +427,24 @@ class WizardViewModel(
                     val apk = desktopPreviewApk() ?: error("The GenTV desktop package is unavailable.")
                     com.gentv.mobile.data.DesktopPreviewInstaller(tv, inputProfile()).install(apk)
                 }
-                _ui.update { it.copy(home = HomeState.GenTVResult(true)) }
+                _ui.update { it.copy(home = HomeState.GenTVResult(true, previewOnly = previewOnly)) }
             } catch (e: kotlinx.coroutines.CancellationException) { throw e }
             catch (e: Exception) {
-                _ui.update { it.copy(home = HomeState.GenTVResult(false, e.message)) }
+                _ui.update { it.copy(home = HomeState.GenTVResult(false, e.message, previewOnly)) }
             }
         }
+    }
+
+    /** True once the owner confirmed GenTV on the TV: Retry and the setup-app answers continue [HomeStages]. */
+    private var staged = false
+    private var rebootConfirmed = false
+
+    /** The owner sees GenTV on the TV and the remote moves around it: hand Home over, original launcher kept on. */
+    fun makeGenTVHome() {
+        val result = _ui.value.home as? HomeState.GenTVResult ?: return
+        if (!result.installed || result.previewOnly) return
+        staged = true
+        runStage(Stage.KEEP_STOCK) { it.keepStock() }
     }
 
     private var screenJob: Job? = null
@@ -1499,6 +1534,7 @@ class WizardViewModel(
 
     private fun enterHome() {
         val snap = snapshot ?: return
+        staged = false
         val options = (snap.installed - snap.disabled)
             .filter { Grouping.groupOf(ListEntry(it, "", "")) == Group.STREAMING }
             .filter { it !in _ui.value.tidy.results.filterValues { r -> r.isOff }.keys }
@@ -1641,7 +1677,13 @@ class WizardViewModel(
     private var lastApp: HomeApp = HomeApp.GENTV
 
     fun homeAction(action: HomeAction, onEthernet: Boolean = false) {
-        when (action) {
+        if (staged) when (action) {
+            HomeAction.RETRY -> runStage(Stage.KEEP_STOCK) { it.keepStock() }
+            HomeAction.CONFIRM_REBOOT -> { rebootConfirmed = true; runStage(Stage.COMPATIBILITY) { it.compatibility(true, onEthernet) } }
+            HomeAction.COMPAT_HANDOVER, HomeAction.TURN_OFF_SETUP_APP ->
+                runStage(Stage.COMPATIBILITY) { it.compatibility(rebootConfirmed, onEthernet) }
+            HomeAction.REPLACE_COPY -> Unit // GenTV is already installed; a staged handover never removes a copy
+        } else when (action) {
             HomeAction.RETRY -> if (lastApp.fromPlayStore) installFromPlayStore(lastApp) else runHome { h, apk, sdk -> h.run(apk, lastDock, sdk) }
             HomeAction.REPLACE_COPY -> runHome { h, apk, sdk ->
                 if (h.removeConflictingCopy()) h.run(apk, lastDock, sdk)
@@ -1649,11 +1691,12 @@ class WizardViewModel(
             }
             // The handover now turns the setup app off itself when that's safe; this only adds "my TV is on a cable".
             HomeAction.TURN_OFF_SETUP_APP -> runHome { h, apk, sdk -> h.run(apk, lastDock, sdk, onEthernet = onEthernet) }
+            HomeAction.COMPAT_HANDOVER, HomeAction.CONFIRM_REBOOT -> Unit
         }
     }
 
     private fun setupAppMessage(c: WraithCheck): String = when (c) {
-        WraithCheck.OwnsWifi -> "Your TV's saved Wi-Fi belongs to Google TV's setup app, so turning that app off would drop the TV off Wi-Fi. Your old home screen stays. If your TV uses a network cable instead, tick the box below and try again."
+        WraithCheck.OwnsWifi -> "Your TV's saved Wi-Fi belongs to Google TV's setup app, so turning that app off would drop the TV off Wi-Fi. Your old home screen stays. In TV Settings, forget this Wi-Fi network and join it again, reconnect this phone, then try again. If your TV uses a network cable instead, tick the box below and try again; GenTV checks that the TV really uses the cable."
         WraithCheck.SetupIncomplete -> "Your TV hasn't finished its first setup, so Google TV's setup app has to stay on. Your old home screen stays."
         WraithCheck.Persistent -> "Google TV's setup app can't be turned off on this TV, so the Home button would keep going to it. Your old home screen stays."
         is WraithCheck.Unknown -> "GenTV couldn't check Google TV's setup app safely (${c.why}), so it changed nothing. Your old home screen stays."
@@ -1671,24 +1714,82 @@ class WizardViewModel(
         wizard(WizardEvent.Busy(true))
         _ui.update { it.copy(home = HomeState.Running) }
         viewModelScope.launch {
-            val outcome = try {
-                var result: HandoverOutcome
-                while (true) {
-                    val s = shell ?: if (reconnect()) shell!! else null
-                    if (s == null) { result = HandoverOutcome.Disconnected; break }
-                    val h = LauncherHandover(s, lg, sleep = { delay(b.saveWaitMs) }, app = app, sourceConfig = inputProfile())
-                    result = tvLock.withLock { block(h, apk, sdk) }
-                    if (result != HandoverOutcome.Disconnected) break
-                    shell = null
-                    if (!reconnect()) break
-                }
-                result
-            } catch (e: kotlinx.coroutines.CancellationException) {
-                throw e
+            val outcome = handoverOnTv { s ->
+                block(LauncherHandover(s, lg, sleep = { delay(b.saveWaitMs) }, app = app, sourceConfig = inputProfile()), apk, sdk)
             }
             trace.line("home screen: $outcome")
             _ui.update { it.copy(home = homeState(outcome, app)) }
             wizard(WizardEvent.Busy(false))
+        }
+    }
+
+    /** Runs a handover on the TV, reconnecting when the link drops (a CVTE restart, Wi-Fi going away). */
+    private suspend fun handoverOnTv(op: suspend (TvShell) -> HandoverOutcome): HandoverOutcome {
+        while (true) {
+            val s = shell ?: if (reconnect()) shell!! else null
+            if (s == null) return HandoverOutcome.Disconnected
+            val result = tvLock.withLock { op(s) }
+            if (result != HandoverOutcome.Disconnected) return result
+            shell = null
+            if (!reconnect()) return result
+        }
+    }
+
+    private enum class Stage { KEEP_STOCK, COMPATIBILITY }
+
+    /** A full install's Home handover ([HomeStages]); GenTV is already installed and was confirmed on the TV. */
+    private fun runStage(stage: Stage, block: suspend (HomeStages) -> HandoverOutcome) {
+        if (_ui.value.home is HomeState.Running || _ui.value.wizard.busy) return
+        val lg = log ?: return
+        val b = backend ?: return
+        val sdk = _ui.value.tv?.sdk ?: 0
+        lastApp = HomeApp.GENTV
+        wizard(WizardEvent.Busy(true))
+        _ui.update { it.copy(home = HomeState.Running) }
+        viewModelScope.launch {
+            val outcome = handoverOnTv { s -> block(HomeStages(s, lg, sdk, inputProfile(), sleep = { delay(b.saveWaitMs) })) }
+            trace.line("home handover ${stage.name.lowercase()}: $outcome")
+            _ui.update { it.copy(home = stagedState(outcome, stage)) }
+            wizard(WizardEvent.Busy(false))
+        }
+    }
+
+    private fun labelOf(component: String?): String? =
+        component?.substringBefore('/')?.let { _ui.value.labels[it] ?: com.gentv.core.lists.AppLabels.label(it) }
+
+    /** Install success is already behind the owner; these say only what happened to Home. */
+    private fun stagedState(o: HandoverOutcome, stage: Stage): HomeState = when {
+        o is HandoverOutcome.Done -> HomeState.Installed(HomeApp.GENTV, note = o.disabledStock?.let { stock ->
+            val off = listOf(stock, Launchers.SETUPWRAITH).filter { it in log?.records().orEmpty().disabledByUs() }
+            "Turned off, never uninstalled: ${off.ifEmpty { listOf(stock) }.joinToString { labelOf(it).orEmpty() }}. " +
+                "Restore everything turns them back on and makes your original home screen Home again."
+        } ?: "Your original home screen is still installed and turned on. Restore everything makes it Home again.")
+        o is HandoverOutcome.RolledBack && stage == Stage.KEEP_STOCK -> HomeState.Problem(
+            "GenTV works, but this TV sent the Home button back to ${labelOf(o.homeNow) ?: "its original home screen"}, so GenTV put that one back as Home. " +
+                "GenTV can try again by turning off only that home screen. It's never uninstalled, and Restore everything turns it back on.",
+            worried = false, action = HomeAction.COMPAT_HANDOVER, installed = true,
+        )
+        o is HandoverOutcome.RolledBack -> HomeState.Problem(
+            "This TV's firmware keeps the Home button for ${labelOf(o.homeNow) ?: "its original home screen"}, so GenTV put everything back. " +
+                "GenTV stays installed: open it from your TV's apps.",
+            worried = false, installed = true,
+        )
+        o == HandoverOutcome.RebootCheckpoint -> HomeState.Problem(
+            "This TV runs CVTE firmware, so GenTV checks a restart before it turns anything off. Restart the TV now, with GenTV still installed. " +
+                "When the TV is back, the Home button works and this phone reconnects, tap continue. Nothing has been turned off.",
+            worried = false, action = HomeAction.CONFIRM_REBOOT, installed = true,
+        )
+        o is HandoverOutcome.SetupAppBlocked -> HomeState.Problem(
+            setupAppMessage(o.check), worried = false, installed = true,
+            action = if (o.check == WraithCheck.OwnsWifi || o.check is WraithCheck.Unknown) HomeAction.TURN_OFF_SETUP_APP else null,
+        )
+        o is HandoverOutcome.UnknownHome -> HomeState.Problem(
+            "GenTV couldn't identify which app runs your TV's home screen, so it left Home alone. GenTV stays installed: open it from your TV's apps.",
+            worried = false, installed = true,
+        )
+        else -> when (val h = homeState(o, HomeApp.GENTV)) {
+            is HomeState.Problem -> h.copy(installed = true, action = h.action.takeUnless { it == HomeAction.REPLACE_COPY })
+            else -> h
         }
     }
 
@@ -1725,6 +1826,7 @@ class WizardViewModel(
             worried = true, rescue = o.rescue,
         )
         HandoverOutcome.Disconnected -> HomeState.Problem("The TV stopped answering. Check it's on, then try again.", worried = true, action = HomeAction.RETRY)
+        HandoverOutcome.RebootCheckpoint -> HomeState.Problem("Restart the TV once, then try again.", worried = false, action = HomeAction.RETRY)
     }
 
     fun homeContinue() = wizard(WizardEvent.HomeScreenDone)

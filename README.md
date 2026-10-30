@@ -77,7 +77,7 @@ Recommended. You need an Android phone on the same Wi-Fi or local network as the
 2. On the TV, [turn on developer options and network or wireless debugging](#turn-on-adb-debugging-on-the-tv).
 3. Open GenTV Remote, pick the TV and accept the pairing or debugging prompt on the TV.
 4. Select **Install GenTV desktop**. GenTV opens on the TV.
-5. Make GenTV the default home screen: choose it in the TV's Home settings. The phone app installs and opens GenTV but doesn't switch Home yet; the [AI assistant route](#install-with-an-ai-assistant) can do it for you and keep a recovery record.
+5. Check that GenTV is on the TV and the remote moves around it, then tap **Yes, make GenTV my home screen**. The app records the current Home, switches to GenTV with the original launcher kept on, and checks the Home button. If the firmware sends Home back, it says so separately from the install and offers a compatibility step that turns off only what blocks the switch, never uninstalling it. **Just preview it, keep my home screen** installs GenTV without changing Home.
 
 After that, keep using the phone for cleanup, the remote, the keyboard and home-screen editing.
 
@@ -191,9 +191,9 @@ Not yet. The phone companion is an Android app. With an iPhone, use the [AI assi
 
 ### Will GenTV become my default home screen?
 
-Yes, that is what a full install is for. Once GenTV opens and works with your remote, the [AI assistant route](#install-with-an-ai-assistant) sets it as the default Home, then checks the Home button and a reboot. The previous Home is recorded so you can switch back. With the phone app or a USB install, choose GenTV in the TV's Home settings. If you only want to try GenTV first, say so and your current Home is kept.
+Yes, that is what a full install is for. Once GenTV opens and works with your remote, the phone app or the [AI assistant route](#install-with-an-ai-assistant) sets it as the default Home and checks the Home button; the assistant also checks a reboot. The previous Home is recorded so you can switch back with Restore everything. With a USB install, choose GenTV in the TV's Home settings. If you only want to try GenTV first, say so and your current Home is kept.
 
-Firmware on Xiaomi, TCL and other China-market TVs often has no such setting, or returns to the stock home screen at power-on or when you press Home. The assistant route then continues with the staged handover in [TV care](docs/tv-care.md): it identifies the actual Home, may disable only what blocks the switch (never uninstalls it, and never touches Android or TV core services), and keeps an exact restore command. Accessibility helpers are only turned on if you choose them. If a firmware limit can't be lifted, you are told so and can still open GenTV from the app list. Don't disable the stock launcher by hand: on some TVs that can leave a black screen at boot that only ADB can fix.
+Firmware on Xiaomi, TCL and other China-market TVs often has no such setting, or returns to the stock home screen at power-on or when you press Home. The phone app and the assistant route then continue with the staged handover in [TV care](docs/tv-care.md): it identifies the actual Home, may disable only what blocks the switch (never uninstalls it, and never touches Android or TV core services), and keeps an exact restore command. Accessibility helpers are only turned on if you choose them. If a firmware limit can't be lifted, you are told so and can still open GenTV from the app list. Don't disable the stock launcher by hand: on some TVs that can leave a black screen at boot that only ADB can fix.
 
 ### Could this break my TV? How do I undo changes?
 

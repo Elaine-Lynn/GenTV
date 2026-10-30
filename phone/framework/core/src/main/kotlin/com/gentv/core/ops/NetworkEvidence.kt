@@ -1,4 +1,4 @@
-package com.gentv.care
+package com.gentv.core.ops
 
 /** Require both an active Ethernet default network and an actual Ethernet default route. */
 fun ethernetDefault(connectivity: String, routes: String): Boolean {

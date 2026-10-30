@@ -183,6 +183,7 @@ private fun StepScreen(step: Step, s: UiState, vm: WizardViewModel?, onShareLogs
             s.home, s.tidy.disabledCount, { vm?.toggleDock(it) }, { vm?.chooseHome(it) }, { vm?.installGenTVHome() }, { vm?.skipHome() },
             { a, eth -> vm?.homeAction(a, eth) }, { vm?.homeContinue() }, onShareLogs, { vm?.cancelPlayStore() },
             { vm?.openLook() }, { vm?.closeLook() }, { vm?.applyLook(it) }, { vm?.applyPhoto(it) }, onBack = { vm?.back() },
+            onPreview = { vm?.installGenTVHome(previewOnly = true) }, onMakeHome = { vm?.makeGenTVHome() },
         )
         Step.DONE -> DoneScreen(
             s.tv, s.done, s.tidy.disabledCount, s.wizard.mode == Mode.RESTORE, s.labels,

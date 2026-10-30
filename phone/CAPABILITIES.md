@@ -5,7 +5,7 @@
 | Discovery, manual connection and pairing | Authorised ADB transport |
 | Inspection, backup, cleanup and restore | Shared framework; protected-package and recovery rules retained |
 | Remote, touchpad, keyboard and file transfer | Existing connection and user-selected operations |
-| GenTV installation | One source-built, identity-checked TV package; no automatic default-Home change |
+| GenTV installation | One source-built, identity-checked TV package; default Home handed over in stages only after the user confirms GenTV on the TV, with the original Home recorded; preview keeps Home |
 | Desktop configuration | Read, local draft, save, undo, profile import and export |
 | Updates, feedback and optional analytics | GenTV endpoints; signature checks and opt-in boundaries retained |
 | Logs and share cards | GenTV presentation; no inherited product mascot |
