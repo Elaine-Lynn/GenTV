@@ -76,7 +76,8 @@ jobs:
       - name: Verify GitHub asset digests before public release
         shell: bash
         run: |
-          gh api "repos/$GH_REPO/releases/tags/$RELEASE_TAG" > /tmp/server-release.json
+          RELEASE_API=$(gh release view "$RELEASE_TAG" --json apiUrl --jq .apiUrl)
+          gh api "$RELEASE_API" > /tmp/server-release.json
           python3 - <<'PY'
           from pathlib import Path
           import hashlib,json
