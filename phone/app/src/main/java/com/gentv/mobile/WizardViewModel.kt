@@ -333,6 +333,7 @@ class WizardViewModel(
     /** Where photos are decoded and shrunk; tests pass their own. */
     private val imageWork: kotlinx.coroutines.CoroutineDispatcher = kotlinx.coroutines.Dispatchers.Default,
     private val desktopPreviewApk: () -> com.gentv.mobile.data.DesktopPreviewApk? = { null },
+    private val sourceProfiles: () -> com.gentv.core.lists.SourceProfiles = { com.gentv.core.lists.SourceProfiles("[]") },
 ) : ViewModel() {
     private val _ui = MutableStateFlow(UiState(languageCode = store.language()))
     val ui: StateFlow<UiState> = _ui.asStateFlow()
@@ -391,6 +392,8 @@ class WizardViewModel(
         desktopOperation { com.gentv.mobile.data.DesktopClient(it).read() }
     }
 
+    private fun inputProfile(): String? = snapshot?.info?.let { sourceProfiles().select(it) }
+
     fun installGenTVHome() {
         if (_ui.value.home == HomeState.Running) return
         _ui.update { it.copy(home = HomeState.Running) }
@@ -399,7 +402,7 @@ class WizardViewModel(
                 tvLock.withLock {
                     val tv = shell ?: error("Reconnect to your TV first.")
                     val apk = desktopPreviewApk() ?: error("The GenTV desktop package is unavailable.")
-                    com.gentv.mobile.data.DesktopPreviewInstaller(tv).install(apk)
+                    com.gentv.mobile.data.DesktopPreviewInstaller(tv, inputProfile()).install(apk)
                 }
                 _ui.update { it.copy(home = HomeState.GenTVResult(true)) }
             } catch (e: kotlinx.coroutines.CancellationException) { throw e }
@@ -424,7 +427,7 @@ class WizardViewModel(
         if (_ui.value.desktop?.busy == true) return
         desktopOperation { tv ->
             val preview = desktopPreviewApk() ?: error("The source-built preview is unavailable. Rebuild the phone app.")
-            com.gentv.mobile.data.DesktopPreviewInstaller(tv).install(preview)
+            com.gentv.mobile.data.DesktopPreviewInstaller(tv, inputProfile()).install(preview)
         }
     }
 
@@ -1543,7 +1546,9 @@ class WizardViewModel(
         wizard(WizardEvent.Busy(true))
         viewModelScope.launch {
             val files = withContext(imageWork) { runCatching { make() }.getOrNull() }
-            val ok = files != null && withShell { s -> com.gentv.core.ops.LauncherLook(s).apply(files) } == true
+            val ok = files != null && withShell { s ->
+                com.gentv.core.ops.LauncherLook(s).also { it.configureSources(inputProfile()) }.apply(files)
+            } == true
             trace.line("look $id: ok=$ok")
             val msg = when {
                 files == null -> RestoreUi.Finished("That photo couldn't be opened. Try another one.", ok = false)
@@ -1671,7 +1676,7 @@ class WizardViewModel(
                 while (true) {
                     val s = shell ?: if (reconnect()) shell!! else null
                     if (s == null) { result = HandoverOutcome.Disconnected; break }
-                    val h = LauncherHandover(s, lg, sleep = { delay(b.saveWaitMs) }, app = app)
+                    val h = LauncherHandover(s, lg, sleep = { delay(b.saveWaitMs) }, app = app, sourceConfig = inputProfile())
                     result = tvLock.withLock { block(h, apk, sdk) }
                     if (result != HandoverOutcome.Disconnected) break
                     shell = null

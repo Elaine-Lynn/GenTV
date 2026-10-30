@@ -1,0 +1,5 @@
+{
+  "live_tv_package": "",
+  "source_panel_service": "com.toptech.tvmenu/.input.InputActivity",
+  "source_panel_action": "com.toptech.tv.action.INPUT_ACTIVITY"
+}

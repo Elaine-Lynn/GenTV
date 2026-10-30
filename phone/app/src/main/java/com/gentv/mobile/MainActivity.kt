@@ -98,6 +98,8 @@ class MainActivity : ComponentActivity() {
                         runCatching { java.io.File(packageManager.getApplicationInfo(pkg, 0).sourceDir) }.getOrNull()
                     }) else null,
                     lists = { Store.loadLists(app.assets) },
+                    sourceProfiles = { com.gentv.core.lists.SourceProfiles(
+                        app.assets.open("source-profiles.json").bufferedReader().use { it.readText() }) },
                     desktopPreviewApk = { runCatching {
                         val bytes = app.assets.open("launcher/gentv-home.apk").use { it.readBytes() }
                         val manifest = org.json.JSONObject(app.assets.open("launcher/build-manifest.json").bufferedReader().use { it.readText() })

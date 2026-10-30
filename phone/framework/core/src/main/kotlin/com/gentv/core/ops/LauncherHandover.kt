@@ -42,8 +42,15 @@ class LauncherHandover(
     private val clock: () -> Long = System::currentTimeMillis,
     private val sleep: suspend (Long) -> Unit = { kotlinx.coroutines.delay(it) },
     private val app: HomeApp = HomeApp.GENTV,
+    private val sourceConfig: String? = null,
     /** Short waits while checking the Home key (an app opening takes a moment). Not the long "Android saves" wait. */
     private val settle: suspend (Long) -> Unit = { kotlinx.coroutines.delay(it) },
+    /** Desktop adapter may identify a vendor Home from live intent/activity evidence. */
+    private val identifiedStockHome: String? = null,
+    /** First handover stage: install and select Home while preserving every original package. */
+    private val keepStockEnabled: Boolean = false,
+    /** A second stage can reuse the APK installed and confirmed by the first stage. */
+    private val alreadyInstalled: Boolean = false,
 ) {
     /** True once this run turned Google TV's setup app off, so a rollback turns it back on. */
     private var wraithOffByUs = false
@@ -101,6 +108,11 @@ class LauncherHandover(
             // Already one of GenTV's home screens: switch between them without touching stock.
             HomeApp.of(homePkg) != null -> null
             homePkg in Launchers.KNOWN_STOCK -> homePkg
+            homePkg == identifiedStockHome && homePkg != null -> {
+                val claims = Parse.componentsIn(tv.run(Commands.QUERY_HOME))
+                if (homePkg !in claims) return HandoverOutcome.UnknownHome(homePkg)
+                homePkg
+            }
             homePkg == "android" -> {
                 val claimants = Parse.componentsIn(tv.run(Commands.QUERY_HOME))
                 val known = claimants.filter { it in Launchers.KNOWN_STOCK }
@@ -116,6 +128,8 @@ class LauncherHandover(
             if (ourPkg !in listed) return HandoverOutcome.NotInstalled
             ours = Parse.component(tv.run(Commands.resolveHomeOf(ourPkg)))?.takeIf { it.startsWith("$ourPkg/") }
                 ?: return HandoverOutcome.NotInstalled
+        } else if (alreadyInstalled) {
+            if (ourPkg !in Parse.packages(tv.run(Commands.isInstalled(ourPkg)))) return HandoverOutcome.NotInstalled
         } else if (!install(apk)) {
             return lastInstallFailure!!
         }
@@ -149,6 +163,7 @@ class LauncherHandover(
         // 2. Give it the dock apps. The compatible desktop reads config.json at start;
         // the home screen takes them as start extras below.
         if (app.dockByConfig) {
+            LauncherLook(tv, clock).configureSources(sourceConfig)
             // Through the launcher's own provider (LauncherLook): a file the shell creates can't be read on Android 14.
             if (dockApps.isNotEmpty()) LauncherLook(tv, clock).writeDock(dockApps)
             tv.run(Commands.grantLocation(ourPkg)) // shows the Wi-Fi name; harmless if refused
@@ -164,12 +179,12 @@ class LauncherHandover(
         // 4. Google TV's setup app claims Home at priority 1 and takes it as soon as the stock launcher is off
         // (a recovery screen on TCL). Turn it off first, while the stock launcher still owns Home, in the
         // tested order, but only when that's safe: it must not own the saved Wi-Fi, and setup must be finished.
-        if (stock != null) prepareSetupApp()?.let { return it }
+        if (stock != null && !keepStockEnabled) prepareSetupApp()?.let { return it }
 
         // 5. Make it Home, then turn the stock launcher off, then set Home again.
         log.append(ActionRecord(clock(), Op.SET_HOME, ours, Phase.INTENT, before = homeBefore))
         setOurs(sdk)
-        if (stock != null && !isPersistent(stock)) {
+        if (stock != null && !keepStockEnabled && !isPersistent(stock)) {
             if (!Parse.lines(tv.run(Commands.mirror(listOf(stock)))).contains("ok")) {
                 return rollback(stock, sdk)
             }
@@ -187,7 +202,7 @@ class LauncherHandover(
         val pressOpens = if (resolvesToUs) homeKeyOpens() else null
         if (resolvesToUs && (pressOpens == null || pressOpens == ourPkg)) {
             log.append(ActionRecord(clock(), Op.SET_HOME, ours, Phase.DONE, before = homeBefore))
-            return HandoverOutcome.Done(stock)
+            return HandoverOutcome.Done(stock.takeUnless { keepStockEnabled })
         }
         val landed = if (resolvesToUs) pressOpens else homeNow
         log.append(ActionRecord(clock(), Op.SET_HOME, ours, Phase.FAILED, before = homeBefore, detail = "home is $landed"))
@@ -248,6 +263,15 @@ class LauncherHandover(
 
     private suspend fun rollback(stock: String?, sdk: Int): HandoverOutcome {
         if (stock == null) return HandoverOutcome.RolledBack(Parse.component(tv.run(Commands.RESOLVE_HOME)))
+        if (keepStockEnabled) {
+            val original = Parse.component(tv.run(Commands.resolveHomeOf(stock)))
+                ?: return HandoverOutcome.RollbackFailed(Parse.component(tv.run(Commands.RESOLVE_HOME)), listOf(Commands.resolveHomeOf(stock)))
+            if (sdk >= 29) tv.run(Commands.addHomeRole(stock))
+            tv.run(Commands.setHome(original))
+            val resolved = Parse.component(tv.run(Commands.RESOLVE_HOME))
+            return if (resolved?.substringBefore('/') == stock) HandoverOutcome.RolledBack(resolved)
+                else HandoverOutcome.RollbackFailed(resolved, listOf(Commands.setHome(original)))
+        }
         tv.run(Commands.enable(stock))
         val component = Parse.component(tv.run(Commands.resolveHomeOf(stock)))
         if (stock !in Parse.packages(tv.run(Commands.LIST_DISABLED))) {

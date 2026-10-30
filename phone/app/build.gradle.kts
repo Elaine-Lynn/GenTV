@@ -84,6 +84,7 @@ val copyLists by tasks.registering(Copy::class) {
         eachFile { path = "lists/" + file.parentFile.name + ".txt" }
         includeEmptyDirs = false
     }
+    from(rootProject.file("framework/data/source-profiles.json"))
     into(layout.buildDirectory.dir("generated/lists"))
 }
 // Licensed themes for existing reference-desktop configuration records: config, wallpapers and a preview.
@@ -141,7 +142,7 @@ val buildHomeAssets by tasks.registering(Exec::class) {
     val repoRoot = rootProject.projectDir.parentFile
     inputs.files(fileTree(rootProject.file("../launcher")) {
         exclude("**/build/**", "**/.gradle/**", "**/local.properties")
-    }, rootProject.file("../tools/build_phone_assets.py"))
+    }, rootProject.file("../tools/build_phone_assets.py"), rootProject.file("framework/data/source-profiles.json"))
     inputs.property("apiBaseUrl", apiBaseUrl)
     inputs.property("debugSigning", signing == null)
     outputs.dir(layout.buildDirectory.dir("generated/homes"))
