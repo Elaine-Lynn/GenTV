@@ -1,0 +1,92 @@
+name: Publish verified TV Care artifacts
+on:
+  workflow_dispatch:
+    inputs:
+      artifact_run_id:
+        description: Successful GenTV skill release workflow run ID
+        required: true
+        type: string
+      publish:
+        description: Publish the existing draft after upload and checksum verification
+        default: false
+        type: boolean
+permissions:
+  actions: read
+  contents: write
+jobs:
+  upload:
+    runs-on: ubuntu-22.04
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      ARTIFACT_RUN_ID: ${{ inputs.artifact_run_id }}
+      RELEASE_TAG: gentv-tv-care-v1.0.0
+    steps:
+      - name: Require successful build and matching release source tree
+        shell: bash
+        run: |
+          [[ "$ARTIFACT_RUN_ID" =~ ^[0-9]+$ ]]
+          gh api "repos/$GH_REPO/actions/runs/$ARTIFACT_RUN_ID" > /tmp/build.json
+          python3 - <<'PY'
+          import json
+          run=json.load(open('/tmp/build.json'))
+          assert run['status']=='completed' and run['conclusion']=='success'
+          assert run['path']=='.github/workflows/tv-care-release.yml'
+          PY
+          gh release view "$RELEASE_TAG" --json isDraft,targetCommitish > /tmp/release.json
+          python3 - <<'PY'
+          import json,re
+          release=json.load(open('/tmp/release.json'))
+          assert release['isDraft'] is True
+          assert re.fullmatch('[a-f0-9]{40}',release['targetCommitish'])
+          PY
+          RUN_SHA=$(python3 -c "import json;print(json.load(open('/tmp/build.json'))['head_sha'])")
+          TARGET_SHA=$(python3 -c "import json;print(json.load(open('/tmp/release.json'))['targetCommitish'])")
+          RUN_TREE=$(gh api "repos/$GH_REPO/git/commits/$RUN_SHA" --jq .tree.sha)
+          TARGET_TREE=$(gh api "repos/$GH_REPO/git/commits/$TARGET_SHA" --jq .tree.sha)
+          test "$RUN_TREE" = "$TARGET_TREE"
+      - uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ inputs.artifact_run_id }}
+          name: gentv-tv-care-release
+          path: release
+      - name: Check local artifacts and upload to draft
+        shell: bash
+        run: |
+          cd release
+          sha256sum --check SHA256SUMS.txt
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib,json,zipfile
+          root=Path('.')
+          sums={}
+          for line in (root/'SHA256SUMS.txt').read_text().splitlines():
+              digest,name=line.split(None,1);name=name.strip()
+              assert Path(name).name==name and len(digest)==64
+              assert hashlib.sha256((root/name).read_bytes()).hexdigest()==digest
+              sums[name]=digest
+          assert len(sums)==5
+          with zipfile.ZipFile('gentv-tv-care-1.0.0.zip') as z:
+              lock=json.loads(z.read('gentv-tv-care/release-lock.json'))
+          assert len(lock['runtimes'])==4
+          for runtime in lock['runtimes']: assert sums[runtime['file']]==runtime['sha256']
+          PY
+          gh release upload "$RELEASE_TAG" ./*.zip SHA256SUMS.txt --clobber
+      - name: Verify GitHub asset digests before public release
+        shell: bash
+        run: |
+          gh api "repos/$GH_REPO/releases/tags/$RELEASE_TAG" > /tmp/server-release.json
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib,json
+          assets=json.load(open('/tmp/server-release.json'))['assets']
+          server={asset['name']:asset for asset in assets}
+          local=list(Path('release').glob('*.zip'))+[Path('release/SHA256SUMS.txt')]
+          assert len(server)==len(local)==6
+          for path in local:
+              assert server[path.name]['digest']=='sha256:'+hashlib.sha256(path.read_bytes()).hexdigest(),path.name
+          PY
+      - name: Publish without replacing the TV APK latest release
+        if: inputs.publish
+        run: gh release edit "$RELEASE_TAG" --draft=false --latest=false
