@@ -9,7 +9,7 @@ description: 用 GenTV 管理 Android TV / Google TV：通过已授权 ADB 识�
 
 ## 入口与范围
 
-找到用户的 GenTV 工作区，先读 `AGENTS.md`、`docs/getting-started.md`、`CONTRIBUTING.md`。工作区未知时可在用户指定目录克隆 `https://github.com/Elaine-Lynn/GenTV`，不要覆盖已有目录。技能路径不等于仓库路径，运行辅助脚本时使用技能内的绝对路径。
+找到用户的 GenTV 工作区，先读 `AGENTS.md`、`docs/getting-started.md`、`CONTRIBUTING.md`。没有工作区时优先准备下述固定版本维护包；仅明确需要源码工作时获取对应 tag，不克隆浮动版本作为已匹配依赖。不要覆盖已有目录。技能路径不等于仓库路径，运行辅助脚本时使用技能内的绝对路径。
 
 商店分发首次使用先读 [安装说明](INSTALL.md)，优先用系统原生 `scripts/prepare.sh` / `scripts/prepare.ps1` 准备同版本维护包，或用 `scripts/setup.py` 核对已有工作区。发布包的 `release-lock.json` 是依赖绑定；不得用浮动 latest 或旧 HEAD 替代。源码开发副本未带锁时按仓库文档运行，不能称为固定发布版本。
 
@@ -36,7 +36,7 @@ python3 SKILL_DIR/scripts/compat.py --repo GENTV_REPO inspect
 python3 SKILL_DIR/scripts/compat.py --repo GENTV_REPO search '电视型号或主板'
 ```
 
-电脑操作使用仓库 `tools/tv_care.py`，它运行 `phone/tv-care` JVM 适配器，直接复用本地 core。清理、安装、恢复默认输出计划；授权覆盖具体动作后加 `--apply`，不能用参数代替用户确认。
+维护包操作优先用 `bin/gentv-care`（Windows 为 .exe）；下面及参考文档中的 `python3 tools/tv_care.py` 示例替换为此入口，其余参数保持一致。已有版本匹配的源码工作区才使用 `tools/tv_care.py`，它运行 `phone/tv-care` JVM 适配器，直接复用本地 core。清理、安装、恢复默认输出计划；授权覆盖具体动作后加 `--apply`，不能用参数代替用户确认。
 
 `GENTV_REPO` 是用户当前 GenTV 仓库绝对路径。查询本地原有机型库与补充记录；使用 `tools/tv_care.py match` 实际调用 ModelMatcher 和 ListParser，结合真实安装包核对；查询命中不自动等于适配成功。用户界面统一使用“已兼容”，仅对已确认匹配的兼容记录使用；来源和固件条件保留内部记录，不虚构本次操作结果。
 

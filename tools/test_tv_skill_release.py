@@ -1,4 +1,5 @@
 import hashlib
+import os
 import importlib.util
 import tempfile
 from pathlib import Path
@@ -31,7 +32,8 @@ class ReleaseTest(unittest.TestCase):
             with self.assertRaises(ValueError): setup.unpack(archive, root / 'bad', {**lock, 'runtime': {**lock['runtime'], 'sha256': 'x'}})
             self.assertFalse((root / 'bad').exists())
             installed = setup.unpack(archive, root / 'new', lock)
-            self.assertTrue((installed / 'tool').stat().st_mode & 0o111)
+            self.assertEqual((installed / 'tool').read_bytes(), b'ok')
+            if os.name != 'nt': self.assertTrue((installed / 'tool').stat().st_mode & 0o111)
             with self.assertRaises(ValueError): setup.unpack(archive, root / 'new', lock)
 
     def test_unsafe_zip_refused_before_creating_destination(self):
