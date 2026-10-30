@@ -182,7 +182,7 @@ python3 tools/tv_care.py configure --serial TV_SERIAL --session SESSION --boot h
 
 ## 冻结运行包和发布
 
-构建机安装 `tools/requirements-tv-build.txt`，运行 `python3 tools/package_tv_skill.py --frozen`。用户入口为包内 `bin/gentv-care`（Windows 为 .exe），自带 Python、Java、传统 TCP 客户端；不需要手动安装 Python/JDK/Gradle/aapt。USB/TLS 调试仍需原生 adb。源码入口的构建依赖不变。Python、依赖和 Java 法律文件随包保留。
+构建机先按哈希锁安装 `tools/requirements-tv-transport.txt`，再单独安装 `tools/requirements-tv-build.txt`，运行 `python3 tools/package_tv_skill.py --frozen`。用户入口为包内 `bin/gentv-care`（Windows 为 .exe），自带 Python、Java、传统 TCP 客户端；不需要手动安装 Python/JDK/Gradle/aapt。USB/TLS 调试仍需原生 adb。源码入口的构建依赖不变。Python、依赖和 Java 法律文件随包保留。
 
 `.github/workflows/tv-care-release.yml` 分别在 macOS ARM64/x64、Linux x64、Windows x64 构建及启动检查，再合并统一 skill；结果以实际 CI 为准。固定 tag 生成 GitHub 草稿，普通 PR 仅上传 artifacts，不公开发布。原生准备脚本从固定版本 URL 下载并校验，缓存工作区可复用。
 
