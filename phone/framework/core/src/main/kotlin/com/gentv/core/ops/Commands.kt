@@ -19,6 +19,9 @@ object Commands {
     const val QUERY_HOME = "cmd package query-activities --brief $HOME_ARGS"
     const val MEMINFO = "cat /proc/meminfo"
     const val WIFI_OWNERS = "dumpsys wifi | grep -o 'cname=[^ ]*'"
+    /** The default network and its route, read together by [ethernetDefault]. */
+    const val CONNECTIVITY = "dumpsys connectivity"
+    const val DEFAULT_ROUTE = "ip route show default"
     const val TV_INPUTS = "dumpsys tv_input"
     const val ENABLED_IMES = "settings get secure enabled_input_methods"
     const val DEFAULT_IME = "settings get secure default_input_method"

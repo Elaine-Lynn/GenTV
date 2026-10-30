@@ -9,6 +9,9 @@ import com.github.takahirom.roborazzi.captureRoboImage
 import com.gentv.mobile.ui.GenTVTheme
 import com.gentv.mobile.ui.screens.HubScreen
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -72,6 +75,48 @@ class HomeScreenTest {
         compose.onNodeWithText("Projectivy").assertDoesNotExist()
         compose.onNodeWithText("Install GenTV desktop").performClick()
         assertEquals(true, installed)
+    }
+
+    @Test fun fullInstallAsksBeforeHomeAndPreviewStaysAChoice() {
+        var state by androidx.compose.runtime.mutableStateOf<HomeState>(HomeState.Offer())
+        val calls = mutableListOf<String>()
+        compose.setContent {
+            GenTVTheme {
+                com.gentv.mobile.ui.screens.HomeScreenStep(
+                    state, 0, {}, {}, { calls += "install" }, {}, { a, _ -> calls += a.name }, { calls += "continue" }, {},
+                    onPreview = { calls += "preview" }, onMakeHome = { calls += "home" },
+                )
+            }
+        }
+        compose.onNodeWithText("Just preview it, keep my home screen").performClick()
+        state = HomeState.GenTVResult(true)
+        compose.waitForIdle()
+        compose.onNodeWithText("Is GenTV on your TV?").assertExists()
+        compose.onNodeWithText("Not now, keep my home screen").performClick()
+        compose.onNodeWithText("Yes, make GenTV my home screen").performClick()
+        state = HomeState.GenTVResult(true, previewOnly = true)
+        compose.waitForIdle()
+        compose.onNodeWithText("Yes, make GenTV my home screen").assertDoesNotExist()
+        compose.onNodeWithText("GenTV is open on your TV. Your home screen wasn't changed.").assertExists()
+        state = HomeState.Problem("Firmware kept Home.", worried = false, action = HomeAction.COMPAT_HANDOVER, installed = true)
+        compose.waitForIdle()
+        compose.onNodeWithText("GenTV installed, Home not switched").assertExists()
+        compose.onNodeWithText("Turn off the old home screen and try").performClick()
+        state = HomeState.Problem("Restart first.", worried = false, action = HomeAction.CONFIRM_REBOOT, installed = true)
+        compose.waitForIdle()
+        compose.onNodeWithText("I restarted the TV, continue").performClick()
+        assertEquals(listOf("preview", "continue", "home", "COMPAT_HANDOVER", "CONFIRM_REBOOT"), calls)
+    }
+
+    @Test fun handoverCopyHasChineseTranslations() {
+        val zh = com.gentv.mobile.ui.AppLanguage.CHINESE
+        for (en in listOf(
+            "Just preview it, keep my home screen", "Is GenTV on your TV?", "Yes, make GenTV my home screen",
+            "Not now, keep my home screen", "GenTV installed, Home not switched", "Turn off the old home screen and try",
+            "I restarted the TV, continue",
+        )) assertTrue(en, com.gentv.mobile.ui.AppCopy.translate(en, zh) != en)
+        assertEquals("已停用（未卸载）：Google TV。恢复所有更改会重新启用它们，并把原桌面设回默认桌面。",
+            com.gentv.mobile.ui.AppCopy.translate("Turned off, never uninstalled: Google TV. Restore everything turns them back on and makes your original home screen Home again.", zh))
     }
 
     @Test fun renderDarkHomepage() {

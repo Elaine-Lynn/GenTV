@@ -28,6 +28,11 @@ sealed interface HandoverOutcome {
     data object Disconnected : HandoverOutcome
     /** A Play Store home screen (Projectivy) isn't installed on the TV yet. Nothing was changed. */
     data object NotInstalled : HandoverOutcome
+    /**
+     * CVTE firmware: before anything is turned off, the owner restarts the TV once with GenTV installed and
+     * confirms the TV, ADB and Home came back ([HomeStages]). Nothing was changed.
+     */
+    data object RebootCheckpoint : HandoverOutcome
 }
 
 /**

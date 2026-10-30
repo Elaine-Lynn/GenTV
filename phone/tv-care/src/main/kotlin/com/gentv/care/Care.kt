@@ -127,7 +127,7 @@ class Care(private val tv: TvShell, private val session: Session, private val re
         if (snap.installed.any { it.startsWith("com.cvte.") } && !bootConfirmed)
             return HandoverOutcome.SetupAppBlocked(WraithCheck.Unknown("GenTV installed. Reboot once, confirm ADB and Home return, then resume with --boot-confirmed; do not enable key helpers in this pass"))
         val wifi = tv.run(Commands.WIFI_OWNERS)
-        val ethernet = ethernetDefault(tv.run("dumpsys connectivity"), tv.run("ip route show default"))
+        val ethernet = ethernetDefault(tv.run(Commands.CONNECTIVITY), tv.run(Commands.DEFAULT_ROUTE))
         if (Launchers.SETUPWRAITH in claimants) {
             if (!ethernet && (!Regex("(?m)^cname=[A-Za-z0-9_.]+").containsMatchIn(wifi) || wifi.contains("setupwraith")))
                 return HandoverOutcome.SetupAppBlocked(WraithCheck.Unknown("GenTV installed. Forget and rejoin Wi-Fi in TV Settings, or establish a verified Ethernet default route; resume this session after reconnecting"))

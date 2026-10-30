@@ -1,4 +1,4 @@
-package com.gentv.care
+package com.gentv.core.ops
 import org.junit.Assert.*
 import org.junit.Test
 class NetworkEvidenceTest {
