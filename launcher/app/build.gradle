@@ -21,8 +21,8 @@ android {
         applicationId 'com.gentv.tv'
         minSdk 26
         targetSdk 34
-        versionCode 23
-        versionName '3.7.1'
+        versionCode 24
+        versionName '3.7.2'
         testInstrumentationRunner 'com.gentv.tv.DesktopIntegration'
         buildConfigField 'String', 'API_BASE_URL', '"' + apiBaseUrl + '"'
     }
@@ -110,3 +110,11 @@ def packageReleaseDistribution = tasks.register('packageReleaseDistribution', Zi
     destinationDirectory = layout.buildDirectory.dir('outputs/distribution')
 }
 tasks.matching { it.name == 'assembleRelease' }.configureEach { finalizedBy(packageReleaseDistribution) }
+
+// One routing catalog is shared by standalone TV APKs and the phone installer.
+def prepareInputProfiles = tasks.register('prepareInputProfiles', Copy) {
+    from(rootProject.file('../phone/framework/data/source-profiles.json'))
+    into(layout.buildDirectory.dir('generated/inputProfiles'))
+}
+android.sourceSets.main.assets.srcDir(layout.buildDirectory.dir('generated/inputProfiles'))
+tasks.named('preBuild') { dependsOn(prepareInputProfiles) }

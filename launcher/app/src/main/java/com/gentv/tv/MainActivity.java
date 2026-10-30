@@ -820,7 +820,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             controlsPosition.topMargin=0;
             controlsPosition.setMarginEnd(Math.round(16*density));
             findViewById(R.id.topButtons).setLayoutParams(controlsPosition);
-            inputSignal = new InputSignalDrawable(density);
+            inputSignal = new InputSignalDrawable(this, density);
             ((TextView)btnInputs).setCompoundDrawablesRelativeWithIntrinsicBounds(inputSignal,null,null,null);
             btnWifi.setVisibility(View.VISIBLE);
             for (TextView button : new TextView[]{(TextView)btnInputs, btnWifi, (TextView)btnSettings}) {
@@ -930,19 +930,18 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     /**
      * VIEW_INPUTS, forwarded by InputsRequestActivity while handle_view_inputs is on: open the Inputs menu once
      * the pill is on screen. The intent is replaced so a later recreate() does not
-     * open it again. Nothing to do when the TV has no inputs to list (the pill is hidden then).
+     * open it again. A hidden header button must not suppress a request from Settings.
      * top_menu hides the pill, so the list hangs under the gear there, as in showInputs().
      */
     private boolean openInputsIfAsked(Intent intent) {
         if (intent == null || !ACTION_VIEW_INPUTS.equals(intent.getAction())) return false;
         setIntent(new Intent(Intent.ACTION_MAIN));
-        View anchor = topMenu ? findViewById(R.id.btnSettings) : btnInputs;
-        if (anchor.getVisibility() != View.VISIBLE) return true;
+        View anchor = inputsAnchor();
         if (anchor.isLaidOut()) {
             // Android 9 delivers a new intent to a paused activity with a brief resume and pause around it, and
             // onPause() closes popups, so open the menu once that has run (HiSmartTV A4, Android TV 9).
             anchor.post(() -> {
-                if (isFinishing() || anchor.getVisibility() != View.VISIBLE) return;
+                if (isFinishing() || isDestroyed()) return;
                 anchor.requestFocus();
                 showInputs();
             });
@@ -954,7 +953,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             public void onGlobalLayout() {
                 anchor.getViewTreeObserver().removeOnGlobalLayoutListener(this);
                 anchor.post(() -> {
-                    if (isFinishing() || anchor.getVisibility() != View.VISIBLE) return;
+                    if (isFinishing() || isDestroyed()) return;
                     anchor.requestFocus();
                     showInputs();
                 });
@@ -3031,41 +3030,42 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
     /** Hides the Inputs pill when it would have nothing to list: streaming boxes have no HDMI-in, AV or tuner. */
     private void updateInputsButton() {
-        if (compactHeaderIcons && inputSignal != null) {
-            boolean connected=false;
-            TvInputManager manager=(TvInputManager)getSystemService(TV_INPUT_SERVICE);
-            if(manager!=null)try {
-                for(TvInputInfo info:manager.getTvInputList()) {
-                    if(info.isPassthroughInput() && !info.isHidden(this)
-                            && manager.getInputState(info.getId())==TvInputManager.INPUT_STATE_CONNECTED) {
-                        connected=true;break;
-                    }
-                }
-            } catch (RuntimeException ignored) { }
-            btnInputs.setVisibility(showInputsPill && connected ? View.VISIBLE:View.GONE);
-            btnInputs.setContentDescription(getString(R.string.inputs));
-            if(showInputsPill && connected && headerResumed && !reducedMotion && android.animation.ValueAnimator.areAnimatorsEnabled()) inputSignal.start();
-            else inputSignal.stop();
-            return;
-        }
-        if (!showInputsPill) {
-            btnInputs.setVisibility(View.GONE);
-            return;
-        }
         boolean any = liveTvIntent() != null || !sourcePanelService.isEmpty()
                 || (coocaaSources && !CoocaaSources.list(this).isEmpty());
+        boolean connected = false;
         TvInputManager tim = (TvInputManager) getSystemService(TV_INPUT_SERVICE);
-        if (!any && tim != null) {
-            for (TvInputInfo info : tim.getTvInputList()) {
-                // Inputs hidden in Settings > Inputs are left out of the menu, so they don't count here either.
-                if (info.isPassthroughInput() && !info.isHidden(this)) {
-                    any = true;
-                    break;
+        if (tim != null) {
+            try {
+                for (TvInputInfo info : tim.getTvInputList()) {
+                    if (info.isPassthroughInput() && !info.isHidden(this)) {
+                        any = true;
+                        if (info.getType() == TvInputInfo.TYPE_HDMI
+                                && tim.getInputState(info.getId()) == TvInputManager.INPUT_STATE_CONNECTED) connected = true;
+                    }
                 }
-            }
+            } catch (RuntimeException ignored) { /* Vendor panel and tuner remain usable. */ }
         }
-        btnInputs.setVisibility(any ? View.VISIBLE : View.GONE);
+        updateInputIndicator(any, connected);
     }
+
+    /** The compact header is an HDMI connection reminder; Settings retains the full Inputs menu. */
+    private void updateInputIndicator(boolean any, boolean connected) {
+        boolean visible = compactHeaderIcons ? connected : any;
+        btnInputs.setVisibility(showInputsPill && visible ? View.VISIBLE : View.GONE);
+        btnInputs.setContentDescription(getString(compactHeaderIcons ? R.string.hdmi_connected : R.string.inputs));
+        if (inputSignal != null) {
+            if (showInputsPill && connected && headerResumed && !reducedMotion
+                    && android.animation.ValueAnimator.areAnimatorsEnabled()) inputSignal.start();
+            else inputSignal.stop();
+        }
+    }
+
+    /** Settings can request inputs even when the optional header button is hidden. */
+    private View inputsAnchor() {
+        return !topMenu && btnInputs.getVisibility() == View.VISIBLE
+                ? btnInputs : findViewById(R.id.btnSettings);
+    }
+
 
     /** boot_to_live_tv, or the Open on start app: the first time Home comes up after the TV starts, open that app
      *  instead. Once per boot, keyed on Settings.Global.BOOT_COUNT and committed to disk before the app starts: on a
@@ -3212,8 +3212,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         // top_menu: the pill is gone, so the list hangs under the gear, growing inward from the right.
         // Read the switch, not the pill: show_inputs_pill=false hides the pill too, and there the list
         // keeps its usual place.
-        boolean underGear = topMenu;
-        View anchor = findViewById(underGear ? R.id.btnSettings : R.id.btnInputs);
+        View anchor = inputsAnchor();
+        boolean underGear = anchor != btnInputs;
         View panel = getLayoutInflater().inflate(R.layout.popup_inputs, root, false);
         LinearLayout rows = panel.findViewById(R.id.rows);
 
@@ -3226,6 +3226,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         boolean connectedOnly = inputsConnectedOnly;
         List<View> folded = new ArrayList<>();
         boolean sawNonHdmi = false;
+        boolean rootChannel = TvContract.Channels.CONTENT_URI.toString().equals(liveTvInputId);
         String tunerId = null;
         boolean tunerIsHw = false;
         boolean tunerIsAnalog = false;
@@ -3265,7 +3266,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             for (TvInputInfo info : inputs) {
                 if (info.getType() == TvInputInfo.TYPE_TUNER
                         && (info.getServiceInfo().applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0
-                        && (liveTvInputId.isEmpty() || liveTvInputId.equals(info.getId()))) {
+                        && (liveTvInputId.isEmpty() || rootChannel || liveTvInputId.equals(info.getId()))) {
                     // Prefer a hardware tuner: the framework names those ".../HW<n>". System apps such as
                     // AirPlay also register software inputs of type TUNER and may sort first (seen on TCL G05).
                     // Among tuners of the same kind, skip an analog input when another is present.
@@ -3369,13 +3370,18 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             // An explicit tuner uses its channel collection (e.g. DVB-S rather than DVB-T/C).
             // Keep the legacy passthrough route for automatic selection: some OEM players need it.
             // If the configured input is absent, tunerId stays null and the app opens normally.
-            boolean configured = !liveTvInputId.isEmpty();
+            boolean configured = !liveTvInputId.isEmpty() && !rootChannel;
             Intent tuned = new Intent(Intent.ACTION_VIEW)
                     .setDataAndType(configured ? TvContract.buildChannelsUriForInput(tunerId)
                                     : TvContract.buildChannelUriForPassthroughInput(tunerId),
                             configured ? TvContract.Channels.CONTENT_TYPE : TvContract.Channels.CONTENT_ITEM_TYPE)
                     .setPackage(liveTvPkg);
-            if (tuned.resolveActivity(getPackageManager()) != null) liveTv = tuned;
+            ComponentName handler = tuned.resolveActivity(getPackageManager());
+            if (handler != null) {
+                liveTv = rootChannel
+                        ? new Intent(Intent.ACTION_VIEW).setData(TvContract.Channels.CONTENT_URI).setComponent(handler)
+                        : tuned;
+            }
         }
         if (liveTv != null) {
             if (rows.getChildCount() > 0) addSeparator(rows);

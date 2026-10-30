@@ -13,7 +13,7 @@ import java.net.HttpURLConnection;
 import java.security.MessageDigest;
 import org.json.JSONObject;
 
-/** User-controlled update and anonymous aggregate statistics settings. */
+/** Software update settings. */
 public final class CloudSettingsActivity extends Activity {
     private TextView status;
     private Button check;
@@ -21,6 +21,7 @@ public final class CloudSettingsActivity extends Activity {
     private File verified;
     private Button later;
     private boolean mandatory;
+    private boolean restoreUpdateFocus;
     private void mandatory(boolean required) {
         mandatory=required; later.setVisibility(required?View.GONE:View.VISIBLE);
     }
@@ -35,7 +36,7 @@ public final class CloudSettingsActivity extends Activity {
         shape.setStroke(dp(width),stroke); return shape;
     }
     private Button action(int label, boolean primary) {
-        Button button = new Button(this); button.setText(label); button.setTextSize(15); button.setAllCaps(false);
+        Button button = new Button(this); button.setFocusableInTouchMode(true); button.setText(label); button.setTextSize(15); button.setAllCaps(false);
         button.setTextColor(0xFFF5F5F7); button.setTypeface(Typeface.create("sans-serif-medium",Typeface.NORMAL));
         StateListDrawable background = new StateListDrawable();
         background.addState(new int[]{android.R.attr.state_focused}, surface(primary?0xFF168FE5:0xFF424750,0xFFF5F5F7,2,12));
@@ -47,12 +48,12 @@ public final class CloudSettingsActivity extends Activity {
     @Override protected void attachBaseContext(Context base) { super.attachBaseContext(LauncherLocale.wrap(base)); }
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
-        FrameLayout backdrop = new FrameLayout(this); backdrop.setBackgroundColor(0x88080B10); backdrop.setOnClickListener(v->{if(!mandatory) finish();});
+        FrameLayout backdrop = new FrameLayout(this); backdrop.setBackgroundColor(0x88080B10); backdrop.setOnClickListener(v->{if(!mandatory) finish();}); backdrop.setFocusable(false);
         LinearLayout card = new LinearLayout(this); card.setOrientation(LinearLayout.VERTICAL); card.setPadding(dp(30),dp(26),dp(30),dp(24));
         card.setClipChildren(false); card.setClipToPadding(false);
-        card.setBackground(surface(0xF21C2129,0x40FFFFFF,1,24)); card.setElevation(dp(16)); card.setOnClickListener(v->{});
-        FrameLayout.LayoutParams position = new FrameLayout.LayoutParams(Math.min(dp(550),getResources().getDisplayMetrics().widthPixels-dp(48)),Math.min(dp(440),getResources().getDisplayMetrics().heightPixels-dp(40)),Gravity.CENTER);
-        ScrollView scroll=new ScrollView(this); scroll.setFillViewport(true); scroll.addView(card); backdrop.addView(scroll,position);
+        card.setBackground(surface(0xF21C2129,0x40FFFFFF,1,24)); card.setElevation(dp(16)); card.setOnClickListener(v->{}); card.setFocusable(false);
+        FrameLayout.LayoutParams position = new FrameLayout.LayoutParams(Math.min(dp(550),getResources().getDisplayMetrics().widthPixels-dp(48)),Math.min(dp(340),getResources().getDisplayMetrics().heightPixels-dp(40)),Gravity.CENTER);
+        ScrollView scroll=new ScrollView(this); scroll.setFocusable(false); scroll.setDescendantFocusability(ViewGroup.FOCUS_AFTER_DESCENDANTS); scroll.setFillViewport(true); scroll.addView(card); backdrop.addView(scroll,position);
         LinearLayout header = new LinearLayout(this); header.setGravity(Gravity.CENTER_VERTICAL);
         android.text.SpannableString brand = new android.text.SpannableString("GenTV");
         brand.setSpan(new android.text.style.ForegroundColorSpan(0xFF64C7F5),3,5,android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
@@ -67,25 +68,37 @@ public final class CloudSettingsActivity extends Activity {
         LinearLayout actions=new LinearLayout(this); actions.setClipChildren(false); actions.setClipToPadding(false); actions.setGravity(Gravity.END); actions.setPadding(0,dp(18),0,dp(20));
         later=action(R.string.cloud_later,false); later.setOnClickListener(v->finish()); actions.addView(later,new LinearLayout.LayoutParams(dp(150),dp(48)));
         check=action(R.string.cloud_check_update,true); LinearLayout.LayoutParams main=new LinearLayout.LayoutParams(0,dp(48),1); main.leftMargin=dp(14); actions.addView(check,main); card.addView(actions);
-        View divider=new View(this); divider.setBackgroundColor(0x20FFFFFF); card.addView(divider,new LinearLayout.LayoutParams(-1,dp(1)));
-        Button stats=action(R.string.cloud_statistics,false); stats.setTextSize(13);
-        stats.setText(TvCloud.prefs(this).getBoolean("statistics",false)?R.string.cloud_stats_on:R.string.cloud_stats_off);
-        stats.setOnClickListener(v->{boolean enabled=!TvCloud.prefs(this).getBoolean("statistics",false);
-            TvCloud.prefs(this).edit().putBoolean("statistics",enabled).apply();
-            stats.setText(enabled?R.string.cloud_stats_on:R.string.cloud_stats_off);});
-        LinearLayout.LayoutParams statsPosition=new LinearLayout.LayoutParams(-1,dp(42)); statsPosition.topMargin=dp(14);statsPosition.bottomMargin=dp(6);card.addView(stats,statsPosition);
-        TextView statsHint=text(getString(R.string.cloud_statistics_hint),11,0xFF929EAD); card.addView(statsHint);
         mandatory(TvCloud.required(this));
         check.setOnClickListener(v->check()); setContentView(backdrop); check.requestFocus();
         if(!TvCloud.enabled()) {
-            status.setText(R.string.cloud_unconfigured); check.setVisibility(View.GONE); stats.setVisibility(View.GONE); statsHint.setVisibility(View.GONE); later.requestFocus();
+            status.setText(R.string.cloud_unconfigured); check.setVisibility(View.GONE); later.requestFocus();
         } else if(TvCloud.prefs(this).getLong("pendingVersion",0)>BuildConfig.VERSION_CODE) {
             check.setText(R.string.cloud_install); check.setOnClickListener(v->install());
         } else if(getIntent().getBooleanExtra("check",false)) check();
     }
-    private void message(int text) { if(!isFinishing() && !isDestroyed()) { status.setText(text); progress.setVisibility(View.GONE); check.setEnabled(true); } }
+    @Override public void onWindowFocusChanged(boolean focused) {
+        super.onWindowFocusChanged(focused);
+        if (focused && check != null && !check.hasFocus() && !later.hasFocus()) focusAction();
+    }
+    private void focusAction() {
+        if (check.getVisibility() == View.VISIBLE && check.isEnabled()) check.requestFocus();
+        else if (later.getVisibility() == View.VISIBLE) later.requestFocus();
+    }
+    private void checking(int text) {
+        restoreUpdateFocus = check.hasFocus() || !later.hasFocus();
+        check.setEnabled(false);
+        status.setText(text);
+        focusAction();
+    }
+    private void message(int text) {
+        if (!isFinishing() && !isDestroyed()) {
+            status.setText(text); progress.setVisibility(View.GONE); check.setEnabled(true);
+            if (restoreUpdateFocus || (!check.hasFocus() && !later.hasFocus())) focusAction();
+            restoreUpdateFocus = false;
+        }
+    }
     private void check() {
-        check.setEnabled(false); status.setText(R.string.cloud_checking); progress.setIndeterminate(true); progress.setVisibility(View.VISIBLE);
+        checking(R.string.cloud_checking); progress.setIndeterminate(true); progress.setVisibility(View.VISIBLE);
         TvCloud.IO.execute(() -> {
             try {
                 JSONObject update = TvCloud.json("update?platform=tv");
@@ -109,7 +122,7 @@ public final class CloudSettingsActivity extends Activity {
     }
     @SuppressWarnings("deprecation")
     private void download(String url,String hash,long version) {
-        check.setEnabled(false); status.setText(R.string.cloud_downloading); progress.setIndeterminate(true); progress.setVisibility(View.VISIBLE);
+        checking(R.string.cloud_downloading); progress.setIndeterminate(true); progress.setVisibility(View.VISIBLE);
         TvCloud.IO.execute(()->{
             File file = new File(getCacheDir(),"updates/gentv.apk.part");
             HttpURLConnection c = null;

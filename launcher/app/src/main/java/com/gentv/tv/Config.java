@@ -501,6 +501,21 @@ final class Config {
         boolean dockBandAll = res.getBoolean(R.bool.dock_band_all);
         boolean applied = false;
 
+        // Model routing is a default; the owner's explicit overlay below remains authoritative.
+        JSONObject routes = InputProfiles.forDevice(ctx);
+        liveTv = string(routes, "live_tv_package", liveTv);
+        liveTvAction = string(routes, "live_tv_action", liveTvAction);
+        liveTvInputId = string(routes, "live_tv_input_id", liveTvInputId);
+        panelService = string(routes, "source_panel_service", panelService);
+        panelAction = string(routes, "source_panel_action", panelAction);
+        panelExtra = string(routes, "source_panel_extra", panelExtra).trim();
+        coocaaSources = bool(routes, "coocaa_sources", coocaaSources);
+        inputAction = string(routes, "input_action", inputAction);
+        inputSources = stringList(routes, "input_sources", inputSources);
+        inputUriScheme = string(routes, "input_uri_scheme", inputUriScheme).trim();
+        inputKeycodes = intArray(routes, "input_key_keycodes", inputKeycodes);
+        handleViewInputs = bool(routes, "handle_view_inputs", handleViewInputs);
+
         File dir = dir(ctx);
         File file = dir != null ? new File(dir, FILE_NAME) : null;
         boolean mounted = Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState());
