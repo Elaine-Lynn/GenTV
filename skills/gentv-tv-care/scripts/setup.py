@@ -5,6 +5,10 @@ import hashlib
 import json
 from pathlib import Path
 import stat
+import platform
+import tempfile
+import urllib.request
+import shutil
 import zipfile
 
 SKILL = Path(__file__).resolve().parents[1]
@@ -47,9 +51,40 @@ def unpack(archive, destination, lock):
     return check(destination / lock['runtime']['directory'], lock)
 
 
+def select_runtime(lock):
+    runtimes = lock.get('runtimes', [lock.get('runtime')])
+    matches = [r for r in runtimes if r and r['platform'] == platform.system() and r['architecture'].lower() == platform.machine().lower()]
+    if len(matches) != 1:
+        raise ValueError('No unique runtime for this OS/architecture')
+    return {**lock, 'runtime': matches[0]}
+
+
+def download(lock, destination):
+    asset = lock['runtime']
+    url = lock['release_url'] + '/' + asset['file']
+    if not url.startswith('https://github.com/Elaine-Lynn/GenTV/releases/download/'):
+        raise ValueError('Unexpected release URL')
+    class HTTPSOnly(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self, req, fp, code, msg, headers, newurl):
+            if not newurl.startswith('https://'):
+                raise ValueError('Insecure redirect refused')
+            return super().redirect_request(req, fp, code, msg, headers, newurl)
+    opener = urllib.request.build_opener(HTTPSOnly())
+    with tempfile.TemporaryDirectory(prefix='gentv-download-') as directory:
+        archive = Path(directory) / asset['file']
+        with opener.open(url, timeout=60) as response, archive.open('wb') as output:
+            total = 0
+            while block := response.read(1024 * 1024):
+                total += len(block)
+                if total > 512 * 1024 * 1024: raise ValueError('Runtime download exceeds limit')
+                output.write(block)
+        return unpack(archive, destination, lock)
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('--repo', type=Path)
+    p.add_argument('--download', action='store_true')
     p.add_argument('--bundle', type=Path)
     p.add_argument('--destination', type=Path)
     a = p.parse_args()
@@ -57,10 +92,13 @@ def main():
     if not lockfile.is_file():
         p.error('Use a packaged skill release with release-lock.json; source checkout is for development')
     lock = json.loads(lockfile.read_text())
-    if a.bundle:
+    if a.download:
+        if not a.destination or a.repo or a.bundle: p.error('--download requires only --destination')
+        root = download(select_runtime(lock), a.destination)
+    elif a.bundle:
         if not a.destination or a.repo:
             p.error('--bundle requires --destination and cannot combine with --repo')
-        root = unpack(a.bundle, a.destination, lock)
+        root = unpack(a.bundle, a.destination, select_runtime(lock))
     elif a.repo and not a.destination:
         root = check(a.repo, lock)
     else:

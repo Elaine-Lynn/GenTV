@@ -16,7 +16,7 @@ import socket
 import subprocess
 import sys
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(sys.executable if getattr(sys, 'frozen', False) else __file__).resolve().parents[1]
 
 
 def sdk_roots():
@@ -115,6 +115,10 @@ def ensure_runtime(force=False):
 
 
 def setup_transport():
+    if getattr(sys, 'frozen', False):
+        executable = ROOT / 'bin' / ('gentv-transport.exe' if os.name == 'nt' else 'gentv-transport')
+        if not executable.is_file(): raise ValueError('Bundled transport missing')
+        return str(executable)
     directory = Path.home() / '.cache/gentv-tv-care/transport-python'
     python = directory / ('Scripts/python.exe' if os.name == 'nt' else 'bin/python')
     if not python.is_file():
@@ -156,6 +160,9 @@ def select_transport(mode, serial, explicit=None):
         raise ValueError('Specify the authorised TV transport with --serial')
     from tv_transport import endpoint
     endpoint(serial)
+    executable = ROOT / 'bin' / ('gentv-transport.exe' if os.name == 'nt' else 'gentv-transport')
+    if executable.is_file():
+        return [str(executable)], []
     python = setup_transport()
     return [str(ROOT / 'tools/tv_transport.py')], ['--adb-python', python]
 
@@ -188,9 +195,10 @@ def main():
         serial = remaining[remaining.index('--serial') + 1] if '--serial' in remaining else None
         selected, extra = select_transport(options.transport, serial, options.adb)
         remaining += ['--adb', selected[0], '--repo', str(ROOT), *extra]
-        if command == 'install' or command == 'home' and '--apk' in remaining:
-            remaining += ['--aapt', tool('aapt', options.aapt)]
     executable, env = ensure_runtime(options.rebuild)
+    if (ROOT / 'maintenance-bundle.json').is_file():
+        java = ROOT / 'runtime/bin' / ('java.exe' if os.name == 'nt' else 'java')
+        return subprocess.call([str(java), '-cp', str(ROOT / 'maintenance/lib/*'), 'com.gentv.care.MainKt', *remaining], env=env)
     return subprocess.call([str(executable), *remaining], env=env)
 
 

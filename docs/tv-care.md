@@ -4,7 +4,7 @@
 
 ## 本地环境和构建
 
-需要 JDK 21、Python 3，以及本地 Android SDK 的 `adb`。安装 APK 还需要 SDK build-tools 中的 `aapt`。入口会检查 PATH、SDK 环境变量、本地 SDK 配置及常见安装位置，首次构建后记录源码及产物 SHA-256；未变化时直接启动，变化后重新构建。
+需要 JDK 21、Python 3，以及本地 Android SDK 的 `adb`。APK 包名及最低系统版本由内置解析器读取，不需要 aapt。入口会检查 PATH、SDK 环境变量、本地 SDK 配置及常见安装位置，首次构建后记录源码及产物 SHA-256；未变化时直接启动，变化后重新构建。
 
 ```sh
 python3 tools/tv_care.py --help
@@ -49,7 +49,7 @@ python3 tools/tv_care.py dns --serial TV_SERIAL --session SESSION --provider ads
 
 ## 安装和 Home 交接
 
-APK 先按官方校验文件或本地构建记录确认 SHA-256。入口还用 `aapt` 核对应用身份；不自动卸载、降级或绕过厂商侧载限制。
+APK 先按官方校验文件或本地构建记录确认 SHA-256。入口还用内置二进制 Manifest 解析器核对应用身份；不自动卸载、降级或绕过厂商侧载限制。
 
 ```sh
 python3 tools/tv_care.py install --serial TV_SERIAL --session SESSION --apk APK_PATH --sha256 APK_SHA256
@@ -144,14 +144,14 @@ python3 tools/tv_care.py --transport python inspect --serial TV_PRIVATE_IP:KNOWN
 
 APK 推送先走同步协议；传输失败时可使用限定于 GenTV 临时目录的分块通道。续传先核对已传部分长度和 SHA-256，每块核对长度，最后核对全文件 SHA-256 后移入目标。断线后重新执行同一安装计划会检查暂存进度；安装结果不确定时先查包状态。设备缺少可靠哈希工具时停止安装。
 
-## 预构建维护运行包
+## 源码方式的预构建维护运行包
 
 ```sh
 python3 tools/tv_care.py --prepare-runtime
 python3 tools/package_tv_care.py
 ```
 
-打包者需要 JDK 21 和 jlink。产物位于 `phone/tv-care/build/bundles/`，包含当前操作系统及架构的 Java 运行时、维护程序、skill、本地机型资料和许可证。用户解压后运行包内 `python3 tools/tv_care.py --help`，不需 JDK 或 Gradle。每次启动校验清单中的文件哈希；下载时另核对可信渠道给出的压缩包 SHA-256。仍需 Python 3；原生连接需 adb，安装 APK 仍需 aapt，独立连接首次准备需安装 Python 依赖。该包不包含 APK、密钥、会话或 SDK，不是独立桌面 App，也不是 GenTV CLI 产品。
+打包者需要 JDK 21 和 jlink。产物位于 `phone/tv-care/build/bundles/`，包含当前操作系统及架构的 Java 运行时、维护程序、skill、本地机型资料和许可证。用户解压后运行包内 `python3 tools/tv_care.py --help`，不需 JDK 或 Gradle。每次启动校验清单中的文件哈希；下载时另核对可信渠道给出的压缩包 SHA-256。仍需 Python 3；原生连接需 adb，APK 身份核对不再需要 aapt，独立连接首次准备需安装 Python 依赖。该包不包含 APK、密钥、会话或 SDK，不是独立桌面 App，也不是 GenTV CLI 产品。
 
 ## 隐私审计和实机性能
 
@@ -179,3 +179,11 @@ python3 tools/tv_care.py configure --serial TV_SERIAL --session SESSION --boot h
 ```
 
 支持 `--dock` 逗号包名列表、`--hide-app` / `--show-app`、`--rename-app APP=NAME`、`--settings-key` / `--input-key` 数字键码列表及 `--app-key KEYCODE_NAME:PACKAGE`。AI 助手将用户自然语言转换为参数，先读取当前真实应用，缺失或多组件歧义时选择准确组件；常用操作无需用户编辑 JSON。高级文件夹、素材导入继续使用已有协议或手机端。配置保留无关字段，按布局和主题各自的冲突检测保存；部分成功会明确报告并保留恢复基线，不宣称跨协议原子提交。按键和开机能力仍受电视辅助服务权限约束，用户在电视上完成权限操作后实测。
+
+## 冻结运行包和发布
+
+构建机先按哈希锁安装 `tools/requirements-tv-transport.txt`，再单独安装 `tools/requirements-tv-build.txt`，运行 `python3 tools/package_tv_skill.py --frozen`。用户入口为包内 `bin/gentv-care`（Windows 为 .exe），自带 Python、Java、传统 TCP 客户端；不需要手动安装 Python/JDK/Gradle/aapt。USB/TLS 调试仍需原生 adb。源码入口的构建依赖不变。Python、依赖和 Java 法律文件随包保留。
+
+`.github/workflows/tv-care-release.yml` 分别在 macOS ARM64/x64、Linux x64、Windows x64 构建及启动检查，再合并统一 skill；结果以实际 CI 为准。固定 tag 生成 GitHub 草稿，普通 PR 仅上传 artifacts，不公开发布。原生准备脚本从固定版本 URL 下载并校验，缓存工作区可复用。
+
+公开发布前另核对实机记录、附件和校验清单，CocoLoop 收录单独确认。发布者提交草稿位于忽略的 work/ 目录，不包含在公开源码中。

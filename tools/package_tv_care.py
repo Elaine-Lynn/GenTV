@@ -15,7 +15,7 @@ import sys
 import tv_care
 
 
-def package():
+def package(frozen=False):
     root = tv_care.ROOT
     executable, env = tv_care.ensure_runtime()
     java_home = Path(env.get('JAVA_HOME', ''))
@@ -40,6 +40,9 @@ def package():
         shutil.copytree(root / directory, output / directory, ignore=shutil.ignore_patterns('.DS_Store'))
     for name in ('launcher/app/src/main/java/com/gentv/tv/Config.java', 'docs/getting-started.md', 'CONTRIBUTING.md', 'README.md'):
         target = output / name; target.parent.mkdir(parents=True, exist_ok=True); shutil.copy2(root / name, target)
+    if frozen:
+        from freeze_tv_care import freeze
+        freeze(root, output)
     launcher = 'maintenance/bin/' + ('tv-care.bat' if os.name == 'nt' else 'tv-care')
     hashes = {p.relative_to(output).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest() for p in output.rglob('*') if p.is_file()}
     (output / 'maintenance-bundle.json').write_text(json.dumps({'version': json.loads((root / 'skills/gentv-tv-care/release.json').read_text())['version'], 'platform': platform.system(), 'architecture': platform.machine(), 'launcher': launcher, 'sha256': hashes}, indent=2) + '\n')
@@ -49,5 +52,5 @@ def package():
 
 
 if __name__ == '__main__':
-    try: package()
+    try: package(frozen='--frozen' in sys.argv)
     except (OSError, ValueError, subprocess.CalledProcessError) as error: raise SystemExit(str(error))

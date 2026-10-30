@@ -56,11 +56,9 @@ fun verifiedApk(options: Options): ByteArray {
     require(expected.matches(Regex("[a-f0-9]{64}")))
     val bytes = apk.readBytes()
     require(sha256(bytes) == expected) { "APK checksum mismatch" }
-    val output = ProcessBuilder(options.require("aapt"), "dump", "badging", apk.absolutePath).redirectErrorStream(true).start()
-    val badging = output.inputStream.bufferedReader().readText()
-    require(output.waitFor() == 0 && Regex("package: name='com\\.gentv\\.tv'").containsMatchIn(badging)) { "APK is not a GenTV TV package" }
-    val sdk = Regex("sdkVersion:'(\\d+)'").find(badging)?.groupValues?.get(1)?.toInt() ?: error("Cannot read APK minimum SDK")
-    require(sdk >= 26) { "Unexpected APK minimum SDK" }
+    val metadata = ApkMetadata.read(apk)
+    require(metadata.packageName == "com.gentv.tv") { "APK is not a GenTV TV package" }
+    require(metadata.minSdk >= 26) { "Unexpected APK minimum SDK" }
     return bytes
 }
 private fun result(status: String, detail: String, extras: Map<String, JsonElement> = emptyMap()) = buildJsonObject {

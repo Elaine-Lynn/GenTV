@@ -4,11 +4,12 @@ import hashlib
 import json
 from pathlib import Path
 import shutil
+import sys
 import package_tv_care
 
 
 def package():
-    runtime = package_tv_care.package()
+    runtime = package_tv_care.package(frozen='--frozen' in sys.argv)
     root = package_tv_care.tv_care.ROOT
     source = root / 'skills/gentv-tv-care'
     release = json.loads((source / 'release.json').read_text())
@@ -26,12 +27,14 @@ def package():
     shutil.copy2(archive, runtime_copy)
     manifest = json.loads((runtime / 'maintenance-bundle.json').read_text())
     workspace = {name: digest for name, digest in manifest['sha256'].items()
-                 if not name.startswith(('runtime/', 'maintenance/', 'skills/'))}
-    lock = {'version': version, 'published': False,
+                 if not name.startswith(('runtime/', 'maintenance/', 'skills/', 'bin/', 'licenses/frozen-python/'))}
+    lock = {'version': version, 'artifact_status': 'prepared', 'release_url': release['repository'] + '/releases/download/' + release['planned_tag'],
             'runtime': {'file': archive.name, 'directory': runtime.name,
                         'platform': manifest['platform'], 'architecture': manifest['architecture'],
                         'sha256': hashlib.sha256(archive.read_bytes()).hexdigest()},
             'workspace_sha256': workspace}
+    from tv_bootstrap import write_bootstraps
+    write_bootstraps(stage, lock)
     (stage / 'release-lock.json').write_text(json.dumps(lock, ensure_ascii=False, indent=2) + '\n')
     skill_archive = Path(shutil.make_archive(str(output / ('gentv-tv-care-' + version)), 'zip', output, stage.name))
     # Store submission notes are private publisher material in the ignored work/ directory.
@@ -39,7 +42,7 @@ def package():
     if submission.is_file(): shutil.copy2(submission, output / 'CocoLoop提交文案.md')
     assets = [skill_archive, runtime_copy]
     (output / 'SHA256SUMS.txt').write_text(''.join(hashlib.sha256(p.read_bytes()).hexdigest() + '  ' + p.name + '\n' for p in assets))
-    receipt = {'version': version, 'published': False, 'files': [p.name for p in assets],
+    receipt = {'version': version, 'artifact_status': 'prepared', 'files': [p.name for p in assets],
                'skill_sha256': hashlib.sha256(skill_archive.read_bytes()).hexdigest(),
                'runtime_sha256': lock['runtime']['sha256']}
     (output / 'release-receipt.json').write_text(json.dumps(receipt, indent=2) + '\n')
