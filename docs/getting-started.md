@@ -76,6 +76,8 @@ cd GenTV
 python3 tools/check_branding.py
 python3 tools/check_repository.py
 python3 -m unittest discover -s server/wallpaper -p 'test_*.py'
+python3 -m unittest discover -s tools -p 'test_*.py'
+python3 -m unittest discover -s skills/gentv-tv-care/scripts -p 'test_*.py'
 ```
 
 TV, from the repository root:
@@ -89,7 +91,7 @@ Output: `launcher/app/build/outputs/apk/debug/app-debug.apk`, package `com.gentv
 Phone, with `JAVA_HOME` set to JDK 21 and `GENTV_HOME_JAVA_HOME` set to JDK 17:
 
 ```sh
-./phone/gradlew -p phone --no-daemon :core:test :adb:test :app:testDebugUnitTest :app:lintDebug :app:assembleDebug
+./phone/gradlew -p phone --no-daemon :core:test :adb:test :tv-care:test :app:testDebugUnitTest :app:lintDebug :app:assembleDebug
 ```
 
 Output: `phone/app/build/outputs/apk/debug/app-debug.apk`, package `com.gentv.mobile.debug`. Without private signing configuration, the embedded TV APK is debug-signed. Android Debug certificates may differ across development machines. A Debug TV build cannot replace an official differently signed TV installation.
@@ -103,7 +105,7 @@ This route installs the TV home screen without a phone or ADB. It requires a TV 
 1. Obtain the **TV APK** (`com.gentv.tv`) from the official download entry, or build it using the TV source steps above. Do not use the phone APK. If you downloaded the TV distribution ZIP, extract it first and keep its licence files with any redistribution.
 2. Copy the APK to a USB drive in a filesystem format your TV supports, then connect it to the TV.
 3. Open the drive in the TV's file manager and select the APK. If prompted, allow that file manager to install unknown applications, then confirm Android's installation dialog.
-4. Open GenTV from the TV's app list and check that navigation works. Choosing it as the default Home is a separate action in system settings.
+4. Open GenTV from the TV's app list and check that navigation works. Then follow the default Home handover below to make GenTV the home screen.
 
 A manufacturer may block USB APK installation or omit a suitable file manager. In that case use the phone/ADB route if supported. A signature conflict or downgrade error is not permission to uninstall the existing app; preserve data and follow [release migration](release.md). Installing the TV app from USB alone does not provide phone-based cleanup or DNS configuration; those require the authorised phone connection. USB installation was documented but not exercised on a real TV in this audit.
 
@@ -113,9 +115,9 @@ Use an assistant that can access your local terminal and Android SDK tools. A ch
 
 You can give it this request:
 
-> Help me install GenTV from https://github.com/Elaine-Lynn/GenTV. Read docs/getting-started.md first. Check my local environment and ask me to identify the intended TV if necessary. Use a compatible TV APK or build a Debug APK from source. Install and open it over authorised ADB, verify the result, and preserve the current default Home and existing applications. I will approve pairing and installation prompts on the device.
+> Help me install GenTV from https://github.com/Elaine-Lynn/GenTV. Read docs/getting-started.md first. Check my local environment and ask me to identify the intended TV if necessary. Use a compatible TV APK or build a Debug APK from source. Install and open it over authorised ADB, verify the result, and set GenTV as the default Home while keeping the original launcher and existing applications available for recovery. I will approve pairing and installation prompts on the device.
 
-The assistant should follow the [CLI installation steps](#connect-and-install-with-the-cli) and the [assistant instructions](#instructions-for-an-ai-assistant). The user must identify the intended device and approve device prompts; do not invent signing credentials, silently uninstall an incompatible app or disable the original launcher. This is an assisted installation workflow, not an unattended one-click installer.
+The assistant should follow the [CLI installation steps](#connect-and-install-with-the-cli) and the [assistant instructions](#instructions-for-an-ai-assistant). The user must identify the intended device and approve device prompts; do not invent signing credentials, silently uninstall an incompatible app or disable the original launcher outside the staged installation flow. This is an assisted installation workflow, not an unattended one-click installer.
 
 ## Connect and install with the CLI
 
@@ -140,7 +142,7 @@ adb -s TV_SERIAL shell pm path com.gentv.tv
 adb -s TV_SERIAL shell am start -W -n com.gentv.tv/.MainActivity
 ```
 
-Check `Success` from installation and `Status: ok` from launch, then confirm the GenTV screen on the TV. Re-run the Home resolution command to verify that the previous default has been preserved. An APK appearing in `pm path` alone does not prove a working UI or remote.
+Check `Success` from installation and `Status: ok` from launch, then confirm the GenTV screen on the TV. Then complete the default Home handover below (unless the user explicitly requested preview/install only). An APK appearing in `pm path` alone does not prove a working UI or remote.
 
 ```sh
 # Phone: replace PHONE_SERIAL with the exact authorised phone serial.
@@ -150,7 +152,22 @@ adb -s PHONE_SERIAL shell am start -W -n com.gentv.mobile.debug/com.gentv.mobile
 
 For an official phone APK use package `com.gentv.mobile`, not the `.debug` package. After opening the phone app, keep phone and TV on the same reachable local network, connect/pair and approve the TV prompt, then select the GenTV installation action. The current installer installs and opens GenTV and checks the desktop bridge; it preserves the default Home and does not grant optional permissions automatically.
 
-Installation is separate from choosing a default Home. Use the TV's system Home settings only if the owner wants GenTV as default. Some firmware does not expose this choice. Accessibility helpers and device-specific HDMI/input features need their own setup and acceptance; do not disable the stock launcher to work around a blocked setting.
+The phone APK installation step alone does not complete default Home handover. For a full GenTV setup, complete and verify the handover below. Some firmware blocks this choice. Accessibility helpers and device-specific HDMI/input features need their own setup and acceptance; normal installation does not disable the stock launcher. A full installation continues through the protected [local maintenance flow](tv-care.md).
+
+## Set GenTV as the default Home
+
+A full TV installation includes making GenTV the default Home. An explicit preview/install-only request keeps the existing default. Before changing Home, save the exact original Home component returned by the command above in a local recovery record. If it is a resolver or no concrete launcher is returned, identify the original launcher before proceeding; never guess a recovery component. Keep the original launcher installed and enabled.
+
+After installation and on-screen navigation have been verified, run:
+
+```sh
+adb -s TV_SERIAL shell cmd package set-home-activity com.gentv.tv/.MainActivity
+adb -s TV_SERIAL shell cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.HOME
+```
+
+The resolved component must be `com.gentv.tv/.MainActivity` (a fully qualified Activity name is equivalent). Ask the user to press the physical Home button and confirm GenTV opens; check the foreground Activity with `adb -s TV_SERIAL shell dumpsys activity activities`. Reboot the TV, wait for it to reconnect, and repeat Home resolution and the physical Home check. A `Success` message alone does not prove handover.
+
+If the command is unsupported or refused, use the TV's system default Home chooser if available and verify the same way. If handover fails, restore the recorded original component using `adb -s TV_SERIAL shell cmd package set-home-activity ORIGINAL_HOME_COMPONENT` or the system chooser, then verify Home again. Replace `ORIGINAL_HOME_COMPONENT` with the saved value. Report firmware restrictions and distinguish successful APK installation from failed Home handover; do not disable packages outside the staged installation flow; use the guarded [local maintenance flow](tv-care.md) for supported exceptions. Optional accessibility helpers need their own setup and acceptance. Turn ADB debugging off after verification.
 
 ## Errors and recovery
 
@@ -162,7 +179,7 @@ Installation is separate from choosing a default Home. Use the TV's system Home 
 | Dependency resolution fails | Check repository connectivity, proxy and first-build network access; omit `--offline` |
 | `INSTALL_FAILED_UPDATE_INCOMPATIBLE` | Certificate conflict: stop; preserve user data and follow the deliberate migration in release.md |
 | `INSTALL_FAILED_VERSION_DOWNGRADE` | Use a compatible newer version; do not automatically uninstall or force a downgrade |
-| App installs but Home stays unchanged | Expected for normal installation; default selection is a separate user action |
+| App installs but Home stays unchanged | Complete default Home handover below; if firmware blocks it, report installation and handover separately |
 | Online features unavailable | Expected without API configuration; a running server also needs valid manifests/media |
 | ADB works but a feature fails | Check model/firmware support and the individual feature; connection success is not compatibility certification |
 
@@ -176,4 +193,4 @@ Device lists under `phone/framework/data/devices/` are inherited community recor
 
 Read this guide, README.md, CONTRIBUTING.md and the relevant component documentation first. Inspect local tool versions and Git status, then build and run checks before attempting installation. Treat placeholders as placeholders; never guess a device serial, private key, server host or pairing code. Do not print signing material or commit keys, backups, screenshots or device records.
 
-For a build-only request, stop after validating the artifacts. For a device installation request, identify the user's intended authorised device, record the current Home, install the selected compatible APK and verify package, launch result and the device UI. Device prompts require the user's interaction. A rejected signature/version is a blocking result, not permission to uninstall. Do not change default Home, disable packages or run cleanup merely to install. Report build/test evidence separately from emulator or real-device acceptance.
+For a build-only request, stop after validating the artifacts. For a device installation request, identify the user's intended authorised device, record the current Home, install the selected compatible APK and verify package, launch result and the device UI. Device prompts require the user's interaction. A rejected signature/version is a blocking result, not permission to uninstall. A full TV installation includes the default Home handover below; preview/install-only requests preserve the current Home. Do not disable packages or run cleanup merely to install or force handover. Report build/test evidence separately from emulator or real-device acceptance.
