@@ -16,6 +16,11 @@ def freeze(root, output):
     version = '.'.join(map(str, sys.version_info[:3]))
     with urllib.request.urlopen('https://raw.githubusercontent.com/python/cpython/v' + version + '/LICENSE', timeout=30) as response:
         (licenses / 'Python-LICENSE.txt').write_bytes(response.read())
+    if os.environ.get('OPENSSL_STATIC') == '1':
+        openssl = Path(os.environ['OPENSSL_DIR'])
+        for pattern in ('LICENSE*', 'share/doc/**/LICENSE*'):
+            for source in openssl.glob(pattern):
+                if source.is_file(): shutil.copy2(source, licenses / ('OpenSSL-' + source.name))
     for dist in importlib.metadata.distributions():
         for entry in dist.files or []:
             if any(word in entry.name.lower() for word in ('license', 'copying', 'copyright')) and '..' not in entry.parts:
