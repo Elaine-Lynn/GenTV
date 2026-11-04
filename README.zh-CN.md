@@ -21,7 +21,7 @@
   <a href="https://github.com/Elaine-Lynn/GenTV/releases/latest"><img alt="最新版本" src="https://img.shields.io/github/v/release/Elaine-Lynn/GenTV?style=flat-square&label=%E7%89%88%E6%9C%AC"></a>
   <a href="LICENSE"><img alt="MIT 许可证" src="https://img.shields.io/badge/%E8%AE%B8%E5%8F%AF%E8%AF%81-MIT-555555?style=flat-square"></a>
   <img alt="Android 8.0 及以上" src="https://img.shields.io/badge/Android%20TV-8.0%2B-3ddc84?style=flat-square&logo=android&logoColor=white">
-  <img alt="电视安装包不超过 1 MB" src="https://img.shields.io/badge/%E7%94%B5%E8%A7%86%E5%AE%89%E8%A3%85%E5%8C%85-%E2%89%A41%20MB-2997ff?style=flat-square">
+  <img alt="电视安装包不超过 5 MB" src="https://img.shields.io/badge/%E7%94%B5%E8%A7%86%E5%AE%89%E8%A3%85%E5%8C%85-%E2%89%A45%20MB-2997ff?style=flat-square">
   <img alt="不用电脑" src="https://img.shields.io/badge/%E7%94%B5%E8%84%91-%E4%B8%8D%E9%9C%80%E8%A6%81-555555?style=flat-square">
   <img alt="无需 Root" src="https://img.shields.io/badge/Root-%E4%B8%8D%E9%9C%80%E8%A6%81-555555?style=flat-square">
 </p>
@@ -46,10 +46,18 @@
 | **三星（Tizen）、LG（webOS）、海信 VIDAA 电视** | GenTV 装不了，[原因看这里](#non-android) |
 | **想先看看效果** | [界面预览](#screenshots) |
 
+## 电视版 3.7.8 新亮点 · 互动养鱼桌面
+
+把电视桌面变成一池活水，看锦鲤和乌龟游动，陪岸边的小猫钓鱼。用遥控器选中顶栏的「喂鱼」「钓鱼」或「成就」，就能投食、抛竿和查看累计鱼获。
+
+在 **控制中心 → 桌面主题切换** 预览并选择苹果风简洁桌面或互动养鱼桌面。两种桌面共用应用布局，重启后会恢复上次选择。在 **养鱼桌面设置** 中，可以调整鱼群数量、游速和帧率，并选择 720p 或 1080p。
+
+<img src="launcher/app/src/main/res/drawable-nodpi/theme_preview_pond.webp" alt="GenTV 互动养鱼桌面，锦鲤在水中游动，小猫在右侧石岸钓鱼，底部保留应用磁贴" width="640">
+
 ## 为什么用 GenTV
 
 - **全程手机操作。** 安装桌面、清理电视、遥控、打字、传文件、整理桌面，都在同一网络下的 Android 手机上完成，不用电脑，也不用数据线。
-- **没有广告的桌面。** 不塞推广，不放推荐流，只有你的应用、壁纸和信号源。大磁贴方便用遥控器操作。正式电视安装包不超过 1 MB，老电视也带得动。
+- **没有广告的桌面。** 不塞推广，不放推荐流，只有你的应用、壁纸和信号源。大磁贴方便用遥控器操作。可以在苹果风简洁桌面和互动养鱼桌面之间切换。
 - **把电视里的垃圾清一清。** 查看存储空间，清理缓存，检查并停用或移除用不上的预装应用。系统组件受保护，每一步都有记录。
 - **改了也能恢复。** 在手机上就能重新启用停用的应用，恢复符合条件的预装应用。
 - **装好就是你的桌面。** 完整安装会在 GenTV 能正常打开、遥控器能操作之后，把它设为默认桌面。切换前先记录原来的桌面，原厂桌面不会被卸载，随时可以换回去。国产电视上的情况见[常见问题](#default-home)。

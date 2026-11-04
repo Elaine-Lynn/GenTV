@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="metrics_title">Privacy &amp; usage statistics</string>
+    <string name="metrics_hint">Off by default; enable again for this revised collection. Sends the local factory MAC when accessible, a random installation ID, fixed pages/actions, version, sessions and foreground time. The server deduplicates by a keyed MAC hash, falling back to installation ID, and does not store or display raw MACs. No app names or input text. A MAC can link reinstalls. Disabling clears pending events and resets the installation ID, but does not remove historical links. Mark physical test devices as test traffic.</string>
+    <string name="metrics_test">Mark future reports as test traffic (emulators are automatic)</string>
+    <string name="metrics_share_statistics">Share usage statistics</string>
+</resources>

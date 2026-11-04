@@ -21,7 +21,7 @@
   <a href="https://github.com/Elaine-Lynn/GenTV/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/Elaine-Lynn/GenTV?style=flat-square&label=release"></a>
   <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-555555?style=flat-square"></a>
   <img alt="Android 8.0 or later" src="https://img.shields.io/badge/Android%20TV-8.0%2B-3ddc84?style=flat-square&logo=android&logoColor=white">
-  <img alt="TV app no larger than 1 MB" src="https://img.shields.io/badge/TV%20app-%E2%89%A41%20MB-2997ff?style=flat-square">
+  <img alt="TV app no larger than 5 MB" src="https://img.shields.io/badge/TV%20app-%E2%89%A45%20MB-2997ff?style=flat-square">
   <img alt="No computer needed" src="https://img.shields.io/badge/computer-not%20needed-555555?style=flat-square">
   <img alt="No root" src="https://img.shields.io/badge/root-not%20needed-555555?style=flat-square">
 </p>
@@ -44,10 +44,18 @@ Official channels are only [gentv.me](https://www.gentv.me/) and this repository
 | **A Samsung (Tizen), LG (webOS) or Hisense VIDAA TV** | GenTV can't run there: [why](#does-it-work-on-samsung-lg-or-vidaa-tvs) |
 | **You want to see it first** | [Screenshots](#screenshots) |
 
+## New in TV 3.7.8 · Interactive fish pond
+
+Turn your TV home screen into a live pond with swimming koi, a turtle and a fishing cat. Use the remote to feed the fish, go fishing and see your catches in Achievements.
+
+Open **Control center → Desktop theme** to preview and switch between the Apple-style simple desktop and the interactive fish pond. The two modes share your app layout and remember your theme choice after a restart. In **Fish pond settings**, adjust the fish count, swimming speed and frame rate, or choose 720p or 1080p rendering.
+
+<img src="launcher/app/src/main/res/drawable-nodpi/theme_preview_pond.webp" alt="GenTV interactive fish pond with swimming koi, a fishing cat on the right bank, and app tiles along the bottom" width="640">
+
 ## Why GenTV
 
 - **Everything from your phone.** Install GenTV, clean up the TV, use the remote and keyboard, send files and rearrange the home screen from an Android phone on the same network. You don't need a computer or a cable.
-- **A home screen without ads.** GenTV shows no promotions, recommendation rows or ads. You see only your apps, wallpapers and input sources, on large tiles made for a remote. The official TV app is no larger than 1 MB, so it stays light on older TVs.
+- **A home screen without ads.** GenTV shows no promotions, recommendation rows or ads. You see only your apps, wallpapers and input sources, on large tiles made for a remote. Choose between the Apple-style simple desktop and the interactive fish pond.
 - **Clear out the clutter.** Check storage, clear caches, and review, disable or remove preinstalled apps you don't use. System components are protected, and every change is recorded.
 - **Undo what you changed.** Re-enable disabled apps and restore eligible preinstalled apps from the phone.
 - **Installed to be your home screen.** A full install makes GenTV the default Home once it opens and works with your remote. The previous Home is recorded first and the stock launcher is never uninstalled, so you can switch back. For China-market TVs, see the [FAQ](#default-home).

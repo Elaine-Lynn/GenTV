@@ -1,0 +1,24 @@
+<resources>
+    <string name="desktop_mode_title">Desktop theme</string>
+    <string name="desktop_mode_simple">Apple-style simple desktop</string>
+    <string name="desktop_mode_pond">Interactive fish pond</string>
+    <string name="pond_feed">Feed fish</string>
+    <string name="pond_ripple">Make a ripple</string>
+    <string name="pond_fish">Go fishing</string>
+    <string name="pond_caught">A fish was caught!</string>
+    <string name="pond_unavailable">Fish pond unavailable. Using the simple desktop.</string>
+    <string name="pond_settings">Fish pond settings</string>
+    <string name="pond_settings_hint">Adjust the fish population, swimming speed and frame rate. App layout settings are shared.</string>
+    <string name="pond_count">Fish population</string>
+    <string name="pond_count_value">Fish population · %1$d</string>
+    <string name="pond_speed">Swimming speed</string>
+    <string name="pond_speed_value">Swimming speed · %1$d%%</string>
+    <string name="pond_fps">Pond frame rate</string>
+    <string name="pond_fps_value">Pond frame rate · %1$d fps</string>
+    <string name="pond_achievements">Achievements</string>
+    <string name="pond_fish_short">Fish</string>
+    <string name="pond_feed_short">Feed</string>
+    <string name="pond_achievements_summary">Fish caught: %1$d\nPoints earned: %2$d</string>
+    <string name="pond_resolution">Pond resolution</string>
+    <string name="pond_resolution_value">Pond resolution · %1$dp</string>
+</resources>
