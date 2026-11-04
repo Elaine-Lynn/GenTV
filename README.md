@@ -50,7 +50,7 @@ Turn your TV home screen into a live pond with swimming koi, a turtle and a fish
 
 Open **Control center → Desktop theme** to preview and switch between the Apple-style simple desktop and the interactive fish pond. The two modes share your app layout and remember your theme choice after a restart. In **Fish pond settings**, adjust the fish count, swimming speed and frame rate, or choose 720p or 1080p rendering.
 
-<img src="docs/media/readme/overview/pond-desktop.webp" alt="GenTV interactive fish pond with swimming koi, a fishing cat on the right bank, and app tiles along the bottom" width="800">
+<img src="docs/media/readme/overview/pond-desktop.gif" alt="GenTV interactive fish pond with swimming koi, a cat casting a fishing rod from the right bank, and app tiles along the bottom" width="800">
 
 ## Why GenTV
 
