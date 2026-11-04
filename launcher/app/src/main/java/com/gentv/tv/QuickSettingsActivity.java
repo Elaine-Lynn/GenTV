@@ -38,7 +38,9 @@ public final class QuickSettingsActivity extends Activity {
             position.setMargins(inset, position.topMargin, 0, position.bottomMargin);
             panel.setLayoutParams(position);
         }
-        findViewById(R.id.scrim).setOnClickListener(v -> finish());
+        View scrim = findViewById(R.id.scrim);
+        scrim.setOnClickListener(v -> finish());
+        scrim.setFocusable(false);
         LinearLayout rows = findViewById(R.id.rows);
         addRow(rows, R.drawable.ic_input, R.string.inputs, 0,
                 new Intent(this, MainActivity.class).setAction(MainActivity.ACTION_VIEW_INPUTS));
@@ -48,9 +50,10 @@ public final class QuickSettingsActivity extends Activity {
         addRow(rows, R.drawable.ic_apps, R.string.quick_apps, R.string.quick_apps_hint,
                 SystemSettings.intent(this, Settings.ACTION_MANAGE_APPLICATIONS_SETTINGS));
         // Through Home, so it rebuilds with the new choices when Launcher settings closes.
-        addRow(rows, R.drawable.ic_home_settings, R.string.launcher_settings, 0,
+        addRow(rows, R.drawable.ic_home_settings, DesktopMode.settingsTitle(this), 0,
                 new Intent(this, MainActivity.class).setAction(MainActivity.ACTION_LAUNCHER_SETTINGS));
         addRow(rows, R.drawable.ic_settings, R.string.cloud_settings, 0, new Intent(this, CloudSettingsActivity.class));
+        addRow(rows, R.drawable.ic_home_settings, R.string.desktop_mode_title, 0, this::showDesktopModes);
         android.media.AudioManager audio = (android.media.AudioManager)getSystemService(AUDIO_SERVICE);
         if (audio != null && !audio.isVolumeFixed() && checkSelfPermission(android.Manifest.permission.MODIFY_AUDIO_SETTINGS) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
             addVolume(rows, R.string.desktop_volume_down, audio, android.media.AudioManager.ADJUST_LOWER);
@@ -87,15 +90,45 @@ public final class QuickSettingsActivity extends Activity {
         rows.addView(row);
     }
 
+    private void showDesktopModes() {
+        DesktopMode current = DesktopMode.current(this);
+        View previousFocus = getCurrentFocus();
+        View choices = getLayoutInflater().inflate(R.layout.dialog_desktop_mode, null);
+        View simple = choices.findViewById(R.id.desktopModeSimple);
+        View pond = choices.findViewById(R.id.desktopModePond);
+        choices.findViewById(R.id.simpleModeCheck).setVisibility(current == DesktopMode.SIMPLE ? View.VISIBLE : View.INVISIBLE);
+        choices.findViewById(R.id.pondModeCheck).setVisibility(current == DesktopMode.POND ? View.VISIBLE : View.INVISIBLE);
+        ((ImageView) choices.findViewById(R.id.modeGlassBackdrop)).setImageResource(
+                current == DesktopMode.POND ? R.drawable.theme_preview_pond_blur : R.drawable.theme_preview_simple_blur);
+        android.app.Dialog dialog = new android.app.Dialog(this);
+        dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
+        dialog.setContentView(choices);
+        simple.setOnClickListener(v -> selectDesktopMode(dialog, current, DesktopMode.SIMPLE));
+        pond.setOnClickListener(v -> selectDesktopMode(dialog, current, DesktopMode.POND));
+        dialog.setOnDismissListener(d -> {
+            if (previousFocus != null) previousFocus.requestFocus();
+        });
+        dialog.show();
+        android.view.Window window = dialog.getWindow();
+        window.setBackgroundDrawableResource(android.R.color.transparent);
+        window.setDimAmount(0.38f);
+        float density = getResources().getDisplayMetrics().density;
+        int available = getResources().getDisplayMetrics().widthPixels - Math.round(48 * density);
+        window.setLayout(Math.min(available, Math.round(680 * density)),
+                android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
+        (current == DesktopMode.POND ? pond : simple).requestFocus();
+    }
+
+    private void selectDesktopMode(android.app.Dialog dialog, DesktopMode current, DesktopMode selected) {
+        dialog.dismiss();
+        if (selected == current) return;
+        selected.select(this);
+        startActivity(new Intent(this, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+        finish();
+    }
+
     private void addRow(LinearLayout rows, int icon, int title, int status, Intent target) {
-        View row = getLayoutInflater().inflate(R.layout.item_input, rows, false);
-        ((ImageView) row.findViewById(R.id.icon)).setImageResource(icon);
-        ((TextView) row.findViewById(R.id.title)).setText(title);
-        row.findViewById(R.id.dot).setVisibility(View.GONE);
-        TextView hint = row.findViewById(R.id.status);
-        if (status != 0) hint.setText(status);
-        else hint.setVisibility(View.GONE);
-        row.setOnClickListener(v -> {
+        addRow(rows, icon, title, status, () -> {
             try {
                 startActivity(target.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
             } catch (ActivityNotFoundException | SecurityException e) {
@@ -103,6 +136,17 @@ public final class QuickSettingsActivity extends Activity {
             }
             finish();
         });
+    }
+
+    private void addRow(LinearLayout rows, int icon, int title, int status, Runnable action) {
+        View row = getLayoutInflater().inflate(R.layout.item_input, rows, false);
+        ((ImageView) row.findViewById(R.id.icon)).setImageResource(icon);
+        ((TextView) row.findViewById(R.id.title)).setText(title);
+        row.findViewById(R.id.dot).setVisibility(View.GONE);
+        TextView hint = row.findViewById(R.id.status);
+        if (status != 0) hint.setText(status);
+        else hint.setVisibility(View.GONE);
+        row.setOnClickListener(v -> action.run());
         rows.addView(row);
     }
 }

@@ -7,7 +7,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.io.*;
 
-/** Small foreground-only client; no services, device identifiers or third-party SDKs. */
+/** Small foreground-only client; no services, hardware identifiers or third-party SDKs. */
 final class TvCloud {
     /** Empty in builds without a configured GenTV API; every cloud feature is then off. */
     static final String BASE = BuildConfig.API_BASE_URL;
@@ -81,23 +81,6 @@ final class TvCloud {
                     activity.startActivity(new android.content.Intent(activity, CloudSettingsActivity.class).putExtra("check",true));
                 });
             } catch (Exception ignored) { }
-        });
-    }
-    static void session(Context context, long seconds) {
-        Context app = context.getApplicationContext();
-        if (!enabled() || !prefs(app).getBoolean("statistics", false)) return;
-        IO.execute(() -> {
-            if (!prefs(app).getBoolean("statistics", false)) return;
-            HttpURLConnection c = null;
-            try {
-                JSONObject event = new JSONObject().put("event", "session").put("versionCode", BuildConfig.VERSION_CODE)
-                        .put("foregroundSeconds", Math.min(86400, Math.max(0, seconds)));
-                c = open(BASE + "stats"); c.setRequestMethod("POST"); c.setDoOutput(true);
-                c.setRequestProperty("Content-Type", "application/json");
-                try (OutputStream out = c.getOutputStream()) { out.write(event.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8)); }
-                c.getResponseCode();
-            } catch (Exception ignored) { /* Offline statistics are dropped, never queued. */ }
-            finally { if (c != null) c.disconnect(); }
         });
     }
 }

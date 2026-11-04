@@ -21,8 +21,8 @@ android {
         applicationId 'com.gentv.tv'
         minSdk 26
         targetSdk 34
-        versionCode 24
-        versionName '3.7.2'
+        versionCode 30
+        versionName '3.7.8'
         testInstrumentationRunner 'com.gentv.tv.DesktopIntegration'
         buildConfigField 'String', 'API_BASE_URL', '"' + apiBaseUrl + '"'
     }

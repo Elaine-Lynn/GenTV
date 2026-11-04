@@ -12,6 +12,8 @@ import android.provider.Settings;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.LinearLayout;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -48,6 +50,24 @@ public final class LauncherSettingsActivity extends Activity {
         setContentView(R.layout.activity_launcher_settings);
         choices = getSharedPreferences(Config.SETTINGS_NAME, MODE_PRIVATE);
         Config config = Config.load(this);
+        boolean pondMode = DesktopMode.current(this) == DesktopMode.POND;
+        if (pondMode) {
+            ((TextView) findViewById(R.id.settingsTitle)).setText(R.string.pond_settings);
+            ((TextView) findViewById(R.id.settingsHint)).setText(R.string.pond_settings_hint);
+            findViewById(R.id.pondSettings).setVisibility(View.VISIBLE);
+            findViewById(R.id.screensaverChoice).setVisibility(View.GONE);
+            findViewById(R.id.screensaver_hint).setVisibility(View.GONE);
+            findViewById(R.id.clearScreensaverCacheChoice).setVisibility(View.GONE);
+            findViewById(R.id.screensaver_cache_hint).setVisibility(View.GONE);
+            findViewById(R.id.advancedChoice).setVisibility(View.GONE);
+            findViewById(R.id.advancedHint).setVisibility(View.GONE);
+            findViewById(R.id.followThemeChoice).setVisibility(View.GONE);
+            findViewById(R.id.followThemeHint).setVisibility(View.GONE);
+            bindPondOption(R.id.pondCountChoice, PondOption.COUNT);
+            bindPondOption(R.id.pondSpeedChoice, PondOption.SPEED);
+            bindPondOption(R.id.pondFpsChoice, PondOption.FPS);
+            bindPondOption(R.id.pondResolutionChoice, PondOption.RESOLUTION);
+        }
         View reorderChoice = findViewById(R.id.reorderChoice);
         reorderChoice.setVisibility(config.launcherSettingsButton ? View.VISIBLE : View.GONE);
         reorderChoice.setOnClickListener(v -> {
@@ -177,6 +197,8 @@ public final class LauncherSettingsActivity extends Activity {
             changed();
             refresh();
         });
+        findViewById(R.id.metricsChoice).setOnClickListener(v ->
+                startActivity(new Intent(this, MetricsSettingsActivity.class)));
         findViewById(R.id.defaultHomeChoice).setOnClickListener(v -> {
             Toast.makeText(this, R.string.home_settings_help, Toast.LENGTH_LONG).show();
             open(new Intent(Settings.ACTION_HOME_SETTINGS));
@@ -184,8 +206,43 @@ public final class LauncherSettingsActivity extends Activity {
         findViewById(R.id.tvSettingsChoice).setOnClickListener(v ->
                 open(SystemSettings.intent(this, Settings.ACTION_SETTINGS)));
         refresh();
-        if (config.launcherSettingsButton) reorderChoice.requestFocus();
+        if (pondMode) findViewById(R.id.pondCountChoice).requestFocus();
+        else if (config.launcherSettingsButton) reorderChoice.requestFocus();
         else columnChoices[Math.max(0, Math.min(columns - 4, 3))].requestFocus();
+    }
+
+    private void bindPondOption(int rowId, PondOption option) {
+        TextView row = findViewById(rowId);
+        row.setText(option.label(this, option.read(choices)));
+        row.setOnClickListener(v -> {
+            int current = option.read(choices);
+            RadioGroup group = new RadioGroup(this);
+            int padding = Math.round(20 * getResources().getDisplayMetrics().density);
+            group.setPadding(padding, padding, padding, padding);
+            AlertDialog dialog = new AlertDialog.Builder(this)
+                    .setTitle(option.title)
+                    .setView(group)
+                    .create();
+            RadioButton selected = null;
+            for (int value : option.values) {
+                RadioButton choice = (RadioButton) getLayoutInflater().inflate(R.layout.item_pond_option, group, false);
+                choice.setId(View.generateViewId());
+                choice.setText(option.label(this, value));
+                choice.setOnClickListener(button -> {
+                    dialog.dismiss();
+                    if (value == current) return;
+                    option.write(choices, value);
+                    changed();
+                    row.setText(option.label(this, value));
+                });
+                group.addView(choice);
+                if (value == current) selected = choice;
+            }
+            dialog.setOnDismissListener(d -> row.requestFocus());
+            if (selected != null) group.check(selected.getId());
+            dialog.show();
+            if (selected != null) selected.requestFocus();
+        });
     }
 
     private void reverseRow(TextView[] views) {

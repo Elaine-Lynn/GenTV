@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/theme_glass_outline"
+    android:foreground="@drawable/theme_glass_outline"
+    android:clipToOutline="true">
+
+    <ImageView
+        android:id="@+id/modeGlassBackdrop"
+        android:tint="#66101A29"
+        android:tintMode="src_atop"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:alpha="0.60"
+        android:importantForAccessibility="no"
+        android:scaleType="centerCrop" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="18dp"
+            android:gravity="center"
+            android:text="@string/desktop_mode_title"
+            android:textColor="#FFFFFFFF"
+            android:textSize="24sp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <LinearLayout
+                android:id="@+id/desktopModeSimple"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@drawable/theme_card_surface"
+                android:clipToOutline="true"
+                android:defaultFocusHighlightEnabled="false"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
+                android:foreground="@drawable/theme_card_focus"
+                android:nextFocusRight="@+id/desktopModePond"
+                android:orientation="vertical">
+
+                <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="170dp"
+                    android:layout_margin="6dp"
+                    android:background="@drawable/theme_card_surface"
+                    android:clipToOutline="true"
+                    android:importantForAccessibility="no"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/theme_preview_simple" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:gravity="center"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="8dp">
+
+                    <TextView
+                        android:id="@+id/simpleModeCheck"
+                        android:layout_width="22dp"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:importantForAccessibility="no"
+                        android:text="✓"
+                        android:textColor="#FFA5D6FF"
+                        android:textSize="16sp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:text="@string/desktop_mode_simple"
+                        android:textColor="#FFFFFFFF"
+                        android:textSize="16sp" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <Space android:layout_width="14dp" android:layout_height="1dp" />
+
+            <LinearLayout
+                android:id="@+id/desktopModePond"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@drawable/theme_card_surface"
+                android:clipToOutline="true"
+                android:defaultFocusHighlightEnabled="false"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
+                android:foreground="@drawable/theme_card_focus"
+                android:nextFocusLeft="@+id/desktopModeSimple"
+                android:orientation="vertical">
+
+                <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="170dp"
+                    android:layout_margin="6dp"
+                    android:background="@drawable/theme_card_surface"
+                    android:clipToOutline="true"
+                    android:importantForAccessibility="no"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/theme_preview_pond" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:gravity="center"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="8dp">
+
+                    <TextView
+                        android:id="@+id/pondModeCheck"
+                        android:layout_width="22dp"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:importantForAccessibility="no"
+                        android:text="✓"
+                        android:textColor="#FFA5D6FF"
+                        android:textSize="16sp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:text="@string/desktop_mode_pond"
+                        android:textColor="#FFFFFFFF"
+                        android:textSize="16sp" />
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+</FrameLayout>

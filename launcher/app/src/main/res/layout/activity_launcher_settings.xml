@@ -1,12 +1,23 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="horizontal" android:background="@drawable/gentv_settings_background" android:padding="32dp">
 <LinearLayout android:layout_width="0dp" android:layout_weight="0.9" android:layout_height="match_parent" android:orientation="vertical" android:paddingEnd="32dp">
 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="GenTV" android:textColor="#FF78B9F0" android:textSize="18sp" android:fontFamily="sans-serif-medium"/>
-<TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="16dp" android:text="@string/launcher_settings" android:textColor="#FFF2F5FA" android:textSize="30sp" android:fontFamily="sans-serif-light"/>
-<TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="10dp" android:text="@string/settings_design_hint" android:textColor="#FF9CAEC2" android:textSize="15sp"/>
+<TextView android:id="@+id/settingsTitle" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="16dp" android:text="@string/launcher_settings" android:textColor="#FFF2F5FA" android:textSize="30sp" android:fontFamily="sans-serif-light"/>
+<TextView android:id="@+id/settingsHint" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="10dp" android:text="@string/settings_design_hint" android:textColor="#FF9CAEC2" android:textSize="15sp"/>
 <com.gentv.tv.SettingsPreview android:id="@+id/settingsPreview" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:layout_marginTop="20dp" android:layout_marginBottom="20dp" android:importantForAccessibility="no"/>
 <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/settings_remote_hint" android:textColor="#FF91A5BC" android:textSize="12sp"/>
 </LinearLayout>
-<ScrollView android:layout_width="0dp" android:layout_weight="1.25" android:layout_height="match_parent" android:clipToPadding="false" android:padding="8dp" android:scrollbars="none"><LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:paddingBottom="20dp"><TextView xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/reorderChoice" style="@style/GenSettingsRow" android:layout_marginTop="12dp" android:text="@string/reorder" android:visibility="gone" />
+<ScrollView android:layout_width="0dp" android:layout_weight="1.25" android:layout_height="match_parent" android:clipToPadding="false" android:padding="8dp" android:scrollbars="none"><LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:paddingBottom="20dp"><LinearLayout
+    android:id="@+id/pondSettings"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:visibility="gone">
+    <TextView android:id="@+id/pondCountChoice" style="@style/GenSettingsRow" android:layout_marginBottom="8dp" />
+    <TextView android:id="@+id/pondSpeedChoice" style="@style/GenSettingsRow" android:layout_marginBottom="8dp" />
+    <TextView android:id="@+id/pondFpsChoice" style="@style/GenSettingsRow" android:layout_marginBottom="8dp" />
+    <TextView android:id="@+id/pondResolutionChoice" style="@style/GenSettingsRow" android:layout_marginBottom="8dp" />
+</LinearLayout>
+<TextView xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/reorderChoice" style="@style/GenSettingsRow" android:layout_marginTop="12dp" android:text="@string/reorder" android:visibility="gone" />
 
 
 <TextView xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:text="@string/columns_label" android:textColor="#FFE9EFF7" android:textSize="15sp" />
@@ -46,9 +57,9 @@
 
 
 <TextView android:id="@+id/screensaverChoice" style="@style/GenSettingsRow" android:layout_marginTop="12dp" />
-<TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/screensaver_hint" android:textColor="#FFA6B3C4" android:textSize="13sp" />
+<TextView android:id="@+id/screensaver_hint" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/screensaver_hint" android:textColor="#FFA6B3C4" android:textSize="13sp" />
 <TextView android:id="@+id/clearScreensaverCacheChoice" style="@style/GenSettingsRow" android:text="@string/screensaver_clear_cache" android:layout_marginTop="12dp" />
-<TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/screensaver_cache_hint" android:textColor="#FFA6B3C4" android:textSize="13sp" />
+<TextView android:id="@+id/screensaver_cache_hint" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/screensaver_cache_hint" android:textColor="#FFA6B3C4" android:textSize="13sp" />
 
 
 
@@ -58,7 +69,7 @@
 <TextView xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/advancedChoice" style="@style/GenSettingsRow" android:layout_marginTop="12dp" />
 
 
-<TextView xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:text="@string/advanced_effects_warning" android:textColor="#FFA6B3C4" android:textSize="13sp" />
+<TextView android:id="@+id/advancedHint" xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:text="@string/advanced_effects_warning" android:textColor="#FFA6B3C4" android:textSize="13sp" />
 
 
 <TextView xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/openOnStartChoice" style="@style/GenSettingsRow" android:layout_marginTop="12dp" android:visibility="gone" />
@@ -67,9 +78,10 @@
 <TextView xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/followThemeChoice" style="@style/GenSettingsRow" android:layout_marginTop="12dp" android:text="@string/follow_theme" />
 
 
-<TextView xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:text="@string/follow_theme_hint" android:textColor="#FFA6B3C4" android:textSize="13sp" />
+<TextView android:id="@+id/followThemeHint" xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:text="@string/follow_theme_hint" android:textColor="#FFA6B3C4" android:textSize="13sp" />
 
 
+<TextView xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/metricsChoice" style="@style/GenSettingsRow" android:layout_marginTop="12dp" android:text="@string/metrics_title" />
 <TextView xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/defaultHomeChoice" style="@style/GenSettingsRow" android:layout_marginTop="12dp" android:text="@string/home_settings" />
 
 

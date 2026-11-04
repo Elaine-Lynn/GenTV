@@ -144,6 +144,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private AppAdapter adapter;
     private RecyclerView grid;
     private FrameLayout root;
+    private com.gentv.tv.pond.PondSurface pond;
+    private final List<View> pondButtons = new ArrayList<>();
     private WallpaperPlayer wallpaperPlayer;
     private RemoteWallpaper remoteWallpaper;
     private GlassView glass;
@@ -386,7 +388,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             // signal level, so only it needs this minute's binder calls (about 7 ms on the UI thread).
             if (festive) updateWifiLabel();
             sky.update();
-            wallpaperPlayer.update();
+            if (wallpaperPlayer != null) wallpaperPlayer.update();
             handler.postDelayed(this, MINUTE_MS);
         }
     };
@@ -444,18 +446,29 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         // black under it is a second full-screen fill on every frame for nothing. The starting window still uses
         // the theme's background, so launch looks the same.
         getWindow().setBackgroundDrawable(null);
-        wallpaperPlayer = new WallpaperPlayer(this, root, cfg);
         sky = findViewById(R.id.sky);
         sky.setIntensity(cfg.skyIntensity);
-        String wallpaperEndpoint=TvCloud.enabled()?TvCloud.BASE+"wallpaper":"";
-        long wallpaperInterval=RemoteWallpaper.INTERVAL_MS;
-        boolean wallpaperTest=false;
-        if(BuildConfig.DEBUG && "127.0.0.1".equals(android.net.Uri.parse(getIntent().getStringExtra("gentv.wallpaper.test_endpoint") == null ? "" : getIntent().getStringExtra("gentv.wallpaper.test_endpoint")).getHost())) {
-            wallpaperEndpoint=getIntent().getStringExtra("gentv.wallpaper.test_endpoint");
-            wallpaperInterval=5000;wallpaperTest=true;
+        if (DesktopMode.current(this) == DesktopMode.POND) {
+            android.app.ActivityManager manager = getSystemService(android.app.ActivityManager.class);
+            if (manager != null && manager.getDeviceConfigurationInfo().reqGlEsVersion >= 0x20000) {
+                SharedPreferences choices = getSharedPreferences(Config.SETTINGS_NAME, MODE_PRIVATE);
+                pond = new com.gentv.tv.pond.PondSurface(this,
+                        PondOption.COUNT.read(choices), PondOption.SPEED.read(choices),
+                        PondOption.FPS.read(choices), PondOption.RESOLUTION.read(choices),
+                        () -> fallBackFromPond(cfg), fish -> {
+                    int catches = choices.getInt("pond_catches", 0) + 1;
+                    int points = choices.getInt("pond_points", 0) + fish.merit;
+                    choices.edit().putInt("pond_catches", catches).putInt("pond_points", points).apply();
+                    if (headerResumed && !isDestroyed()) Toast.makeText(this, R.string.pond_caught, Toast.LENGTH_SHORT).show();
+                });
+                root.addView(pond, 0, new FrameLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+                sky.setVisibility(View.GONE);
+            } else {
+                Toast.makeText(this, R.string.pond_unavailable, Toast.LENGTH_SHORT).show();
+            }
         }
-        remoteWallpaper=new RemoteWallpaper(this,root,cfg,wallpaperEndpoint,wallpaperInterval,wallpaperTest,wallpaperPlayer::hasImage);
-        wallpaperPlayer.setOnImageChanged(remoteWallpaper::localWallpaperReady);
+        if (pond == null) setUpWallpapers(cfg);
         glass = findViewById(R.id.glass);
         glass.setStyle(cfg.glassStyle);
         if (festive) glass.setAccent(festival.accentColor());
@@ -463,8 +476,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         // The glow is one bitmap, so its alpha can be applied while drawing it. Otherwise every frame of
         // a fade renders it into a full-screen offscreen buffer first.
         ambient.forceHasOverlappingRendering(false);
-        ambientGlow = cfg.ambientGlow;
-        appGlow = cfg.appGlow;
+        ambientGlow = pond == null && cfg.ambientGlow;
+        appGlow = pond == null && cfg.appGlow;
         if (!ambientGlow) ambient.setVisibility(View.GONE);
         heroName = findViewById(R.id.heroName);
         hero = findViewById(R.id.hero);
@@ -478,7 +491,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         glowStyle = cfg.glowStyle;
         heroDotsShown = cfg.cinematicDots;
         cinematicWhiteFocus = cfg.cinematicWhiteFocus;
-        heroArtAlpha = cfg.cinematicArt / 100f;
+        heroArtAlpha = pond == null ? cfg.cinematicArt / 100f : 0f;
         if (cinematic) setUpCinematicShelf(cfg.cinematicScrim);
         // dock_title false: the name above the dock (and the cinematic lines under it) never shows; the glow
         // still follows the dock.
@@ -742,7 +755,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         });
         launcherSettingsButton = cfg.launcherSettingsButton;
         if (launcherSettingsButton) {
-            ((TextView) btnSettings).setText(R.string.launcher_settings);
+            ((TextView) btnSettings).setText(DesktopMode.settingsTitle(this));
             ((TextView) btnSettings).setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_home_settings_pill, 0, 0, 0);
         }
         btnSettings.setOnClickListener(v -> {
@@ -840,6 +853,12 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             btnSettings.setOnClickListener(v -> startActivity(new Intent(this,QuickSettingsActivity.class)));
         }
         if (cfg.iconOnlyInputs) makeIconOnly((TextView) btnInputs);
+        if (pond != null) {
+            addPondButton(R.string.pond_feed_short, R.drawable.ic_pond_feed, () -> pond.feed());
+            addPondButton(R.string.pond_fish_short, R.drawable.ic_pond_hook, () -> pond.fish());
+            addPondButton(R.string.pond_achievements, R.drawable.ic_pond_award, this::showPondAchievements);
+            positionPondButtons();
+        }
         btnSettings.setOnLongClickListener(v -> {
             showSettingsMenu();
             return true;
@@ -857,6 +876,15 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                 return true;
             }
             int firstButton = btnInputs.getVisibility() == View.VISIBLE ? R.id.btnInputs : firstTopButton().getId();
+            if (!rtlMenuBar && !pondButtons.isEmpty()) {
+                ViewGroup bar = findViewById(R.id.topButtons);
+                for (int i = 0; i < bar.getChildCount(); i++) {
+                    View child = bar.getChildAt(i);
+                    if (child.getVisibility() != View.VISIBLE) continue;
+                    firstButton = child.getId();
+                    break;
+                }
+            }
             int leftButton = rtlMenuBar ? R.id.btnSettings : firstButton;
             int rightButton = rtlMenuBar ? firstButton : R.id.btnSettings;
             if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT) return v.getId() == leftButton;
@@ -869,6 +897,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         btnReorder.setOnKeyListener(pillKeys);
         btnLibraryTop.setOnKeyListener(pillKeys);
         for (View button : topAppButtons) button.setOnKeyListener(pillKeys);
+        for (View button : pondButtons) button.setOnKeyListener(pillKeys);
         if (advancedEffects) {
             List<View> pills = new ArrayList<>(Arrays.asList(btnInputs, btnWifi, btnVpn, btnReorder, btnLibraryTop, btnSettings));
             pills.addAll(topAppButtons);
@@ -992,6 +1021,42 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         }
     }
 
+    private void setUpWallpapers(Config cfg) {
+        wallpaperPlayer = new WallpaperPlayer(this, root, cfg);
+        String wallpaperEndpoint=TvCloud.enabled()?TvCloud.BASE+"wallpaper":"";
+        long wallpaperInterval=RemoteWallpaper.INTERVAL_MS;
+        boolean wallpaperTest=false;
+        if(BuildConfig.DEBUG && "127.0.0.1".equals(android.net.Uri.parse(getIntent().getStringExtra("gentv.wallpaper.test_endpoint") == null ? "" : getIntent().getStringExtra("gentv.wallpaper.test_endpoint")).getHost())) {
+            wallpaperEndpoint=getIntent().getStringExtra("gentv.wallpaper.test_endpoint");
+            wallpaperInterval=5000;wallpaperTest=true;
+        }
+        remoteWallpaper=new RemoteWallpaper(this,root,cfg,wallpaperEndpoint,wallpaperInterval,wallpaperTest,wallpaperPlayer::hasImage);
+        wallpaperPlayer.setOnImageChanged(remoteWallpaper::localWallpaperReady);
+    }
+
+    private void fallBackFromPond(Config cfg) {
+        if (pond == null || isDestroyed() || isFinishing()) return;
+        pond.onPause();
+        root.removeView(pond);
+        pond = null;
+        ViewGroup bar = findViewById(R.id.topButtons);
+        for (View button : pondButtons) bar.removeView(button);
+        pondButtons.clear();
+        restartIdleScreensaver();
+        heroArtAlpha = cfg.cinematicArt / 100f;
+        ambientGlow = cfg.ambientGlow;
+        appGlow = cfg.appGlow;
+        ambient.setVisibility(ambientGlow ? View.VISIBLE : View.GONE);
+        sky.setVisibility(View.VISIBLE);
+        sky.update();
+        setUpWallpapers(cfg);
+        if (headerResumed) {
+            wallpaperPlayer.start();
+            remoteWallpaper.start();
+        }
+        Toast.makeText(this, R.string.pond_unavailable, Toast.LENGTH_SHORT).show();
+    }
+
     @Override
     protected void onStart() {
         super.onStart();
@@ -1009,11 +1074,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         tileRefresh.onStart();
     }
 
-    private long cloudSessionStart;
 
     @Override
     protected void onResume() {
-        cloudSessionStart = android.os.SystemClock.elapsedRealtime();
         TvCloud.checkOnHome(this);
         super.onResume();
         int currentDesktopRevision = DesktopStore.revision(this);
@@ -1072,8 +1135,12 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         }
         if (showStats) startStats();
         sky.update();
-        wallpaperPlayer.start();
-        remoteWallpaper.start();
+        if (pond != null) {
+            pond.onResume();
+        } else {
+            wallpaperPlayer.start();
+            remoteWallpaper.start();
+        }
         handler.postDelayed(minuteTick, MINUTE_MS);
         if (festive && diya != null) {
             diya.start();
@@ -1236,7 +1303,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private void restartIdleScreensaver() {
         if (root == null) return;
         root.removeCallbacks(showIdleScreensaver);
-        if (!headerResumed || !hasWindowFocus()) { screensaverIdle.pause(); return; }
+        if (pond != null || !headerResumed || !hasWindowFocus()) { screensaverIdle.pause(); return; }
         screensaverIdle.restart(android.os.SystemClock.elapsedRealtime(), screensaverMinutes);
         long remaining = screensaverIdle.remaining(android.os.SystemClock.elapsedRealtime());
         if (remaining >= 0) root.postDelayed(showIdleScreensaver, remaining);
@@ -1244,7 +1311,6 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
     @Override
     protected void onPause() {
-        if (cloudSessionStart != 0) { TvCloud.session(this, (android.os.SystemClock.elapsedRealtime() - cloudSessionStart) / 1000); cloudSessionStart = 0; }
         super.onPause();
         if(headerResumed) unregisterReceiver(signalReceiver);
         headerResumed=false;
@@ -1252,8 +1318,11 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         root.removeCallbacks(showIdleScreensaver);
         screensaverIdle.pause();
         endReorder();   // Home or another app while reordering keeps the order so far
-        wallpaperPlayer.stop();
-        remoteWallpaper.stop();
+        if (pond != null) pond.onPause();
+        if (wallpaperPlayer != null) {
+            wallpaperPlayer.stop();
+            remoteWallpaper.stop();
+        }
         stopAmbientAnimation();
         hero.animate().cancel();
         ambient.animate().cancel();
@@ -1297,8 +1366,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         grid.getRecycledViewPool().clear();
         heroArtCache.clear();
         heroArtKey = null;
-        wallpaperPlayer.releaseForMemoryPressure();
-        remoteWallpaper.releaseForMemoryPressure();
+        if (wallpaperPlayer != null) {
+            wallpaperPlayer.releaseForMemoryPressure();
+            remoteWallpaper.releaseForMemoryPressure();
+        }
         tileRefresh.invalidate();
     }
 
@@ -1317,8 +1388,11 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     protected void onDestroy() {
         super.onDestroy();
         unregisterReceiver(packageReceiver);
-        wallpaperPlayer.close();
-        remoteWallpaper.close();
+        if (pond != null) root.removeView(pond);
+        if (wallpaperPlayer != null) {
+            wallpaperPlayer.close();
+            remoteWallpaper.close();
+        }
         ConnectivityManager cm = getSystemService(ConnectivityManager.class);
         TvInputManager tim = (TvInputManager) getSystemService(TV_INPUT_SERVICE);
         if (tim != null) tim.unregisterCallback(inputCallback);
@@ -1708,7 +1782,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     }
 
     private void openScreensaver() {
-        if (!headerResumed || !hasWindowFocus() || screensaverOpening || reordering
+        if (pond != null || !headerResumed || !hasWindowFocus() || screensaverOpening || reordering
                 || appLibrary != null
                 || (openPopup != null && openPopup.isShowing())
                 || (cardPrompt != null && cardPrompt.isShowing())) return;
@@ -1801,7 +1875,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         glassTargetY = y;
         // Cinematic shelf: the highlight glows in the dock app's colour, plain white in the grid (and on the dock with
         // cinematic_white_focus). app_glow: every tile. In a single row every tile is the dock's kind.
-        boolean coloured = (appGlow || cinematic && !cinematicWhiteFocus && (singleRow || position < COLUMNS)) && !festive;
+        boolean coloured = pond == null && !festive
+                && (appGlow || cinematic && !cinematicWhiteFocus && (singleRow || position < COLUMNS));
         int accent = coloured ? adapter.ambientColorAt(position) : 0;
         if ((cinematic || appGlow) && !festive && accent != glassAccent) {
             glassAccent = accent;
@@ -3052,6 +3127,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private void updateInputIndicator(boolean any, boolean connected) {
         boolean visible = compactHeaderIcons ? connected : any;
         btnInputs.setVisibility(showInputsPill && visible ? View.VISIBLE : View.GONE);
+        positionPondButtons();
         btnInputs.setContentDescription(getString(compactHeaderIcons ? R.string.hdmi_connected : R.string.inputs));
         if (inputSignal != null) {
             if (showInputsPill && connected && headerResumed && !reducedMotion
@@ -3121,6 +3197,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     }
 
     private void open(Intent i) {
+        TvMetrics.action(this, Intent.ACTION_MAIN.equals(i.getAction()) ? "launch_app" : "open_settings");
         i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         try {
             startActivity(i);
@@ -3153,6 +3230,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     }
 
     private void openInput(String inputId) {
+        TvMetrics.action(this, "switch_input");
         // A CEC device is a child input of its HDMI port; the vendor source number belongs to the port
         // (MiTV-MFFU0). Only that lookup uses the parent: the generic path below still opens the child.
         String sourceId = inputId;
@@ -3202,6 +3280,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
     /** Dropdown menu under the Inputs pill: HDMI ports (with connection state), AV and Live TV. */
     private void showInputs() {
+        TvMetrics.action(this, "open_inputs");
         // A configured source panel and no Live TV row to offer next to it: the panel is the whole menu.
         // The BYINTEK U4 needs this, as its TvInputManager lists three HDMI ports and an AV input it doesn't have.
         List<CoocaaSources.Source> coocaa = coocaaSources ? CoocaaSources.list(this) : Collections.emptyList();
@@ -3491,12 +3570,13 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         }
         addInputRow(rows, popup, R.drawable.ic_swap_vert, getString(R.string.reorder), -1, this::toggleReorder);
         if (launcherSettingsButton) {
-            addInputRow(rows, popup, R.drawable.ic_home_settings_pill, getString(R.string.launcher_settings), -1,
+            addInputRow(rows, popup, R.drawable.ic_home_settings_pill, getString(DesktopMode.settingsTitle(this)), -1,
                     () -> startActivityForResult(new Intent(this, LauncherSettingsActivity.class), LAUNCHER_SETTINGS_REQUEST));
         } else {
             addInputRow(rows, popup, R.drawable.ic_settings, getString(R.string.settings), -1,
                     () -> open(systemIntent(Settings.ACTION_SETTINGS)));
         }
+        if (pond != null) addSettingsMenuRow(rows, popup, R.string.desktop_mode_pond, () -> root.post(this::showPondActions));
         panel.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
         popup.setWidth(Math.max((int) (220 * density), Math.min(panel.getMeasuredWidth(), (int) (360 * density))));
         dropIn(popup, panel, anchor, getResources().getBoolean(R.bool.rtl_menu_bar) ? Gravity.START : Gravity.END);
@@ -3509,7 +3589,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         View panel = getLayoutInflater().inflate(R.layout.popup_inputs, root, false);
         LinearLayout rows = panel.findViewById(R.id.rows);
         PopupWindow popup = glassPopup(panel, (int) (200 * density));
-        if (!launcherSettingsButton) addSettingsMenuRow(rows, popup, R.string.launcher_settings, () -> startActivityForResult(
+        if (!launcherSettingsButton) addSettingsMenuRow(rows, popup, DesktopMode.settingsTitle(this), () -> startActivityForResult(
                 new Intent(this, LauncherSettingsActivity.class), LAUNCHER_SETTINGS_REQUEST));
         // Firmware that ships its own settings app next to the AOSP one (Xiaomi China is one): the
         // vendor app holds pages the AOSP settings has no row for, such as Account & Security with
@@ -3526,6 +3606,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         addSettingsMenuRow(rows, popup, R.string.reorder, this::toggleReorder);
         // A launcher may not restart the TV itself; the Home key helper can open the system power menu instead.
         if (HomeKeyService.canOpenPowerMenu()) addSettingsMenuRow(rows, popup, R.string.power_menu, HomeKeyService::openPowerMenu);
+        if (pond != null) addSettingsMenuRow(rows, popup, R.string.desktop_mode_pond, () -> root.post(this::showPondActions));
         panel.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
         popup.setWidth(Math.max((int) (200 * density), panel.getMeasuredWidth()));
         // Hebrew puts Settings at the left of the header: grow the menu inward from it.
@@ -3608,6 +3689,61 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         int at=adapter.positionOf(key); if(at<0)return;
         focusTile(at);pickUp(at);
         Toast.makeText(this,R.string.reorder_hint,Toast.LENGTH_LONG).show();
+    }
+
+    private void addPondButton(int label, int icon, Runnable action) {
+        ViewGroup bar = findViewById(R.id.topButtons);
+        View button = getLayoutInflater().inflate(R.layout.top_pond_button, bar, false);
+        button.setId(View.generateViewId());
+        button.setContentDescription(getText(label));
+        ImageView image = button.findViewById(R.id.pondButtonIcon);
+        image.setImageResource(icon);
+        TextView name = button.findViewById(R.id.pondButtonLabel);
+        name.setText(label);
+        button.setOnFocusChangeListener((v, focused) ->
+                name.setVisibility(focused ? View.VISIBLE : View.INVISIBLE));
+        button.setOnClickListener(v -> action.run());
+        pondButtons.add(button);
+    }
+
+    private void positionPondButtons() {
+        if (pondButtons.isEmpty()) return;
+        ViewGroup bar = findViewById(R.id.topButtons);
+        View anchor = btnInputs.getVisibility() == View.VISIBLE ? btnInputs : btnWifi;
+        int first = bar.indexOfChild(pondButtons.get(0));
+        if (first >= 0 && first + pondButtons.size() == bar.indexOfChild(anchor)) return;
+        View focused = getCurrentFocus();
+        for (View button : pondButtons) bar.removeView(button);
+        for (View button : pondButtons) bar.addView(button, bar.indexOfChild(anchor));
+        if (pondButtons.contains(focused)) focused.requestFocus();
+    }
+
+    private void showPondAchievements() {
+        SharedPreferences choices = getSharedPreferences(Config.SETTINGS_NAME, MODE_PRIVATE);
+        new android.app.AlertDialog.Builder(this)
+                .setTitle(R.string.pond_achievements)
+                .setMessage(getString(R.string.pond_achievements_summary,
+                        choices.getInt("pond_catches", 0), choices.getInt("pond_points", 0)))
+                .setPositiveButton(android.R.string.ok, null)
+                .show();
+    }
+
+    private void showPondActions() {
+        if (pond == null || !headerResumed) return;
+        View panel = getLayoutInflater().inflate(R.layout.popup_inputs, root, false);
+        LinearLayout rows = panel.findViewById(R.id.rows);
+        View anchor = findViewById(R.id.btnSettings);
+        PopupWindow popup = glassPopup(panel, (int) (220 * density));
+        popup.setOnDismissListener(() -> {
+            if (openPopup == popup) openPopup = null;
+            if (headerResumed) anchor.requestFocus();
+        });
+        addSettingsMenuRow(rows, popup, R.string.pond_feed, () -> { if (pond != null) pond.feed(); });
+        addSettingsMenuRow(rows, popup, R.string.pond_ripple, () -> { if (pond != null) pond.ripple(); });
+        addSettingsMenuRow(rows, popup, R.string.pond_fish, () -> { if (pond != null) pond.fish(); });
+        dropIn(popup, panel, anchor,
+                getResources().getBoolean(R.bool.rtl_menu_bar) ? Gravity.START : Gravity.END);
+        rows.getChildAt(0).requestFocus();
     }
 
     private void addSettingsMenuRow(LinearLayout rows, PopupWindow popup, int title, Runnable action) {

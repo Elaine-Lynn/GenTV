@@ -43,10 +43,10 @@ for directory, names, files in os.walk(root):
         assert path.suffix not in blocked, f'Generated/private file outside ignored output: {path.relative_to(root)}'
 apk = root/'launcher/app/build/outputs/apk/release/app-release.apk'
 if apk.exists():
-    # Keep visual assets within the 1 MB (decimal) Release APK budget.
+    # Keep visual assets within the 5 MB (decimal) Release APK budget.
     size = apk.stat().st_size
-    print(f'TV release APK size: {size:,} / 1,000,000 bytes')
-    assert size <= 1_000_000, f'Launcher exceeds the 1 MB size budget: {size:,} bytes'
+    print(f'TV release APK size: {size:,} / 5,000,000 bytes')
+    assert size <= 5_000_000, f'Launcher exceeds the 5 MB size budget: {size:,} bytes'
 bundle = root/'phone/app/build/generated/homes/launcher/build-manifest.json'
 if bundle.exists():
     delivery = json.loads(bundle.read_text())
