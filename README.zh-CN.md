@@ -52,7 +52,7 @@
 
 在 **控制中心 → 桌面主题切换** 预览并选择苹果风简洁桌面或互动养鱼桌面。两种桌面共用应用布局，重启后会恢复上次选择。在 **养鱼桌面设置** 中，可以调整鱼群数量、游速和帧率，并选择 720p 或 1080p。
 
-<img src="launcher/app/src/main/res/drawable-nodpi/theme_preview_pond.webp" alt="GenTV 互动养鱼桌面，锦鲤在水中游动，小猫在右侧石岸钓鱼，底部保留应用磁贴" width="640">
+<img src="docs/media/readme/overview/pond-desktop.webp" alt="GenTV 互动养鱼桌面，锦鲤在水中游动，小猫在右侧石岸钓鱼，底部保留应用磁贴" width="800">
 
 ## 为什么用 GenTV
 
