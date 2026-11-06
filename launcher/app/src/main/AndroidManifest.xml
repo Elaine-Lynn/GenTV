@@ -84,6 +84,13 @@
         android:allowBackup="false"
         android:localeConfig="@xml/locales_config">
 
+        <activity android:name=".ChildChallengeActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:launchMode="singleTask"
+            android:taskAffinity="${applicationId}.childChallenge"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar.Fullscreen" />
+        <activity android:name=".ChildSettingsActivity" android:exported="false" />
         <activity android:name=".MetricsSettingsActivity" android:exported="false" />
         <activity android:name=".CloudSettingsActivity" android:exported="false" android:theme="@android:style/Theme.Translucent.NoTitleBar.Fullscreen" />
         <provider android:name="androidx.core.content.FileProvider" android:authorities="${applicationId}.updates" android:exported="false" android:grantUriPermissions="true">
@@ -254,6 +261,13 @@
             </intent-filter>
         </receiver>
 
+        <service android:name=".ChildWatchService" android:label="@string/child_lock_settings"
+            android:exported="true" android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data android:name="android.accessibilityservice" android:resource="@xml/child_watch_service" />
+        </service>
         <service
             android:name=".InputKeyService"
             android:exported="false"
