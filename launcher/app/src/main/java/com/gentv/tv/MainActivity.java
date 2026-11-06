@@ -257,6 +257,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private static LocalDate lastPetalShower;
     /** boot_to_live_tv: open the Live TV app on the first Home of each boot. */
     private boolean bootToLiveTv;
+    private ChildLock childLock;
     /** open_on_start_choice: the app picked in Launcher settings may open on the first Home of each boot. */
     private boolean openOnStartChoice;
     /** hidden_apps as the adapter sees them (config.xml or a theme's config.json): a hidden app gets no card either. */
@@ -398,6 +399,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        childLock = new ChildLock(this);
         setContentView(R.layout.activity_main);
         density = getResources().getDisplayMetrics().density;
         // config.xml, overlaid by config.json from a pushed theme (see Config).
@@ -939,7 +941,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                     .build(), vpnCallback);
         }
         // Not after recreate(): the launch intent survives it and would open the settings again.
-        if (savedInstanceState == null && !openLauncherSettingsIfAsked(getIntent())) openInputsIfAsked(getIntent());
+        if (savedInstanceState == null && !ChildLock.locked(this) && !openLauncherSettingsIfAsked(getIntent())) {
+            openInputsIfAsked(getIntent());
+        }
     }
 
     /**
@@ -1006,6 +1010,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
+        if (childLock.showIfLocked()) return;
         if (openLauncherSettingsIfAsked(intent)) return;
         if (openInputsIfAsked(intent)) return;
         if (intent == null || !intent.hasCategory(Intent.CATEGORY_HOME)) return;
@@ -1077,8 +1082,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
     @Override
     protected void onResume() {
-        TvCloud.checkOnHome(this);
         super.onResume();
+        boolean childLocked = childLock.showIfLocked();
+        if (!childLocked) TvCloud.checkOnHome(this);
         int currentDesktopRevision = DesktopStore.revision(this);
         if (desktopRevision >= 0 && currentDesktopRevision != desktopRevision) {
             desktopRevision = currentDesktopRevision;
@@ -1119,7 +1125,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             default:
                 break;
         }
-        if (openLiveTvAfterBoot()) return;
+        if (!childLocked && openLiveTvAfterBoot()) return;
         updateGreeting();
         updateRace();
         // The network and Inputs pills keep their state while Home is in the background, and callbacks update them
@@ -1312,6 +1318,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     @Override
     protected void onPause() {
         super.onPause();
+        childLock.dismiss();
         if(headerResumed) unregisterReceiver(signalReceiver);
         headerResumed=false;
         if(inputSignal!=null)inputSignal.stop();
@@ -3174,6 +3181,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     /** The TV's own source-selection panel, for TVs that have no TvInputManager (TCL Android TV 9): a
      *  service, or an activity on sets whose panel is a dialog (BYINTEK U4's QuickSourceActivity). */
     private void openSourcePanel() {
+        if (childLock.showIfLocked()) return;
         Intent i = new Intent(sourcePanelAction);
         ComponentName c = ComponentName.unflattenFromString(sourcePanelService);
         if (c != null) i.setComponent(c);
@@ -3197,6 +3205,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     }
 
     private void open(Intent i) {
+        if (childLock.showIfLocked()) return;
         TvMetrics.action(this, Intent.ACTION_MAIN.equals(i.getAction()) ? "launch_app" : "open_settings");
         i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         try {
@@ -3230,6 +3239,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     }
 
     private void openInput(String inputId) {
+        if (childLock.showIfLocked()) return;
         TvMetrics.action(this, "switch_input");
         // A CEC device is a child input of its HDMI port; the vendor source number belongs to the port
         // (MiTV-MFFU0). Only that lookup uses the parent: the generic path below still opens the child.

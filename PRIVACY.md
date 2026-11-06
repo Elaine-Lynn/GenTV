@@ -30,6 +30,8 @@ The server immediately converts valid MAC addresses to an app-scoped HMAC using 
 
 TV connection keys, backups, restore records, operation history and desktop drafts stay on the phone unless you choose to export or share them. Shared reports are redacted before export. The phone talks to your TV directly over your local network after you authorise ADB.
 
+The TV app’s local ADB activation connects only to the TV’s loopback address after your confirmation, to enable the child timer accessibility service. Its separate ADB key stays in the TV app’s private, backup-excluded storage. The previous service settings are recorded locally for recovery and are not sent to GenTV servers. This feature does not start network debugging or grant the app general permission to write secure settings. Network debugging can be turned off afterwards.
+
 ## Optional Private DNS filtering
 
 If you enable ad filtering in GenTV Remote, the app configures the TV to use AdGuard DNS (`dns.adguard-dns.com`). The TV then sends DNS lookups to that third-party provider, which can see the queried domain names and the connection source IP. Those lookups are not sent to the GenTV service. Filtering depends on the provider and the app; it does not remove every in-app ad. The previous DNS settings are recorded for restoration.

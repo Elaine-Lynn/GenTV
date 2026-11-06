@@ -52,6 +52,12 @@ Open **Control center → Desktop theme** to preview and switch between the Appl
 
 <img src="docs/media/readme/overview/pond-desktop.gif" alt="GenTV interactive fish pond with swimming koi, a cat casting a fishing rod from the right bank, and app tiles along the bottom" width="800">
 
+## Child viewing controls
+
+Open **Control center → Child mode** to set a parent PIN, managed apps, question type and difficulty. Choose 5, 10, 15 or 20 minutes; the default is 10. The timer counts screen-on foreground time in selected apps and presents an offline question when due. A correct answer releases the current restriction; playback recovery depends on the player.
+
+Automatic timing requires the child timer accessibility service to be connected. On supported devices, the activation button can use local legacy ADB after you enable debugging and accept Android's prompt. Pairing-only/TLS debugging and vendor restrictions may prevent this method. Debugging can be turned off afterwards. This is not tamper-proof system parental control. See [usage and validation](docs/child-mode.md).
+
 ## Why GenTV
 
 - **Everything from your phone.** Install GenTV, clean up the TV, use the remote and keyboard, send files and rearrange the home screen from an Android phone on the same network. You don't need a computer or a cable.
