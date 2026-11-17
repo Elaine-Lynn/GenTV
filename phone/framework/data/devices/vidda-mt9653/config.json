@@ -1,0 +1,5 @@
+{
+  "live_tv_package": "",
+  "source_panel_service": "com.hisense.tv.inputs/com.hisense.tv.InputsUIService",
+  "source_panel_action": "com.hisense.tv.start_inputs"
+}

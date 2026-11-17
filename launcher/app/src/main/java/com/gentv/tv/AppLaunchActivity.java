@@ -13,6 +13,10 @@ public class AppLaunchActivity extends Activity {
     protected void onCreate(Bundle state) {
         super.onCreate(state);
         try {
+            if (ChildLock.locked(this)) {
+                startActivity(new Intent(this, MainActivity.class));
+                return;
+            }
             Uri data = getIntent().getData();
             String pkg = data == null ? null : data.getQueryParameter("id");
             if (pkg != null) {

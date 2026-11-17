@@ -41,6 +41,25 @@ public class ThemeProvider extends ContentProvider {
         return ParcelFileDescriptor.open(f, ParcelFileDescriptor.MODE_READ_ONLY);
     }
 
+    /** Read through the same permission-guarded provider on TVs that hide Android/data from ADB. */
+    @Override
+    public android.os.Bundle call(String method, String arg, android.os.Bundle extras) {
+        if (!"read_config".equals(method)) return super.call(method, arg, extras);
+        getContext().enforceCallingOrSelfPermission("android.permission.WRITE_SECURE_SETTINGS", "Read launcher configuration");
+        try {
+            File dir = Config.dir(getContext());
+            if (dir == null) throw new java.io.IOException("External files unavailable");
+            File config = new File(dir, Config.FILE_NAME);
+            if (config.length() > 1024 * 1024) throw new java.io.IOException("Config too large");
+            byte[] bytes = config.exists() ? java.nio.file.Files.readAllBytes(config.toPath()) : new byte[0];
+            android.os.Bundle result = new android.os.Bundle();
+            result.putString("config_base64", android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP));
+            return result;
+        } catch (java.io.IOException e) {
+            throw new IllegalStateException("Cannot read launcher configuration", e);
+        }
+    }
+
     @Override
     public int delete(Uri uri, String selection, String[] selectionArgs) {
         File dir = Config.dir(getContext());

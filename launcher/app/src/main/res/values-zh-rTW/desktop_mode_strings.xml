@@ -1,0 +1,24 @@
+<resources>
+    <string name="desktop_mode_title">桌面主題切換</string>
+    <string name="desktop_mode_simple">蘋果風簡潔桌面</string>
+    <string name="desktop_mode_pond">互動養魚桌面</string>
+    <string name="pond_feed">餵魚</string>
+    <string name="pond_ripple">激起水波</string>
+    <string name="pond_fish">開始釣魚</string>
+    <string name="pond_caught">釣到了一條魚！</string>
+    <string name="pond_unavailable">魚池暫時無法運作，已返回簡潔桌面。</string>
+    <string name="pond_settings">養魚桌面設定</string>
+    <string name="pond_settings_hint">調整魚群數量、游速和畫面幀率。應用程式版面設定由兩種桌面共用。</string>
+    <string name="pond_count">魚群數量</string>
+    <string name="pond_count_value">魚群數量 · %1$d 條</string>
+    <string name="pond_speed">游速</string>
+    <string name="pond_speed_value">游速 · %1$d%%</string>
+    <string name="pond_fps">魚池幀率</string>
+    <string name="pond_fps_value">魚池幀率 · %1$d fps</string>
+    <string name="pond_achievements">成就</string>
+    <string name="pond_fish_short">釣魚</string>
+    <string name="pond_feed_short">餵魚</string>
+    <string name="pond_achievements_summary">累計釣獲：%1$d 條\n累計積分：%2$d</string>
+    <string name="pond_resolution">魚池解析度</string>
+    <string name="pond_resolution_value">魚池解析度 · %1$dp</string>
+</resources>

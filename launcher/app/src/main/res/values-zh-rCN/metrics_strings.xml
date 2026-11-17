@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="metrics_title">隐私与使用统计</string>
+    <string name="metrics_hint">默认关闭，本版需重新开启。开启后上报可读取的本机有效 MAC、随机安装 ID、固定页面、操作、版本、会话与前台时长。服务端优先按 MAC 的加密哈希去重，MAC 不可用时按安装 ID 去重；不保存或展示原始 MAC。不读取应用名称或输入内容。有效 MAC 可跨重装关联同一设备；关闭统计会清空待发事件并重置安装 ID，但不能撤回历史关联。实体测试机请开启测试标记。</string>
+    <string name="metrics_test">将之后的上报标记为测试流量（模拟器自动标记）</string>
+    <string name="metrics_share_statistics">发送使用统计</string>
+</resources>

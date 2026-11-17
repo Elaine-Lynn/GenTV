@@ -1,0 +1,753 @@
+[
+  {
+    "id": "acer-ar55ar2851udpro",
+    "title": "Acer AR55AR2851UDPRO 55\" (SCBC device R4, Realtek rtd2851m), India, Android TV 14, firmware UKR1.260308",
+    "android": [
+      "14"
+    ],
+    "config": {
+      "live_tv_package": "com.apps.livetv"
+    }
+  },
+  {
+    "id": "aiwa-ai-pont-sa",
+    "title": "AIWA AI PONT SA (Changhong, brand AIWA, device osaka, product ISDB86AW)",
+    "android": [
+      "14"
+    ],
+    "config": {
+      "live_tv_package": "com.mediatek.wwtv.tvcenter"
+    }
+  },
+  {
+    "id": "anker-nebula-d2426",
+    "title": "Anker Nebula projector, model D2426 (build name D2426_CapsuleIIIPro, device baekdu, SDMC board,",
+    "android": [
+      "14"
+    ],
+    "config": {
+      "live_tv_package": ""
+    }
+  },
+  {
+    "id": "anker-nebula-mars-3-air",
+    "title": "Anker Nebula Mars 3 Air projector, model D2325 (build name Nebula_Mars_2_V2, device taihang,",
+    "android": [
+      "14"
+    ],
+    "config": {
+      "live_tv_package": ""
+    }
+  },
+  {
+    "id": "aqua-matrixtv-ee-50",
+    "title": "AQUA MatrixTV EE 50\" 4K (Haier, ro.product.model \"AQUA MatrixTV EE\", product AQ9676EU, device omonia),",
+    "android": [
+      "14"
+    ],
+    "config": {
+      "live_tv_package": "com.cltv.hybrid"
+    }
+  },
+  {
+    "id": "benq-gv32",
+    "title": "BenQ GV32 portable projector (SDMC-built, product BenQ_GV01, device himalaya, MediaTek m7332), 1.8 GB RAM,",
+    "android": [
+      "14"
+    ],
+    "config": {
+      "live_tv_package": ""
+    }
+  },
+  {
+    "id": "byintek-u4",
+    "title": "BYINTEK Love U4, 1080P version (Skyworth board RG_HS352_D1E8_SW_B10, HiSilicon Hi3751V350)",
+    "android": [
+      "9"
+    ],
+    "config": {
+      "source_panel_service": "com.sdt.app.skysettings/.entry.activity.QuickSourceActivity"
+    }
+  },
+  {
+    "id": "epson-ls800",
+    "title": "Epson LS800 laser projector, Android TV module HA90 (built by Askey, board sti6202d101, Amlogic/droidlogic),",
+    "android": [
+      "14"
+    ],
+    "config": {
+      "live_tv_package": ""
+    }
+  },
+  {
+    "id": "hisense-65d62qh",
+    "title": "Hisense 65D62QH (China market), JuUI 9.0.10.845",
+    "android": [
+      "11"
+    ],
+    "config": {
+      "live_tv_package": "com.jamdeo.tv.livetv",
+      "source_panel_service": "com.hisense.tv.inputs/com.hisense.tv.InputsUIService",
+      "source_panel_action": "com.hisense.tv.start_inputs"
+    }
+  },
+  {
+    "id": "hisense-e5q-pro",
+    "title": "Hisense E5Q Pro (internal model \"VIDAA_TV\", MediaTek MT9653), VIDAA on Android 11, firmware 02.02.70.01",
+    "android": [
+      "11"
+    ],
+    "config": {
+      "live_tv_package": "",
+      "live_tv_action": "",
+      "source_panel_service": "com.hisense.tv.inputs/com.hisense.tv.InputsUIService",
+      "source_panel_action": "com.hisense.tv.start_inputs"
+    }
+  },
+  {
+    "id": "hisense-smarttv-4k-ffm",
+    "title": "Hisense SmartTV 4K FFM (device huangshan, MediaTek), Android TV 10, firmware QTG3.200902.001",
+    "android": [
+      "10"
+    ],
+    "config": {
+      "live_tv_package": "com.mediatek.wwtv.tvcenter",
+      "handle_view_inputs": true
+    }
+  },
+  {
+    "id": "hisense-u75-hengshan",
+    "title": "Hisense U75 (device hengshan, MediaTek), Google TV / Android 12, build STT2.230310.002.",
+    "android": [
+      "12"
+    ],
+    "config": {
+      "live_tv_package": "com.vt.tv.tvcenter"
+    }
+  },
+  {
+    "id": "hy320",
+    "title": "HY320 projector (t950s_be311, Google-certified Android TV), Android 13 (SDK 33)",
+    "android": [
+      "13"
+    ],
+    "config": {
+      "live_tv_package": ""
+    }
+  },
+  {
+    "id": "jvc-lt-43km348",
+    "title": "JVC LT-43KM348 (built by KTC, product KTC_JVC_2K_25GV1, device jagalchi, MediaTek mt5867 / T56),",
+    "android": [
+      "14"
+    ],
+    "config": {
+      "live_tv_package": "com.mediatek.wwtv.tvcenter",
+      "live_tv_action": "android.mtk.intent.action.ACTION_REQUEST_TOP_RESUME"
+    }
+  },
+  {
+    "id": "liberton-ltv-24h01at",
+    "title": "Liberton LTV 24H01AT (Liberton, built by Changhong, device redwood, Android 11 API 30,",
+    "android": [
+      "11"
+    ],
+    "config": {
+      "live_tv_package": "com.mediatek.wwtv.tvcenter"
+    }
+  },
+  {
+    "id": "magcubic-hy300-pro-plus",
+    "title": "Magcubic HY300 Pro+ projector (rk3566_rgo, Rockchip), Android 14 (SDK 34)",
+    "android": [
+      "14"
+    ],
+    "config": {
+      "source_panel_service": "com.softwinner.awsource/com.softwinner.awsource.MainActivity",
+      "live_tv_package": ""
+    }
+  },
+  {
+    "id": "nokia-streaming-box-8000",
+    "title": "Nokia Streaming Box 8000 (Sagemcom/NES, product SEI600NK4, device HND, Amlogic), 2 GB RAM",
+    "android": [
+      "14"
+    ],
+    "config": {
+      "live_tv_package": ""
+    }
+  },
+  {
+    "id": "nvidia-shield-tv-2019",
+    "title": "NVIDIA SHIELD TV 2019 tube (model P3430, codename sif, Tegra X1+, 2 GB RAM), Android TV 11 (API 30)",
+    "android": [
+      "11"
+    ],
+    "config": {
+      "live_tv_package": "com.google.android.tv"
+    }
+  },
+  {
+    "id": "ok-ai-pont-ikebukuro",
+    "title": "OK. \"AI PONT\" (Changhong, device ikebukuro), Android TV 11 (API 30), firmware RTO2.250804.001,",
+    "android": [
+      "11"
+    ],
+    "config": {
+      "live_tv_package": "com.mediatek.wwtv.tvcenter"
+    }
+  },
+  {
+    "id": "oneplus-tv-cebu",
+    "title": "OnePlus TV (model C00, codename Cebu), Android TV 10 (API 29), firmware QTG3.201207.001",
+    "android": [
+      "10"
+    ],
+    "config": {
+      "live_tv_package": "com.heytap.tv.livetv"
+    }
+  },
+  {
+    "id": "oneplus-tv-dosa",
+    "title": "OnePlus TV (Dosa, Oneplus_Dosa_IN), Android TV 11 (API 30), firmware RTM5.220609.299",
+    "android": [
+      "11"
+    ],
+    "config": {
+      "live_tv_package": "com.oneplus.tv.android.livetv"
+    }
+  },
+  {
+    "id": "panasonic-4ktv-3mup",
+    "title": "Panasonic 4KTV-3MUP (MOKA R4_GTV, Realtek rtd2851m), Taiwan, Google TV 14 (SDK 34), build UKR1.260308",
+    "android": [
+      "14"
+    ],
+    "config": {
+      "live_tv_package": "com.realtek.tv"
+    }
+  },
+  {
+    "id": "panasonic-4ktv-3su",
+    "title": "Panasonic 4KTV-3SU (Skyworth-built, device SW6H, product SW6H_PANATV_NF, MediaTek, armeabi-v7a), Android TV 14",
+    "android": [
+      "14"
+    ],
+    "config": {
+      "live_tv_package": "com.smartdevice.livetv"
+    }
+  },
+  {
+    "id": "peaq-ptv43aqu-5023c",
+    "title": "PEAQ PTV 43AQU-5023C (Changhong, reports brand OK. / model \"AI PONT\", device dundas), Android TV 11",
+    "android": [
+      "11"
+    ],
+    "config": {
+      "live_tv_package": "com.mediatek.wwtv.tvcenter"
+    }
+  },
+  {
+    "id": "philips-55pos9002",
+    "title": "Philips 55POS9002/12 (55\" OLED, TP Vision TPM171E, device PH7M_EU_5596), Europe, 2017 model",
+    "android": [
+      "8"
+    ],
+    "config": {
+      "live_tv_package": "org.droidtv.playtv"
+    }
+  },
+  {
+    "id": "philips-google-tv-ta7",
+    "title": "Philips Google TV TA7 (TPV, PH3M_LT_T32 / device PH3M_AL_T32, MediaTek), Brazil",
+    "android": [
+      "14"
+    ],
+    "config": {
+      "live_tv_package": "com.mediatek.wwtv.tvcenter"
+    }
+  },
+  {
+    "id": "rca-ai-pont",
+    "title": "RCA AI PONT SA (Changhong, device redwood, product ISDB92RC)",
+    "android": [
+      "14"
+    ],
+    "config": {
+      "live_tv_package": "com.mediatek.wwtv.tvcenter"
+    }
+  },
+  {
+    "id": "rca-rc50a21s-4ksm",
+    "title": "RCA Android TV, RC50A21S-4KSM (Toptech/Zeasn firmware, Realtek RTD2851P)",
+    "android": [
+      "9"
+    ],
+    "config": {
+      "live_tv_package": "",
+      "source_panel_service": "com.toptech.tvmenu/.input.InputActivity",
+      "source_panel_action": "com.toptech.tv.action.INPUT_ACTIVITY"
+    }
+  },
+  {
+    "id": "redmi-mitv-mooq3",
+    "title": "Redmi TV 43\" (MiTV-MOOQ3, codename tarzan, MediaTek m7632), Android TV 11, firmware RTM4.220307.164.8237",
+    "android": [
+      "11"
+    ],
+    "config": {
+      "live_tv_package": "com.mediatek.wwtv.tvcenter"
+    }
+  },
+  {
+    "id": "sankey-smart-tv-hi3751v350",
+    "title": "Sankey SMART_TV (CVTE firmware, HiSilicon Hi3751V350 \"bigfish\"), Android 12, build Hi3751V352E_DMO, firmware 20231115_180213_01",
+    "android": [
+      "12"
+    ],
+    "config": {
+      "live_tv_package": "",
+      "source_panel_service": "com.cvte.tv.globalui/.InputSourceActivity"
+    }
+  },
+  {
+    "id": "sber-salute-tv-at30a6",
+    "title": "Sber Salute TV 43\" (CVTE board TP.T962D4.PC756, Amlogic T962D4 \"t5w\", codename at30a6, panel LE43VA, 2 GB RAM, 8 GB eMMC), Russia",
+    "android": [
+      "13"
+    ],
+    "config": {
+      "live_tv_package": ""
+    }
+  },
+  {
+    "id": "sber-salute-tv-pb766",
+    "title": "Sber Salute TV 32\" (CVTE board TPD.MT9216.PB766, MediaTek MT9256 \"mt5867\", panel ST3151A07-2, 1 GB RAM, 8 GB eMMC), Russia",
+    "android": [
+      "11"
+    ],
+    "config": {
+      "live_tv_package": ""
+    }
+  },
+  {
+    "id": "seleco-tv39020hda9smart",
+    "title": "Seleco TV39020HDA9SMART 39\" (AT_SmartScreen, panel 13AT204V10_PAS; Toptech + Zeasn, Realtek RTK2842P, rtd285o), Italy",
+    "android": [
+      "9"
+    ],
+    "config": {
+      "live_tv_package": "",
+      "source_panel_service": "com.toptech.tvmenu/.input.InputActivity"
+    }
+  },
+  {
+    "id": "sharp-4t-c43dl1",
+    "title": "SHARP AQUOS 4T-C43DL1 (AQUOS-TVJ21-2, tcve2uj), Japan, Android TV 11 (SDK 30), firmware RTT2.220104.001 (78000_20241212)",
+    "android": [
+      "11"
+    ],
+    "config": {
+      "live_tv_package": "jp.co.sharp.av.android.aquostvapp"
+    }
+  },
+  {
+    "id": "skyworth-7s60-a5",
+    "title": "Skyworth 7S60_A5 (board 6A658B, sky8S34), China market, Coocaa OS on Android 8.0 (API 26)",
+    "android": [
+      "8"
+    ],
+    "config": {
+      "source_panel_service": "com.coocaa.os.ccosservice/com.coocaa.os.centerintegration.service.CenterService",
+      "source_panel_action": "com.coocaa.intent.action.CONTROL_CENTER",
+      "source_panel_extra": "control_center_command=100",
+      "coocaa_sources": true
+    }
+  },
+  {
+    "id": "skyworth-7t861-a23",
+    "title": "Skyworth 7T861_A23 (MediaTek MT9638, mt5872), China market, Coocaa OS on Android 10 (API 29)",
+    "android": [
+      "10"
+    ],
+    "config": {
+      "live_tv_package": "com.skyworth.tv"
+    }
+  },
+  {
+    "id": "sony-bravia-4k-vh21",
+    "title": "Sony BRAVIA 4K VH21 (KD-65X85K, 2022, device BRAVIA_VH21, MediaTek MT5895), Australia",
+    "android": [
+      "12"
+    ],
+    "config": {
+      "live_tv_package": "com.sony.dtv.tvx"
+    }
+  },
+  {
+    "id": "sony-bravia-ae1",
+    "title": "Sony BRAVIA 4K AE1 (device BRAVIA_AE_M6L, MediaTek MT5897), EU firmware",
+    "android": [
+      "12"
+    ],
+    "config": {
+      "live_tv_package": "com.sony.dtv.tvlin"
+    }
+  },
+  {
+    "id": "sony-bravia-vu1",
+    "title": "Sony BRAVIA VU1 (KD-43X7500H, product BRAVIA_VU1_UC, Realtek SoC), 2 GB RAM, armeabi-v7a",
+    "android": [
+      "11"
+    ],
+    "config": {
+      "live_tv_package": "com.realtek.tv.atv"
+    }
+  },
+  {
+    "id": "sony-bravia-vu3",
+    "title": "Sony KD-55X75K (Android product BRAVIA_VU3 / BRAVIA_VU3_4K, Realtek rtd2885m)",
+    "android": [
+      "14"
+    ],
+    "config": {
+      "live_tv_package": "com.android.tv"
+    }
+  },
+  {
+    "id": "sony-kdl-43w950d",
+    "title": "Sony BRAVIA KDL-43W950D (Android model \"BRAVIA 2015\", SVP-DTV15, MediaTek), India (\"PA\") firmware",
+    "android": [
+      "8"
+    ],
+    "config": {
+      "live_tv_package": "com.sony.dtv.tvx"
+    }
+  },
+  {
+    "id": "tcl-43c645",
+    "title": "TCL G03 / BeyondTV4 firmware V8-R51MT05-LF1V652 (AR11), reports as \"Smart TV Pro\", Android TV 11 (SDK 30),",
+    "android": [
+      "11"
+    ],
+    "config": {
+      "live_tv_package": "com.tcl.tv"
+    }
+  },
+  {
+    "id": "tcl-55a300w",
+    "title": "TCL 55A300W picture-frame QLED Google TV, 2023, US (device G08, model \"Smart TV\", product G08_4K_US_NF,",
+    "android": [
+      "12"
+    ],
+    "config": {
+      "live_tv_package": "com.tcl.tv"
+    }
+  },
+  {
+    "id": "tcl-55c745",
+    "title": "TCL 55C745 (2023), device G08, model \"Smart TV Pro\", product G08_4K_GB, MediaTek tcl9618, 2.4 GB RAM.",
+    "android": [
+      "14"
+    ],
+    "config": {
+      "live_tv_package": "com.tcl.tv"
+    }
+  },
+  {
+    "id": "tcl-55c7k-uk",
+    "title": "TCL 55C7K-UK QD-Mini LED Google TV, 2025, UK (device G08, model \"Smart TV Pro\", MediaTek tcl9618)",
+    "android": [
+      "14"
+    ],
+    "config": {
+      "live_tv_package": "com.tcl.tv"
+    }
+  },
+  {
+    "id": "tcl-55p638",
+    "title": "TCL 55P638 (reports \"Smart TV\", device BeyondTV4), Android TV 11.",
+    "android": [
+      "11"
+    ],
+    "config": {
+      "live_tv_package": "com.tcl.tv"
+    }
+  },
+  {
+    "id": "tcl-65c735",
+    "title": "TCL 65C735 (reports as \"Smart TV Pro\", device G05, product G05_4K_GB), Google TV 11 (SDK 30),",
+    "android": [
+      "11"
+    ],
+    "config": {
+      "live_tv_package": "com.tcl.tv"
+    }
+  },
+  {
+    "id": "tcl-65c7l-google-tv",
+    "title": "TCL 65\" C7L Google TV, 2025, Australia (device G08, model \"Smart TV Pro\", MediaTek tcl9618 / mt5896)",
+    "android": [
+      "14"
+    ],
+    "config": {
+      "live_tv_package": "com.tcl.tv"
+    }
+  },
+  {
+    "id": "tcl-65c8l-google-tv",
+    "title": "TCL 65C8L Google TV, 2025, Australia (device G17, model \"Smart TV Pro\", MediaTek tcl9655)",
+    "android": [
+      "14"
+    ],
+    "config": {
+      "live_tv_package": "com.tcl.tv"
+    }
+  },
+  {
+    "id": "tcl-65ep68",
+    "title": "TCL 65EP68 (Europe; product/device and ro.product.model \"BeyondTV\"; board RTD2851, ro.hardware",
+    "android": [
+      "11"
+    ],
+    "config": {
+      "live_tv_package": "com.tcl.tv"
+    }
+  },
+  {
+    "id": "tcl-65qm8l-google-tv",
+    "title": "TCL 65QM8L Google TV, 2025, US (device G17, model \"Smart TV Pro\", MediaTek tcl9655)",
+    "android": [
+      "14"
+    ],
+    "config": {
+      "live_tv_package": "com.tcl.tv"
+    }
+  },
+  {
+    "id": "tcl-75p635",
+    "title": "TCL 75P635 (reports \"Smart TV\", device G07, product G07_4K_GB_NF, client TCL-EU-RTD51A-S1), BeyondTV4 firmware.",
+    "android": [
+      "11"
+    ],
+    "config": {
+      "live_tv_package": "com.tcl.tv"
+    }
+  },
+  {
+    "id": "tcl-beyondtv4-uk",
+    "title": "TCL \"Smart TV Pro\", UK Freeview Play build (device BeyondTV4, product BeyondTV6, board Realtek rtd288o), 2 GB RAM",
+    "android": [
+      "11"
+    ],
+    "config": {
+      "live_tv_package": "com.tcl.tv"
+    }
+  },
+  {
+    "id": "tcl-c89b-google-tv",
+    "title": "TCL C89B 85\" Google TV, 2024 (device G08, model \"Smart TV Pro\", MediaTek tcl9618), a local variant of the C855",
+    "android": [
+      "14"
+    ],
+    "config": {
+      "live_tv_package": "com.tcl.tv"
+    }
+  },
+  {
+    "id": "tcl-g03-google-tv",
+    "title": "TCL Smart TV Pro (device BeyondTV4, product G03_4K_GB, Realtek rtd288o / R51MT05, software",
+    "android": [
+      "11"
+    ],
+    "config": {
+      "live_tv_package": "com.tcl.tv"
+    }
+  },
+  {
+    "id": "tcl-g08-au-android12",
+    "title": "TCL Smart TV Pro (G08, G08_4K_GB, MediaTek), Australian firmware, Android 12 (Google TV, Basic TV mode)",
+    "android": [
+      "12"
+    ],
+    "config": {
+      "live_tv_package": ""
+    }
+  },
+  {
+    "id": "tcl-g09-google-tv",
+    "title": "TCL Smart TV Pro, UK firmware (device G09, product G09_4K_GB, Amlogic T5M), used in Brazil",
+    "android": [
+      "12"
+    ],
+    "config": {
+      "live_tv_package": "com.tcl.tv"
+    }
+  },
+  {
+    "id": "tcl-q7c-google-tv",
+    "title": "TCL Q7C QD-Mini LED, Europe (device G08, model \"Smart TV Pro\", product G08_4K_GB, MediaTek tcl9618)",
+    "android": [
+      "14"
+    ],
+    "config": {
+      "live_tv_package": "com.tcl.tv"
+    }
+  },
+  {
+    "id": "tcl-tc8000-ay30a2",
+    "title": "TCL tc8000_ay30a2 — Chinese-market TCL, Amlogic ohm / TC8000, 3.8 GB RAM",
+    "android": [
+      "11"
+    ],
+    "config": {
+      "source_panel_service": "com.tcl.settings/.ShowWindowService",
+      "source_panel_action": "com.tcl.insrc.SHOW_WINDOW"
+    }
+  },
+  {
+    "id": "thomson-43rt1055",
+    "title": "Thomson 43RT1055 FA Series, India, built by SPPL (ro.product.model \"SPPL 2K ANDROID TV\", product",
+    "android": [
+      "14"
+    ],
+    "config": {
+      "live_tv_package": "com.realtek.tv"
+    }
+  },
+  {
+    "id": "thomson-sppl-4k-sw6h",
+    "title": "Thomson SPPL 4K Google TV (ro.product.model \"SPPL 4K GSmartTV FF\", product SW6H_Thomson, device SW6H,",
+    "android": [
+      "14"
+    ],
+    "config": {
+      "live_tv_package": "com.smartdevice.livetv"
+    }
+  },
+  {
+    "id": "vidda-mt9653",
+    "title": "Vidda VIDAA_TV (Hisense sub-brand; device MT9653, board mt5879), Android TV 11, build",
+    "android": [
+      "11"
+    ],
+    "config": {
+      "live_tv_package": "",
+      "source_panel_service": "com.hisense.tv.inputs/com.hisense.tv.InputsUIService",
+      "source_panel_action": "com.hisense.tv.start_inputs"
+    }
+  },
+  {
+    "id": "vu-vibe-tv",
+    "title": "Vu VIBE TV (ro.product.model \"Vu VIBE TV\", device bandra, manufacturer KONKA, Realtek SoC),",
+    "android": [
+      "14"
+    ],
+    "config": {
+      "live_tv_package": "com.realtek.tv"
+    }
+  },
+  {
+    "id": "xgimi-horizon-s-pro",
+    "title": "XGIMI Horizon S Pro projector (model XK03H, device xgimigalileo, MediaTek), Android TV 11 (SDK 30),",
+    "android": [
+      "11"
+    ],
+    "config": {
+      "input_action": "com.xgimi.action.hdmiPlayer",
+      "live_tv_package": ""
+    }
+  },
+  {
+    "id": "xgimi-mogo-4",
+    "title": "XGIMI MoGo 4 projector (model WK08K, device altai, MediaTek), Google TV / Android 14 (SDK 34),",
+    "android": [
+      "14"
+    ],
+    "config": {
+      "live_tv_package": ""
+    }
+  },
+  {
+    "id": "xgimi-mogo-4-laser",
+    "title": "XGIMI MoGo 4 Laser projector (model WK03K, device altai, MediaTek), Google TV / Android 14 (SDK 34),",
+    "android": [
+      "14"
+    ],
+    "config": {
+      "live_tv_package": ""
+    }
+  },
+  {
+    "id": "xiaomi-mi-box-s",
+    "title": "Xiaomi Mi Box S (model MIBOX4, MDZ-22-AB, codename oneday, Amlogic gxl), Android TV 9 (SDK 28),",
+    "android": [
+      "9"
+    ],
+    "config": {
+      "live_tv_package": ""
+    }
+  },
+  {
+    "id": "xiaomi-mitv-astp0",
+    "title": "Xiaomi MiTV-ASTP0 (codename mulan; China-market firmware, sold as L55M7-EA), Android 9 (SDK 28),",
+    "android": [
+      "9"
+    ],
+    "config": {
+      "input_action": "com.xiaomi.mitv.tvplayer.EXTSRC_PLAY",
+      "input_sources": [
+        "HW5=23",
+        "HW6=24",
+        "HW7=25",
+        "HW1=2"
+      ]
+    }
+  },
+  {
+    "id": "xiaomi-mitv-mooq2",
+    "title": "Xiaomi Mi TV P1 43\" (MiTV-MOOQ2, codename croods, MediaTek), Android TV 11, firmware RTM4.220307.164.8238",
+    "android": [
+      "11"
+    ],
+    "config": {
+      "live_tv_package": "com.mediatek.wwtv.tvcenter"
+    }
+  },
+  {
+    "id": "xiaomi-mitv-moor0",
+    "title": "Xiaomi MiTV-MOOR0 (codename venom), Google TV / Android 11, firmware RTM5.220609.003.1246",
+    "android": [
+      "11"
+    ],
+    "config": {
+      "live_tv_package": "com.mitv.livetv"
+    }
+  },
+  {
+    "id": "xiaomi-mitv-mosr4",
+    "title": "Xiaomi MiTV-MOSR4 (codename irobot), Google TV / Android 11 (SDK 30), firmware RTM5.220609.003.1585",
+    "android": [
+      "11"
+    ],
+    "config": {
+      "live_tv_package": "com.mitv.livetv"
+    }
+  },
+  {
+    "id": "xiaomi-mitv-mteq0",
+    "title": "Xiaomi TV EA Pro 55\" (MiTV-MTEQ0, codename baymax; sold as L55MA-EP), China-market firmware 23.6.26.4028,",
+    "android": [
+      "10"
+    ],
+    "config": {
+      "input_action": "com.xiaomi.mitv.tvplayer.EXTSRC_PLAY",
+      "input_sources": [
+        "HW5=23",
+        "HW6=24",
+        "HW7=25",
+        "HW2=2"
+      ]
+    }
+  }
+]

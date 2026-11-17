@@ -100,6 +100,9 @@ class DemoBackend(val tv: FakeTv = FakeTv.tclG06(), private val phoneApk: (Strin
             delay(40)
             if (command.startsWith("pm install -r /data/local/tmp/gentv-desktop-preview-")) {
                 genTVInstalled = true
+                // Like a real install: GenTV is on the TV and answers Home, so the handover can follow.
+                tv.installed += com.gentv.core.lists.HomeApp.GENTV.pkg
+                tv.homeClaimants.putIfAbsent(com.gentv.core.lists.HomeApp.GENTV.component, 0)
                 return "Success\n"
             }
             if (genTVInstalled && command == "pm path com.gentv.tv") return "package:/data/app/com.gentv.tv/base.apk\n"

@@ -70,4 +70,44 @@ class LauncherLookTest {
         assertTrue(put.contains("*'Unsupported operation'*) false"))
         assertTrue(put.contains("|| cp /data/local/tmp/gentv-look-config.json $dir/config.json"))
     }
+    @Test fun deviceRoutesSurviveThemesAndDockUpdates() = runTest {
+        val tv = FakeTv.googleTv()
+        val look = LauncherLook(tv) { 9 }
+        look.configureSources("""{"input_action":"vendor.HDMI","input_sources":["HW5=23"],"live_tv_package":"vendor.tv","coocaa_sources":false}""")
+        look.writeDock(listOf("com.netflix.ninja"))
+        look.apply(LookFiles("glass", """{"input_action":"wrong.ACTION","live_tv_package":"wrong.tv","wallpaper":true}"""))
+        val c = config(tv)
+        assertEquals("vendor.HDMI", c["input_action"]!!.jsonPrimitive.content)
+        assertEquals("vendor.tv", c["live_tv_package"]!!.jsonPrimitive.content)
+        assertEquals("HW5=23", c["input_sources"]!!.jsonArray.single().jsonPrimitive.content)
+        assertEquals("false", c["coocaa_sources"]!!.jsonPrimitive.content)
+        assertEquals("com.netflix.ninja", c["dock_apps"]!!.jsonArray.single().jsonPrimitive.content)
+        look.configureSources("""{"input_action":"new.ACTION"}""")
+        assertEquals("vendor.HDMI", config(tv)["input_action"]!!.jsonPrimitive.content)
+    }
+
+    @Test fun inaccessibleConfigStopsBeforeOverwritingAnything() = runTest {
+        val fake = FakeTv.googleTv()
+        val shell = object : TvShell by fake {
+            override suspend fun run(command: String): String =
+                if (command == Commands.lookReadConfig("com.gentv.tv")) "INPUT_CONFIG_READ_FAILED" else fake.run(command)
+        }
+        assertTrue(runCatching { LauncherLook(shell).apply(LookFiles("default", "{}")) }.isFailure)
+        assertTrue(fake.pushed.isEmpty())
+    }
+
+    @Test fun providerReadPreservesRoutesWhenAndroidDataIsNotReadableByShell() = runTest {
+        val fake = FakeTv.googleTv()
+        val bytes = """{"source_panel_service":"vendor/.Inputs","input_uri_scheme":"live-tv"}""".toByteArray()
+        val shell = object : TvShell by fake {
+            override suspend fun run(command: String): String =
+                if (command == Commands.lookReadConfig("com.gentv.tv"))
+                    "Result: Bundle[{config_base64=${java.util.Base64.getEncoder().encodeToString(fake.pushed["$dir/config.json"] ?: bytes)}}]"
+                else fake.run(command)
+        }
+        assertTrue(LauncherLook(shell).apply(LookFiles("default", "{}")))
+        assertEquals("vendor/.Inputs", config(fake)["source_panel_service"]!!.jsonPrimitive.content)
+        assertEquals("live-tv", config(fake)["input_uri_scheme"]!!.jsonPrimitive.content)
+    }
+
 }

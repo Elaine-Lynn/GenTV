@@ -29,7 +29,7 @@ TV (JDK 17, Android SDK 34, build-tools 34.0.0):
 Phone (JDK 21 for Gradle, Android SDK 37, JDK 25 for the ADB unit tests). Set `GENTV_HOME_JAVA_HOME` to a JDK 17 installation, because the phone build compiles and embeds the TV app. Without the private release key, the embedded TV app is debug-signed and only for local testing. See the [phone instructions](phone/README.md).
 
 ```sh
-./phone/gradlew -p phone --no-daemon :core:test :adb:test :app:testDebugUnitTest :app:lintDebug :app:assembleDebug
+./phone/gradlew -p phone --no-daemon :core:test :adb:test :tv-care:test :app:testDebugUnitTest :app:lintDebug :app:assembleDebug
 ```
 
 Outputs: `launcher/app/build/outputs/apk/debug/app-debug.apk` and `phone/app/build/outputs/apk/debug/app-debug.apk`.
@@ -62,10 +62,12 @@ Run the checks for the parts you changed:
 
 ```sh
 (cd launcher && ./gradlew --no-daemon testDebugUnitTest lintDebug assembleDebug)
-(cd phone && ./gradlew --no-daemon :core:test :adb:test :app:testDebugUnitTest :app:lintDebug :app:assembleDebug)
+(cd phone && ./gradlew --no-daemon :core:test :adb:test :tv-care:test :app:testDebugUnitTest :app:lintDebug :app:assembleDebug)
 python3 tools/check_branding.py
 python3 tools/check_repository.py
 python3 -m unittest discover -s server/wallpaper -p 'test_*.py'
+python3 -m unittest discover -s tools -p 'test_*.py'
+python3 -m unittest discover -s skills/gentv-tv-care/scripts -p 'test_*.py'
 git diff --check
 ```
 

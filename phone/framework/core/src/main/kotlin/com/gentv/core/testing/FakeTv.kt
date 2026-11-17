@@ -23,6 +23,8 @@ class FakeTv(
     val settings: MutableMap<String, String> = mutableMapOf(),
     val files: MutableMap<String, String> = mutableMapOf(),
     var wifiOwner: String = "android.uid.system",
+    /** The default network is a network cable (`dumpsys connectivity` and the default route both say so). */
+    var ethernet: Boolean = false,
     val liveOwners: MutableList<String> = mutableListOf(),
 ) : TvShell {
     val commands = mutableListOf<String>()
@@ -357,7 +359,7 @@ class FakeTv(
                 val dir = c.substringAfter("mkdir -p ").substringBefore(" 2>/dev/null")
                 pushed.keys.removeAll { it.startsWith("$dir/") }; "cleared\n"
             }
-            c.startsWith("cat /sdcard/Android/data/") && c.contains("config.json") ->
+            (c.startsWith("cat /sdcard/Android/data/") || c.startsWith("r=\$(content call")) && c.contains("config.json") ->
                 (pushed[c.substringAfter("cat ").substringBefore(" 2>/dev/null")]?.let { String(it) } ?: "") + "\n"
             c.contains("am force-stop ") && c.endsWith("echo restarted") -> { lookRestarts++; "restarted\n" }
             c.startsWith("mkdir -p /sdcard/Android/data/") -> "ok\n"
@@ -403,6 +405,8 @@ class FakeTv(
 
             c == Commands.MEMINFO -> "MemTotal:        2009240 kB\nMemFree:          112340 kB\nMemAvailable:     ${memAvailable()} kB\n"
             c == Commands.WIFI_OWNERS -> "cname=$wifiOwner\n"
+            c == Commands.CONNECTIVITY -> "Active default network: 100\nNetworkAgentInfo{network{100} nc{[ Transports: ${if (ethernet) "ETHERNET" else "WIFI"} Capabilities: INTERNET ]}}\n"
+            c == Commands.DEFAULT_ROUTE -> "default via 192.0.2.1 dev ${if (ethernet) "eth0" else "wlan0"} proto dhcp\n"
             c == Commands.TV_INPUTS -> liveOwners.joinToString("") { "  inputId: $it/.HdmiService/HW5\n" }
 
             c.startsWith("settings get ") -> (settings["${args[2]}/${args[3]}"] ?: "null") + "\n"

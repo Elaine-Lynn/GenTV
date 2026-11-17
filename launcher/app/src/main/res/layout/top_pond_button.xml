@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="40dp"
+    android:layout_height="42dp"
+    android:layout_gravity="center_vertical"
+    android:clipChildren="false"
+    android:clipToPadding="false"
+    android:defaultFocusHighlightEnabled="false"
+    android:focusable="true">
+
+    <ImageView
+        android:id="@+id/pondButtonIcon"
+        android:layout_width="35dp"
+        android:layout_height="35dp"
+        android:layout_gravity="center"
+        android:duplicateParentState="true"
+        android:foreground="@drawable/pond_icon_focus"
+        android:importantForAccessibility="no"
+        android:padding="1dp"
+        android:scaleType="fitCenter" />
+
+    <TextView
+        android:id="@+id/pondButtonLabel"
+        android:layout_width="96dp"
+        android:layout_height="16dp"
+        android:layout_gravity="bottom|center_horizontal"
+        android:gravity="center"
+        android:importantForAccessibility="no"
+        android:shadowColor="#CC000000"
+        android:shadowRadius="3"
+        android:singleLine="true"
+        android:textColor="#FFFFFFFF"
+        android:textSize="11sp"
+        android:translationY="14.5dp"
+        android:visibility="invisible" />
+</FrameLayout>

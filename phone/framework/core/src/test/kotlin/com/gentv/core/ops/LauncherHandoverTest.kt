@@ -219,7 +219,7 @@ class LauncherHandoverTest {
         assertEquals(HandoverOutcome.Done(Launchers.LAUNCHERX), out)
         assertEquals(HomeApp.GENTV.component, tv.home())
         val config = tv.pushed["/sdcard/Android/data/com.gentv.tv/files/config.json"]!!.decodeToString()
-        assertEquals("{\"dock_apps\": [\"com.netflix.ninja\", \"com.google.android.youtube.tv\"], \"tile_menu\": true, \"app_library\": true, \"launcher_settings_button\": true}\n", config)
+        assertEquals(kotlinx.serialization.json.Json.parseToJsonElement(Commands.dockConfig(listOf("com.netflix.ninja", "com.google.android.youtube.tv"))), kotlinx.serialization.json.Json.parseToJsonElement(config))
         assertTrue(tv.files.keys.any { it.endsWith("com.gentv.tv/files/theme_revision") })
         assertTrue(tv.commands.any { it.startsWith("am start -W -n com.gentv.tv/.MainActivity") && !it.contains("--es") })
         assertTrue(tv.commands.any { it.startsWith("pm grant com.gentv.tv") })

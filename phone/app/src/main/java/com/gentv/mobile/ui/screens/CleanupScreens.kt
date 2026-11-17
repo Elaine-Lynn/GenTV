@@ -125,10 +125,13 @@ fun HomeScreenStep(
     onApplyLook: (com.gentv.mobile.LookId) -> Unit = {},
     onApplyPhoto: (com.gentv.mobile.PickedFile) -> Unit = {},
     onBack: () -> Unit = {},
+    onPreview: () -> Unit = {},
+    onMakeHome: () -> Unit = {},
 ) {
     when (s) {
         is HomeState.Offer -> ScreenFrame(top = { TopBar("返回", onBack, null) }, bottom = {
             BigButton("Install GenTV desktop", onInstall)
+            TextLink("Just preview it, keep my home screen", onPreview)
         }) {
             Title("GenTV desktop")
             Body("Your apps, a clean home screen, and no ads.")
@@ -140,16 +143,31 @@ fun HomeScreenStep(
                     contentScale = androidx.compose.ui.layout.ContentScale.Fit,
                 )
                 Text("GenTV", modifier = Modifier.padding(top = 12.dp, bottom = 4.dp), style = MaterialTheme.typography.titleLarge, color = GenTVPalette.Ink)
-                Body("Install GenTV on your connected TV and open it immediately.")
+                Body("Install GenTV on your connected TV, open it, and make it your home screen once you've checked it works.")
             }
-            Note("Requires Android 8 or newer. Your existing home screen stays available.")
+            Note("Requires Android 8 or newer. Your current home screen is recorded first and never uninstalled, so Restore everything can switch back.")
         }
-        is HomeState.GenTVResult -> ScreenFrame(top = { TopBar("返回", onBack, null) }, bottom = {
-            if (s.installed) BigButton("Done", onContinue)
-            else BigButton("Try again", onInstall)
-        }) {
-            Title(if (s.installed) "GenTV desktop installed" else "Could not install GenTV desktop")
-            Body(if (s.installed) "GenTV is open on your TV. You can set it as the default home screen in your TV settings." else s.message ?: "Reconnect to your TV and try again.")
+        is HomeState.GenTVResult -> when {
+            !s.installed -> ScreenFrame(top = { TopBar("返回", onBack, null) }, bottom = {
+                BigButton("Try again", if (s.previewOnly) onPreview else onInstall)
+            }) {
+                Title("Could not install GenTV desktop")
+                Body(s.message ?: "Reconnect to your TV and try again.")
+            }
+            s.previewOnly -> ScreenFrame(top = { TopBar("返回", onBack, null) }, bottom = {
+                BigButton("Done", onContinue)
+            }) {
+                Title("GenTV desktop installed")
+                Body("GenTV is open on your TV. Your home screen wasn't changed.")
+            }
+            else -> ScreenFrame(top = { TopBar("返回", onBack, null) }, bottom = {
+                BigButton("Yes, make GenTV my home screen", onMakeHome)
+                TextLink("Not now, keep my home screen", onContinue)
+            }) {
+                Title("Is GenTV on your TV?")
+                Body("GenTV is installed and should be open on your TV. Check that you can see it and that the remote's arrow keys move around it.")
+                Note("GenTV records your current home screen first. Your original home screen is never uninstalled.")
+            }
         }
         is HomeState.WaitingForPlayStore -> ScreenFrame(top = { com.gentv.mobile.ui.TopBar("返回", onBack, null) }, bottom = {
             TextLink("Choose another home screen", onCancelPlayStore)
@@ -173,7 +191,7 @@ fun HomeScreenStep(
             HeroMascot(mood = Mood.HAPPY)
             Bubble("New home screen is on", color = GenTVPalette.GreenSoft, textColor = GenTVPalette.GreenInk) { Check(GenTVPalette.Green, 30.dp) }
             HomePreview(s.app)
-            Body(s.app.tip)
+            Body(s.note ?: s.app.tip)
         }
         is HomeState.Problem -> {
             var ethernet by rememberSaveable { mutableStateOf(false) }
@@ -182,13 +200,19 @@ fun HomeScreenStep(
                     HomeAction.REPLACE_COPY -> BigButton("Replace it", { onAction(HomeAction.REPLACE_COPY, false) })
                     HomeAction.TURN_OFF_SETUP_APP -> BigButton("Try again", { onAction(HomeAction.TURN_OFF_SETUP_APP, ethernet) })
                     HomeAction.RETRY -> BigButton("Try again", { onAction(HomeAction.RETRY, false) })
+                    HomeAction.COMPAT_HANDOVER -> BigButton("Turn off the old home screen and try", { onAction(HomeAction.COMPAT_HANDOVER, false) })
+                    HomeAction.CONFIRM_REBOOT -> BigButton("I restarted the TV, continue", { onAction(HomeAction.CONFIRM_REBOOT, false) })
                     null -> Unit
                 }
                 TextLink(if (s.action == null) "Continue" else "Skip, keep my home screen", onContinue)
                 androidx.compose.foundation.layout.Row { TextLink("Share logs", onShareLogs); if (s.worried) com.gentv.mobile.ui.ReportProblemLink("tidy") }
             }) {
                 HeroMascot(worried = s.worried)
-                Title(if (s.worried) "Something needs a look" else "Home screen not changed")
+                Title(when {
+                    s.worried -> "Something needs a look"
+                    s.installed -> "GenTV installed, Home not switched"
+                    else -> "Home screen not changed"
+                })
                 Body(s.message)
                 if (s.action == HomeAction.TURN_OFF_SETUP_APP) Row(verticalAlignment = Alignment.CenterVertically) {
                     Checkbox(ethernet, { ethernet = it })

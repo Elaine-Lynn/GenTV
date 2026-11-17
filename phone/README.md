@@ -24,7 +24,7 @@ Set `GENTV_HOME_JAVA_HOME` to a local JDK 17 installation. Release builds requir
 - `framework/data`: licensed device lists and theme configuration, without a second launcher implementation.
 - `framework-lock.json`: integrity manifest for the current modified framework snapshot; original authors remain in the licence files.
 
-`app:buildHomeAssets` builds this repository's GenTV TV source, checks package `com.gentv.tv`, the configured release certificate (when signing is configured) and SHA-256, then includes only `gentv-home.apk`. Incremental builds remove obsolete generated desktop APKs. Installation opens GenTV and preserves the current default Home; real-TV acceptance remains separate.
+`app:buildHomeAssets` builds this repository's GenTV TV source, checks package `com.gentv.tv`, the configured release certificate (when signing is configured) and SHA-256, then includes only `gentv-home.apk`. Incremental builds remove obsolete generated desktop APKs. Installation opens GenTV without touching Home. After the user confirms GenTV on the TV, the app hands Home over through `HomeStages` (core): the original launcher stays enabled first; a compatibility step that disables only identified Home blockers follows only when the firmware sends Home back. The original Home is recorded for Restore everything, and **Just preview it** keeps the current Home. Real-TV acceptance remains separate.
 
 Older installed applications and recovery records keep their real identities. The parsers continue to recognise them; new builds do not ship or advertise alternative launcher products. Existing saved data is not deleted, relabelled or silently migrated by this branding update.
 

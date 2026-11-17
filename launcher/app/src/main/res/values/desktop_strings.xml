@@ -11,7 +11,7 @@
     <string name="desktop_folder_empty">No available apps. Hold OK on the folder to add apps.</string>
     <string name="desktop_original_image">Use original app image</string>
 
-    <string name="cloud_settings">Updates &amp; usage statistics</string>
+    <string name="cloud_settings">Software update</string>
     <string name="cloud_statistics">Share anonymous usage statistics</string>
     <string name="cloud_statistics_hint">Optional: session count, foreground duration and GenTV version only. No device identifiers or app lists. Off by default.</string>
     <string name="cloud_check_update">Check for updates</string>
@@ -35,4 +35,5 @@
     <string name="cloud_required">This version requires an update to continue.</string>
     <string name="cloud_stats_on">Anonymous usage statistics · On</string>
     <string name="cloud_stats_off">Anonymous usage statistics · Off</string>
+    <string name="hdmi_connected">HDMI connected</string>
 </resources>

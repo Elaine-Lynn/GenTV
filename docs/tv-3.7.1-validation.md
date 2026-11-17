@@ -61,8 +61,7 @@ download links, structured software version and `data/release.json` were updated
 The phone artifact remains unchanged. The update remains optional (`forceUpdate=false`).
 Public APK SHA-256 and signing certificate match the candidate recorded above.
 
-Site rollback target: `/var/www/gentv/releases/20261029T113944Z-tv-download`.
-Published site: `/var/www/gentv/releases/20261029T152414Z-tv371`.
+The site was deployed to a new timestamped release directory and the previous one was kept as the rollback target. Exact server paths are kept in the maintainer's private deployment record.
 
 A separate fresh `GenTV_371_UpgradeQA` Google TV API 36 emulator was used:
 

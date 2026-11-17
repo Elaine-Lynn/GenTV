@@ -1,0 +1,301 @@
+# grade|word|zh|English definition
+1|apple|苹果|a round fruit that can be red or green
+1|banana|香蕉|a long curved fruit with yellow skin
+1|orange|橙子|a round citrus fruit with orange skin
+1|grape|葡萄|a small juicy fruit that grows in bunches
+1|pear|梨|a fruit with a narrow top and a wider bottom
+1|cat|猫|a small pet animal that meows
+1|dog|狗|a pet animal that barks
+1|bird|鸟|an animal with feathers and a beak
+1|fish|鱼|an animal with fins that lives in water
+1|duck|鸭子|a water bird with a broad flat bill
+1|cow|奶牛|a large farm animal kept for milk
+1|pig|猪|a farm animal with a flat round snout
+1|horse|马|a large animal that people can ride
+1|rabbit|兔子|a small animal with long ears and a short tail
+1|sheep|绵羊|a farm animal with a woolly coat
+1|lion|狮子|a large wild cat whose male often has a mane
+1|tiger|老虎|a large wild cat with dark stripes
+1|elephant|大象|a very large animal with a long trunk
+1|monkey|猴子|an animal with hands that often climbs trees
+1|bear|熊|a large wild animal with thick fur and strong paws
+1|book|书|a set of pages bound together for reading
+1|pen|钢笔|a tool that writes with ink
+1|pencil|铅笔|a writing tool with a graphite center
+1|eraser|橡皮|an object used to rub out pencil marks
+1|ruler|尺子|a straight tool marked for measuring length
+1|bag|包|a container used for carrying things
+1|desk|书桌|a table used for writing or studying
+1|chair|椅子|a seat with a back for one person
+1|door|门|a movable panel used to enter or close a room
+1|window|窗户|an opening with glass that lets light into a room
+1|bed|床|a piece of furniture used for sleeping
+1|cup|杯子|a small open container used for drinking
+1|spoon|勺子|a tool with a small bowl used for eating soup
+1|plate|盘子|a flat dish used for serving food
+1|shoe|鞋|something worn on a foot to protect it
+1|hat|帽子|a covering worn on the head
+1|shirt|衬衫|a piece of clothing for the upper body, usually with a collar
+1|sock|袜子|a soft covering worn inside a shoe
+1|ball|球|a round object used in many games
+1|kite|风筝|a light object that flies on a string in the wind
+1|car|汽车|a road vehicle that usually has four wheels
+1|bus|公共汽车|a large road vehicle that carries many passengers
+1|train|火车|a connected set of vehicles that travels on rails
+1|boat|小船|a small vehicle used for traveling on water
+1|sun|太阳|the star that gives Earth light and heat
+1|moon|月亮|the natural object that goes around Earth
+1|star|星星|a very distant ball of hot gas seen as a point of light
+1|tree|树|a tall plant with a woody trunk
+1|flower|花|the colorful part of a plant that can make seeds
+1|leaf|叶子|a usually flat green part of a plant
+2|head|头|the body part that contains the brain
+2|eye|眼睛|the body part used for seeing
+2|ear|耳朵|the body part used for hearing
+2|nose|鼻子|the body part used for smelling
+2|mouth|嘴巴|the opening used for eating and speaking
+2|tooth|牙齿|a hard white structure used for biting food
+2|hand|手|the body part at the end of an arm
+2|finger|手指|one of the five parts at the end of a hand
+2|foot|脚|the body part at the end of a leg
+2|knee|膝盖|the joint in the middle of a leg
+2|father|父亲|a male parent
+2|mother|母亲|a female parent
+2|sister|姐妹|a girl or woman who shares a parent with you
+2|brother|兄弟|a boy or man who shares a parent with you
+2|baby|婴儿|a very young child
+2|teacher|老师|a person whose job is to help students learn
+2|doctor|医生|a person trained to treat illness and injury
+2|nurse|护士|a person trained to care for sick or injured people
+2|farmer|农民|a person who grows crops or keeps farm animals
+2|driver|司机|a person who operates a vehicle
+2|school|学校|a place where children go to learn
+2|classroom|教室|a room where a class has lessons
+2|kitchen|厨房|a room where food is prepared and cooked
+2|bedroom|卧室|a room used mainly for sleeping
+2|bathroom|浴室|a room containing a bath or shower
+2|garden|花园|an area where flowers or other plants are grown
+2|park|公园|a public open area for walking and playing
+2|shop|商店|a place where things are sold
+2|zoo|动物园|a place where animals are kept for people to see
+2|farm|农场|land used for growing crops or raising animals
+2|bread|面包|food baked from a mixture that includes flour and water
+2|rice|米饭|small grains cooked and eaten as a common food
+2|milk|牛奶|a white drink produced by cows and some other animals
+2|egg|鸡蛋|an oval object with a shell laid by a hen
+2|water|水|the clear liquid that people need to drink
+2|juice|果汁|liquid taken from fruit or vegetables
+2|cake|蛋糕|a sweet baked food often served at celebrations
+2|cheese|奶酪|a solid food made from milk
+2|soup|汤|a mostly liquid food often served in a bowl
+2|noodle|面条|a long thin piece of food made from dough
+2|red|红色|the color of a ripe strawberry
+2|blue|蓝色|the color of a clear daytime sky
+2|green|绿色|the color of most fresh grass
+2|yellow|黄色|the color of a ripe lemon
+2|black|黑色|the darkest color
+2|white|白色|the color of fresh snow
+2|purple|紫色|a color made by mixing red and blue
+2|pink|粉红色|a pale color made by mixing red and white
+2|brown|棕色|the color of chocolate
+2|gray|灰色|a color between black and white
+3|morning|早晨|the early part of the day before noon
+3|afternoon|下午|the part of the day between noon and evening
+3|evening|傍晚|the part of the day between afternoon and night
+3|night|夜晚|the time when it is dark outside
+3|today|今天|the day that is happening now
+3|tomorrow|明天|the day after today
+3|yesterday|昨天|the day before today
+3|week|星期|a period of seven days
+3|month|月份|one of the twelve named parts of a year
+3|year|年|a period of twelve months
+3|spring|春天|the season between winter and summer
+3|summer|夏天|the season between spring and autumn
+3|autumn|秋天|the season between summer and winter
+3|winter|冬天|the season between autumn and spring
+3|rain|雨|drops of water falling from clouds
+3|snow|雪|soft white frozen flakes falling from clouds
+3|wind|风|air moving across the land
+3|cloud|云|a visible mass of tiny water drops in the sky
+3|weather|天气|the condition of the air outside at a particular time
+3|rainbow|彩虹|a curved band of colors seen when sunlight meets rain
+3|read|阅读|to look at written words and understand them
+3|write|书写|to form letters or words on a surface
+3|listen|倾听|to pay attention to sounds
+3|speak|说话|to say words using your voice
+3|walk|步行|to move on foot at a normal pace
+3|run|跑步|to move on foot faster than walking
+3|jump|跳跃|to push yourself off the ground with your legs
+3|swim|游泳|to move through water using your body
+3|dance|跳舞|to move your body in a pattern, often to music
+3|sing|唱歌|to make music using your voice
+3|draw|画画|to make a picture with lines
+3|cook|烹饪|to prepare food by heating it
+3|wash|清洗|to clean something using water
+3|sleep|睡觉|to rest with your eyes closed and your mind less active
+3|drink|喝|to take liquid into your mouth and swallow it
+3|eat|吃|to take food into your mouth and swallow it
+3|open|打开|to move something so it is no longer closed
+3|close|关闭|to move something so an opening is covered
+3|carry|搬运|to hold something while moving it somewhere
+3|help|帮助|to make a task easier for someone
+3|happy|快乐的|feeling pleased or glad
+3|sad|难过的|feeling unhappy
+3|hungry|饥饿的|feeling a need to eat
+3|thirsty|口渴的|feeling a need to drink
+3|tired|疲倦的|feeling a need to rest
+3|angry|生气的|feeling strong displeasure about something
+3|afraid|害怕的|feeling fear
+3|excited|兴奋的|feeling very eager and full of energy
+3|quiet|安静的|making little or no noise
+3|busy|忙碌的|having many things to do
+4|library|图书馆|a place where people can borrow books
+4|hospital|医院|a place where people receive medical treatment
+4|museum|博物馆|a place that displays objects of historical or scientific interest
+4|station|车站|a place where trains stop for passengers
+4|airport|机场|a place where aircraft take off and land
+4|restaurant|餐馆|a place where people pay to sit and eat meals
+4|supermarket|超市|a large shop selling food and everyday goods
+4|playground|操场|an outdoor area where children can play
+4|postcard|明信片|a card sent by mail without an envelope
+4|envelope|信封|a paper cover used for sending a letter
+4|address|地址|the details of where a building or person can be found
+4|ticket|票|a document giving permission to travel or enter a place
+4|map|地图|a drawing that shows where places are
+4|calendar|日历|a chart showing the days, weeks, and months
+4|dictionary|词典|a book or resource explaining words and their meanings
+4|umbrella|雨伞|an object held above the head to keep rain off
+4|raincoat|雨衣|a coat made to keep rain off the body
+4|suitcase|行李箱|a case used for carrying clothes when traveling
+4|wallet|钱包|a small case for carrying money and cards
+4|bottle|瓶子|a container with a narrow neck for holding liquid
+4|brush|刷子|a tool with bristles used for cleaning or painting
+4|towel|毛巾|a piece of cloth used for drying something
+4|soap|肥皂|a substance used with water for washing
+4|mirror|镜子|a surface that reflects an image of what is in front of it
+4|blanket|毯子|a thick covering used to keep someone warm
+4|pillow|枕头|a soft cushion used to support the head in bed
+4|pocket|口袋|a small sewn pouch in a piece of clothing
+4|button|纽扣|a small object used to fasten clothing through a hole
+4|glove|手套|a covering for a hand with separate parts for the fingers
+4|scarf|围巾|a piece of cloth worn around the neck for warmth
+4|island|岛屿|an area of land surrounded by water
+4|river|河流|a large natural stream of water flowing across land
+4|mountain|山|a very high natural area of land
+4|forest|森林|a large area of land covered with trees
+4|desert|沙漠|a very dry area of land with little rainfall
+4|ocean|海洋|a very large body of salt water
+4|bridge|桥|a structure carrying a path or road over a gap
+4|village|村庄|a small group of homes in the countryside
+4|city|城市|a large town where many people live and work
+4|street|街道|a road in a town or city with buildings along it
+4|cheap|便宜的|costing little money
+4|expensive|昂贵的|costing a lot of money
+4|heavy|沉重的|weighing a lot
+4|empty|空的|containing nothing
+4|full|满的|containing as much as it can hold
+4|clean|干净的|free from dirt
+4|dirty|脏的|covered with dirt
+4|early|早的|before the expected time
+4|late|迟的|after the expected time
+4|careful|仔细的|paying close attention to avoid mistakes
+5|borrow|借入|to take something with permission and return it later
+5|lend|借出|to allow someone to use something and return it later
+5|return|归还|to give something back
+5|invite|邀请|to ask someone to come to an event or place
+5|accept|接受|to agree to receive or do something offered
+5|refuse|拒绝|to say that you will not accept or do something
+5|decide|决定|to choose after thinking about possibilities
+5|explain|解释|to make something clear by giving information
+5|describe|描述|to say what someone or something is like
+5|compare|比较|to look at things to see how they are alike or different
+5|collect|收集|to bring things together into a group
+5|protect|保护|to keep someone or something safe from harm
+5|repair|修理|to make a broken thing work again
+5|prepare|准备|to get ready for something
+5|practice|练习|to do something repeatedly to improve a skill
+5|improve|改进|to make something better
+5|remember|记得|to keep information in your mind
+5|forget|忘记|to fail to remember something
+5|discover|发现|to find something that was not known before
+5|invent|发明|to create something new for the first time
+5|arrive|到达|to reach a place
+5|leave|离开|to go away from a place
+5|follow|跟随|to go behind someone in the same direction
+5|lead|带领|to guide someone along a way
+5|choose|选择|to pick one thing from several possibilities
+5|promise|承诺|to say firmly that you will do something
+5|suggest|建议|to put forward an idea for someone to consider
+5|allow|允许|to give permission for something
+5|prefer|更喜欢|to like one thing more than another
+5|notice|注意到|to become aware of something
+5|honest|诚实的|telling the truth rather than lying
+5|polite|有礼貌的|showing good manners toward others
+5|patient|有耐心的|able to wait calmly without becoming annoyed
+5|brave|勇敢的|ready to face danger despite feeling fear
+5|kind|友善的|caring about other people and wanting to help them
+5|friendly|友好的|acting pleasantly toward others
+5|helpful|乐于助人的|willing to make things easier for others
+5|healthy|健康的|in good physical condition and not ill
+5|dangerous|危险的|likely to cause harm or injury
+5|safe|安全的|protected from danger or harm
+5|possible|可能的|able to happen or be done
+5|impossible|不可能的|unable to happen or be done
+5|important|重要的|having great value or needing special attention
+5|necessary|必要的|needed for a particular purpose
+5|different|不同的|not the same as something else
+5|similar|相似的|alike in some ways but not exactly the same
+5|correct|正确的|free from errors or mistakes
+5|wrong|错误的|not correct
+5|simple|简单的|easy to understand or do
+5|difficult|困难的|not easy to understand or do
+6|environment|环境|the natural world and the conditions around living things
+6|pollution|污染|harmful substances that make air, water, or land dirty
+6|energy|能量|the ability to do work or produce heat, light, or movement
+6|resource|资源|a supply of something useful that people can use
+6|recycle|回收利用|to process used materials so they can be used again
+6|reduce|减少|to make something smaller in amount or size
+6|reuse|再次使用|to use something again instead of throwing it away
+6|waste|浪费|to use more of something than is needed
+6|climate|气候|the usual weather conditions in a place over a long period
+6|temperature|温度|a measure of how hot or cold something is
+6|journey|旅程|the act of traveling from one place to another
+6|destination|目的地|the place someone is traveling to
+6|direction|方向|the way toward a particular place
+6|distance|距离|the amount of space between two places
+6|experience|经历|something that happens to you and becomes part of your knowledge
+6|knowledge|知识|information and understanding gained through learning
+6|opinion|观点|what someone thinks or believes about something
+6|reason|原因|an explanation of why something happens or is done
+6|result|结果|something that happens because of an action or event
+6|purpose|目的|the aim for which something is done
+6|advantage|优点|a feature that makes something useful or beneficial
+6|disadvantage|缺点|a feature that makes something less useful or more difficult
+6|solution|解决办法|a way of dealing with a problem
+6|decision|决定结果|a choice made after considering possibilities
+6|instruction|指令|a statement telling someone what to do
+6|attention|注意力|the act of carefully watching, listening, or thinking
+6|confidence|信心|a feeling of trust in your ability to do something
+6|effort|努力|the physical or mental work put into a task
+6|progress|进步|movement toward a better or more complete state
+6|success|成功|the achievement of an aim
+6|failure|失败|a lack of success in achieving an aim
+6|responsibility|责任|a duty to take care of something or act correctly
+6|opportunity|机会|a situation that makes it possible to do something
+6|challenge|挑战|a difficult task that tests someone's ability
+6|communicate|交流|to share information with others
+6|cooperate|合作|to work together toward a shared goal
+6|consider|考虑|to think carefully about something
+6|support|支持|to give help or encouragement
+6|respect|尊重|to treat someone as worthy of care and consideration
+6|achieve|实现|to succeed in reaching a goal through effort
+6|light|轻的|not heavy in weight
+6|bright|明亮的|giving or reflecting a lot of light
+6|miss|未赶上|to fail to catch a bus, train, or other transport
+6|catch|赶上|to get on a bus or train before it leaves
+6|turn down|调低|to reduce the volume of a sound
+6|turn up|调高|to increase the volume of a sound
+6|look after|照顾|to take care of someone or something
+6|give up|放弃|to stop trying to do something
+6|find out|查明|to discover information about something
+6|put off|推迟|to delay an event or action until a later time

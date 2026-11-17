@@ -2,6 +2,7 @@ package com.gentv.core.ops
 
 import com.gentv.core.lists.HomeApp
 import com.gentv.core.lists.PackageName
+import com.gentv.core.lists.SourceProfiles
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
@@ -45,8 +46,9 @@ class LauncherLook(private val tv: TvShell, private val clock: () -> Long = Syst
     /** True when the look is on the TV and Home was restarted with it. */
     suspend fun apply(look: LookFiles): Boolean {
         if (!Parse.lines(tv.run(Commands.makeConfigDir(pkg))).contains("ok")) return false
-        val dock = currentDock()
-        put("config.json", merged(look.config, dock).toByteArray())
+        val current = currentConfig()
+        val dock = dock(current)
+        put("config.json", merged(look.config, dock, current).toByteArray())
         if (look.wallpaper != null) put("wallpaper.jpg", look.wallpaper) else tv.run(Commands.lookDelete(pkg, "wallpaper.jpg"))
         tv.run(Commands.lookClearWallpapers(pkg))
         for ((name, bytes) in look.wallpapers) put("wallpapers/$name", bytes)
@@ -58,27 +60,54 @@ class LauncherLook(private val tv: TvShell, private val clock: () -> Long = Syst
     /** Writes the dock alone, as the handover does after installing the home screen. */
     suspend fun writeDock(dockApps: List<String>) {
         if (!Parse.lines(tv.run(Commands.makeConfigDir(pkg))).contains("ok")) return
-        put("config.json", Commands.dockConfig(dockApps).toByteArray())
+        val current = currentConfig().toMutableMap()
+        current.putAll(Json.parseToJsonElement(Commands.dockConfig(dockApps)).jsonObject)
+        put("config.json", JsonObject(current).toString().toByteArray())
         put("theme_revision", clock().toString().toByteArray())
     }
 
     private suspend fun put(name: String, bytes: ByteArray) {
         tv.push(bytes, Commands.lookStage(name))
         tv.run(Commands.lookPut(pkg, name))
+        if (name == "config.json") {
+            check(currentConfig() == Json.parseToJsonElement(String(bytes, Charsets.UTF_8)).jsonObject) {
+                "The TV did not save the launcher configuration"
+            }
+        }
     }
 
-    /** The dock apps in the config.json on the TV now, so a new look keeps the owner's choice. */
-    private suspend fun currentDock(): List<String> = runCatching {
-        val text = tv.run(Commands.lookReadConfig(pkg))
-        Json.parseToJsonElement(text.substring(text.indexOf('{'))).jsonObject["dock_apps"]!!.jsonArray
-            .map { it.jsonPrimitive.content }.filter(PackageName::isValid)
-    }.getOrDefault(emptyList())
+    /** Fill missing device routing fields; an owner's explicit values always win. No Home change. */
+    suspend fun configureSources(profile: String?) {
+        if (profile == null) return
+        val selected = SourceProfiles.routing(Json.parseToJsonElement(profile).jsonObject)
+        if (selected.isEmpty()) return
+        check(Parse.lines(tv.run(Commands.makeConfigDir(pkg))).contains("ok")) { "Cannot prepare input configuration" }
+        val current = currentConfig()
+        val out = selected.toMutableMap().apply { putAll(current) }
+        if (out == current) return
+        put("config.json", JsonObject(out).toString().toByteArray())
+        put("theme_revision", clock().toString().toByteArray())
+    }
+
+    // A failed read must stop a write, rather than erase the owner's routing configuration.
+    private suspend fun currentConfig(): JsonObject {
+        val output = tv.run(Commands.lookReadConfig(pkg)).trim()
+        val encoded = Regex("config_base64=([A-Za-z0-9+/=]*)").find(output)?.groupValues?.get(1)
+        val text = if (encoded != null) String(java.util.Base64.getDecoder().decode(encoded), Charsets.UTF_8) else output
+        return if (text.isEmpty()) JsonObject(emptyMap()) else Json.parseToJsonElement(text).jsonObject
+    }
+
+    private fun dock(config: JsonObject): List<String> =
+        (config["dock_apps"] as? JsonArray).orEmpty()
+            .mapNotNull { (it as? JsonPrimitive)?.content }.filter(PackageName::isValid)
 
     companion object {
         /** The theme's settings with the owner's dock in place of the theme's sample dock. */
-        fun merged(config: String, dock: List<String>): String {
+        fun merged(config: String, dock: List<String>, current: JsonObject = JsonObject(emptyMap())): String {
             val theme = runCatching { Json.parseToJsonElement(config).jsonObject }.getOrDefault(JsonObject(emptyMap()))
             val out = theme.toMutableMap()
+            // Hardware routing belongs to the TV, not to the selected wallpaper/theme.
+            out.putAll(SourceProfiles.routing(current))
             if (dock.isNotEmpty()) out["dock_apps"] = JsonArray(dock.map { JsonPrimitive(it) })
             else out.remove("dock_apps")
             // Editing stays on unless the theme itself says otherwise.

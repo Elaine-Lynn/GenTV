@@ -161,7 +161,7 @@ final class DesktopStore {
         Map<String, ResolveInfo> installed = catalog(ctx);
         for (Map.Entry<String, ResolveInfo> entry : installed.entrySet()) {
             String key = entry.getKey(), pkg = entry.getValue().activityInfo.packageName;
-            boolean visible = LibraryApps.visible(tv.contains(pkg), cfg.hiddenApps.contains(pkg), added.contains(pkg), removed.contains(pkg));
+            boolean visible = LibraryApps.visible(true, cfg.hiddenApps.contains(pkg), added.contains(pkg), removed.contains(pkg));
             if (!visible) hidden.add(key);
             apps.put(new JSONObject().put("id", key).put("package", pkg)
                     .put("label", Cards.cleanLabel(String.valueOf(entry.getValue().loadLabel(ctx.getPackageManager())), pkg)));
