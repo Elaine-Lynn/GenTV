@@ -1,6 +1,8 @@
 package com.gentv.tv;
 
 import android.animation.ArgbEvaluator;
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.app.Dialog;
@@ -55,17 +57,20 @@ import android.text.style.ForegroundColorSpan;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.SoundEffectConstants;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.Window;
 import android.view.animation.AnimationUtils;
+import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.LayoutAnimationController;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
+import android.widget.TextClock;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -125,6 +130,15 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private final ScreensaverIdle screensaverIdle = new ScreensaverIdle();
     private int screensaverMinutes;
     private boolean screensaverOpening;
+    private boolean inWallpaperMode;
+    private boolean wallpaperModeExiting;
+    private TextClock wallpaperModeClock;
+    private View focusBeforeWallpaperMode;
+    private final Map<View, Integer> wallpaperModeVisibilities = new HashMap<>();
+    private final Map<View, Float> wallpaperModeAlphas = new HashMap<>();
+    private final Map<View, Float> wallpaperModeTranslations = new HashMap<>();
+    private ValueAnimator wallpaperModeTransition;
+    private float wallpaperModeProgress;
     private final Runnable showIdleScreensaver = () -> {
         if (screensaverIdle.due(android.os.SystemClock.elapsedRealtime())) openScreensaver();
     };
@@ -1107,6 +1121,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     @Override
     protected void onResume() {
         super.onResume();
+        if (inWallpaperMode) finishWallpaperMode();
         boolean childLocked = childLock.showIfLocked();
         if (!childLocked) TvCloud.checkOnHome(this);
         int currentDesktopRevision = DesktopStore.revision(this);
@@ -1337,7 +1352,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private void restartIdleScreensaver() {
         if (root == null) return;
         root.removeCallbacks(showIdleScreensaver);
-        if (pond != null || !headerResumed || !hasWindowFocus()) { screensaverIdle.pause(); return; }
+        if (pond != null || inWallpaperMode || !headerResumed || !hasWindowFocus()) {
+            screensaverIdle.pause();
+            return;
+        }
         screensaverIdle.restart(android.os.SystemClock.elapsedRealtime(), screensaverMinutes);
         long remaining = screensaverIdle.remaining(android.os.SystemClock.elapsedRealtime());
         if (remaining >= 0) root.postDelayed(showIdleScreensaver, remaining);
@@ -1345,6 +1363,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
     @Override
     protected void onPause() {
+        if (inWallpaperMode) finishWallpaperMode();
         super.onPause();
         childLock.dismiss();
         if(headerResumed) unregisterReceiver(signalReceiver);
@@ -1453,8 +1472,15 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
     /** Keep the first row live and show a blurred still as the app grid scrolls upward. */
     private void updateWallpaperScrollState() {
+        updateWallpaperScrollState(focusedTilePosition());
+    }
+
+    private void updateWallpaperScrollState(int focused) {
         if (grid == null || blurredWallpaper == null || videoWallpaper == null) return;
-        boolean blur = grid.computeVerticalScrollOffset() > Math.round(40 * density);
+        boolean dockFocused = focused >= 0 && (singleRow || focused < COLUMNS);
+        boolean gridFocused = !singleRow && focused >= COLUMNS;
+        boolean blur = gridFocused || (!dockFocused
+                && grid.computeVerticalScrollOffset() > Math.round(40 * density));
         if (blur == wallpaperBlurred) return;
         wallpaperBlurred = blur;
         int generation = ++wallpaperBlurGeneration;
@@ -1522,6 +1548,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
      */
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
+        if (inWallpaperMode) {
+            if (event.getAction() == KeyEvent.ACTION_UP && !event.isCanceled()) closeWallpaperMode();
+            return true;
+        }
         restartIdleScreensaver();
         // Vendor keys (TCL Netflix button, 4062) never reach the key services, only the focused window.
         if (event.getKeyCode() >= 1000 && RemoteKeys.handle(this, event, homeAppKeys.get(event.getKeyCode()), null)) return true;
@@ -1854,19 +1884,154 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
     @Override
     public void onBackPressed() {
-        // Back first returns focus to the first tile, then opens the screensaver.
+        if (inWallpaperMode) { closeWallpaperMode(); return; }
+        // Back from later rows returns to the first row; Back on the first screen shows the wallpaper.
         GridLayoutManager layout = (GridLayoutManager) grid.getLayoutManager();
+        int focused = focusedTilePosition();
         if (!reordering && appLibrary == null && layout != null && adapter.appCount() > 0
-                && focusedTilePosition() != 0) {
+                && !singleRow && (focused >= COLUMNS || (focused < 0 && grid.hasFocus()))) {
             libraryFocusPending = false;
             cancelPendingFocusScroll();
             layout.scrollToPositionWithOffset(0, 0);
             lastFocused = 0;
             lastFocusedKey = adapter.getItemCount() > 0 ? adapter.keyAt(0) : null;
-            grid.post(() -> focusTile(0));
+            grid.post(() -> {
+                focusTile(0);
+                updateWallpaperScrollState();
+            });
             return;
         }
-        openScreensaver();
+        openWallpaperMode();
+    }
+
+    private void openWallpaperMode() {
+        if (!headerResumed || !hasWindowFocus() || inWallpaperMode || reordering
+                || appLibrary != null || (openPopup != null && openPopup.isShowing())
+                || (cardPrompt != null && cardPrompt.isShowing())) return;
+        inWallpaperMode = true;
+        root.removeCallbacks(showIdleScreensaver);
+        screensaverIdle.pause();
+        focusBeforeWallpaperMode = getCurrentFocus();
+        rememberWallpaperModeView(findViewById(R.id.sky));
+        rememberWallpaperModeView(heroArt);
+        rememberWallpaperModeView(ambient);
+        rememberWallpaperModeView(findViewById(R.id.racePanel));
+        rememberWallpaperModeView(findViewById(R.id.heroScrim));
+        rememberWallpaperModeView(hero);
+        rememberWallpaperModeView((View) grid.getParent().getParent());
+        rememberWallpaperModeView(glass);
+        wallpaperModeClock = new TextClock(this);
+        wallpaperModeClock.setFormat12Hour("h:mm");
+        wallpaperModeClock.setFormat24Hour("HH:mm");
+        wallpaperModeClock.setTextColor(Color.WHITE);
+        wallpaperModeClock.setTextSize(TypedValue.COMPLEX_UNIT_SP, 28);
+        wallpaperModeClock.setShadowLayer(3 * density, 0, density, 0x99000000);
+        wallpaperModeClock.setFocusable(false);
+        wallpaperModeClock.setAlpha(0f);
+        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT,
+                Gravity.TOP | Gravity.START);
+        params.topMargin = Math.round(48 * density);
+        params.leftMargin = Math.round(68 * density);
+        root.addView(wallpaperModeClock, params);
+        animateWallpaperModeTo(1f);
+    }
+
+    private void rememberWallpaperModeView(View view) {
+        if (view == null || wallpaperModeVisibilities.containsKey(view)) return;
+        view.animate().cancel();
+        wallpaperModeVisibilities.put(view, view.getVisibility());
+        wallpaperModeAlphas.put(view, view.getAlpha());
+        wallpaperModeTranslations.put(view, view.getTranslationY());
+    }
+
+    private void closeWallpaperMode() {
+        if (!inWallpaperMode || wallpaperModeExiting) return;
+        wallpaperModeExiting = true;
+        animateWallpaperModeTo(0f);
+    }
+
+    private void animateWallpaperModeTo(float target) {
+        if (wallpaperModeTransition != null) {
+            ValueAnimator previous = wallpaperModeTransition;
+            wallpaperModeTransition = null;
+            previous.cancel();
+        }
+        if (!animations || reducedMotion || !ValueAnimator.areAnimatorsEnabled()) {
+            setWallpaperModeProgress(target);
+            if (target == 0f) finishWallpaperMode();
+            return;
+        }
+        ValueAnimator animation = ValueAnimator.ofFloat(wallpaperModeProgress, target);
+        wallpaperModeTransition = animation;
+        animation.setDuration(Math.max(1, Math.round((target == 1f ? 520 : 480)
+                * Math.abs(target - wallpaperModeProgress))));
+        animation.setInterpolator(new AccelerateDecelerateInterpolator());
+        animation.addUpdateListener(value -> setWallpaperModeProgress((float) value.getAnimatedValue()));
+        animation.addListener(new AnimatorListenerAdapter() {
+            @Override public void onAnimationEnd(Animator ended) {
+                if (wallpaperModeTransition != ended) return;
+                wallpaperModeTransition = null;
+                setWallpaperModeProgress(target);
+                if (target == 0f) finishWallpaperMode();
+            }
+        });
+        animation.start();
+    }
+
+    private void setWallpaperModeProgress(float progress) {
+        wallpaperModeProgress = progress;
+        float uiProgress = Math.min(1f, progress / 0.82f);
+        float clockProgress = Math.max(0f, Math.min(1f, (progress - 0.22f) / 0.78f));
+        for (Map.Entry<View, Integer> entry : wallpaperModeVisibilities.entrySet()) {
+            if (entry.getValue() != View.VISIBLE) continue;
+            View view = entry.getKey();
+            view.setVisibility(progress >= 1f ? View.INVISIBLE : View.VISIBLE);
+            view.setAlpha(wallpaperModeAlphas.get(view) * (1f - uiProgress));
+            view.setTranslationY(wallpaperModeTranslations.get(view) - 12 * density * uiProgress);
+        }
+        if (wallpaperModeClock != null) {
+            wallpaperModeClock.setAlpha(clockProgress);
+            wallpaperModeClock.setTranslationY(8 * density * (1f - clockProgress));
+        }
+    }
+
+    private void finishWallpaperMode() {
+        if (wallpaperModeTransition != null) {
+            ValueAnimator running = wallpaperModeTransition;
+            wallpaperModeTransition = null;
+            running.cancel();
+        }
+        if (wallpaperModeClock != null) root.removeView(wallpaperModeClock);
+        wallpaperModeClock = null;
+        for (Map.Entry<View, Integer> entry : wallpaperModeVisibilities.entrySet()) {
+            View view = entry.getKey();
+            view.setVisibility(entry.getValue());
+            view.setAlpha(wallpaperModeAlphas.get(view));
+            view.setTranslationY(wallpaperModeTranslations.get(view));
+        }
+        wallpaperModeVisibilities.clear();
+        wallpaperModeAlphas.clear();
+        wallpaperModeTranslations.clear();
+        wallpaperModeProgress = 0f;
+        wallpaperModeExiting = false;
+        inWallpaperMode = false;
+        if (focusBeforeWallpaperMode != null) focusBeforeWallpaperMode.requestFocus();
+        focusBeforeWallpaperMode = null;
+        restartIdleScreensaver();
+    }
+
+    @Override public boolean dispatchTouchEvent(MotionEvent event) {
+        if (inWallpaperMode) {
+            if (event.getActionMasked() == MotionEvent.ACTION_UP) closeWallpaperMode();
+            return true;
+        }
+        return super.dispatchTouchEvent(event);
+    }
+
+    @Override public boolean dispatchGenericMotionEvent(MotionEvent event) {
+        if (inWallpaperMode) { closeWallpaperMode(); return true; }
+        return super.dispatchGenericMotionEvent(event);
     }
 
     private void openScreensaver() {
@@ -1931,6 +2096,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     public void onTileFocused(int position, View card) {
         lastFocused = position;
         lastFocusedKey = adapter.keyAt(position);
+        // Focus can move before RecyclerView sends a scroll callback, so update both transitions here.
+        updateWallpaperScrollState(position);
         // Focus restored before the first layout (cold start): the tile has no size yet, and the glass
         // would be sized to 2*pad. Run again once the tile is laid out.
         if (card.getWidth() == 0) {
