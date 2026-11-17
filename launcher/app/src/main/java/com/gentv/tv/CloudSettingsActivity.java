@@ -76,7 +76,9 @@ public final class CloudSettingsActivity extends Activity {
         LinearLayout.LayoutParams statsPosition=new LinearLayout.LayoutParams(-1,dp(42)); statsPosition.topMargin=dp(14);statsPosition.bottomMargin=dp(6);card.addView(stats,statsPosition);
         TextView statsHint=text(getString(R.string.cloud_statistics_hint),11,0xFF929EAD); card.addView(statsHint);
         mandatory(TvCloud.required(this));
-        check.setOnClickListener(v->check()); setContentView(backdrop); check.requestFocus();
+        check.setOnClickListener(v->check()); setContentView(backdrop);
+        WallpaperBackdrop.applyOverlay(this, findViewById(android.R.id.content));
+        check.requestFocus();
         if(!TvCloud.enabled()) {
             status.setText(R.string.cloud_unconfigured); check.setVisibility(View.GONE); stats.setVisibility(View.GONE); statsHint.setVisibility(View.GONE); later.requestFocus();
         } else if(TvCloud.prefs(this).getLong("pendingVersion",0)>BuildConfig.VERSION_CODE) {

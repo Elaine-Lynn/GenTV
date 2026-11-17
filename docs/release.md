@@ -42,7 +42,7 @@ python3 tools/deploy_tv_api.py --host admin@host
 python3 tools/publish_tv_release.py --host admin@host
 ```
 
-发布工具验证 APK 大小、身份、正式证书与 keystore 一致性，版本路径不可覆盖为不同内容，最后原子更新清单。可通过重复 `--ssh-option` 传入代理等 SSH 配置。发布后核对公网 APK SHA256，并分别检查旧版和新版 User-Agent 的更新通道。
+发布工具报告 APK 大小，并验证应用身份、正式证书与 keystore 一致性；版本路径不可覆盖为不同内容，最后原子更新清单。可通过重复 `--ssh-option` 传入代理等 SSH 配置。发布后核对公网 APK SHA256，并分别检查旧版和新版 User-Agent 的更新通道。
 
 ## 尚需验收
 
@@ -50,6 +50,4 @@ python3 tools/publish_tv_release.py --host admin@host
 
 ## TV APK 大小策略
 
-以桌面视觉效果为先，保留壁纸画质，将 Release APK 预算从 576 KiB 调整为不超过
-1 MB（1,000,000 字节，含上限）。仓库检查和 TV 发布工具使用同一上限，报告实际大小，
-超出时阻止通过。签名、校验和、应用身份检查继续执行。
+Release APK 不设固定大小上限。仓库检查和发布工具仍报告实际大小；签名、校验和、应用身份检查继续执行。

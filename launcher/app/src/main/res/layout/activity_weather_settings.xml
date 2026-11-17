@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/gentv_settings_background"
+    android:orientation="vertical"
+    android:paddingStart="70dp"
+    android:paddingEnd="70dp"
+    android:paddingTop="54dp"
+    android:paddingBottom="42dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/weather_settings_title"
+        android:textColor="#FFFFFFFF"
+        android:textSize="37sp"
+        android:fontFamily="@string/font_light" />
+
+    <TextView
+        android:id="@+id/weatherStatus"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:textColor="#BFFFFFFF"
+        android:textSize="18sp" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="380dp"
+        android:layout_marginTop="28dp"
+        android:layout_marginStart="60dp"
+        android:layout_marginEnd="60dp"
+        android:background="@drawable/glass_panel"
+        android:padding="22dp"
+        android:clipChildren="false"
+        android:clipToPadding="false"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView style="@style/GenWeatherColumnTitle"
+                android:layout_width="0dp" android:layout_weight="1"
+                android:gravity="center" android:text="@string/weather_province" />
+            <TextView style="@style/GenWeatherColumnTitle"
+                android:layout_width="0dp" android:layout_weight="1"
+                android:gravity="center" android:text="@string/weather_city" />
+            <TextView style="@style/GenWeatherColumnTitle"
+                android:layout_width="0dp" android:layout_weight="1"
+                android:gravity="center" android:text="@string/weather_district" />
+        </LinearLayout>
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:layout_marginTop="12dp">
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="74dp"
+                android:layout_gravity="center_vertical"
+                android:background="@drawable/weather_wheel_selection"
+                android:importantForAccessibility="no" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="horizontal">
+
+                <com.gentv.tv.WeatherWheelView
+                    android:id="@+id/weatherProvinces"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:nextFocusRight="@id/weatherCities" />
+
+                <com.gentv.tv.WeatherWheelView
+                    android:id="@+id/weatherCities"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:nextFocusLeft="@id/weatherProvinces"
+                    android:nextFocusRight="@id/weatherDistricts" />
+
+                <com.gentv.tv.WeatherWheelView
+                    android:id="@+id/weatherDistricts"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:nextFocusLeft="@id/weatherCities" />
+            </LinearLayout>
+        </FrameLayout>
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="@string/weather_wheel_hint"
+        android:textColor="#BFFFFFFF"
+        android:textSize="17sp" />
+
+</LinearLayout>

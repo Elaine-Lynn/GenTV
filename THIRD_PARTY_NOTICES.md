@@ -21,6 +21,7 @@ GenTV has since changed package namespaces, integration, UI, delivery, updates a
 | [Outfit](https://github.com/Outfitio/Outfit-Fonts) | SIL Open Font License 1.1, copyright 2021 The Outfit Project Authors — [Outfit-OFL.txt](licenses/Outfit-OFL.txt) | TV typeface |
 | [Nunito](https://github.com/googlefonts/nunito) | SIL Open Font License 1.1, copyright 2014 The Nunito Project Authors — [Nunito-OFL.txt](licenses/Nunito-OFL.txt) | Phone typeface |
 | [Simple Icons](https://simpleicons.org) | CC0 1.0 | App marks in `phone/framework/assets/icons.json`, used only to identify third-party apps |
+| [ChinaGeoJson](https://github.com/zhChuXiao/ChinaGeoJson) | MIT, copyright (c) 2024 ChuXiao — [ChinaGeoJson-MIT.txt](licenses/ChinaGeoJson-MIT.txt) | Bundled mainland province, city and district names and coordinates for the offline TV weather picker; snapshot `4ff8c091ff9347345d523c88729844d89c9286e5` |
 
 ## Third-party names
 

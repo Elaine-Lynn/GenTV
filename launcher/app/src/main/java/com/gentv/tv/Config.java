@@ -649,6 +649,13 @@ final class Config {
             wallpaper = chosen.isEmpty() ? null : chosen.get(0);
             wallpaperEnabled = !chosen.isEmpty();
         }
+        String bundledChoice = BundledWallpapers.selected(ctx);
+        if (UserWallpaper.isImage(bundledChoice) || UserWallpaper.isVideo(bundledChoice)) {
+            wallpapers.clear();
+            wallpaper = UserWallpaper.isImage(bundledChoice) ? UserWallpaper.image(ctx) : null;
+            wallpaperEnabled = wallpaper != null && wallpaper.isFile() && wallpaper.length() > 0;
+            if (wallpaperEnabled) wallpapers.add(wallpaper);
+        }
         // A festive skin comes only from a theme; config.xml has no festival.
         Festival festival = json == null ? Festival.NONE : Festival.parse(string(json, "festival", ""),
                 string(json, "festival_until", ""), string(json, "greeting", ""), string(json, "accent_color", ""));

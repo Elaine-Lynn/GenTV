@@ -33,7 +33,6 @@ import java.util.concurrent.Executors;
 final class WallpaperPlayer {
     private final FrameLayout root;
     private final ImageView image;
-    private final int backgroundColor;
     private final List<File> files;
     private final long interval;
     private final String order;
@@ -65,7 +64,6 @@ final class WallpaperPlayer {
 
     WallpaperPlayer(Context context, FrameLayout root, Config config) {
         this.root = root;
-        backgroundColor = config.backgroundColor;
         files = new ArrayList<>(config.wallpapers);
         interval = config.wallpaperRotationMinutes * 60_000L;
         bitmapConfig = config.wallpaperTrueColor ? Bitmap.Config.ARGB_8888 : Bitmap.Config.RGB_565;
@@ -130,6 +128,11 @@ final class WallpaperPlayer {
     }
 
     boolean hasImage() { return current != null; }
+    Bitmap blurredFrame() {
+        if (displayed.isEmpty() || files.isEmpty()) return null;
+        try { return WallpaperBlur.fromFile(new File(files.get(0).getParentFile(), displayed)); }
+        catch (Exception | OutOfMemoryError ignored) { return null; }
+    }
     void setOnImageChanged(Runnable listener) { onImageChanged=listener; }
 
     void start() {
@@ -149,7 +152,8 @@ final class WallpaperPlayer {
         // let Android reclaim its native buffer after rendering releases it instead of recycling it mid-frame.
         current = null;
         displayed = "";
-        root.setBackgroundColor(backgroundColor);
+        // The bundled fallback remains in RemoteWallpaper while this local image is released.
+        root.setBackground(null);
     }
 
     /** The pictures the rotation picks from now: wallpaper_moods' group for the time of day, or the whole collection. */

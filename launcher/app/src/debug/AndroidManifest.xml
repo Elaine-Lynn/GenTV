@@ -1,1 +1,6 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"><application android:usesCleartextTraffic="true" /></manifest>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:ignore="MissingLeanbackLauncher,ImpliedTouchscreenHardware,MissingLeanbackSupport">
+    <!-- TV launcher intent and optional hardware features are declared in the main manifest. -->
+    <application android:usesCleartextTraffic="true" />
+</manifest>

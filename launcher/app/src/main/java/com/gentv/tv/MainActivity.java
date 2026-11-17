@@ -90,6 +90,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * tvOS style home: black, a pinned dock row, an app grid, and one glass highlight that springs between tiles.
@@ -146,6 +148,12 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private FrameLayout root;
     private WallpaperPlayer wallpaperPlayer;
     private RemoteWallpaper remoteWallpaper;
+    private VideoWallpaperPlayer videoWallpaper;
+    private WeatherWidget weatherWidget;
+    private ImageView blurredWallpaper;
+    private final ExecutorService wallpaperBlurWorker = Executors.newSingleThreadExecutor();
+    private int wallpaperBlurGeneration;
+    private boolean wallpaperBlurred;
     private GlassView glass;
     private View ambient;
     private TextView heroName;
@@ -455,6 +463,18 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             wallpaperInterval=5000;wallpaperTest=true;
         }
         remoteWallpaper=new RemoteWallpaper(this,root,cfg,wallpaperEndpoint,wallpaperInterval,wallpaperTest,wallpaperPlayer::hasImage);
+        videoWallpaper = new VideoWallpaperPlayer(this, root);
+        blurredWallpaper = new ImageView(this);
+        blurredWallpaper.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        blurredWallpaper.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        blurredWallpaper.setVisibility(View.GONE);
+        root.addView(blurredWallpaper, root.indexOfChild(root.findViewById(R.id.racePanel)),
+                new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT));
+        WallpaperBackdrop.prepare(this);
+        TextView weatherSummary = findViewById(R.id.weatherSummary);
+        weatherWidget = new WeatherWidget(this, weatherSummary);
+        weatherSummary.setOnClickListener(v -> startActivity(new Intent(this, WeatherSettingsActivity.class)));
         wallpaperPlayer.setOnImageChanged(remoteWallpaper::localWallpaperReady);
         glass = findViewById(R.id.glass);
         glass.setStyle(cfg.glassStyle);
@@ -683,6 +703,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         grid.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrolled(@NonNull RecyclerView rv, int dx, int dy) {
+                if (dy != 0) updateWallpaperScrollState();
                 if (!glassShown) return;
                 glassTargetY -= dy;
                 glassScrollShift -= dy;
@@ -748,7 +769,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         btnSettings.setOnClickListener(v -> {
             if (launcherSettingsButton) startActivityForResult(
                     new Intent(this, LauncherSettingsActivity.class), LAUNCHER_SETTINGS_REQUEST);
-            else open(systemIntent(Settings.ACTION_SETTINGS));
+            else startActivity(new Intent(this, QuickSettingsActivity.class));
         });
         btnReorder = findViewById(R.id.btnReorder);
         btnReorder.setOnClickListener(v -> toggleReorder());
@@ -1075,6 +1096,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         sky.update();
         wallpaperPlayer.start();
         remoteWallpaper.start();
+        videoWallpaper.start();
+        weatherWidget.start();
+        updateWallpaperScrollState();
+        if (wallpaperBlurred) videoWallpaper.pause();
         handler.postDelayed(minuteTick, MINUTE_MS);
         if (festive && diya != null) {
             diya.start();
@@ -1255,6 +1280,16 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         endReorder();   // Home or another app while reordering keeps the order so far
         wallpaperPlayer.stop();
         remoteWallpaper.stop();
+        Bitmap videoFrame = videoWallpaper.frameForBlur();
+        videoWallpaper.pause();
+        if (videoFrame != null) wallpaperBlurWorker.execute(() -> {
+            Bitmap backdrop = WallpaperBlur.fromFrame(videoFrame);
+            if (backdrop != null) {
+                WallpaperBackdrop.fromHome(this, backdrop);
+                backdrop.recycle();
+            }
+        });
+        weatherWidget.stop();
         stopAmbientAnimation();
         hero.animate().cancel();
         ambient.animate().cancel();
@@ -1278,6 +1313,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         handler.removeCallbacks(clockCheck);
         stopped = true;
         tileRefresh.onStop();
+        videoWallpaper.stop();
     }
 
     /**
@@ -1320,6 +1356,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         unregisterReceiver(packageReceiver);
         wallpaperPlayer.close();
         remoteWallpaper.close();
+        videoWallpaper.close();
+        weatherWidget.close();
+        wallpaperBlurWorker.shutdownNow();
         ConnectivityManager cm = getSystemService(ConnectivityManager.class);
         TvInputManager tim = (TvInputManager) getSystemService(TV_INPUT_SERVICE);
         if (tim != null) tim.unregisterCallback(inputCallback);
@@ -1327,6 +1366,45 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             cm.unregisterNetworkCallback(networkCallback);
             cm.unregisterNetworkCallback(vpnCallback);
         }
+    }
+
+    /** Keep the first row live and show a blurred still as the app grid scrolls upward. */
+    private void updateWallpaperScrollState() {
+        if (grid == null || blurredWallpaper == null || videoWallpaper == null) return;
+        boolean blur = grid.computeVerticalScrollOffset() > Math.round(40 * density);
+        if (blur == wallpaperBlurred) return;
+        wallpaperBlurred = blur;
+        int generation = ++wallpaperBlurGeneration;
+        blurredWallpaper.animate().cancel();
+        if (!blur) {
+            videoWallpaper.start();
+            blurredWallpaper.animate().alpha(0f).setDuration(180).withEndAction(() -> {
+                if (!wallpaperBlurred && generation == wallpaperBlurGeneration)
+                    blurredWallpaper.setVisibility(View.GONE);
+            }).start();
+            return;
+        }
+        Bitmap frame = videoWallpaper.frameForBlur();
+        videoWallpaper.pause();
+        blurredWallpaper.setAlpha(0f);
+        blurredWallpaper.setVisibility(View.VISIBLE);
+        wallpaperBlurWorker.execute(() -> {
+            Bitmap result = frame == null ? null : WallpaperBlur.fromFrame(frame);
+            if (result == null) result = remoteWallpaper.blurredFrame();
+            if (result == null) result = wallpaperPlayer.blurredFrame();
+            if (result == null) result = WallpaperBackdrop.current(this);
+            Bitmap ready = result;
+            root.post(() -> {
+                if (isDestroyed() || !wallpaperBlurred || generation != wallpaperBlurGeneration) {
+                    if (ready != null) ready.recycle();
+                    return;
+                }
+                if (ready == null) { blurredWallpaper.setVisibility(View.GONE); return; }
+                blurredWallpaper.setImageBitmap(ready);
+                WallpaperBackdrop.fromHome(this, ready);
+                blurredWallpaper.animate().alpha(1f).setDuration(220).start();
+            });
+        });
     }
 
     /**
