@@ -53,6 +53,8 @@ public final class QuickSettingsActivity extends Activity {
         // Through Home, so it rebuilds with the new choices when Launcher settings closes.
         addRow(rows, R.drawable.ic_home_settings, DesktopMode.settingsTitle(this), 0,
                 new Intent(this, MainActivity.class).setAction(MainActivity.ACTION_LAUNCHER_SETTINGS));
+        addRow(rows, R.drawable.ic_home_settings, R.string.set_default_home, R.string.set_default_home_hint,
+                new Intent(this, HomeSettingsActivity.class));
         addRow(rows, R.drawable.ic_settings, R.string.cloud_settings, 0, new Intent(this, CloudSettingsActivity.class));
         addRow(rows, R.drawable.ic_picture, R.string.quick_personalize, 0,
                 new Intent(this, PersonalizationActivity.class));

@@ -46,6 +46,10 @@
     <string name="vpn">VPN</string>
     <string name="vpn_off">VPN off</string>
     <string name="home_settings">Choose default home</string>
+    <string name="set_default_home">Set GenTV as default Home</string>
+    <string name="set_default_home_hint">Confirm in system settings</string>
+    <string name="home_already_default">GenTV is already the default Home</string>
+    <string name="home_set_success">GenTV is now the default Home</string>
     <string name="home_settings_help">Select your original home to stop using GenTV as Home, or GenTV to switch back. The original launcher must be enabled and your TV must provide a home picker; use the restore script first if it was disabled.</string>
     <string name="launcher_settings">Launcher settings</string>
     <string name="native_settings">Native settings</string>

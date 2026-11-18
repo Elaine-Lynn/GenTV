@@ -202,8 +202,7 @@ public final class LauncherSettingsActivity extends Activity {
         findViewById(R.id.metricsChoice).setOnClickListener(v ->
                 startActivity(new Intent(this, MetricsSettingsActivity.class)));
         findViewById(R.id.defaultHomeChoice).setOnClickListener(v -> {
-            Toast.makeText(this, R.string.home_settings_help, Toast.LENGTH_LONG).show();
-            open(new Intent(Settings.ACTION_HOME_SETTINGS));
+            startActivity(new Intent(this, HomeSettingsActivity.class));
         });
         findViewById(R.id.tvSettingsChoice).setOnClickListener(v ->
                 open(SystemSettings.intent(this, Settings.ACTION_SETTINGS)));

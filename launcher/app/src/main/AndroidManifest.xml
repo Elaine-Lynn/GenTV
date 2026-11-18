@@ -166,7 +166,7 @@
             android:exported="false"
             android:taskAffinity=""
             android:excludeFromRecents="true"
-            android:theme="@android:style/Theme.NoDisplay" />
+            android:theme="@android:style/Theme.Translucent.NoTitleBar.Fullscreen" />
         <!-- Home button for remotes that send KEYCODE_ALL_APPS (Xiaomi). Opt-in, off by default;
              see HomeKeyService. -->
         <service
