@@ -1,11 +1,11 @@
 package com.gentv.tv;
 
 import android.content.Context;
-import android.content.res.AssetFileDescriptor;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
 import android.graphics.SurfaceTexture;
-import android.media.MediaPlayer;
+import android.net.Uri;
+import android.os.SystemClock;
 import android.util.Log;
 import android.view.Surface;
 import android.view.TextureView;
@@ -16,6 +16,13 @@ import android.widget.ImageView;
 
 import java.io.File;
 
+import com.google.android.exoplayer2.ExoPlayer;
+import com.google.android.exoplayer2.MediaItem;
+import com.google.android.exoplayer2.PlaybackException;
+import com.google.android.exoplayer2.Player;
+import com.google.android.exoplayer2.upstream.RawResourceDataSource;
+import com.google.android.exoplayer2.video.VideoSize;
+
 /** Plays a selected built-in loop or the phone-supplied MP4 behind Home's controls. */
 final class VideoWallpaperPlayer implements TextureView.SurfaceTextureListener {
     private static final long MAX_BYTES = 100L * 1024 * 1024;
@@ -25,14 +32,14 @@ final class VideoWallpaperPlayer implements TextureView.SurfaceTextureListener {
     private final ImageView heldFrame;
     private Bitmap heldBitmap;
     private Surface surface;
-    private MediaPlayer player;
+    private ExoPlayer player;
     private boolean active;
     private boolean paused;
-    private boolean prepared;
     private boolean closed;
     private int videoWidth;
     private int videoHeight;
     private int bundledResource;
+    private long lastLoopAt;
 
     VideoWallpaperPlayer(Context context, FrameLayout root) {
         this.context = context;
@@ -62,7 +69,7 @@ final class VideoWallpaperPlayer implements TextureView.SurfaceTextureListener {
         if (closed) return;
         if (active) {
             paused = false;
-            if (player != null && prepared && !player.isPlaying()) player.start();
+            if (player != null) player.play();
             return;
         }
         bundledResource = BundledWallpapers.videoResource(context);
@@ -112,7 +119,7 @@ final class VideoWallpaperPlayer implements TextureView.SurfaceTextureListener {
                 }
             } catch (RuntimeException | OutOfMemoryError ignored) { }
         }
-        if (player != null && prepared && player.isPlaying()) player.pause();
+        if (player != null) player.pause();
     }
 
     Bitmap frameForBlur() {
@@ -139,41 +146,51 @@ final class VideoWallpaperPlayer implements TextureView.SurfaceTextureListener {
 
     private void play() {
         if (!active || closed || player != null || surface == null || !surface.isValid()) return;
-        MediaPlayer next = new MediaPlayer();
+        ExoPlayer next = new ExoPlayer.Builder(context).build();
         player = next;
         try {
-            next.setSurface(surface);
-            if (bundledResource != 0) {
-                try (AssetFileDescriptor source = context.getResources().openRawResourceFd(bundledResource)) {
-                    next.setDataSource(source.getFileDescriptor(), source.getStartOffset(), source.getLength());
+            next.setVideoSurface(surface);
+            Uri uri = bundledResource != 0
+                    ? RawResourceDataSource.buildRawResourceUri(bundledResource)
+                    : Uri.fromFile(file);
+            next.setMediaItem(MediaItem.fromUri(uri));
+            next.setVolume(0f);
+            next.setRepeatMode(Player.REPEAT_MODE_ONE);
+            next.addListener(new Player.Listener() {
+                @Override public void onVideoSizeChanged(VideoSize size) {
+                    if (player == next) {
+                        videoWidth = size.width;
+                        videoHeight = size.height;
+                        crop();
+                    }
                 }
-            } else next.setDataSource(file.getAbsolutePath());
-            next.setVolume(0f, 0f);
-            next.setLooping(true);
-            next.setOnVideoSizeChangedListener((mp, width, height) -> {
-                if (player == mp) { videoWidth = width; videoHeight = height; crop(); }
-            });
-            next.setOnPreparedListener(mp -> {
-                if (player != mp) return;
-                prepared = true;
-                if (active && !paused) mp.start();
-            });
-            next.setOnInfoListener((mp, what, extra) -> {
-                if (player == mp && active && what == MediaPlayer.MEDIA_INFO_VIDEO_RENDERING_START) {
+                @Override public void onRenderedFirstFrame() {
+                    if (player != next || !active) return;
+                    if (lastLoopAt == 0) lastLoopAt = SystemClock.elapsedRealtime();
                     video.setAlpha(1f);
                     releaseHeldFrame();
                 }
-                return false;
+                @Override public void onMediaItemTransition(MediaItem item, int reason) {
+                    if (player != next || reason != Player.MEDIA_ITEM_TRANSITION_REASON_REPEAT) return;
+                    long now = SystemClock.elapsedRealtime();
+                    if (lastLoopAt != 0)
+                        Log.i("GenTV.VideoWallpaper", "ExoPlayer loop elapsedMs=" + (now - lastLoopAt));
+                    lastLoopAt = now;
+                }
+                @Override public void onPlayerError(PlaybackException error) {
+                    Log.w("GenTV.VideoWallpaper", "ExoPlayer video wallpaper failed", error);
+                    failed(next);
+                }
             });
-            next.setOnErrorListener((mp, what, extra) -> { failed(mp); return true; });
-            next.prepareAsync();
+            next.prepare();
+            if (active && !paused) next.play();
         } catch (Exception error) {
             Log.w("GenTV.VideoWallpaper", "Cannot open video wallpaper", error);
             failed(next);
         }
     }
 
-    private void failed(MediaPlayer failed) {
+    private void failed(ExoPlayer failed) {
         if (player != failed) return;
         Log.w("GenTV.VideoWallpaper", "Video wallpaper unavailable; showing still wallpaper");
         release();
@@ -193,7 +210,7 @@ final class VideoWallpaperPlayer implements TextureView.SurfaceTextureListener {
 
     private void release() {
         if (player != null) { player.release(); player = null; }
-        prepared = false;
+        lastLoopAt = 0;
         videoWidth = 0;
         videoHeight = 0;
     }
