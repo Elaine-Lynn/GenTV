@@ -210,5 +210,7 @@
     <string name="wallpaper_picker_roots">Storage</string>
     <string name="wallpaper_picker_empty">No images or videos in this folder</string>
     <string name="wallpaper_picker_internal">Internal storage</string>
+    <string name="wallpaper_picker_disconnected">Storage device removed. Choose another location.</string>
+    <string name="wallpaper_picker_file_unavailable">This file is no longer available.</string>
     <string name="wallpaper_selected">Selected</string>
 </resources>

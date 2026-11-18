@@ -59,7 +59,6 @@ public final class PersonalizationActivity extends Activity {
     private int previewSample;
     private boolean ready;
     private boolean closed;
-    private boolean freezeMotionPreview;
     private final int[] focusedIndexes = new int[3];
     private final boolean[] visitedRows = new boolean[3];
     private int rowNavigationKey;
@@ -73,8 +72,6 @@ public final class PersonalizationActivity extends Activity {
         setContentView(R.layout.activity_personalization);
         WallpaperBackdrop.apply(this, ((android.view.ViewGroup) findViewById(android.R.id.content)).getChildAt(0));
         selected = BundledWallpapers.selected(this);
-        freezeMotionPreview = UserWallpaper.isVideo(selected)
-                || BundledWallpapers.videoResource(this) != 0;
         ActivityManager memory = CompatApi.service(this, ActivityManager.class);
         boolean lowRam = memory != null && CompatApi.lowRam(memory);
         previewSample = lowRam ? 2 : 1;
@@ -103,8 +100,6 @@ public final class PersonalizationActivity extends Activity {
         decoder.execute(() -> {
             Bitmap first = initialGroup == 2 ? decodeUserPreview(previewSample)
                     : decode(requestedResource, previewSample);
-            if (freezeMotionPreview && (initialGroup == 1 || UserWallpaper.isVideo(selected)))
-                first = WallpaperBlur.fromFrame(first);
             Bitmap initialPreview = first;
             Bitmap[][] loaded = {
                     new Bitmap[BundledWallpapers.IDS.length],
@@ -205,13 +200,11 @@ public final class PersonalizationActivity extends Activity {
         if (group == 2) {
             requestedResource = 0;
             selectedMotionResource = 0;
-            if (!freezeMotionPreview && UserWallpaper.isVideo(selected))
+            if (UserWallpaper.isVideo(selected))
                 videoPreview.selectFile(UserWallpaper.video(this));
             else videoPreview.select(0);
             decoder.execute(() -> {
                 Bitmap bitmap = decodeUserPreview(previewSample);
-                if (freezeMotionPreview && UserWallpaper.isVideo(selected))
-                    bitmap = WallpaperBlur.fromFrame(bitmap);
                 Bitmap result = bitmap;
                 main.post(() -> { if (!closed && requestedResource == 0 && result != null) showBitmap(result); });
             });
@@ -220,7 +213,7 @@ public final class PersonalizationActivity extends Activity {
         int resource = imageAt(group, index);
         requestedResource = resource;
         selectedMotionResource = videoAt(group, index);
-        videoPreview.select(freezeMotionPreview ? 0 : selectedMotionResource);
+        videoPreview.select(selectedMotionResource);
         Bitmap cached = previews.get(resource);
         if (cached != null) showBitmap(cached);
         else queuePreview(resource);
@@ -230,8 +223,6 @@ public final class PersonalizationActivity extends Activity {
         if (previews.get(resource) != null || !loading.add(resource)) return;
         decoder.execute(() -> {
             Bitmap bitmap = decode(resource, previewSample);
-            if (freezeMotionPreview && isMotionImage(resource))
-                bitmap = WallpaperBlur.fromFrame(bitmap);
             Bitmap result = bitmap;
             main.post(() -> {
                 loading.remove(resource);
@@ -240,12 +231,6 @@ public final class PersonalizationActivity extends Activity {
                 if (requestedResource == resource) showBitmap(result);
             });
         });
-    }
-
-    private boolean isMotionImage(int resource) {
-        for (int motion : BundledWallpapers.MOTION_IMAGES)
-            if (motion == resource) return true;
-        return false;
     }
 
     private void prefetch(int firstGroup) {
@@ -344,9 +329,9 @@ public final class PersonalizationActivity extends Activity {
 
     @Override protected void onResume() {
         super.onResume();
-        if (ready && !freezeMotionPreview && selectedMotionResource != 0)
+        if (ready && selectedMotionResource != 0)
             videoPreview.select(selectedMotionResource);
-        else if (ready && !freezeMotionPreview && userChoices.hasFocus() && UserWallpaper.isVideo(selected))
+        else if (ready && userChoices.hasFocus() && UserWallpaper.isVideo(selected))
             videoPreview.selectFile(UserWallpaper.video(this));
     }
 

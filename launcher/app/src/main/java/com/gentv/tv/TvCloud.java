@@ -6,6 +6,8 @@ import org.json.JSONObject;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.io.*;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLSocketFactory;
 
 /** Small foreground-only client; no services, hardware identifiers or third-party SDKs. */
 final class TvCloud {
@@ -17,6 +19,10 @@ final class TvCloud {
     static HttpURLConnection open(String url) throws IOException {
         if (!enabled() || !url.startsWith(BASE)) throw new IOException("Unexpected API address");
         HttpURLConnection c = (HttpURLConnection) new URL(url).openConnection();
+        // Android 4.2-4.4 support TLS 1.2 but do not enable it by default.
+        if (android.os.Build.VERSION.SDK_INT < 20 && c instanceof HttpsURLConnection) {
+            ((HttpsURLConnection) c).setSSLSocketFactory(new LegacyTls12SocketFactory((SSLSocketFactory) SSLSocketFactory.getDefault()));
+        }
         c.setConnectTimeout(8000); c.setReadTimeout(15000); c.setInstanceFollowRedirects(false);
         c.setRequestProperty("User-Agent", "GenTV/" + BuildConfig.VERSION_NAME);
         return c;
@@ -42,7 +48,8 @@ final class TvCloud {
         String url=update.getString("url");
         if (!url.startsWith(BASE+"releases/") || !url.substring(BASE.length()+9).matches("[A-Za-z0-9._-]+\\.apk")
                 || !update.getString("sha256").matches("[a-fA-F0-9]{64}")) throw new IOException("Invalid release");
-        if (update.optInt("minSdk",26)>android.os.Build.VERSION.SDK_INT) throw new IOException("Unsupported Android");
+        if (!UpdatePolicy.compatible(BuildConfig.VERSION_CODE, version, update.optInt("minSdk",26), android.os.Build.VERSION.SDK_INT))
+            throw new IOException("Unsupported Android");
         String certificate=update.optString("signingCertificateSha256", "");
         if (!certificate.equalsIgnoreCase(UpdatePackage.certificate(context))) throw new IOException("Incompatible signing certificate");
     }

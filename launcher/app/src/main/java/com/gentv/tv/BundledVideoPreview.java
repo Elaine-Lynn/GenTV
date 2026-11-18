@@ -1,17 +1,24 @@
 package com.gentv.tv;
 
 import android.content.Context;
-import android.content.res.AssetFileDescriptor;
 import android.graphics.Matrix;
 import android.graphics.SurfaceTexture;
-import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
 
 import java.io.File;
+
+import com.google.android.exoplayer2.ExoPlayer;
+import com.google.android.exoplayer2.MediaItem;
+import com.google.android.exoplayer2.PlaybackException;
+import com.google.android.exoplayer2.Player;
+import com.google.android.exoplayer2.upstream.RawResourceDataSource;
+import com.google.android.exoplayer2.video.VideoSize;
 
 /** One muted video surface for the personalization preview. Focus changes never wait for decoding. */
 final class BundledVideoPreview implements TextureView.SurfaceTextureListener {
@@ -21,7 +28,7 @@ final class BundledVideoPreview implements TextureView.SurfaceTextureListener {
     private final Runnable delayedStart = this::startIfReady;
     private final Runnable delayedStop = this::stopIfStill;
     private Surface surface;
-    private MediaPlayer player;
+    private ExoPlayer player;
     private int requestedResource;
     private int playingResource;
     private File requestedFile;
@@ -103,30 +110,39 @@ final class BundledVideoPreview implements TextureView.SurfaceTextureListener {
         if (surface == null || !surface.isValid()
                 || requestedResource == 0 && requestedFile == null) return;
         if (player != null) release();
-        MediaPlayer next = new MediaPlayer();
+        ExoPlayer next = new ExoPlayer.Builder(context).build();
         player = next;
         playingResource = requestedResource;
         playingFile = requestedFile;
         try {
-            next.setSurface(surface);
-            if (requestedFile != null) next.setDataSource(requestedFile.getAbsolutePath());
-            else try (AssetFileDescriptor source = context.getResources().openRawResourceFd(requestedResource)) {
-                next.setDataSource(source.getFileDescriptor(), source.getStartOffset(), source.getLength());
-            }
-            next.setVolume(0f, 0f);
-            next.setLooping(true);
-            next.setOnVideoSizeChangedListener((mp, width, height) -> {
-                if (player == mp) { videoWidth = width; videoHeight = height; crop(); }
+            next.setVideoSurface(surface);
+            Uri uri = requestedFile != null ? Uri.fromFile(requestedFile)
+                    : RawResourceDataSource.buildRawResourceUri(requestedResource);
+            next.setMediaItem(MediaItem.fromUri(uri));
+            next.setVolume(0f);
+            next.setRepeatMode(Player.REPEAT_MODE_ONE);
+            next.addListener(new Player.Listener() {
+                @Override public void onVideoSizeChanged(VideoSize size) {
+                    if (player == next) {
+                        videoWidth = size.width;
+                        videoHeight = size.height;
+                        crop();
+                    }
+                }
+                @Override public void onRenderedFirstFrame() {
+                    if (player == next && requestedResource == playingResource
+                            && requestedFile == playingFile)
+                        video.animate().alpha(1f).setDuration(240).start();
+                }
+                @Override public void onPlayerError(PlaybackException error) {
+                    Log.w("GenTV.VideoPreview", "Cannot play wallpaper preview", error);
+                    if (player == next) stop();
+                }
             });
-            next.setOnPreparedListener(mp -> { if (player == mp) mp.start(); });
-            next.setOnInfoListener((mp, what, extra) -> {
-                if (player == mp && what == MediaPlayer.MEDIA_INFO_VIDEO_RENDERING_START)
-                    video.animate().alpha(1f).setDuration(240).start();
-                return false;
-            });
-            next.setOnErrorListener((mp, what, extra) -> { if (player == mp) stop(); return true; });
-            next.prepareAsync();
+            next.prepare();
+            next.play();
         } catch (Exception error) {
+            Log.w("GenTV.VideoPreview", "Cannot open wallpaper preview", error);
             stop();
         }
     }

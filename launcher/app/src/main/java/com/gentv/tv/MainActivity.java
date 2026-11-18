@@ -63,6 +63,7 @@ import android.view.SoundEffectConstants;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.Window;
+import android.view.WindowManager;
 import android.view.animation.AnimationUtils;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.LayoutAnimationController;
@@ -377,6 +378,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // Keep Home awake while it is visible; the system may otherwise enter
+        // its own ambient mode independently of GenTV's idle screensaver.
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         childLock = new ChildLock(this);
         setContentView(R.layout.activity_main);
         density = getResources().getDisplayMetrics().density;
@@ -1141,6 +1145,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             updateWallpaperScrollState();
             if (wallpaperBlurred) videoWallpaper.pause();
         }
+        // A returning window can lay out the dock at a new position while the
+        // tile size stays unchanged; align the highlight after that layout.
+        grid.post(this::refitGlass);
         weatherWidget.start();
         handler.postDelayed(minuteTick, MINUTE_MS);
         if (festive && diya != null) {
@@ -2145,7 +2152,14 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         float scale = adapter.focusScale();
         int w = (int) (card.getWidth() * scale + 2 * pad);
         int h = (int) (card.getHeight() * scale + 2 * pad);
-        if (!glassShown || card.getWidth() != glassCardW || glass.getWidth() != w || glass.getHeight() != h) {
+        Rect r = tileRect;
+        r.set(0, 0, card.getWidth(), card.getHeight());
+        root.offsetDescendantRectToMyCoords(card, r);
+        float x = r.exactCenterX() - (card.getWidth() * scale + 2 * pad) / 2f;
+        float y = r.exactCenterY() - (card.getHeight() * scale + 2 * pad) / 2f
+                - (advancedEffects ? 4f * density : 0f);
+        if (!glassShown || card.getWidth() != glassCardW || glass.getWidth() != w || glass.getHeight() != h
+                || Math.abs(glassTargetX - x) > 1f || Math.abs(glassTargetY - y) > 1f) {
             onTileFocused(pos, card);
         }
     }

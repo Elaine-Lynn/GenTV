@@ -10,11 +10,10 @@
     android:focusable="true"
     android:clickable="true">
 
-    <ImageView
+    <com.gentv.tv.FocusTintImageView
         android:id="@+id/icon"
         android:layout_width="20dp"
         android:layout_height="20dp"
-        android:tint="@drawable/pill_text"
         android:duplicateParentState="true"
         android:contentDescription="@null" />
 

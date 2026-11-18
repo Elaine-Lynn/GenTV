@@ -3,13 +3,17 @@ package com.gentv.tv;
 import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
+import android.content.BroadcastReceiver;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,6 +21,7 @@ import android.view.animation.DecelerateInterpolator;
 import android.widget.LinearLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.GridLayoutManager;
@@ -40,6 +45,32 @@ public final class LocalWallpaperPickerActivity extends Activity {
     private TextView empty;
     private File current;
     private File internal;
+    private boolean browserReady;
+    private final Handler handler = new Handler(Looper.getMainLooper());
+    private final Runnable storageCheck = new Runnable() {
+        @Override public void run() {
+            reconcileStorage(false);
+            handler.postDelayed(this, 2000);
+        }
+    };
+    private final BroadcastReceiver storageReceiver = new BroadcastReceiver() {
+        @Override public void onReceive(Context context, Intent intent) {
+            // Some TV firmware does not publish its USB mount under /storage.
+            // The periodic check below also catches those devices.
+            String action = intent.getAction();
+            if (current != null && isRemovableFolder(current)
+                    && (Intent.ACTION_MEDIA_EJECT.equals(action)
+                    || Intent.ACTION_MEDIA_UNMOUNTED.equals(action)
+                    || Intent.ACTION_MEDIA_REMOVED.equals(action)
+                    || Intent.ACTION_MEDIA_BAD_REMOVAL.equals(action))) {
+                showRoots();
+                Toast.makeText(LocalWallpaperPickerActivity.this,
+                        R.string.wallpaper_picker_disconnected, Toast.LENGTH_SHORT).show();
+                return;
+            }
+            reconcileStorage(true);
+        }
+    };
 
     @Override protected void attachBaseContext(Context base) {
         super.attachBaseContext(LauncherLocale.wrap(base));
@@ -70,8 +101,45 @@ public final class LocalWallpaperPickerActivity extends Activity {
         if (requestCode == STORAGE_PERMISSION) showRoots();
     }
 
+    @Override protected void onStart() {
+        super.onStart();
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(Intent.ACTION_MEDIA_MOUNTED);
+        filter.addAction(Intent.ACTION_MEDIA_EJECT);
+        filter.addAction(Intent.ACTION_MEDIA_UNMOUNTED);
+        filter.addAction(Intent.ACTION_MEDIA_REMOVED);
+        filter.addAction(Intent.ACTION_MEDIA_BAD_REMOVAL);
+        filter.addDataScheme("file");
+        registerReceiver(storageReceiver, filter);
+    }
+
+    @Override protected void onResume() {
+        super.onResume();
+        reconcileStorage(false);
+        handler.postDelayed(storageCheck, 2000);
+    }
+
+    @Override protected void onPause() {
+        handler.removeCallbacks(storageCheck);
+        super.onPause();
+    }
+
+    @Override protected void onStop() {
+        unregisterReceiver(storageReceiver);
+        super.onStop();
+    }
+
     private void showRoots() {
         current = null;
+        discoverRoots();
+        entries.clear();
+        entries.addAll(roots.values());
+        path.setText(R.string.wallpaper_picker_roots);
+        browserReady = true;
+        refresh();
+    }
+
+    private void discoverRoots() {
         roots.clear();
         internal = Environment.getExternalStorageDirectory();
         addRoot(internal);
@@ -88,10 +156,39 @@ public final class LocalWallpaperPickerActivity extends Activity {
             if (!candidate.getName().equals("emulated") && !candidate.getName().equals("self"))
                 addRoot(candidate);
         }
-        entries.clear();
-        entries.addAll(roots.values());
-        path.setText(R.string.wallpaper_picker_roots);
-        refresh();
+        // Some Android 5 TV firmware mounts USB under /mnt/sda/sda1 only.
+        File[] mounts = new File("/mnt").listFiles();
+        if (mounts != null) for (File disk : mounts) {
+            if (!disk.getName().matches("sd[a-z]")) continue;
+            File[] partitions = disk.listFiles();
+            if (partitions == null) continue;
+            for (File partition : partitions) {
+                if (partition.getName().matches("sd[a-z][0-9]+")) addRoot(partition);
+            }
+        }
+    }
+
+    private void reconcileStorage(boolean mediaEvent) {
+        if (!browserReady) return;
+        if (current != null) {
+            if (!current.isDirectory() || !current.canRead() || current.listFiles() == null) {
+                showRoots();
+                Toast.makeText(this, R.string.wallpaper_picker_disconnected, Toast.LENGTH_SHORT).show();
+            } else if (mediaEvent) {
+                showFolder(current);
+            }
+            return;
+        }
+        List<String> previous = new ArrayList<>(roots.keySet());
+        discoverRoots();
+        if (!previous.equals(new ArrayList<>(roots.keySet()))) {
+            boolean removed = !roots.keySet().containsAll(previous);
+            entries.clear();
+            entries.addAll(roots.values());
+            refresh();
+            if (removed) Toast.makeText(this, R.string.wallpaper_picker_disconnected,
+                    Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void addRoot(File file) {
@@ -99,9 +196,19 @@ public final class LocalWallpaperPickerActivity extends Activity {
             roots.put(file.getAbsolutePath(), file);
     }
 
+    private boolean isRemovableFolder(File folder) {
+        String path = folder.getAbsolutePath();
+        String internalPath = internal == null ? "" : internal.getAbsolutePath();
+        return !path.equals(internalPath) && !path.startsWith(internalPath + "/");
+    }
+
     private void showFolder(File folder) {
-        File[] children = folder.listFiles();
-        if (children == null) return;
+        File[] children = folder == null ? null : folder.listFiles();
+        if (children == null || !folder.canRead()) {
+            showRoots();
+            Toast.makeText(this, R.string.wallpaper_picker_disconnected, Toast.LENGTH_SHORT).show();
+            return;
+        }
         current = folder;
         entries.clear();
         for (File file : children) {
@@ -176,6 +283,12 @@ public final class LocalWallpaperPickerActivity extends Activity {
             holder.card.setOnClickListener(view -> {
                 if (directory) showFolder(file);
                 else {
+                    if (!file.isFile() || !file.canRead()) {
+                        reconcileStorage(true);
+                        if (current != null) Toast.makeText(LocalWallpaperPickerActivity.this,
+                                R.string.wallpaper_picker_file_unavailable, Toast.LENGTH_SHORT).show();
+                        return;
+                    }
                     setResult(RESULT_OK, new Intent().setData(Uri.fromFile(file)));
                     finish();
                 }

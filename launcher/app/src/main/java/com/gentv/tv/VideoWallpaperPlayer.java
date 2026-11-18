@@ -86,7 +86,7 @@ final class VideoWallpaperPlayer implements TextureView.SurfaceTextureListener {
 
     void stop() {
         // Keep the last video frame behind Home while another page is open. Without it the
-        // bundled still preview flashes until MediaPlayer renders its first frame on return.
+        // bundled still preview flashes until ExoPlayer renders its first frame on return.
         if (heldBitmap == null && active && video.isAvailable() && video.getAlpha() > 0f) {
             try {
                 Bitmap frame = video.getBitmap(960, 540);

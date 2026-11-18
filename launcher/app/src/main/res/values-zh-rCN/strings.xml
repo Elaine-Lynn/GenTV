@@ -181,6 +181,8 @@
     <string name="wallpaper_picker_roots">存储设备</string>
     <string name="wallpaper_picker_empty">此文件夹没有图片或视频</string>
     <string name="wallpaper_picker_internal">内部存储</string>
+    <string name="wallpaper_picker_disconnected">存储设备已拔出，请选择其他位置</string>
+    <string name="wallpaper_picker_file_unavailable">此文件已不可用</string>
     <string name="wallpaper_selected">已选</string>
     <string name="weather_settings_title">城市</string>
     <string name="weather_no_city">请依次选择省、市、区县。</string>

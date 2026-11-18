@@ -8,6 +8,7 @@ import java.security.MessageDigest;
 
 /** Recheck private cached APKs after permission settings and process recreation. */
 final class UpdatePackage {
+    static final long MAX_APK_BYTES = 128L * 1024 * 1024;
     static String hex(byte[] bytes) {
         StringBuilder value=new StringBuilder();
         for(byte b:bytes) value.append(String.format(java.util.Locale.ROOT,"%02x",b&255));
@@ -21,7 +22,7 @@ final class UpdatePackage {
     @SuppressWarnings("deprecation")
     static File verified(Context context) throws Exception {
         File file=new File(context.getCacheDir(),"updates/gentv.apk");
-        if (!file.isFile() || file.length()>8*1024*1024) throw new IOException("Missing update");
+        if (!file.isFile() || file.length() == 0 || file.length() > MAX_APK_BYTES) throw new IOException("Missing update");
         MessageDigest digest=MessageDigest.getInstance("SHA-256");
         try(InputStream in=new FileInputStream(file)) { byte[] buf=new byte[8192]; int n; while((n=in.read(buf))!=-1)digest.update(buf,0,n); }
         if (!hex(digest.digest()).equalsIgnoreCase(TvCloud.prefs(context).getString("pendingHash",""))) throw new IOException("Changed update");

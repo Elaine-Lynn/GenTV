@@ -134,12 +134,13 @@ public final class CloudSettingsActivity extends Activity {
             try {
                 file.getParentFile().mkdirs(); c = TvCloud.open(url);
                 if(c.getResponseCode()!=200) throw new IOException("Download refused");
+                long length=c.getContentLength();
+                if(length>UpdatePackage.MAX_APK_BYTES) throw new IOException("APK too large");
                 MessageDigest digest=MessageDigest.getInstance("SHA-256");
                 try(InputStream in=c.getInputStream(); OutputStream out=new FileOutputStream(file)) {
-                    byte[] buf=new byte[8192]; int n,total=0;
-                    int length=c.getContentLength();
-                    while((n=in.read(buf))!=-1) { total+=n; if(total>8*1024*1024) throw new IOException("APK too large"); out.write(buf,0,n); digest.update(buf,0,n);
-                        if(length>0 && length<=8*1024*1024) { final int percent=(int)(total*100L/length); runOnUiThread(()->{if(!isDestroyed()){progress.setIndeterminate(false);progress.setProgress(percent);}}); } }
+                    byte[] buf=new byte[8192]; int n; long total=0;
+                    while((n=in.read(buf))!=-1) { total+=n; if(total>UpdatePackage.MAX_APK_BYTES) throw new IOException("APK too large"); out.write(buf,0,n); digest.update(buf,0,n);
+                        if(length>0) { final int percent=(int)(total*100/length); runOnUiThread(()->{if(!isDestroyed()){progress.setIndeterminate(false);progress.setProgress(percent);}}); } }
                 }
                 StringBuilder actual=new StringBuilder(); for(byte b:digest.digest()) actual.append(String.format(java.util.Locale.ROOT,"%02x",b&255));
                 if(!hash.equalsIgnoreCase(actual.toString())) throw new IOException("Checksum mismatch");

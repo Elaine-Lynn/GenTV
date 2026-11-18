@@ -1,9 +1,10 @@
 package com.gentv.tv;
 
 import android.content.Context;
-import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 import android.view.Surface;
 import android.graphics.SurfaceTexture;
 import android.view.TextureView;
@@ -21,6 +22,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import com.google.android.exoplayer2.ExoPlayer;
+import com.google.android.exoplayer2.MediaItem;
+import com.google.android.exoplayer2.PlaybackException;
+import com.google.android.exoplayer2.Player;
+import com.google.android.exoplayer2.video.VideoSize;
 
 /** Silent fullscreen aerial playback, allocated only by the screensaver. */
 final class AerialPlayer implements TextureView.SurfaceTextureListener {
@@ -52,8 +59,8 @@ final class AerialPlayer implements TextureView.SurfaceTextureListener {
     private Listener listener;
     private final Runnable progress = this::reportProgress;
     void setListener(Listener listener) { this.listener = listener; }
-    private MediaPlayer player;
-    private boolean active, closed, prepared;
+    private ExoPlayer player;
+    private boolean active, closed, prepared, firstFrameRendered;
     private int failures, videoWidth, videoHeight;
     private final Runnable retry = this::play;
     private final Runnable timeout = () -> failed(player);
@@ -163,40 +170,54 @@ final class AerialPlayer implements TextureView.SurfaceTextureListener {
         if (currentFilm == null) return;
         File local = cache.cached(currentFilm.url);
         if (local == null) return;
-        MediaPlayer next = new MediaPlayer();
+        ExoPlayer next = new ExoPlayer.Builder(video.getContext()).build();
         player = next;
         try {
-            next.setSurface(surface);
-            next.setVolume(0f, 0f);
-            next.setOnVideoSizeChangedListener((mp, w, h) -> {
-                if (player != mp) return;
-                videoWidth = w; videoHeight = h; crop();
-            });
-            next.setOnPreparedListener(mp -> {
-                if (player == mp && active) { prepared = true; mp.start(); }
-            });
-            next.setOnInfoListener((mp, what, extra) -> {
-                if (player == mp && active && what == MediaPlayer.MEDIA_INFO_VIDEO_RENDERING_START) {
+            next.setVideoSurface(surface);
+            next.setVolume(0f);
+            next.setMediaItem(MediaItem.fromUri(Uri.fromFile(local)));
+            next.addListener(new Player.Listener() {
+                @Override public void onVideoSizeChanged(VideoSize size) {
+                    if (player != next) return;
+                    videoWidth = size.width;
+                    videoHeight = size.height;
+                    crop();
+                }
+
+                @Override public void onPlaybackStateChanged(int state) {
+                    if (player != next || !active) return;
+                    if (state == Player.STATE_READY) prepared = true;
+                    else if (state == Player.STATE_BUFFERING) {
+                        handler.removeCallbacks(timeout);
+                        handler.postDelayed(timeout, 30_000);
+                    } else if (state == Player.STATE_ENDED) {
+                        handler.removeCallbacks(timeout);
+                        handler.post(AerialPlayer.this::play);
+                    }
+                }
+
+                @Override public void onRenderedFirstFrame() {
+                    if (player != next || !active || firstFrameRendered) return;
+                    firstFrameRendered = true;
+                    prepared = true;
                     handler.removeCallbacks(timeout);
                     failures = 0;
-                    if (listener != null) listener.onFrame(currentFilm.captions, mp.getCurrentPosition());
+                    if (listener != null) listener.onFrame(currentFilm.captions, (int) next.getCurrentPosition());
                     reportProgress();
                     if (CompatApi.animatorsEnabled()) {
                         fallback.animate().alpha(0f).setDuration(900)
                                 .withEndAction(() -> fallback.setVisibility(View.GONE)).start();
                     } else fallback.setVisibility(View.GONE);
-                    android.util.Log.i("GenTV.Aerial", "Screensaver video rendering");
-                } else if (player == mp && what == MediaPlayer.MEDIA_INFO_BUFFERING_START) {
-                    handler.removeCallbacks(timeout); handler.postDelayed(timeout, 30_000);
-                } else if (player == mp && what == MediaPlayer.MEDIA_INFO_BUFFERING_END) {
-                    handler.removeCallbacks(timeout);
+                    Log.i("GenTV.Aerial", "Screensaver video rendering");
                 }
-                return false;
+
+                @Override public void onPlayerError(PlaybackException error) {
+                    Log.w("GenTV.Aerial", "Screensaver video failed", error);
+                    failed(next);
+                }
             });
-            next.setOnCompletionListener(mp -> { if (player == mp) play(); });
-            next.setOnErrorListener((mp, what, extra) -> { failed(mp); return true; });
-            next.setDataSource(local.getAbsolutePath());
-            next.prepareAsync();
+            next.prepare();
+            next.play();
             handler.postDelayed(timeout, 30_000);
         } catch (Exception error) { failed(next); }
     }
@@ -204,12 +225,12 @@ final class AerialPlayer implements TextureView.SurfaceTextureListener {
     private void reportProgress() {
         handler.removeCallbacks(progress);
         if (!active || !prepared || player == null || listener == null) return;
-        int position = player.getCurrentPosition();
+        int position = (int) player.getCurrentPosition();
         listener.onPosition(position);
         if (position < ScreensaverInfo.SHOW_MS) handler.postDelayed(progress, 250);
     }
 
-    private void failed(MediaPlayer failed) {
+    private void failed(ExoPlayer failed) {
         if (failed == null || player != failed) return;
         android.util.Log.w("GenTV.Aerial", "Video unavailable; using screensaver image");
         showFallback();
@@ -240,6 +261,7 @@ final class AerialPlayer implements TextureView.SurfaceTextureListener {
         handler.removeCallbacks(progress);
         if (player != null) { player.release(); player = null; }
         prepared = false;
+        firstFrameRendered = false;
     }
 
     private void cancelDownload() {
@@ -255,9 +277,8 @@ final class AerialPlayer implements TextureView.SurfaceTextureListener {
         handler.removeCallbacks(retry);
         handler.removeCallbacks(progress);
         // Keep the last frame through the exit fade; release the decoder on destruction.
-        if (player != null && prepared) {
-            try { player.pause(); } catch (IllegalStateException error) { release(); }
-        } else release();
+        if (player != null && prepared) player.pause();
+        else release();
     }
     void stop() { active = false; cancelDownload(); release(); showFallback(); }
     void close() { closed = true; stop(); downloads.shutdownNow(); }
