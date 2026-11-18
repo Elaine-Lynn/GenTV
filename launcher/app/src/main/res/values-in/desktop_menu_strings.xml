@@ -1,0 +1,6 @@
+<resources>
+    <string name="desktop_rename">Ganti nama di Beranda</string>
+    <string name="desktop_move_folder">Pindahkan ke folder</string>
+    <string name="desktop_original_image">Gunakan gambar asli aplikasi</string>
+    <string name="desktop_folder_new">Folder baru</string>
+</resources>

@@ -1,0 +1,6 @@
+<resources>
+    <string name="desktop_rename">เปลี่ยนชื่อบนหน้าหลัก</string>
+    <string name="desktop_move_folder">ย้ายไปยังโฟลเดอร์</string>
+    <string name="desktop_original_image">ใช้ภาพต้นฉบับของแอป</string>
+    <string name="desktop_folder_new">โฟลเดอร์ใหม่</string>
+</resources>

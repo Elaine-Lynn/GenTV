@@ -1,0 +1,6 @@
+<resources>
+    <string name="desktop_rename">Zmień nazwę na ekranie głównym</string>
+    <string name="desktop_move_folder">Przenieś do folderu</string>
+    <string name="desktop_original_image">Użyj oryginalnego obrazu aplikacji</string>
+    <string name="desktop_folder_new">Nowy folder</string>
+</resources>

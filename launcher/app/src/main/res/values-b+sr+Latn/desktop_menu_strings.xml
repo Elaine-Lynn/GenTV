@@ -1,0 +1,6 @@
+<resources>
+    <string name="desktop_rename">Preimenuj na početnom ekranu</string>
+    <string name="desktop_move_folder">Premesti u fasciklu</string>
+    <string name="desktop_original_image">Koristi originalnu sliku aplikacije</string>
+    <string name="desktop_folder_new">Nova fascikla</string>
+</resources>

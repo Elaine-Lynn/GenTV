@@ -1,0 +1,6 @@
+<resources>
+    <string name="desktop_rename">Đổi tên trên màn hình chính</string>
+    <string name="desktop_move_folder">Chuyển vào thư mục</string>
+    <string name="desktop_original_image">Dùng hình ảnh gốc của ứng dụng</string>
+    <string name="desktop_folder_new">Thư mục mới</string>
+</resources>

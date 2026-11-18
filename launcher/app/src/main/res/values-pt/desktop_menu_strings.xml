@@ -1,0 +1,6 @@
+<resources>
+    <string name="desktop_rename">Renomear na tela inicial</string>
+    <string name="desktop_move_folder">Mover para pasta</string>
+    <string name="desktop_original_image">Usar imagem original do aplicativo</string>
+    <string name="desktop_folder_new">Nova pasta</string>
+</resources>

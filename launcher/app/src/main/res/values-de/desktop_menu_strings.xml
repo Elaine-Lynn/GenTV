@@ -1,0 +1,6 @@
+<resources>
+    <string name="desktop_rename">Auf Startbildschirm umbenennen</string>
+    <string name="desktop_move_folder">In Ordner verschieben</string>
+    <string name="desktop_original_image">Originalbild der App verwenden</string>
+    <string name="desktop_folder_new">Neuer Ordner</string>
+</resources>

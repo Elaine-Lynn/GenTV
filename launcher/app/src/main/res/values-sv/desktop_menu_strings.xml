@@ -1,0 +1,6 @@
+<resources>
+    <string name="desktop_rename">Byt namn på startskärmen</string>
+    <string name="desktop_move_folder">Flytta till mapp</string>
+    <string name="desktop_original_image">Använd appens originalbild</string>
+    <string name="desktop_folder_new">Ny mapp</string>
+</resources>

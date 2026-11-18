@@ -1,0 +1,6 @@
+<resources>
+    <string name="desktop_rename">Nimeä uudelleen aloitusnäytössä</string>
+    <string name="desktop_move_folder">Siirrä kansioon</string>
+    <string name="desktop_original_image">Käytä sovelluksen alkuperäistä kuvaa</string>
+    <string name="desktop_folder_new">Uusi kansio</string>
+</resources>
