@@ -5,7 +5,7 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
+import java.nio.charset.Charset;
 import java.util.Locale;
 
 /** Bounded, HTTPS-only Open-Meteo requests. No device location or API key is needed. */
@@ -60,7 +60,7 @@ final class WeatherApi {
         connection.setRequestProperty("User-Agent", "GenTV/" + BuildConfig.VERSION_NAME);
         try {
             if (connection.getResponseCode() != 200) throw new IOException("Weather HTTP " + connection.getResponseCode());
-            return new JSONObject(new String(TvCloud.read(connection.getInputStream(), 64 * 1024), StandardCharsets.UTF_8));
+            return new JSONObject(new String(TvCloud.read(connection.getInputStream(), 64 * 1024), Charset.forName("UTF-8")));
         } finally { connection.disconnect(); }
     }
 

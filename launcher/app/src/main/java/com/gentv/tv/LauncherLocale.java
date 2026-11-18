@@ -20,7 +20,12 @@ final class LauncherLocale {
     /** The Locale for a config tag such as "vi", "pt-BR" or "ar-EG-u-nu-latn", or null for "" or anything that is not a plain tag. */
     static Locale parse(String tag) {
         if (tag == null || !TAG.matcher(tag.trim()).matches()) return null;
-        return Locale.forLanguageTag(tag.trim());
+        // SDK_INT is 0 in the host JVM used by the plain unit tests.
+        if (android.os.Build.VERSION.SDK_INT == 0 || android.os.Build.VERSION.SDK_INT >= 21)
+            return Locale.forLanguageTag(tag.trim());
+        String[] parts = tag.trim().split("-");
+        return parts.length > 1 && parts[1].length() == 2
+                ? new Locale(parts[0], parts[1]) : new Locale(parts[0]);
     }
 
     /** base with the configured language, or base itself when locale is off. */

@@ -324,7 +324,7 @@ public final class PondRenderer implements GLSurfaceView.Renderer {
     }
     private int texture(String file,boolean fish){
         Bitmap image;
-        try(InputStream in=context.getAssets().open("pond/" + file)){BitmapFactory.Options options=new BitmapFactory.Options();options.inScaled=false;options.inPremultiplied=true;image=BitmapFactory.decodeStream(in,null,options);if(image==null)throw new IllegalStateException("Cannot decode "+file);}
+        try(InputStream in=context.getAssets().open("pond/" + file)){BitmapFactory.Options options=new BitmapFactory.Options();options.inScaled=false;if(android.os.Build.VERSION.SDK_INT>=19)options.inPremultiplied=true;image=BitmapFactory.decodeStream(in,null,options);if(image==null)throw new IllegalStateException("Cannot decode "+file);}
         catch(Exception ex){Log.e("Yichi","Missing texture: "+file,ex);if(file.equals("turtle.png")||file.startsWith("fishing-cat-"))throw new IllegalStateException("Turtle texture unavailable",ex);image=fallback(fish);}
         boolean turtle=file.equals("turtle.png"),mipmapped=turtle||fish;
         if(mipmapped){
@@ -343,7 +343,7 @@ public final class PondRenderer implements GLSurfaceView.Renderer {
         GLUtils.texImage2D(GLES20.GL_TEXTURE_2D,0,image,0);if(mipmapped){GLES20.glGenerateMipmap(GLES20.GL_TEXTURE_2D);Log.i("Yichi",file+" texture="+image.getWidth()+"x"+image.getHeight()+" trilinear mipmaps");}
         image.recycle();return id[0];
     }
-    private static Bitmap fallback(boolean fish){Bitmap b=Bitmap.createBitmap(512,256,Bitmap.Config.ARGB_8888);Canvas c=new Canvas(b);Paint p=new Paint(3);if(!fish){c.drawColor(Color.rgb(31,73,67));return b;}p.setColor(Color.rgb(225,220,193));c.drawOval(25,70,410,186,p);Path tail=new Path();tail.moveTo(375,128);tail.lineTo(500,55);tail.lineTo(470,128);tail.lineTo(500,200);tail.close();c.drawPath(tail,p);p.setColor(Color.rgb(178,67,42));c.drawOval(70,84,160,165,p);c.drawOval(240,90,310,160,p);p.setColor(Color.rgb(24,46,38));c.drawCircle(45,108,5,p);c.drawCircle(45,148,5,p);return b;}
+    private static Bitmap fallback(boolean fish){Bitmap b=Bitmap.createBitmap(512,256,Bitmap.Config.ARGB_8888);Canvas c=new Canvas(b);Paint p=new Paint(3);if(!fish){c.drawColor(Color.rgb(31,73,67));return b;}p.setColor(Color.rgb(225,220,193));c.drawOval(new android.graphics.RectF(25,70,410,186),p);Path tail=new Path();tail.moveTo(375,128);tail.lineTo(500,55);tail.lineTo(470,128);tail.lineTo(500,200);tail.close();c.drawPath(tail,p);p.setColor(Color.rgb(178,67,42));c.drawOval(new android.graphics.RectF(70,84,160,165),p);c.drawOval(new android.graphics.RectF(240,90,310,160),p);p.setColor(Color.rgb(24,46,38));c.drawCircle(45,108,5,p);c.drawCircle(45,148,5,p);return b;}
     private static int shader(int type,String source){int s=GLES20.glCreateShader(type);GLES20.glShaderSource(s,source);GLES20.glCompileShader(s);int[] ok=new int[1];GLES20.glGetShaderiv(s,GLES20.GL_COMPILE_STATUS,ok,0);if(ok[0]==0)throw new IllegalStateException("Shader compile failed: "+GLES20.glGetShaderInfoLog(s));return s;}
     private static int program(String vertex,String fragment){int v=shader(GLES20.GL_VERTEX_SHADER,vertex),f=shader(GLES20.GL_FRAGMENT_SHADER,fragment),p=GLES20.glCreateProgram();GLES20.glAttachShader(p,v);GLES20.glAttachShader(p,f);GLES20.glLinkProgram(p);int[] ok=new int[1];GLES20.glGetProgramiv(p,GLES20.GL_LINK_STATUS,ok,0);if(ok[0]==0)throw new IllegalStateException("Shader link failed: "+GLES20.glGetProgramInfoLog(p));GLES20.glDeleteShader(v);GLES20.glDeleteShader(f);return p;}
 }

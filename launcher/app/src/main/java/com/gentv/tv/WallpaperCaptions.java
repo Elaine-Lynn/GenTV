@@ -1,7 +1,7 @@
 package com.gentv.tv;
 
 import java.io.File;
-import java.nio.charset.StandardCharsets;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.Collections;
 import java.util.HashMap;
@@ -39,7 +39,7 @@ final class WallpaperCaptions {
         File file = folder == null ? null : new File(folder, FILE_NAME);
         if (file == null || !file.isFile() || file.length() > 256 * 1024) return Collections.emptyMap();
         try {
-            return parse(Files.readAllLines(file.toPath(), StandardCharsets.UTF_8));
+            return parse(Files.readAllLines(file.toPath(), Charset.forName("UTF-8")));
         } catch (Exception e) {
             return Collections.emptyMap();
         }

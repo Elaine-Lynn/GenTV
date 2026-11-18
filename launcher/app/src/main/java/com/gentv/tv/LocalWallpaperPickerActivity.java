@@ -75,7 +75,8 @@ public final class LocalWallpaperPickerActivity extends Activity {
         roots.clear();
         internal = Environment.getExternalStorageDirectory();
         addRoot(internal);
-        File[] appDirs = getExternalFilesDirs(null);
+        File[] appDirs = android.os.Build.VERSION.SDK_INT >= 19
+                ? getExternalFilesDirs(null) : new File[]{getExternalFilesDir(null)};
         if (appDirs != null) for (File appDir : appDirs) {
             if (appDir == null) continue;
             String full = appDir.getAbsolutePath();
@@ -145,7 +146,9 @@ public final class LocalWallpaperPickerActivity extends Activity {
             View item = LayoutInflater.from(parent.getContext())
                     .inflate(R.layout.item_local_wallpaper_file, parent, false);
             LinearLayout card = item.findViewById(R.id.fileCard);
-            card.setForeground(getDrawable(R.drawable.my_apps_focus));
+            if (android.os.Build.VERSION.SDK_INT >= 23) {
+                card.setForeground(CompatApi.drawable(LocalWallpaperPickerActivity.this, R.drawable.my_apps_focus));
+            }
             card.setOnFocusChangeListener((view, focused) -> {
                 view.animate().cancel();
                 view.animate().scaleX(focused ? 1.12f : 1f).scaleY(focused ? 1.12f : 1f)

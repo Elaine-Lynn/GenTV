@@ -6,6 +6,8 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.UserManager;
 import android.service.notification.NotificationListenerService;
+import android.service.notification.StatusBarNotification;
+import androidx.annotation.RequiresApi;
 
 /**
  * Starts this launcher's process after the firmware has killed it.
@@ -14,13 +16,17 @@ import android.service.notification.NotificationListenerService;
  * once the process is gone. That rebind is what brings Home back on TCL and Xiaomi. No notification
  * is read. Enable with {@code cmd notification allow_listener com.gentv.tv/.GuardRevival}.
  */
+@RequiresApi(18)
 public class GuardRevival extends NotificationListenerService {
     private BroadcastReceiver unlocked;
 
+    @Override public void onNotificationPosted(StatusBarNotification notification) { }
+    @Override public void onNotificationRemoved(StatusBarNotification notification) { }
+
     @Override
     public void onListenerConnected() {
-        UserManager users = getSystemService(UserManager.class);
-        if (users != null && !users.isUserUnlocked()) {
+        UserManager users = CompatApi.service(this, UserManager.class);
+        if (users != null && !CompatApi.userUnlocked(users)) {
             if (unlocked != null) return;
             unlocked = new BroadcastReceiver() {
                 @Override
@@ -30,7 +36,7 @@ public class GuardRevival extends NotificationListenerService {
                 }
             };
             registerReceiver(unlocked, new IntentFilter(Intent.ACTION_USER_UNLOCKED));
-            if (users.isUserUnlocked()) {
+            if (CompatApi.userUnlocked(users)) {
                 stopWaiting();
                 GuardKeep.ensureHomeKey(this);
             }

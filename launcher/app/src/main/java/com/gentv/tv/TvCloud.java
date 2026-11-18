@@ -25,7 +25,7 @@ final class TvCloud {
         HttpURLConnection c = open(BASE + path);
         try {
             if (c.getResponseCode() != 200) throw new IOException("HTTP " + c.getResponseCode());
-            return new JSONObject(new String(read(c.getInputStream(), 65536), java.nio.charset.StandardCharsets.UTF_8));
+            return new JSONObject(new String(read(c.getInputStream(), 65536), java.nio.charset.Charset.forName("UTF-8")));
         } finally { c.disconnect(); }
     }
     static byte[] read(InputStream in, int limit) throws IOException {

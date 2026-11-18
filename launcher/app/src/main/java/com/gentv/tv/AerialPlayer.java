@@ -181,7 +181,7 @@ final class AerialPlayer implements TextureView.SurfaceTextureListener {
                     failures = 0;
                     if (listener != null) listener.onFrame(currentFilm.captions, mp.getCurrentPosition());
                     reportProgress();
-                    if (android.animation.ValueAnimator.areAnimatorsEnabled()) {
+                    if (CompatApi.animatorsEnabled()) {
                         fallback.animate().alpha(0f).setDuration(900)
                                 .withEndAction(() -> fallback.setVisibility(View.GONE)).start();
                     } else fallback.setVisibility(View.GONE);

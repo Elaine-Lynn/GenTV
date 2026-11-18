@@ -59,7 +59,8 @@ final class ChildLock {
     }
 
     static SharedPreferences state(Context context) {
-        SharedPreferences preferences = context.createDeviceProtectedStorageContext()
+        SharedPreferences preferences = (android.os.Build.VERSION.SDK_INT >= 24
+                ? context.createDeviceProtectedStorageContext() : context)
                 .getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         if (!BuildConfig.CHILD_TIMER_TEST_MODE && preferences.contains(ChildSettingsActivity.TEST_INTERVAL)) {
             SharedPreferences.Editor migration = preferences.edit().remove(ChildSettingsActivity.TEST_INTERVAL);

@@ -45,7 +45,7 @@ final class VolumeKeys {
         if (!changesPress(event.getAction(), event.getRepeatCount())) return true;
         stop();
         if (event.getAction() != KeyEvent.ACTION_DOWN) return true;
-        AudioManager audio = context.getSystemService(AudioManager.class);
+        AudioManager audio = CompatApi.service(context, AudioManager.class);
         if (audio == null) return true;
         if (handler == null) handler = new Handler(Looper.getMainLooper());
         step = new Runnable() {

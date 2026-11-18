@@ -30,7 +30,7 @@ for name in ('launcher/app/build.gradle', 'phone/app/build.gradle.kts'):
     assert 'api.gentv.app' not in (root/name).read_text(encoding='utf-8'), f'Hard-coded GenTV API: {name}'
 receiver = manifest.find("application/receiver[@"+ns+"name='.DesktopReceiver']")
 assert receiver is not None and receiver.get(ns+'permission') == 'android.permission.WRITE_SECURE_SETTINGS'
-assert re.search(r'\bminSdk\s+26\b', (root/'launcher/app/build.gradle').read_text(encoding='utf-8'))
+assert re.search(r'\bminSdk\s+17\b', (root/'launcher/app/build.gradle').read_text(encoding='utf-8'))
 assert "applicationId 'com.gentv.tv'" in (root/'launcher/app/build.gradle').read_text(encoding='utf-8')
 assert 'applicationId = "com.gentv.mobile"' in (root/'phone/app/build.gradle.kts').read_text(encoding='utf-8')
 assert 'com.gentv.tv.category.DOCK_CARD' in (root/'launcher/app/src/main/AndroidManifest.xml').read_text(encoding='utf-8')

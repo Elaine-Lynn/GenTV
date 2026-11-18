@@ -8,10 +8,11 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
+import androidx.multidex.MultiDex;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import java.net.HttpURLConnection;
-import java.nio.charset.StandardCharsets;
+import java.nio.charset.Charset;
 import java.util.ArrayDeque;
 import java.util.UUID;
 
@@ -33,6 +34,10 @@ public final class TvMetrics extends Application implements Application.Activity
             handler.postDelayed(this, 60000);
         }
     };
+    @Override protected void attachBaseContext(Context base) {
+        super.attachBaseContext(base);
+        MultiDex.install(this);
+    }
     @Override public void onCreate() { super.onCreate(); instance = this; registerActivityLifecycleCallbacks(this); }
     static boolean enabled(Context c) { return TvCloud.enabled() && TvCloud.prefs(c).getBoolean("metrics_v3", false); }
     static boolean emulator() {
@@ -98,7 +103,7 @@ public final class TvMetrics extends Application implements Application.Activity
                     try {
                         c = TvCloud.open(TvCloud.BASE + "analytics"); c.setRequestMethod("POST"); c.setDoOutput(true);
                         c.setRequestProperty("Content-Type", "application/json");
-                        try (java.io.OutputStream out = c.getOutputStream()) { out.write(body.getBytes(StandardCharsets.UTF_8)); }
+                        try (java.io.OutputStream out = c.getOutputStream()) { out.write(body.getBytes(Charset.forName("UTF-8"))); }
                         accepted = c.getResponseCode() == 204;
                     } catch (Exception ignored) { }
                     finally { if (c != null) c.disconnect(); }

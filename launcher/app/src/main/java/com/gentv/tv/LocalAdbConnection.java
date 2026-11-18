@@ -10,11 +10,10 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.charset.StandardCharsets;
+import java.nio.charset.Charset;
 import java.security.GeneralSecurityException;
 import java.security.KeyPair;
 import java.security.interfaces.RSAPublicKey;
-import java.util.Base64;
 import javax.crypto.Cipher;
 
 /** Small legacy ADB transport, confined to this device's loopback interface. No TLS downgrade. */
@@ -77,7 +76,7 @@ final class LocalAdbConnection implements Closeable {
                 send(OKAY, local, remote, new byte[0]);
             } else if (packet.command == CLSE && (remote == 0 || remote == packet.arg0)) {
                 send(CLSE, local, packet.arg0, new byte[0]);
-                return collected.toString(StandardCharsets.UTF_8.name()).trim();
+                return collected.toString(Charset.forName("UTF-8").name()).trim();
             } else throw new ProtocolFailure("Unexpected ADB packet");
         }
         throw new ProtocolFailure("ADB stream did not close");
@@ -92,7 +91,22 @@ final class LocalAdbConnection implements Closeable {
         littleInteger(encoded, n);
         littleInteger(encoded, BigInteger.ONE.shiftLeft(4096).mod(n));
         encoded.putInt(key.getPublicExponent().intValue());
-        return bytes(Base64.getEncoder().encodeToString(encoded.array()) + " gentv@localhost\0");
+        return bytes(base64(encoded.array())
+                + " gentv@localhost\0");
+    }
+
+    private static String base64(byte[] input) {
+        final char[] alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/".toCharArray();
+        StringBuilder out = new StringBuilder((input.length + 2) / 3 * 4);
+        for (int i = 0; i < input.length; i += 3) {
+            int a = input[i] & 255;
+            int b = i + 1 < input.length ? input[i + 1] & 255 : 0;
+            int c = i + 2 < input.length ? input[i + 2] & 255 : 0;
+            out.append(alphabet[a >>> 2]).append(alphabet[((a & 3) << 4) | (b >>> 4)]);
+            out.append(i + 1 < input.length ? alphabet[((b & 15) << 2) | (c >>> 6)] : '=');
+            out.append(i + 2 < input.length ? alphabet[c & 63] : '=');
+        }
+        return out.toString();
     }
 
     private static void littleInteger(ByteBuffer out, BigInteger value) {
@@ -129,7 +143,7 @@ final class LocalAdbConnection implements Closeable {
     }
 
     private static int checksum(byte[] data) { int sum = 0; for (byte b : data) sum += b & 255; return sum; }
-    private static byte[] bytes(String value) { return value.getBytes(StandardCharsets.UTF_8); }
+    private static byte[] bytes(String value) { return value.getBytes(Charset.forName("UTF-8")); }
     @Override public void close() throws IOException { socket.close(); }
     static final class ProtocolFailure extends IOException {
         ProtocolFailure(String diagnostic) { super(diagnostic); }

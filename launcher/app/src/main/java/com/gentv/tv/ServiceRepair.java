@@ -35,8 +35,7 @@ final class ServiceRepair {
     }
 
     static void restore(Context context) {
-        if (context.checkSelfPermission(Manifest.permission.WRITE_SECURE_SETTINGS)
-                != PackageManager.PERMISSION_GRANTED) return;
+        if (!CompatApi.permissionGranted(context, Manifest.permission.WRITE_SECURE_SETTINGS)) return;
         try {
             ContentResolver cr = context.getContentResolver();
             String list = Settings.Secure.getString(cr, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);

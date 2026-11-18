@@ -33,7 +33,7 @@ final class OpenOnStart {
 
     /** The app's TV entry point, or its phone one; null when it is uninstalled or disabled, so Home stays. */
     static Intent intent(PackageManager pm, String pkg) {
-        Intent i = pm.getLeanbackLaunchIntentForPackage(pkg);
+        Intent i = CompatApi.leanbackLaunch(pm, pkg);
         return i != null ? i : pm.getLaunchIntentForPackage(pkg);
     }
 }

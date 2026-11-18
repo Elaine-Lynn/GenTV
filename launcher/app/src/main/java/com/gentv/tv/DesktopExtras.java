@@ -18,7 +18,9 @@ import java.util.Set;
 final class DesktopExtras {
     static final int IMAGE_BYTES = 12 * 1024, TOTAL_IMAGE_BYTES = 24 * 1024;
     private static final LruCache<String, Bitmap> images = new LruCache<String, Bitmap>(512 * 1024) {
-        @Override protected int sizeOf(String key, Bitmap value) { return value.getAllocationByteCount(); }
+        @Override protected int sizeOf(String key, Bitmap value) {
+            return android.os.Build.VERSION.SDK_INT >= 19 ? value.getAllocationByteCount() : value.getByteCount();
+        }
     };
     static void clearImages() { images.evictAll(); }
     static boolean folder(String key) { return key != null && key.matches("com\\.gentv\\.(?:tv|home)/Folder\\.[a-f0-9]{32}"); }

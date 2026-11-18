@@ -15,7 +15,7 @@ final class NetworkStatusDrawable extends Drawable {
         c.save();c.translate(getBounds().left,getBounds().top);c.scale(getBounds().width()/28f,getBounds().height()/28f);
         paint.setColor(Color.WHITE);paint.setStrokeWidth(2.1f);paint.setStrokeCap(Paint.Cap.ROUND);paint.setStyle(Paint.Style.STROKE);
         if(ethernet) {
-            c.drawRoundRect(5,3,23,19,2,2,paint);c.drawLine(10,19,10,23,paint);c.drawLine(18,19,18,23,paint);c.drawLine(10,23,18,23,paint);
+            c.drawRoundRect(new RectF(5,3,23,19),2,2,paint);c.drawLine(10,19,10,23,paint);c.drawLine(18,19,18,23,paint);c.drawLine(10,23,18,23,paint);
             for(int x=10;x<=18;x+=4)c.drawLine(x,7,x,11,paint);
         } else {
             float[][] arcs={{3,10,14,0,25,10},{7,15,14,8,21,15},{11,19,14,16,17,19}};

@@ -13,7 +13,7 @@ GenTV 由 Android 应用组成，不是电脑上的 Python / Node 程序，也�
 - 构建手机版：需要安装下面列出的两个 Android SDK 平台和两个构建用 JDK。手机版构建时会从源码生成并内嵌电视版 APK。
 - 参与开发，或让 AI 助手在本地构建：步骤相同。Debug 构建不需要服务器账号或签名密钥。
 
-两个应用都需要 Android 8 / API 26 或以上。用手机管理电视或用命令行安装，电视需要支持安装 Android APK，并允许已授权的 ADB 连接。三星 Tizen 和 LG webOS 不能运行这些 Android 应用。即使是 Android 电视，厂商限制也可能阻止安装、配对、切换信号源或更换默认桌面。
+手机 App 需要 Android 8 / API 26 或以上，其引导式电视安装流程目前也面向 Android 8 及以上。电视 Launcher 源码现已按 Android 4.2 / API 17 最低版本构建，但尚未在 4.2 实机上验证。旧版电视请先从源码构建，通过 ADB 直接安装、启动并检查，不要在确认可用前更换默认桌面。用手机管理电视或用命令行安装，电视需要支持安装 Android APK，并允许已授权的 ADB 连接。三星 Tizen 和 LG webOS 不能运行这些 Android 应用。即使是 Android 电视，厂商限制也可能阻止安装、配对、切换信号源或更换默认桌面。
 
 <a id="verify-a-download"></a>
 

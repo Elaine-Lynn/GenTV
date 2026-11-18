@@ -75,11 +75,11 @@ final class ChildLocalAdb {
             Process process = null;
             try {
                 process = new ProcessBuilder("/system/bin/getprop", property).start();
-                if (!process.waitFor(2, TimeUnit.SECONDS)) continue;
+                if (!CompatApi.waitFor(process, 2000)) continue;
                 byte[] bytes = new byte[32];
                 int count = process.getInputStream().read(bytes);
                 if (count <= 0) continue;
-                int port = Integer.parseInt(new String(bytes, 0, count, java.nio.charset.StandardCharsets.UTF_8).trim());
+                int port = Integer.parseInt(new String(bytes, 0, count, java.nio.charset.Charset.forName("UTF-8")).trim());
                 if (port >= 1 && port <= 65535) return port;
             } catch (IOException | InterruptedException | NumberFormatException ignored) {
                 // A user can enter the actual port shown in TV settings instead.
@@ -89,7 +89,8 @@ final class ChildLocalAdb {
     }
 
     private static synchronized KeyPair key(Context context) throws Exception {
-        AtomicFile file = new AtomicFile(new File(context.getNoBackupFilesDir(), "child-local-adb.pk8"));
+        AtomicFile file = new AtomicFile(new File(android.os.Build.VERSION.SDK_INT >= 21
+                ? context.getNoBackupFilesDir() : context.getFilesDir(), "child-local-adb.pk8"));
         if (file.getBaseFile().exists()) {
             byte[] encoded = file.readFully();
             KeyFactory factory = KeyFactory.getInstance("RSA");

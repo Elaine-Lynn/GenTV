@@ -19,8 +19,11 @@ badging=subprocess.check_output([str(sdk/'build-tools/34.0.0/aapt'),'dump','badg
 identity=re.search(r"package: name='([^']+)' versionCode='([0-9]+)' versionName='([^']+)'",badging)
 assert identity and identity[1]=='com.gentv.tv'
 code,version=int(identity[2]),identity[3];assert re.fullmatch(r'[0-9.]+',version)
+min_sdk_match=re.search(r"sdkVersion:'([0-9]+)'",badging)
+assert min_sdk_match,'Cannot verify TV APK minimum SDK'
+min_sdk=int(min_sdk_match[1])
 name='gentv-tv-'+version+'.apk';sha=hashlib.sha256(apk.read_bytes()).hexdigest()
-metadata=dict(versionCode=code,versionName=version,packageName='com.gentv.tv',url='https://api.gentv.app/tv/releases/'+name,sha256=sha,signingCertificateSha256=cert,minSdk=26,sizeBytes=apk.stat().st_size,forceUpdate=False,minSupportedVersionCode=0)
+metadata=dict(versionCode=code,versionName=version,packageName='com.gentv.tv',url='https://api.gentv.app/tv/releases/'+name,sha256=sha,signingCertificateSha256=cert,minSdk=min_sdk,sizeBytes=apk.stat().st_size,forceUpdate=False,minSupportedVersionCode=0)
 options=['-o','BatchMode=yes','-o','ConnectTimeout=15']
 for option in a.ssh_option:options+=['-o',option]
 subprocess.run(['scp',*options,str(apk),a.host+':/var/tmp/'+name],check=True)

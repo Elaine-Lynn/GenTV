@@ -39,7 +39,7 @@ public final class ChildWatchService extends AccessibilityService {
     @Override protected void onServiceConnected() {
         connected = this;
         state = ChildLock.state(this);
-        power = getSystemService(PowerManager.class);
+        power = CompatApi.service(this, PowerManager.class);
         targets = ChildApps.read(state);
         clock = new ChildWatchClock(SystemClock.elapsedRealtime(), state.getLong(WATCHED, 0));
         if (state.getBoolean(ChildSettingsActivity.ENABLED, false)) updateActiveWindow();
@@ -59,26 +59,28 @@ public final class ChildWatchService extends AccessibilityService {
     }
 
     private boolean updateActiveWindow() {
-        for (android.view.accessibility.AccessibilityWindowInfo window : getWindows()) {
-            try {
-                if (!window.isFocused()) continue;
-                AccessibilityNodeInfo root = window.getRoot();
-                if (root != null) {
-                    try {
-                        CharSequence pkg = root.getPackageName();
-                        if (pkg != null) {
-                            setForeground(pkg.toString());
-                            return true;
-                        }
-                    } finally { root.recycle(); }
-                }
-            } finally { window.recycle(); }
+        if (android.os.Build.VERSION.SDK_INT >= 21) {
+            for (android.view.accessibility.AccessibilityWindowInfo window : getWindows()) {
+                try {
+                    if (!window.isFocused()) continue;
+                    AccessibilityNodeInfo root = window.getRoot();
+                    if (root != null) {
+                        try {
+                            CharSequence pkg = root.getPackageName();
+                            if (pkg != null) {
+                                setForeground(pkg.toString());
+                                return true;
+                            }
+                        } finally { root.recycle(); }
+                    }
+                } finally { window.recycle(); }
+            }
         }
         if (foreground.isEmpty()) {
             AccessibilityNodeInfo root = getRootInActiveWindow();
             if (root != null) {
                 try {
-                    if (root.refresh() && root.getPackageName() != null) {
+                    if ((android.os.Build.VERSION.SDK_INT < 18 || root.refresh()) && root.getPackageName() != null) {
                         setForeground(root.getPackageName().toString());
                         return true;
                     }
@@ -101,7 +103,7 @@ public final class ChildWatchService extends AccessibilityService {
     private final Runnable tick = new Runnable() {
         @Override public void run() {
             targets = ChildApps.read(state);
-            boolean interactive = power.isInteractive();
+            boolean interactive = CompatApi.interactive(power);
             boolean enabled = state.getBoolean(ChildSettingsActivity.ENABLED, false);
             if (enabled && interactive) updateActiveWindow();
             long now = SystemClock.elapsedRealtime();
@@ -125,7 +127,7 @@ public final class ChildWatchService extends AccessibilityService {
     private void account(long now) {
         if (clock == null) return;
         boolean counting = state.getBoolean(ChildSettingsActivity.ENABLED, false)
-                && power.isInteractive() && targets.contains(foreground) && !ChildLock.locked(this);
+                && CompatApi.interactive(power) && targets.contains(foreground) && !ChildLock.locked(this);
         clock.advance(now, counting);
     }
 
@@ -145,14 +147,16 @@ public final class ChildWatchService extends AccessibilityService {
     private void openChallenge(long now) {
         lastOpen = now;
         if (overlay != null) return;
-        android.app.admin.DevicePolicyManager policies = getSystemService(android.app.admin.DevicePolicyManager.class);
-        boolean managedDevice = policies != null && policies.isDeviceOwnerApp(getPackageName());
+        android.app.admin.DevicePolicyManager policies = CompatApi.service(this, android.app.admin.DevicePolicyManager.class);
+        boolean managedDevice = android.os.Build.VERSION.SDK_INT >= 18
+                && policies != null && policies.isDeviceOwnerApp(getPackageName());
         // Enable only after this exact firmware/player combination passes pause,
         // silence, remote-control and recovery checks. DBB3 Pro + Tencent did not.
-        if (state.getBoolean("overlay_verified", false) && !managedDevice && !overlayUnavailable
+        if (android.os.Build.VERSION.SDK_INT >= 26 && state.getBoolean("overlay_verified", false)
+                && !managedDevice && !overlayUnavailable
                 && state.getInt(ChildLock.STAGE, 0) == ChildLock.QUESTION) {
             try {
-                android.media.AudioManager audio = getSystemService(android.media.AudioManager.class);
+                android.media.AudioManager audio = CompatApi.service(this, android.media.AudioManager.class);
                 overlayFocus = new android.media.AudioFocusRequest.Builder(
                         android.media.AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_EXCLUSIVE)
                         .setAudioAttributes(new android.media.AudioAttributes.Builder()
@@ -183,8 +187,8 @@ public final class ChildWatchService extends AccessibilityService {
 
     private void releaseOverlay() {
         if (overlay != null) { overlay.dismiss(); overlay = null; }
-        if (overlayFocus != null) {
-            getSystemService(android.media.AudioManager.class).abandonAudioFocusRequest(overlayFocus);
+        if (android.os.Build.VERSION.SDK_INT >= 26 && overlayFocus != null) {
+            CompatApi.service(this, android.media.AudioManager.class).abandonAudioFocusRequest(overlayFocus);
             overlayFocus = null;
         }
     }
@@ -226,7 +230,7 @@ public final class ChildWatchService extends AccessibilityService {
     @Override protected void dump(java.io.FileDescriptor fd, java.io.PrintWriter writer, String[] args) {
         if (state == null) { writer.println("ChildWatch: not connected"); return; }
         writer.println("ChildWatch enabled=" + state.getBoolean(ChildSettingsActivity.ENABLED, false)
-                + " interactive=" + power.isInteractive()
+                + " interactive=" + CompatApi.interactive(power)
                 + " foreground=" + foreground + " managed=" + targets.contains(foreground)
                 + " targets=" + targets.size()
                 + " watched_ms=" + clock.elapsed()

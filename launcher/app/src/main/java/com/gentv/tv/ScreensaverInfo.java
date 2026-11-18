@@ -31,7 +31,7 @@ final class ScreensaverInfo extends View implements AerialPlayer.Listener {
 
     ScreensaverInfo(Context context) {
         super(context);
-        chinese = "zh".equals(getResources().getConfiguration().getLocales().get(0).getLanguage());
+        chinese = "zh".equals(CompatApi.locale(getResources().getConfiguration()).getLanguage());
         clockPaint.setTypeface(Typeface.create("sans-serif-thin", Typeface.NORMAL));
         captionPaint.setTypeface(Typeface.create("sans-serif-light", Typeface.NORMAL));
         clockPaint.setColor(Color.WHITE); captionPaint.setColor(Color.WHITE);
@@ -47,7 +47,7 @@ final class ScreensaverInfo extends View implements AerialPlayer.Listener {
         setVisibility(VISIBLE);
         onPosition(positionMs);
         tick.run();
-        if (android.animation.ValueAnimator.areAnimatorsEnabled()) {
+        if (CompatApi.animatorsEnabled()) {
             setAlpha(0f); animate().alpha(1f).setDuration(600).start();
         }
         postDelayed(hide, SHOW_MS);
@@ -66,7 +66,7 @@ final class ScreensaverInfo extends View implements AerialPlayer.Listener {
 
     private void hideInfo() {
         removeCallbacks(tick);
-        if (android.animation.ValueAnimator.areAnimatorsEnabled()) {
+        if (CompatApi.animatorsEnabled()) {
             animate().alpha(0f).setDuration(600).withEndAction(() -> {
                 setVisibility(INVISIBLE); setContentDescription(null);
             }).start();
@@ -88,10 +88,17 @@ final class ScreensaverInfo extends View implements AerialPlayer.Listener {
         super.onDraw(canvas);
         float x = getWidth() * .055f;
         canvas.drawText(clock, x, getHeight() * .835f, clockPaint);
-        if (captionLayout == null) captionLayout = StaticLayout.Builder.obtain(caption, 0, caption.length(),
-                captionPaint, Math.max(1, Math.round(getWidth() * .89f)))
-                .setAlignment(Layout.Alignment.ALIGN_NORMAL).setIncludePad(false)
-                .setMaxLines(2).setEllipsize(TextUtils.TruncateAt.END).build();
+        if (captionLayout == null) {
+            int width = Math.max(1, Math.round(getWidth() * .89f));
+            if (android.os.Build.VERSION.SDK_INT >= 23) {
+                captionLayout = StaticLayout.Builder.obtain(caption, 0, caption.length(), captionPaint, width)
+                        .setAlignment(Layout.Alignment.ALIGN_NORMAL).setIncludePad(false)
+                        .setMaxLines(2).setEllipsize(TextUtils.TruncateAt.END).build();
+            } else {
+                captionLayout = new StaticLayout(caption, captionPaint, width,
+                        Layout.Alignment.ALIGN_NORMAL, 1f, 0f, false);
+            }
+        }
         canvas.save();
         canvas.translate(x, getHeight() * .91f + captionPaint.ascent());
         captionLayout.draw(canvas);

@@ -10,7 +10,7 @@ import org.json.JSONObject;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
+import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -85,7 +85,7 @@ final class ChildQuestionBank {
                 }
             }
             Entry entry = eligible.get(order.get(cursor));
-            boolean chinese = context.getResources().getConfiguration().getLocales().get(0).getLanguage().equals("zh");
+            boolean chinese = CompatApi.locale(context.getResources().getConfiguration()).getLanguage().equals("zh");
             List<String> options = new ArrayList<>(chinese ? entry.optionsZh() : entry.optionsEn());
             // Order is stable for the saved round and changes between newly generated rounds.
             String answer = options.get(entry.correct());
@@ -105,7 +105,7 @@ final class ChildQuestionBank {
         if (cached != null) return cached;
         JSONObject manifest;
         try (InputStream input = context.getAssets().open(ROOT + "manifest.json")) {
-            manifest = new JSONObject(new String(readBytes(input), StandardCharsets.UTF_8));
+            manifest = new JSONObject(new String(readBytes(input), Charset.forName("UTF-8")));
         }
         JSONObject metadata = manifest.getJSONObject("files").getJSONObject(name);
         byte[] data;
@@ -117,7 +117,7 @@ final class ChildQuestionBank {
         }
         List<Entry> entries = new ArrayList<>();
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(
-                new java.io.ByteArrayInputStream(data), StandardCharsets.UTF_8))) {
+                new java.io.ByteArrayInputStream(data), Charset.forName("UTF-8")))) {
             String line;
             java.util.Set<String> ids = new java.util.HashSet<>();
             while ((line = reader.readLine()) != null) {

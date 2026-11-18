@@ -64,8 +64,8 @@ final class RemoteWallpaper {
         chosenResource=BundledWallpapers.resource(ctx);
         selectedWallpaper=BundledWallpapers.selected(ctx);
         userVideoPreview=UserWallpaper.videoPreview(ctx);
-        android.app.ActivityManager memory=ctx.getSystemService(android.app.ActivityManager.class);
-        boolean lowRam=memory!=null && memory.isLowRamDevice();
+        android.app.ActivityManager memory=CompatApi.service(ctx, android.app.ActivityManager.class);
+        boolean lowRam=memory!=null && CompatApi.lowRam(memory);
         bitmapConfig=lowRam?Bitmap.Config.RGB_565:Bitmap.Config.ARGB_8888;
         width=Math.min(lowRam?1280:1920,ctx.getResources().getDisplayMetrics().widthPixels);
         height=Math.min(lowRam?720:1080,ctx.getResources().getDisplayMetrics().heightPixels);
@@ -176,7 +176,7 @@ final class RemoteWallpaper {
                     policy.manifestFailure(now);cache.savePolicy(policy);
                     byte[] body=fetch(endpoint,256*1024,cache.etag);
                     if(body!=null) {
-                        List<String> updated=parse(new String(body,java.nio.charset.StandardCharsets.UTF_8),localTest);
+                        List<String> updated=parse(new String(body,java.nio.charset.Charset.forName("UTF-8")),localTest);
                         playlist=updated;cache.etag=receivedEtag;
                     }
                     refreshedAt=now;policy.manifestSuccess(now,refreshInterval);
@@ -284,7 +284,7 @@ final class RemoteWallpaper {
                 int code=c.getResponseCode();
                 if(code==304 && limit!=MAX_IMAGE && !etag.isEmpty())return null;
                 if(code>=300 && code<400) {uri=checked(uri.resolve(c.getHeaderField("Location")).toString(),localTest);continue;}
-                if(code!=200 || c.getContentLengthLong()>limit)throw new IllegalArgumentException("Wallpaper response refused");
+                if(code!=200 || CompatApi.contentLength(c)>limit)throw new IllegalArgumentException("Wallpaper response refused");
                 receivedEtag=c.getHeaderField("ETag");if(receivedEtag==null)receivedEtag="";
                 try(InputStream in=c.getInputStream();ByteArrayOutputStream out=new ByteArrayOutputStream()) {
                     byte[] buffer=new byte[8192];int n;
@@ -293,8 +293,8 @@ final class RemoteWallpaper {
                         if(!active || closed)throw new java.io.InterruptedIOException("Home is hidden");
                         out.write(buffer,0,n);
                     }
-                    if(out.size()==limit && c.getContentLengthLong()!=limit)throw new IllegalArgumentException("Wallpaper too large");
-                    if(c.getContentLengthLong()>=0 && out.size()!=c.getContentLengthLong())throw new java.io.IOException("Incomplete wallpaper");
+                    if(out.size()==limit && CompatApi.contentLength(c)!=limit)throw new IllegalArgumentException("Wallpaper too large");
+                    if(CompatApi.contentLength(c)>=0 && out.size()!=CompatApi.contentLength(c))throw new java.io.IOException("Incomplete wallpaper");
                     return out.toByteArray();
                 }
             }finally {c.disconnect();connection=null;}
@@ -315,7 +315,7 @@ final class RemoteWallpaper {
         if(resized!=original)original.recycle();
         if(dim>0)new Canvas(resized).drawColor(Color.argb(dim*255/100,0,0,0));
         // Full colour avoids banding in skies; a hardware bitmap avoids retaining a second CPU copy.
-        if(bitmapConfig==Bitmap.Config.ARGB_8888) {
+        if(android.os.Build.VERSION.SDK_INT >= 26 && bitmapConfig==Bitmap.Config.ARGB_8888) {
             Bitmap hardware=resized.copy(Bitmap.Config.HARDWARE,false);
             if(hardware!=null) {resized.recycle();return hardware;}
         }

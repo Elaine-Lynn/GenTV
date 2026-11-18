@@ -3,7 +3,7 @@ package com.gentv.tv;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
@@ -28,7 +28,7 @@ class AerialCache {
 
     private File file(String url, String suffix) throws IOException {
         try {
-            byte[] hash = MessageDigest.getInstance("SHA-256").digest(url.getBytes(StandardCharsets.UTF_8));
+            byte[] hash = MessageDigest.getInstance("SHA-256").digest(url.getBytes(Charset.forName("UTF-8")));
             StringBuilder name = new StringBuilder();
             for (byte b : hash) name.append(String.format(Locale.ROOT, "%02x", b & 255));
             return new File(directory, name + suffix);
@@ -68,7 +68,7 @@ class AerialCache {
             if (count() >= MAX_VIDEOS) return null;
             if (!directory.isDirectory() && !directory.mkdirs()) throw new IOException("Cache unavailable");
             File part = file(url, ".part"), metadata = file(url, ".etag");
-            String saved = metadata.isFile() ? new String(Files.readAllBytes(metadata.toPath()), StandardCharsets.UTF_8) : "";
+            String saved = metadata.isFile() ? new String(Files.readAllBytes(metadata.toPath()), Charset.forName("UTF-8")) : "";
             String[] fields = saved.split("\\n", -1);
             String validator = fields[0];
             long expected = -1;
@@ -111,7 +111,7 @@ class AerialCache {
                     offset = 0;
                     Files.deleteIfExists(part.toPath());
                     Files.deleteIfExists(metadata.toPath());
-                    total = c.getContentLengthLong();
+                    total = CompatApi.contentLength(c);
                 } else if (status == 416) {
                     Files.deleteIfExists(part.toPath()); Files.deleteIfExists(metadata.toPath());
                     throw new IOException("Stale partial transfer");
@@ -124,7 +124,7 @@ class AerialCache {
                 }
                 if (total - offset > directory.getUsableSpace() - 16L * 1024 * 1024) return null;
                 String etag = c.getHeaderField("ETag");
-                byte[] meta = strong(etag) ? (etag + "\n" + total).getBytes(StandardCharsets.UTF_8) : new byte[0];
+                byte[] meta = strong(etag) ? (etag + "\n" + total).getBytes(Charset.forName("UTF-8")) : new byte[0];
                 // Check metadata before writing it, so even partial transfers stay within budget.
                 if (used() - part.length() - metadata.length() + total + meta.length > limit) {
                     Files.deleteIfExists(part.toPath()); Files.deleteIfExists(metadata.toPath());

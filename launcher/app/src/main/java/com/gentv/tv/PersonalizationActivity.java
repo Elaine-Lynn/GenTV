@@ -75,8 +75,8 @@ public final class PersonalizationActivity extends Activity {
         selected = BundledWallpapers.selected(this);
         freezeMotionPreview = UserWallpaper.isVideo(selected)
                 || BundledWallpapers.videoResource(this) != 0;
-        ActivityManager memory = getSystemService(ActivityManager.class);
-        boolean lowRam = memory != null && memory.isLowRamDevice();
+        ActivityManager memory = CompatApi.service(this, ActivityManager.class);
+        boolean lowRam = memory != null && CompatApi.lowRam(memory);
         previewSample = lowRam ? 2 : 1;
         previews = new LruCache<Integer, Bitmap>(lowRam ? 8 * 1024 * 1024 : 28 * 1024 * 1024) {
             @Override protected int sizeOf(Integer key, Bitmap value) { return value.getByteCount(); }
@@ -366,12 +366,14 @@ public final class PersonalizationActivity extends Activity {
         @NonNull @Override public ChoiceHolder onCreateViewHolder(@NonNull ViewGroup parent, int type) {
             View item = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_wallpaper_choice, parent, false);
             View card = item.findViewById(R.id.wallpaperCard);
-            card.setOutlineProvider(new ViewOutlineProvider() {
-                @Override public void getOutline(View view, Outline outline) {
-                    outline.setRoundRect(0, 0, view.getWidth(), view.getHeight(), dp(20));
-                }
-            });
-            card.setClipToOutline(true);
+            if (android.os.Build.VERSION.SDK_INT >= 21) {
+                card.setOutlineProvider(new ViewOutlineProvider() {
+                    @Override public void getOutline(View view, Outline outline) {
+                        outline.setRoundRect(0, 0, view.getWidth(), view.getHeight(), dp(20));
+                    }
+                });
+                card.setClipToOutline(true);
+            }
             item.setOnFocusChangeListener((view, focused) -> {
                 card.setSelected(focused);
                 view.animate().cancel();

@@ -80,7 +80,7 @@ GenTV's TV home screen and device lists come from the computer-script approach (
 
 ## Install
 
-Both the TV and the phone need **Android 8.0 (API 26) or later**. Phone management needs the TV's ADB debugging switched on and authorised.
+The phone app needs **Android 8.0 (API 26) or later**. Its guided TV installation currently targets Android 8 or later. The TV launcher source can now build for **Android 4.2 (API 17)**, but that compatibility path has not yet been validated on an Android 4.2 device; use the direct ADB/source-build route below for testing. Phone management needs the TV's ADB debugging switched on and authorised.
 
 ### Install from your phone
 

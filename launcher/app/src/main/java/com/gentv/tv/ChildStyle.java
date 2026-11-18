@@ -30,7 +30,7 @@ final class ChildStyle {
         text.setText(label);
         text.setTextColor(color);
         text.setTextSize(size);
-        text.setFontFeatureSettings("kern");
+        if (android.os.Build.VERSION.SDK_INT >= 21) text.setFontFeatureSettings("kern");
         if (bold) text.setTypeface(Typeface.create("sans-serif", Typeface.BOLD));
         return text;
     }
@@ -74,7 +74,7 @@ final class ChildStyle {
         states.addState(new int[0],
                 raised(context, primary ? INK : 0xffffffff, primary ? 0xff111022 : LINE, 10));
         button.setBackground(states);
-        button.setStateListAnimator(null);
+        if (android.os.Build.VERSION.SDK_INT >= 21) button.setStateListAnimator(null);
         return button;
     }
 

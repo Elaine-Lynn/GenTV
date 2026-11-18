@@ -71,8 +71,8 @@ public final class WeatherWheelView extends View {
         float cx = getWidth() / 2f;
         float cy = getHeight() / 2f;
         if (hasFocus()) {
-            canvas.drawRoundRect(0, cy - 37 * density,
-                    getWidth(), cy + 37 * density,
+            canvas.drawRoundRect(new android.graphics.RectF(0, cy - 37 * density,
+                    getWidth(), cy + 37 * density),
                     22 * density, 22 * density, focusFill);
         }
         float step = 62 * density;
@@ -129,7 +129,7 @@ public final class WeatherWheelView extends View {
     private void scrollByOne(int direction) {
         float from = Math.max(-2.5f, Math.min(2.5f, animatedOffset + direction));
         if (scrollAnimator != null) scrollAnimator.cancel();
-        if (!ValueAnimator.areAnimatorsEnabled()) {
+        if (!CompatApi.animatorsEnabled()) {
             animatedOffset = 0f;
             invalidate();
             return;

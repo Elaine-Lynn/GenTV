@@ -9,7 +9,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.nio.charset.StandardCharsets;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -55,7 +55,7 @@ final class DesktopStore {
         AtomicFile file = new AtomicFile(new File(dir, FILE));
         JSONObject state;
         if (file.getBaseFile().exists() || new File(dir, FILE + ".bak").exists()) {
-            state = new JSONObject(new String(file.readFully(), StandardCharsets.UTF_8));
+            state = new JSONObject(new String(file.readFully(), Charset.forName("UTF-8")));
             // A broken state is never silently replaced by defaults on the next save.
             state.getJSONObject("files"); state.getJSONObject("names"); state.getJSONArray("hidden");
             state.getInt("revision"); state.getString("effects");
@@ -64,7 +64,7 @@ final class DesktopStore {
             for (String name : LEGACY) {
                 AtomicFile old = new AtomicFile(new File(dir, name));
                 if (old.getBaseFile().exists() || new File(dir, name + ".bak").exists())
-                    files.put(name, new String(old.readFully(), StandardCharsets.UTF_8));
+                    files.put(name, new String(old.readFully(), Charset.forName("UTF-8")));
             }
             state = new JSONObject().put("revision", 0).put("files", files)
                     .put("names", new JSONObject()).put("hidden", new JSONArray()).put("effects", "auto").put("libraryVisibilityVersion", 1);
@@ -85,7 +85,7 @@ final class DesktopStore {
         FileOutputStream out = null;
         try {
             out = file.startWrite();
-            out.write(next.toString().getBytes(StandardCharsets.UTF_8));
+            out.write(next.toString().getBytes(Charset.forName("UTF-8")));
             file.finishWrite(out);
         } catch (Exception e) { if (out != null) file.failWrite(out); throw e; }
         cachedDir = dir; cached = copy(next);
@@ -200,7 +200,7 @@ final class DesktopStore {
     }
 
     static void validate(JSONObject p) throws Exception {
-        if (android.util.Base64.encodeToString(p.toString().getBytes(StandardCharsets.UTF_8), android.util.Base64.NO_WRAP).length()>60000)
+        if (android.util.Base64.encodeToString(p.toString().getBytes(Charset.forName("UTF-8")), android.util.Base64.NO_WRAP).length()>60000)
             throw new IllegalArgumentException("Desktop profile is full");
         if (!(p.get("schema") instanceof Integer) || p.getInt("schema") != 2) throw new IllegalArgumentException("Schema 2 required");
         Set<String> allowed = new HashSet<>(java.util.Arrays.asList("schema", "order", "hidden", "names", "effects", "pinnedSources", "sourceNames", "sourceDevices", "sourceTargets", "folders", "images"));
@@ -378,7 +378,7 @@ final class DesktopStore {
             android.app.ActivityManager am = (android.app.ActivityManager)ctx.getSystemService(Context.ACTIVITY_SERVICE);
             android.app.ActivityManager.MemoryInfo info = new android.app.ActivityManager.MemoryInfo();
             am.getMemoryInfo(info);
-            return fallback || am.isLowRamDevice() || info.totalMem < 1800L*1024*1024 || Runtime.getRuntime().availableProcessors() <= 2;
+            return fallback || CompatApi.lowRam(am) || info.totalMem < 1800L*1024*1024 || Runtime.getRuntime().availableProcessors() <= 2;
         } catch (Exception e) { return fallback; }
     }
     private static Set<String> strings(JSONArray a) throws Exception {

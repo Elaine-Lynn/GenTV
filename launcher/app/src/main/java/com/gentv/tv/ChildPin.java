@@ -205,7 +205,7 @@ final class ChildPin {
         private void showPendingKeyboard() {
             EditText field = pendingEditor;
             if (field == null || !isShowing() || !field.hasWindowFocus()) return;
-            InputMethodManager keyboard = activity.getSystemService(InputMethodManager.class);
+            InputMethodManager keyboard = CompatApi.service(activity, InputMethodManager.class);
             if (keyboard != null) {
                 boolean requested = keyboard.showSoftInput(field, 0);
                 if (requested) pendingEditor = null;

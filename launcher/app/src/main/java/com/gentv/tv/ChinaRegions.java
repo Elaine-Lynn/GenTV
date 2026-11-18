@@ -6,7 +6,7 @@ import org.json.JSONArray;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -29,7 +29,7 @@ final class ChinaRegions {
 
     static List<Region> load(Context context) throws Exception {
         try (InputStream input = context.getAssets().open("china_regions.json")) {
-            JSONArray data = new JSONArray(new String(TvCloud.read(input, 256 * 1024), StandardCharsets.UTF_8));
+            JSONArray data = new JSONArray(new String(TvCloud.read(input, 256 * 1024), Charset.forName("UTF-8")));
             List<Region> provinces = parse(data);
             if (provinces.size() != 31) throw new IOException("Incomplete China regions data");
             return provinces;

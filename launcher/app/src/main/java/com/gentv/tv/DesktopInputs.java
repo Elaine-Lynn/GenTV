@@ -13,6 +13,7 @@ import java.util.Map;
 final class DesktopInputs {
     static Map<String, String> list(Context ctx) {
         Map<String, String> result = new LinkedHashMap<>();
+        if (android.os.Build.VERSION.SDK_INT < 21) return result;
         try {
             TvInputManager manager = (TvInputManager)ctx.getSystemService(Context.TV_INPUT_SERVICE);
             if (manager != null) for (TvInputInfo input : manager.getTvInputList()) {
@@ -23,7 +24,7 @@ final class DesktopInputs {
     }
     static ComponentName component(Context ctx, String id) {
         try {
-            byte[] digest = java.security.MessageDigest.getInstance("SHA-256").digest(id.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            byte[] digest = java.security.MessageDigest.getInstance("SHA-256").digest(id.getBytes(java.nio.charset.Charset.forName("UTF-8")));
             StringBuilder hex = new StringBuilder("source.");
             for (byte b : digest) hex.append(String.format(java.util.Locale.ROOT, "%02x", b & 255));
             return new ComponentName(ctx.getPackageName(), hex.toString());
@@ -47,6 +48,6 @@ final class DesktopInputs {
         String kind = state.optJSONObject("sourceDevices").optString(id, "");
         int resource = kind.equals("computer") ? R.drawable.ic_picture :
                 (kind.equals("playstation") || kind.equals("switch") || kind.equals("xbox")) ? R.drawable.ic_apps : R.drawable.ic_input;
-        return ctx.getDrawable(resource);
+        return CompatApi.drawable(ctx, resource);
     }
 }

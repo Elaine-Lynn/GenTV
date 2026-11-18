@@ -62,7 +62,8 @@ public final class QuickSettingsActivity extends Activity {
         addRow(rows, R.drawable.ic_home_settings, R.string.child_lock_settings, 0,
                 new Intent(this, ChildSettingsActivity.class));
         android.media.AudioManager audio = (android.media.AudioManager)getSystemService(AUDIO_SERVICE);
-        if (audio != null && !audio.isVolumeFixed() && checkSelfPermission(android.Manifest.permission.MODIFY_AUDIO_SETTINGS) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+        if (audio != null && (android.os.Build.VERSION.SDK_INT < 21 || !audio.isVolumeFixed())
+                && CompatApi.permissionGranted(this, android.Manifest.permission.MODIFY_AUDIO_SETTINGS)) {
             addVolume(rows, R.string.desktop_volume_down, audio, android.media.AudioManager.ADJUST_LOWER);
             addVolume(rows, R.string.desktop_volume_up, audio, android.media.AudioManager.ADJUST_RAISE);
         }

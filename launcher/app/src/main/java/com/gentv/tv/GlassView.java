@@ -98,7 +98,8 @@ public class GlassView extends View {
                 float o = step * (i + 0.5f);
                 float t = 1f - (float) i / rings;
                 glow.setColor(Math.round(alpha * t) << 24 | glowRgb);
-                canvas.drawRoundRect(rect.left - o, rect.top - o, rect.right + o, rect.bottom + o, radius + o, radius + o, glow);
+                canvas.drawRoundRect(new android.graphics.RectF(rect.left - o, rect.top - o,
+                        rect.right + o, rect.bottom + o), radius + o, radius + o, glow);
             }
         }
         if (flat) {

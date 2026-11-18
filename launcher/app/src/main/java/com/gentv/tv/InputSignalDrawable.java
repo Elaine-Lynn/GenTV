@@ -15,7 +15,7 @@ final class InputSignalDrawable extends Drawable {
     private int alpha = 255;
 
     InputSignalDrawable(Context context, float density) {
-        input = context.getDrawable(R.drawable.ic_input).mutate();
+        input = CompatApi.drawable(context, R.drawable.ic_input).mutate();
         size = Math.round(18.2f * density);
         animator.setDuration(1600);
         animator.setRepeatCount(ValueAnimator.INFINITE);

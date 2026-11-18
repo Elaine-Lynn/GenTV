@@ -320,7 +320,7 @@ final class AppLibraryDialog {
             main.post(() -> {
                 iconsLoading.remove(pkg);
                 if (closed) return;
-                Drawable shown = result != null ? result : activity.getDrawable(R.drawable.ic_apps);
+                Drawable shown = result != null ? result : CompatApi.drawable(activity, R.drawable.ic_apps);
                 icons.put(pkg, shown);
                 // The view may show another app by now; a view bound to it later takes it from the cache.
                 if (pkg.equals(icon.getTag())) icon.setImageDrawable(shown);
@@ -518,7 +518,7 @@ final class AppLibraryDialog {
         menu.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         menu.setOutsideTouchable(true);
         menu.setAnimationStyle(0);
-        menu.setElevation(0f);
+        if (android.os.Build.VERSION.SDK_INT >= 21) menu.setElevation(0f);
         menu.setOnDismissListener(() -> {
             if (actionPopup == menu) actionPopup = null;
             restoreCardFocus();
@@ -586,7 +586,7 @@ final class AppLibraryDialog {
         view.setTextSize(size);
         view.setTextColor(color);
         view.setTypeface(UiFont.get(activity, R.string.font_medium));
-        view.setLetterSpacing(0.01f);
+        CompatApi.letterSpacing(view, 0.01f);
         view.setIncludeFontPadding(false);
         return view;
     }

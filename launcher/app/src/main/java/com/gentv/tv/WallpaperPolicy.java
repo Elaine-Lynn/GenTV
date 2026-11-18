@@ -1,7 +1,7 @@
 package com.gentv.tv;
 
 import java.io.*;
-import java.nio.charset.StandardCharsets;
+import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.util.*;
 
@@ -38,7 +38,7 @@ final class WallpaperPolicy {
     }
     private String key(String url) {
         try {
-            byte[] digest = MessageDigest.getInstance("SHA-256").digest(url.getBytes(StandardCharsets.UTF_8));
+            byte[] digest = MessageDigest.getInstance("SHA-256").digest(url.getBytes(Charset.forName("UTF-8")));
             StringBuilder text = new StringBuilder();
             for (byte b : digest) text.append(String.format(Locale.ROOT, "%02x", b & 255));
             return text.toString();

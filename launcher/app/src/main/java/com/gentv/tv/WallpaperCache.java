@@ -3,7 +3,7 @@ package com.gentv.tv;
 import android.util.AtomicFile;
 import org.json.*;
 import java.io.*;
-import java.nio.charset.StandardCharsets;
+import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.util.*;
 
@@ -21,7 +21,7 @@ final class WallpaperCache {
     }
     JSONObject state() throws Exception {
         byte[] data=manifest.readFully();if(data.length>512*1024)throw new IOException("Manifest too large");
-        JSONObject state=new JSONObject(new String(data,StandardCharsets.UTF_8));
+        JSONObject state=new JSONObject(new String(data,Charset.forName("UTF-8")));
         if(!endpoint.equals(state.optString("endpoint")))throw new IOException("Different source");
         etag=state.optString("etag", "");
         JSONArray saved=state.optJSONArray("cached");
@@ -36,7 +36,7 @@ final class WallpaperCache {
         JSONArray array=new JSONArray();for(String url:urls)array.put(new JSONObject().put("url",url));
         JSONArray cached=new JSONArray();for(String url:available(urls))cached.put(new JSONObject().put("url",url));
         retained.clear();for(int i=0;i<cached.length();i++)retained.add(cached.getJSONObject(i).getString("url"));
-        write(manifest,new JSONObject().put("cached",cached).put("etag",etag).put("endpoint",endpoint).put("wallpapers",array).put("fetchedAt",fetchedAt).put("selected",selected).toString().getBytes(StandardCharsets.UTF_8));
+        write(manifest,new JSONObject().put("cached",cached).put("etag",etag).put("endpoint",endpoint).put("wallpapers",array).put("fetchedAt",fetchedAt).put("selected",selected).toString().getBytes(Charset.forName("UTF-8")));
     }
     byte[] read(String url) throws Exception {
         File file=file(url);if(!file.isFile() || file.length()>8*1024*1024)return null;
@@ -85,7 +85,7 @@ final class WallpaperCache {
         catch(IOException e){if(out!=null)target.failWrite(out);throw e;}
     }
     private File file(String url) throws Exception {
-        byte[] digest=MessageDigest.getInstance("SHA-256").digest(url.getBytes(StandardCharsets.UTF_8));
+        byte[] digest=MessageDigest.getInstance("SHA-256").digest(url.getBytes(Charset.forName("UTF-8")));
         StringBuilder name=new StringBuilder();for(byte b:digest)name.append(String.format(Locale.ROOT,"%02x",b&255));
         return new File(directory,name+".img");
     }

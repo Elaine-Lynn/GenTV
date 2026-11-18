@@ -35,8 +35,8 @@ final class GuardKeep {
     }
 
     static boolean offInStandby(Context context) {
-        UserManager users = context.getSystemService(UserManager.class);
-        if (users != null && !users.isUserUnlocked()) return false;
+        UserManager users = CompatApi.service(context, UserManager.class);
+        if (users != null && !CompatApi.userUnlocked(users)) return false;
         return context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean(KEY_OFF, false);
     }
 
@@ -50,11 +50,10 @@ final class GuardKeep {
         // that arrives after that, so the first screen-off does nothing (Philips 65PUS8102).
         HomeKeyService.applyStandbyOptIn();
         if (!offInStandby(context)) return;
-        if (context.checkSelfPermission(Manifest.permission.WRITE_SECURE_SETTINGS)
-                != PackageManager.PERMISSION_GRANTED) return;
-        PowerManager power = context.getSystemService(PowerManager.class);
+        if (!CompatApi.permissionGranted(context, Manifest.permission.WRITE_SECURE_SETTINGS)) return;
+        PowerManager power = CompatApi.service(context, PowerManager.class);
         // Still off: binding the helper again would sit on the power key. Wait for the screen.
-        if (power != null && !power.isInteractive()) {
+        if (power != null && !CompatApi.interactive(power)) {
             watchScreenOn(context.getApplicationContext());
             return;
         }
@@ -86,7 +85,8 @@ final class GuardKeep {
     /** Drops the service from the list and puts it back on the next SCREEN_ON. The process has to stay up. */
     static void stepOut(AccessibilityService service) {
         watchScreenOn(service.getApplicationContext());
-        service.disableSelf();
+        if (android.os.Build.VERSION.SDK_INT >= 24) service.disableSelf();
+        else service.stopSelf();
     }
 
     private static void watchScreenOn(Context app) {

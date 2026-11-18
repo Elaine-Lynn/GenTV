@@ -11,7 +11,7 @@ This guide is the entry point for people and AI assistants working from this rep
 - To build the phone companion, install both Android SDK platforms and both build JDKs below. Its build generates and embeds the TV APK from source.
 - To contribute or let an AI assistant build locally, follow the same source steps. No server account or signing key is needed for Debug builds.
 
-Both apps require Android 8/API 26 or later. The TV must support Android APK installation and an authorised ADB connection for phone management or CLI installation. Samsung Tizen and LG webOS do not run these Android apps. Manufacturer restrictions may prevent installation, pairing, input switching or Home replacement even on an Android TV.
+The phone app requires Android 8/API 26 or later, and its guided TV installation currently targets Android 8 or later. The TV launcher source now builds with Android 4.2/API 17 as its minimum, but this path is not yet verified on an Android 4.2 device. For an older TV, build the TV APK from source and test a direct ADB install without changing its default Home until it works. The TV must support Android APK installation and an authorised ADB connection for phone management or CLI installation. Samsung Tizen and LG webOS do not run these Android apps. Manufacturer restrictions may prevent installation, pairing, input switching or Home replacement even on an Android TV.
 
 ## Verify a download
 
@@ -133,6 +133,8 @@ Enter the pairing code interactively. The pairing port and connection port are u
 
 Always specify the intended serial from `adb devices -l`, especially with multiple devices. These commands assume a build from the previous section and run from the repository root:
 
+On Android 4.2, `cmd package` may not exist. Record the existing Home using the device's package manager or Settings before installation; do not treat a failed `cmd package` command as proof that no Home exists. For the first 4.2 trial, stop after installing, opening and testing GenTV; leave the current default Home unchanged.
+
 ```sh
 # TV: replace TV_SERIAL with the exact authorised TV serial/address.
 adb -s TV_SERIAL shell getprop ro.build.version.sdk
@@ -159,6 +161,8 @@ The phone app's handover follows the same protections as the [local maintenance 
 A full TV installation includes making GenTV the default Home. An explicit preview/install-only request keeps the existing default. Before changing Home, save the exact original Home component returned by the command above in a local recovery record. If it is a resolver or no concrete launcher is returned, identify the original launcher before proceeding; never guess a recovery component. Keep the original launcher installed and enabled.
 
 After installation and on-screen navigation have been verified, run:
+
+The `cmd package set-home-activity` command below is for systems that support it. On Android 4.2, use the TV's own Home chooser if one is available, only after recording a recoverable original Home and verifying the new launcher with the remote. If no reliable chooser/recovery path exists, keep the original Home and report the limitation.
 
 ```sh
 adb -s TV_SERIAL shell cmd package set-home-activity com.gentv.tv/.MainActivity

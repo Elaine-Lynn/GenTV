@@ -51,7 +51,9 @@ public final class CloudSettingsActivity extends Activity {
         FrameLayout backdrop = new FrameLayout(this); backdrop.setBackgroundColor(0x88080B10); backdrop.setOnClickListener(v->{if(!mandatory) finish();}); backdrop.setFocusable(false);
         LinearLayout card = new LinearLayout(this); card.setOrientation(LinearLayout.VERTICAL); card.setPadding(dp(30),dp(26),dp(30),dp(24));
         card.setClipChildren(false); card.setClipToPadding(false);
-        card.setBackground(surface(0xF21C2129,0x40FFFFFF,1,24)); card.setElevation(dp(16)); card.setOnClickListener(v->{}); card.setFocusable(false);
+        card.setBackground(surface(0xF21C2129,0x40FFFFFF,1,24));
+        if (android.os.Build.VERSION.SDK_INT >= 21) card.setElevation(dp(16));
+        card.setOnClickListener(v->{}); card.setFocusable(false);
         FrameLayout.LayoutParams position = new FrameLayout.LayoutParams(Math.min(dp(550),getResources().getDisplayMetrics().widthPixels-dp(48)),Math.min(dp(340),getResources().getDisplayMetrics().heightPixels-dp(40)),Gravity.CENTER);
         ScrollView scroll=new ScrollView(this); scroll.setFocusable(false); scroll.setDescendantFocusability(ViewGroup.FOCUS_AFTER_DESCENDANTS); scroll.setFillViewport(true); scroll.addView(card); backdrop.addView(scroll,position);
         LinearLayout header = new LinearLayout(this); header.setGravity(Gravity.CENTER_VERTICAL);
@@ -63,7 +65,8 @@ public final class CloudSettingsActivity extends Activity {
         TextView heading=text(getString(R.string.cloud_update_title),27,0xFFF5F5F7); heading.setTypeface(Typeface.create("sans-serif-medium",Typeface.NORMAL));
         LinearLayout.LayoutParams headingSpace=new LinearLayout.LayoutParams(-1,-2); headingSpace.topMargin=dp(24); card.addView(heading,headingSpace);
         status=text(getString(R.string.cloud_update_intro),16,0xFFBEC8D6); status.setMinHeight(dp(64)); status.setPadding(0,dp(10),0,dp(12)); card.addView(status);
-        progress=new ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal); progress.setProgressTintList(android.content.res.ColorStateList.valueOf(0xFF64C7F5));
+        progress=new ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);
+        if (android.os.Build.VERSION.SDK_INT >= 21) progress.setProgressTintList(android.content.res.ColorStateList.valueOf(0xFF64C7F5));
         progress.setVisibility(View.GONE); card.addView(progress,new LinearLayout.LayoutParams(-1,dp(6)));
         LinearLayout actions=new LinearLayout(this); actions.setClipChildren(false); actions.setClipToPadding(false); actions.setGravity(Gravity.END); actions.setPadding(0,dp(18),0,dp(20));
         later=action(R.string.cloud_later,false); later.setOnClickListener(v->finish()); actions.addView(later,new LinearLayout.LayoutParams(dp(150),dp(48)));
@@ -156,7 +159,7 @@ public final class CloudSettingsActivity extends Activity {
     private void install() {
         try {
             verified=UpdatePackage.verified(this);
-            if(!getPackageManager().canRequestPackageInstalls()) {
+            if(android.os.Build.VERSION.SDK_INT >= 26 && !getPackageManager().canRequestPackageInstalls()) {
                 message(R.string.cloud_install_permission);
                 check.setText(R.string.cloud_install); check.setOnClickListener(v->install());
                 startActivity(new Intent(android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,android.net.Uri.parse("package:"+getPackageName())));

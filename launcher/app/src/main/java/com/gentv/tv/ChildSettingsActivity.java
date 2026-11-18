@@ -181,7 +181,7 @@ public final class ChildSettingsActivity extends Activity {
         // Reveal the final focused rectangle after layout, including wrapped button labels.
         shell.getViewTreeObserver().addOnGlobalFocusChangeListener((previous, focused) -> {
             if (focused != null) focused.post(() -> {
-                if (focused.isAttachedToWindow() && focused.hasFocus()) {
+                if ((android.os.Build.VERSION.SDK_INT < 19 || focused.isAttachedToWindow()) && focused.hasFocus()) {
                     focused.requestRectangleOnScreen(new android.graphics.Rect(
                             0, 0, focused.getWidth(), focused.getHeight()), true);
                 }
@@ -433,14 +433,14 @@ public final class ChildSettingsActivity extends Activity {
                 android.graphics.drawable.Drawable icon;
                 try { icon = getPackageManager().getApplicationIcon(app.getKey()); }
                 catch (android.content.pm.PackageManager.NameNotFoundException missing) {
-                    icon = getDrawable(android.R.drawable.sym_def_app_icon);
+                    icon = CompatApi.drawable(ChildSettingsActivity.this, android.R.drawable.sym_def_app_icon);
                 }
                 icon.setBounds(0, 0, dp(42), dp(42));
                 row.setCompoundDrawablesRelative(icon, null, null, null);
                 android.graphics.drawable.StateListDrawable check = new android.graphics.drawable.StateListDrawable();
                 check.addState(new int[]{android.R.attr.state_checked},
-                        getDrawable(R.drawable.child_app_checked));
-                check.addState(new int[0], getDrawable(R.drawable.child_app_unchecked));
+                        CompatApi.drawable(ChildSettingsActivity.this, R.drawable.child_app_checked));
+                check.addState(new int[0], CompatApi.drawable(ChildSettingsActivity.this, R.drawable.child_app_unchecked));
                 row.setCheckMarkDrawable(check);
                 row.setChecked(chosen.contains(app.getKey()));
                 android.graphics.drawable.StateListDrawable background = new android.graphics.drawable.StateListDrawable();

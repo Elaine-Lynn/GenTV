@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <style name="Theme.GenTV" parent="android:Theme.Material.NoActionBar.Fullscreen">
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <style name="Theme.GenTV" parent="android:Theme.Holo.NoActionBar.Fullscreen">
         <item name="android:windowBackground">@android:color/black</item>
         <item name="android:colorBackground">@android:color/black</item>
         <item name="android:windowAnimationStyle">@null</item>
@@ -25,9 +25,9 @@
         <item name="android:textColor">@drawable/pill_text</item>
         <item name="android:textSize">15sp</item>
         <item name="android:fontFamily">@string/font_medium</item>
-        <item name="android:letterSpacing">0.01</item>
+        <item name="android:letterSpacing" tools:targetApi="21">0.01</item>
         <item name="android:drawablePadding">9dp</item>
-        <item name="android:drawableTint">@drawable/pill_text</item>
+        <item name="android:drawableTint" tools:targetApi="23">@drawable/pill_text</item>
         <item name="android:focusable">true</item>
         <item name="android:clickable">true</item>
     </style>
@@ -60,7 +60,7 @@
         <item name="android:layout_marginEnd">10dp</item>
         <item name="android:gravity">center</item>
     </style>
-<style name="GenSettingsRow" parent="SettingsRow"><item name="android:layout_height">wrap_content</item><item name="android:minHeight">46dp</item><item name="android:paddingTop">10dp</item><item name="android:paddingBottom">10dp</item><item name="android:textSize">15sp</item><item name="android:background">@drawable/gentv_settings_choice</item><item name="android:defaultFocusHighlightEnabled">false</item></style>
+<style name="GenSettingsRow" parent="SettingsRow"><item name="android:layout_height">wrap_content</item><item name="android:minHeight">46dp</item><item name="android:paddingTop">10dp</item><item name="android:paddingBottom">10dp</item><item name="android:textSize">15sp</item><item name="android:background">@drawable/gentv_settings_choice</item><item name="android:defaultFocusHighlightEnabled" tools:targetApi="26">false</item></style>
 <style name="GenSettingsChoice" parent="GenSettingsRow"><item name="android:layout_width">0dp</item><item name="android:layout_weight">1</item><item name="android:layout_marginEnd">8dp</item><item name="android:gravity">center</item></style>
 <style name="GenWeatherColumnTitle"><item name="android:layout_width">match_parent</item><item name="android:layout_height">wrap_content</item><item name="android:paddingStart">8dp</item><item name="android:paddingTop">4dp</item><item name="android:paddingBottom">16dp</item><item name="android:textColor">#F2FFFFFF</item><item name="android:textSize">20sp</item><item name="android:fontFamily">@string/font_medium</item></style>
 </resources>

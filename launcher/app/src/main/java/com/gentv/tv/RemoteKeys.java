@@ -310,7 +310,7 @@ final class RemoteKeys {
         switch (target) {
             case "mute":
                 // The media stream a TV plays everything on, with its own volume bar, as a remote's mute button would.
-                AudioManager audio = ctx.getSystemService(AudioManager.class);
+                AudioManager audio = CompatApi.service(ctx, AudioManager.class);
                 if (audio != null) audio.adjustStreamVolume(AudioManager.STREAM_MUSIC,
                         AudioManager.ADJUST_TOGGLE_MUTE, AudioManager.FLAG_SHOW_UI);
                 break;
@@ -370,6 +370,11 @@ final class RemoteKeys {
         }
         String guide = guidePackage(pkg);
         if (guide != null) {
+            if (android.os.Build.VERSION.SDK_INT < 21) {
+                Intent fallback = CompatApi.leanbackLaunch(ctx.getPackageManager(), guide);
+                if (fallback != null) start(ctx, fallback);
+                return;
+            }
             // The program guide, asked for the way Android TV's Live TV apps take it: the programs directory.
             start(ctx, new Intent(Intent.ACTION_VIEW)
                     .setDataAndType(TvContract.Programs.CONTENT_URI, "vnd.android.cursor.dir/program")
@@ -378,6 +383,12 @@ final class RemoteKeys {
         }
         String inputId = inputId(pkg);
         if (inputId != null) {
+            if (android.os.Build.VERSION.SDK_INT < 21) {
+                ctx.startActivity(new Intent(ctx, MainActivity.class)
+                        .setAction(MainActivity.ACTION_VIEW_INPUTS)
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+                return;
+            }
             // The same passthrough URI the Inputs menu opens, which the Live TV app handles.
             Intent view = new Intent(Intent.ACTION_VIEW)
                     .setDataAndType(TvContract.buildChannelUriForPassthroughInput(inputId),
@@ -397,7 +408,7 @@ final class RemoteKeys {
             }
             return;
         }
-        Intent open = ctx.getPackageManager().getLeanbackLaunchIntentForPackage(pkg);
+        Intent open = CompatApi.leanbackLaunch(ctx.getPackageManager(), pkg);
         if (open == null) open = ctx.getPackageManager().getLaunchIntentForPackage(pkg);
         if (open == null) return;
         try {

@@ -20,7 +20,7 @@ public class AppLaunchActivity extends Activity {
             Uri data = getIntent().getData();
             String pkg = data == null ? null : data.getQueryParameter("id");
             if (pkg != null) {
-                Intent launch = getPackageManager().getLeanbackLaunchIntentForPackage(pkg);
+                Intent launch = CompatApi.leanbackLaunch(getPackageManager(), pkg);
                 if (launch == null) launch = getPackageManager().getLaunchIntentForPackage(pkg);
                 if (launch != null) startActivity(launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
             }

@@ -8,6 +8,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.util.Log;
+import androidx.annotation.RequiresApi;
 
 import java.util.List;
 
@@ -23,10 +24,11 @@ final class ChildLockPolicy {
     ChildLockPolicy(Activity home, SharedPreferences state) {
         this.home = home;
         this.state = state;
-        policies = home.getSystemService(DevicePolicyManager.class);
+        policies = CompatApi.service(home, DevicePolicyManager.class);
     }
 
     void apply(boolean locked) {
+        if (Build.VERSION.SDK_INT < 24) return; // Device-owner suspension does not exist on Android 4.2.
         ComponentName admin = ownerAdmin();
         if (admin == null) return;
         try {
@@ -37,6 +39,7 @@ final class ChildLockPolicy {
         }
     }
 
+    @RequiresApi(24)
     private ComponentName ownerAdmin() {
         if (policies == null || !policies.isDeviceOwnerApp(home.getPackageName())) return null;
         List<ComponentName> admins = policies.getActiveAdmins();
@@ -48,6 +51,7 @@ final class ChildLockPolicy {
         return null;
     }
 
+    @RequiresApi(24)
     private void enforce(ComponentName admin) {
         String target = state.getString(TARGET, "");
         if (target.isEmpty() || target.equals(home.getPackageName())) return;
@@ -60,6 +64,7 @@ final class ChildLockPolicy {
         Log.i(TAG, "managed locked=" + inLockTask() + " suspended=" + suspended(admin, target));
     }
 
+    @RequiresApi(24)
     private void suspend(ComponentName admin, String target) {
         if (suspended(admin, target)) return;
         // Record ownership first so a process death between the two operations remains recoverable.
@@ -72,6 +77,7 @@ final class ChildLockPolicy {
         }
     }
 
+    @RequiresApi(24)
     private void release(ComponentName admin) {
         String target = state.getString(APPLIED_TARGET, "");
         if (!target.isEmpty() &&
@@ -81,6 +87,7 @@ final class ChildLockPolicy {
         if (inLockTask()) home.stopLockTask();
     }
 
+    @RequiresApi(24)
     private boolean suspended(ComponentName admin, String target) {
         try {
             return policies.isPackageSuspended(admin, target);
@@ -89,8 +96,9 @@ final class ChildLockPolicy {
         }
     }
 
+    @RequiresApi(24)
     private boolean inLockTask() {
-        return home.getSystemService(ActivityManager.class).getLockTaskModeState()
+        return CompatApi.service(home, ActivityManager.class).getLockTaskModeState()
                 == ActivityManager.LOCK_TASK_MODE_LOCKED;
     }
 }

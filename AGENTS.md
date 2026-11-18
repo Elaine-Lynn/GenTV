@@ -8,7 +8,7 @@ GenTV is a free, open-source, ad-free home screen (launcher) for Android TV and 
 
 | Component | Application ID | Source | Minimum |
 |---|---|---|---|
-| TV home screen | `com.gentv.tv` | `launcher/` | Android 8 / API 26 |
+| TV home screen | `com.gentv.tv` | `launcher/` | Android 4.2 / API 17 (source build; real-device validation pending) |
 | Phone companion | `com.gentv.mobile` (`com.gentv.mobile.debug` for Debug builds) | `phone/` | Android 8 / API 26 |
 
 Samsung Tizen, LG webOS and Hisense VIDAA are not Android and cannot run GenTV. Stop and tell the user if the TV is one of these.
@@ -27,6 +27,8 @@ Read [docs/getting-started.md](docs/getting-started.md) first, including its "In
    `adb -s <serial> shell am start -W -n com.gentv.tv/.MainActivity`
 6. Verify `Success`, `Status: ok`, and ask the user to confirm the GenTV screen on the TV. After confirming GenTV works, set it as default Home with `adb -s <serial> shell cmd package set-home-activity com.gentv.tv/.MainActivity`. Re-run the Home command from step 4, press the physical Home button and confirm GenTV opens; reboot and verify again. A command reporting success alone is not proof. If handover fails, restore the recorded Home and report the limitation. If the user explicitly requests preview/install only, preserve the existing Home instead.
 7. Report what you ran and its raw output. Report build or emulator results separately from what was seen on the real TV.
+
+For Android 4.2, `cmd package` may be unavailable: identify and record the existing Home by supported device means, then install and preview only until this source-build compatibility path is verified on that device. Do not claim the current phone-guided installer supports a 4.2 TV.
 
 Do not:
 

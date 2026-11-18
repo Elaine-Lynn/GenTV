@@ -74,7 +74,7 @@ public final class AerialScreensaverActivity extends Activity {
 
     @Override public void finish() {
         if (isFinishing()) return;
-        if (paused || !android.animation.ValueAnimator.areAnimatorsEnabled()) {
+        if (paused || !CompatApi.animatorsEnabled()) {
             finishWithoutAnimation();
             return;
         }
