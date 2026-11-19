@@ -15,6 +15,7 @@
     <string name="child_lock_player">受管应用 · %1$s</string>
     <string name="child_lock_player_none">未选择</string>
     <string name="child_lock_pick_player">选择受管应用（可多选）</string>
+    <string name="child_lock_confirm_apps">确认选择</string>
     <string name="child_lock_preview">预览题目</string>
     <string name="child_lock_permission">计时服务设置</string>
     <string name="child_lock_disable">关闭儿童模式</string>

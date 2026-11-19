@@ -15,6 +15,7 @@
     <string name="child_lock_player">Managed app · %1$s</string>
     <string name="child_lock_player_none">None selected</string>
     <string name="child_lock_pick_player">Choose apps to manage (multiple selection)</string>
+    <string name="child_lock_confirm_apps">Save selection</string>
     <string name="child_lock_preview">Preview questions</string>
     <string name="child_lock_permission">Viewing timer service</string>
     <string name="child_lock_disable">Turn child mode off</string>

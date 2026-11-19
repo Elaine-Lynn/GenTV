@@ -445,7 +445,7 @@ public final class ChildSettingsActivity extends Activity {
                 row.setChecked(chosen.contains(app.getKey()));
                 android.graphics.drawable.StateListDrawable background = new android.graphics.drawable.StateListDrawable();
                 background.addState(new int[]{android.R.attr.state_focused},
-                        ChildStyle.shape(ChildSettingsActivity.this, 0xfff0eaff, ChildStyle.FOCUS, 12, 2));
+                        ChildStyle.shape(ChildSettingsActivity.this, 0xfff0eaff, ChildStyle.FOCUS, 12, 4));
                 background.addState(new int[]{android.R.attr.state_checked},
                         ChildStyle.shape(ChildSettingsActivity.this, 0xffebffad, 0xffa8cc56, 12, 1));
                 background.addState(new int[0],
@@ -454,24 +454,39 @@ public final class ChildSettingsActivity extends Activity {
                 return row;
             }
         };
+        LinearLayout content = new LinearLayout(this);
+        content.setOrientation(LinearLayout.VERTICAL);
+        content.setPadding(dp(22), dp(20), dp(22), dp(20));
         TextView pickerTitle = ChildStyle.text(this, getString(R.string.child_lock_pick_player),
                 21, ChildStyle.INK, true);
-        pickerTitle.setPadding(dp(24), dp(20), dp(24), dp(12));
+        content.addView(pickerTitle, new LinearLayout.LayoutParams(-1, dp(48)));
+        android.widget.ListView list = new android.widget.ListView(this);
+        list.setAdapter(adapter);
+        list.setChoiceMode(android.widget.ListView.CHOICE_MODE_MULTIPLE);
+        list.setDivider(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
+        list.setDividerHeight(dp(8));
+        list.setSelector(ChildStyle.shape(this, android.graphics.Color.TRANSPARENT,
+                ChildStyle.FOCUS, 12, 4));
+        list.setDrawSelectorOnTop(true);
+        content.addView(list, new LinearLayout.LayoutParams(-1, 0, 1));
+        LinearLayout actions = new LinearLayout(this);
+        actions.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
+        LinearLayout.LayoutParams actionsParams = new LinearLayout.LayoutParams(-1, dp(56));
+        actionsParams.topMargin = dp(14);
+        content.addView(actions, actionsParams);
+        Button cancel = ChildStyle.button(this, getString(android.R.string.cancel), false);
+        Button confirm = ChildStyle.button(this, getString(R.string.child_lock_confirm_apps), true);
+        actions.addView(cancel, new LinearLayout.LayoutParams(dp(132), dp(52)));
+        LinearLayout.LayoutParams confirmParams = new LinearLayout.LayoutParams(dp(160), dp(52));
+        confirmParams.setMarginStart(dp(12));
+        actions.addView(confirm, confirmParams);
         AlertDialog picker = new AlertDialog.Builder(this, android.R.style.Theme_Material_Light_Dialog_Alert)
-                .setCustomTitle(pickerTitle)
-                .setAdapter(adapter, null)
-                .setPositiveButton(android.R.string.ok, null)
-                .setNegativeButton(android.R.string.cancel, null).create();
+                .setView(content).create();
         playerDialog = picker;
         picker.setOnDismissListener(dialog -> {
             if (playerDialog == picker) playerDialog = null;
         });
         picker.setOnShowListener(dialog -> {
-            android.widget.ListView list = picker.getListView();
-            list.setChoiceMode(android.widget.ListView.CHOICE_MODE_MULTIPLE);
-            list.setDivider(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
-            list.setDividerHeight(dp(8));
-            list.setPadding(dp(22), dp(8), dp(22), dp(8));
             for (int i = 0; i < entries.size(); i++) {
                 list.setItemChecked(i, chosen.contains(entries.get(i).getKey()));
             }
@@ -484,9 +499,8 @@ public final class ChildSettingsActivity extends Activity {
                     getResources().getDisplayMetrics().heightPixels * 82 / 100);
             picker.getWindow().setBackgroundDrawable(
                     ChildStyle.shape(this, ChildStyle.PAPER, ChildStyle.LINE, 18, 1));
-            picker.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ChildStyle.FOCUS);
-            picker.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ChildStyle.MUTED);
-            picker.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(view -> {
+            cancel.setOnClickListener(view -> picker.dismiss());
+            confirm.setOnClickListener(view -> {
                 if (!authorized || !resumed) return;
                 if (chosen.isEmpty()) {
                     android.widget.Toast.makeText(this, R.string.child_lock_select_app,
@@ -498,6 +512,8 @@ public final class ChildSettingsActivity extends Activity {
                 render();
                 playerButton.requestFocus();
             });
+            if (!entries.isEmpty()) list.requestFocus();
+            else confirm.requestFocus();
         });
         picker.show();
     }
