@@ -18,6 +18,12 @@ import android.widget.Toast;
  * closes the panel.
  */
 public final class QuickSettingsActivity extends Activity {
+    private enum Section { DEVICE, DESKTOP, SERVICES }
+    private LinearLayout rows;
+    private TextView title;
+    private Section section;
+    private int lastCategory;
+
     @Override
     protected void attachBaseContext(android.content.Context base) {
         super.attachBaseContext(LauncherLocale.wrap(base));   // locale
@@ -42,7 +48,39 @@ public final class QuickSettingsActivity extends Activity {
         View scrim = findViewById(R.id.scrim);
         scrim.setOnClickListener(v -> finish());
         scrim.setFocusable(false);
-        LinearLayout rows = findViewById(R.id.rows);
+        rows = findViewById(R.id.rows);
+        title = findViewById(R.id.quickTitle);
+        showCategories();
+    }
+
+    private void showCategories() {
+        section = null;
+        rows.removeAllViews();
+        title.setText(R.string.quick_toolbox);
+        addRow(rows, R.drawable.ic_settings, R.string.quick_group_device,
+                R.string.quick_group_device_hint, () -> showSection(Section.DEVICE));
+        addRow(rows, R.drawable.ic_home_settings, R.string.quick_group_desktop,
+                R.string.quick_group_desktop_hint, () -> showSection(Section.DESKTOP));
+        addRow(rows, R.drawable.ic_cloud, R.string.quick_group_services,
+                R.string.quick_group_services_hint, () -> showSection(Section.SERVICES));
+        rows.getChildAt(Math.min(lastCategory, rows.getChildCount() - 1)).requestFocus();
+    }
+
+    private void showSection(Section target) {
+        section = target;
+        lastCategory = target.ordinal();
+        rows.removeAllViews();
+        title.setText(target == Section.DEVICE ? R.string.quick_group_device
+                : target == Section.DESKTOP ? R.string.quick_group_desktop
+                : R.string.quick_group_services);
+        addRow(rows, R.drawable.ic_back, R.string.quick_back, 0, this::showCategories);
+        if (target == Section.DEVICE) addDeviceRows();
+        else if (target == Section.DESKTOP) addDesktopRows();
+        else addServiceRows();
+        rows.getChildAt(1).requestFocus();
+    }
+
+    private void addDeviceRows() {
         addRow(rows, R.drawable.ic_input, R.string.inputs, 0,
                 new Intent(this, MainActivity.class).setAction(MainActivity.ACTION_VIEW_INPUTS));
         addRow(rows, R.drawable.ic_settings, R.string.tv_settings, 0, SystemSettings.intent(this, Settings.ACTION_SETTINGS));
@@ -50,26 +88,38 @@ public final class QuickSettingsActivity extends Activity {
         addRow(rows, R.drawable.ic_wifi, R.string.quick_network, 0, SystemSettings.intent(this, Settings.ACTION_WIFI_SETTINGS));
         addRow(rows, R.drawable.ic_apps, R.string.quick_apps, R.string.quick_apps_hint,
                 SystemSettings.intent(this, Settings.ACTION_MANAGE_APPLICATIONS_SETTINGS));
-        // Through Home, so it rebuilds with the new choices when Launcher settings closes.
-        addRow(rows, R.drawable.ic_home_settings, DesktopMode.settingsTitle(this), 0,
-                new Intent(this, MainActivity.class).setAction(MainActivity.ACTION_LAUNCHER_SETTINGS));
-        addRow(rows, R.drawable.ic_home_settings, R.string.set_default_home, R.string.set_default_home_hint,
-                new Intent(this, HomeSettingsActivity.class));
-        addRow(rows, R.drawable.ic_settings, R.string.cloud_settings, 0, new Intent(this, CloudSettingsActivity.class));
-        addRow(rows, R.drawable.ic_picture, R.string.quick_personalize, 0,
-                new Intent(this, PersonalizationActivity.class));
-        addRow(rows, R.drawable.ic_settings, R.string.weather_settings_title, 0,
-                new Intent(this, WeatherSettingsActivity.class));
-        addRow(rows, R.drawable.ic_home_settings, R.string.desktop_mode_title, 0, this::showDesktopModes);
-        addRow(rows, R.drawable.ic_home_settings, R.string.child_lock_settings, 0,
-                new Intent(this, ChildSettingsActivity.class));
         android.media.AudioManager audio = (android.media.AudioManager)getSystemService(AUDIO_SERVICE);
         if (audio != null && (android.os.Build.VERSION.SDK_INT < 21 || !audio.isVolumeFixed())
                 && CompatApi.permissionGranted(this, android.Manifest.permission.MODIFY_AUDIO_SETTINGS)) {
-            addVolume(rows, R.string.desktop_volume_down, audio, android.media.AudioManager.ADJUST_LOWER);
-            addVolume(rows, R.string.desktop_volume_up, audio, android.media.AudioManager.ADJUST_RAISE);
+            addVolume(rows, R.drawable.ic_volume_down, R.string.desktop_volume_down, audio,
+                    android.media.AudioManager.ADJUST_LOWER);
+            addVolume(rows, R.drawable.ic_volume_up, R.string.desktop_volume_up, audio,
+                    android.media.AudioManager.ADJUST_RAISE);
         }
-        rows.getChildAt(0).requestFocus();
+    }
+
+    private void addDesktopRows() {
+        // Through Home, so it rebuilds with the new choices when Launcher settings closes.
+        addRow(rows, R.drawable.ic_controls, DesktopMode.settingsTitle(this), 0,
+                new Intent(this, MainActivity.class).setAction(MainActivity.ACTION_LAUNCHER_SETTINGS));
+        addRow(rows, R.drawable.ic_home_settings, R.string.set_default_home, R.string.set_default_home_hint,
+                new Intent(this, HomeSettingsActivity.class));
+        addRow(rows, R.drawable.ic_personalize, R.string.quick_personalize, 0,
+                new Intent(this, PersonalizationActivity.class));
+        addRow(rows, R.drawable.ic_theme, R.string.desktop_mode_title, 0, this::showDesktopModes);
+    }
+
+    private void addServiceRows() {
+        addRow(rows, R.drawable.ic_cloud, R.string.cloud_settings, 0, new Intent(this, CloudSettingsActivity.class));
+        addRow(rows, R.drawable.ic_weather, R.string.weather_settings_title, 0,
+                new Intent(this, WeatherSettingsActivity.class));
+        addRow(rows, R.drawable.ic_lock, R.string.child_lock_settings, 0,
+                new Intent(this, ChildSettingsActivity.class));
+    }
+
+    @Override public void onBackPressed() {
+        if (section != null) showCategories();
+        else super.onBackPressed();
     }
 
     /** Settings pressed again while the panel is up. */
@@ -87,9 +137,10 @@ public final class QuickSettingsActivity extends Activity {
         overridePendingTransition(0, 0);
     }
 
-    private void addVolume(LinearLayout rows, int label, android.media.AudioManager audio, int direction) {
+    private void addVolume(LinearLayout rows, int icon, int label,
+                           android.media.AudioManager audio, int direction) {
         View row = getLayoutInflater().inflate(R.layout.item_input, rows, false);
-        ((ImageView)row.findViewById(R.id.icon)).setImageResource(R.drawable.ic_settings);
+        ((ImageView)row.findViewById(R.id.icon)).setImageResource(icon);
         ((TextView)row.findViewById(R.id.title)).setText(label);
         row.findViewById(R.id.dot).setVisibility(View.GONE);
         row.findViewById(R.id.status).setVisibility(View.GONE);

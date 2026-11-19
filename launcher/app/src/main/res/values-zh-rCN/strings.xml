@@ -29,6 +29,14 @@
     <string name="follow_theme_hint">恢复当前主题或内置的布局与动效设置。推送或重置主题也会清除电视端的这些设置。</string>
     <string name="tv_settings">电视系统设置</string>
     <string name="quick_picture">显示</string>
+    <string name="quick_toolbox">小工具箱</string>
+    <string name="quick_group_device">设备与系统</string>
+    <string name="quick_group_device_hint">信号源 · 设置</string>
+    <string name="quick_group_desktop">桌面与壁纸</string>
+    <string name="quick_group_desktop_hint">主题 · 个性化</string>
+    <string name="quick_group_services">服务与家长</string>
+    <string name="quick_group_services_hint">云端 · 天气</string>
+    <string name="quick_back">全部分类</string>
     <string name="quick_network">网络</string>
     <string name="quick_apps">应用</string>
     <string name="quick_apps_hint">重新启用</string>
