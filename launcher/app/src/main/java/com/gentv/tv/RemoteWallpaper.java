@@ -63,9 +63,10 @@ final class RemoteWallpaper {
         resources=ctx.getResources();this.localWallpaperPresent=localWallpaperPresent;
         chosenResource=BundledWallpapers.resource(ctx);
         selectedWallpaper=BundledWallpapers.selected(ctx);
-        userVideoPreview=UserWallpaper.videoPreview(ctx);
+        userVideoPreview=UserWallpaper.isVideo(selectedWallpaper)
+                ? UserWallpaper.videoPreview(ctx, selectedWallpaper) : null;
         android.app.ActivityManager memory=CompatApi.service(ctx, android.app.ActivityManager.class);
-        boolean lowRam=memory!=null && CompatApi.lowRam(memory);
+        boolean lowRam=CompatApi.constrainedHeap(memory);
         bitmapConfig=lowRam?Bitmap.Config.RGB_565:Bitmap.Config.ARGB_8888;
         width=Math.min(lowRam?1280:1920,ctx.getResources().getDisplayMetrics().widthPixels);
         height=Math.min(lowRam?720:1080,ctx.getResources().getDisplayMetrics().heightPixels);
@@ -89,8 +90,19 @@ final class RemoteWallpaper {
         finishTransition();
         if(chosenResource==0 && localWallpaperPresent.getAsBoolean()) { image.setImageDrawable(null); return; }
         if (UserWallpaper.isVideo(selectedWallpaper)) {
-            Bitmap still = BitmapFactory.decodeFile(userVideoPreview.getAbsolutePath());
-            if (still != null) { image.setImageBitmap(still); return; }
+            try {
+                BitmapFactory.Options options = new BitmapFactory.Options();
+                options.inJustDecodeBounds = true;
+                BitmapFactory.decodeFile(userVideoPreview.getAbsolutePath(), options);
+                if (options.outWidth > 0 && options.outHeight > 0
+                        && WallpaperSize.accepted(options.outWidth, options.outHeight)) {
+                    options.inJustDecodeBounds = false;
+                    options.inSampleSize = WallpaperSize.sampleSize(options.outWidth, options.outHeight, width, height);
+                    options.inPreferredConfig = bitmapConfig;
+                    Bitmap still = BitmapFactory.decodeFile(userVideoPreview.getAbsolutePath(), options);
+                    if (still != null) { image.setImageBitmap(still); return; }
+                }
+            } catch (RuntimeException | OutOfMemoryError ignored) { /* Keep the bundled fallback. */ }
         }
         try {
             Bitmap bitmap=decode(TvCloud.read(resources.openRawResource(
@@ -98,6 +110,8 @@ final class RemoteWallpaper {
             if(bitmap!=null) image.setImageBitmap(bitmap);
         } catch(java.io.IOException failure) {
             android.util.Log.e("GenTV.Wallpaper","Bundled wallpaper unavailable",failure);
+        } catch (OutOfMemoryError exhausted) {
+            android.util.Log.w("GenTV.Wallpaper","Not enough heap for fallback wallpaper");
         }
     }
     void localWallpaperReady() {
@@ -106,9 +120,9 @@ final class RemoteWallpaper {
         }
     }
     Bitmap blurredFrame() {
-        if (chosenResource==0 && showingFallback && localWallpaperPresent.getAsBoolean()) return null;
-        if (UserWallpaper.isVideo(selectedWallpaper)) return WallpaperBlur.fromFile(userVideoPreview);
         try {
+            if (chosenResource==0 && showingFallback && localWallpaperPresent.getAsBoolean()) return null;
+            if (UserWallpaper.isVideo(selectedWallpaper)) return WallpaperBlur.fromFile(userVideoPreview);
             if (!showingFallback && !displayed.isEmpty())
                 return WallpaperBlur.fromBytes(cache.read(displayed));
             try (InputStream fallback = resources.openRawResource(

@@ -667,7 +667,7 @@ final class Config {
         String bundledChoice = BundledWallpapers.selected(ctx);
         if (UserWallpaper.isImage(bundledChoice) || UserWallpaper.isVideo(bundledChoice)) {
             wallpapers.clear();
-            wallpaper = UserWallpaper.isImage(bundledChoice) ? UserWallpaper.image(ctx) : null;
+            wallpaper = UserWallpaper.isImage(bundledChoice) ? UserWallpaper.image(ctx, bundledChoice) : null;
             wallpaperEnabled = wallpaper != null && wallpaper.isFile() && wallpaper.length() > 0;
             if (wallpaperEnabled) wallpapers.add(wallpaper);
         }

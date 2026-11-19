@@ -2,12 +2,15 @@ package com.gentv.tv;
 
 import android.app.Activity;
 import android.app.ActivityManager;
+import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.graphics.Outline;
+import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -20,6 +23,7 @@ import android.view.ViewGroup;
 import android.view.ViewOutlineProvider;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -30,9 +34,19 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.HashSet;
 import java.io.File;
+import java.io.IOException;
+import java.net.Inet4Address;
+import java.net.NetworkInterface;
+import java.security.SecureRandom;
+import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.WriterException;
+import com.google.zxing.common.BitMatrix;
+import com.google.zxing.qrcode.QRCodeWriter;
 
 /** Large preview and two Leanback thumbnail rows; image decoding never blocks focus scrolling. */
 public final class PersonalizationActivity extends Activity {
@@ -40,10 +54,10 @@ public final class PersonalizationActivity extends Activity {
     private final Handler main = new Handler(Looper.getMainLooper());
     private final ExecutorService decoder = Executors.newSingleThreadExecutor();
     private final Set<Integer> loading = new HashSet<>();
-    private final Bitmap[][] thumbnails = {
+    private Bitmap[][] thumbnails = {
             new Bitmap[BundledWallpapers.IDS.length],
             new Bitmap[BundledWallpapers.MOTION_IDS.length],
-            new Bitmap[1]
+            new Bitmap[2]
     };
     private LruCache<Integer, Bitmap> previews;
     private ImageView preview;
@@ -54,11 +68,16 @@ public final class PersonalizationActivity extends Activity {
     private BundledVideoPreview videoPreview;
     private Bitmap shownBitmap;
     private String selected;
+    private List<String> userIds;
+    private String focusedUserId;
     private int requestedResource;
     private int selectedMotionResource;
     private int previewSample;
     private boolean ready;
     private boolean closed;
+    private LanWallpaperReceiver lanReceiver;
+    private AlertDialog lanDialog;
+    private TextView lanStatus;
     private final int[] focusedIndexes = new int[3];
     private final boolean[] visitedRows = new boolean[3];
     private int rowNavigationKey;
@@ -72,8 +91,9 @@ public final class PersonalizationActivity extends Activity {
         setContentView(R.layout.activity_personalization);
         WallpaperBackdrop.apply(this, ((android.view.ViewGroup) findViewById(android.R.id.content)).getChildAt(0));
         selected = BundledWallpapers.selected(this);
+        userIds = UserWallpaper.ids(this);
         ActivityManager memory = CompatApi.service(this, ActivityManager.class);
-        boolean lowRam = memory != null && CompatApi.lowRam(memory);
+        boolean lowRam = CompatApi.constrainedHeap(memory);
         previewSample = lowRam ? 2 : 1;
         previews = new LruCache<Integer, Bitmap>(lowRam ? 8 * 1024 * 1024 : 28 * 1024 * 1024) {
             @Override protected int sizeOf(Integer key, Bitmap value) { return value.getByteCount(); }
@@ -93,27 +113,30 @@ public final class PersonalizationActivity extends Activity {
             if (BundledWallpapers.IDS[i].equals(selected)) index = i;
         for (int i = 0; i < BundledWallpapers.MOTION_IDS.length; i++)
             if (BundledWallpapers.MOTION_IDS[i].equals(selected)) { group = 1; index = i; }
-        if (UserWallpaper.isImage(selected) || UserWallpaper.isVideo(selected)) { group = 2; index = 0; }
+        int userIndex = userIds.indexOf(selected);
+        if (userIndex >= 0) { group = 2; index = userIndex + 2; focusedUserId = selected; }
         final int initialGroup = group, initialIndex = index;
         requestedResource = group == 2 ? 0 : imageAt(group, index);
         selectedMotionResource = videoAt(group, index);
         decoder.execute(() -> {
-            Bitmap first = initialGroup == 2 ? decodeUserPreview(previewSample)
+            Bitmap first = initialGroup == 2 ? decodeUserPreview(selected,
+                    getResources().getDisplayMetrics().widthPixels / previewSample,
+                    getResources().getDisplayMetrics().heightPixels / previewSample)
                     : decode(requestedResource, previewSample);
             Bitmap initialPreview = first;
             Bitmap[][] loaded = {
                     new Bitmap[BundledWallpapers.IDS.length],
                     new Bitmap[BundledWallpapers.MOTION_IDS.length],
-                    new Bitmap[1]
+                    new Bitmap[userIds.size() + 2]
             };
             for (int column = 0; column < 2; column++)
                 for (int choice = 0; choice < loaded[column].length; choice++)
                     loaded[column][choice] = decode(thumbnailAt(column, choice), column == 0 ? 1 : 4);
-            loaded[2][0] = decodeUserPreview(4);
+            for (int choice = 0; choice < userIds.size(); choice++)
+                loaded[2][choice + 2] = decodeUserPreview(userIds.get(choice), 220, 130);
             main.post(() -> {
                 if (closed) return;
-                for (int column = 0; column < loaded.length; column++)
-                    System.arraycopy(loaded[column], 0, thumbnails[column], 0, loaded[column].length);
+                thumbnails = loaded;
                 if (initialPreview != null) {
                     if (initialGroup != 2) previews.put(requestedResource, initialPreview);
                     showBitmap(initialPreview);
@@ -138,7 +161,7 @@ public final class PersonalizationActivity extends Activity {
 
     private void configure(HorizontalGridView row) {
         row.setNumRows(1);
-        row.setHorizontalSpacing(dp(10));
+        row.setHorizontalSpacing(dp(28));
         row.setWindowAlignment(BaseGridView.WINDOW_ALIGN_BOTH_EDGE);
         row.setWindowAlignmentOffsetPercent(50f);
         row.setItemAlignmentOffsetPercent(50f);
@@ -200,13 +223,18 @@ public final class PersonalizationActivity extends Activity {
         if (group == 2) {
             requestedResource = 0;
             selectedMotionResource = 0;
-            if (UserWallpaper.isVideo(selected))
-                videoPreview.selectFile(UserWallpaper.video(this));
+            focusedUserId = index < 2 ? null : userIds.get(index - 2);
+            if (focusedUserId != null && UserWallpaper.isVideo(focusedUserId))
+                videoPreview.selectFile(UserWallpaper.video(this, focusedUserId));
             else videoPreview.select(0);
+            if (focusedUserId == null) return;
+            String id = focusedUserId;
             decoder.execute(() -> {
-                Bitmap bitmap = decodeUserPreview(previewSample);
+                Bitmap bitmap = decodeUserPreview(id,
+                        getResources().getDisplayMetrics().widthPixels / previewSample,
+                        getResources().getDisplayMetrics().heightPixels / previewSample);
                 Bitmap result = bitmap;
-                main.post(() -> { if (!closed && requestedResource == 0 && result != null) showBitmap(result); });
+                main.post(() -> { if (!closed && id.equals(focusedUserId) && result != null) showBitmap(result); });
             });
             return;
         }
@@ -270,24 +298,37 @@ public final class PersonalizationActivity extends Activity {
         }
     }
 
-    private Bitmap decodeUserPreview(int sample) {
-        File file = UserWallpaper.isVideo(selected) ? UserWallpaper.videoPreview(this)
-                : UserWallpaper.image(this);
+    private Bitmap decodeUserPreview(String id, int maxWidth, int maxHeight) {
+        File file = UserWallpaper.isVideo(id) ? UserWallpaper.videoPreview(this, id)
+                : UserWallpaper.image(this, id);
         if (!file.isFile()) return null;
-        BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inSampleSize = sample;
-        options.inPreferredConfig = Bitmap.Config.RGB_565;
-        try { return BitmapFactory.decodeFile(file.getAbsolutePath(), options); }
+        try {
+            BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inJustDecodeBounds = true;
+            BitmapFactory.decodeFile(file.getAbsolutePath(), options);
+            if (options.outWidth <= 0 || options.outHeight <= 0) return null;
+            options.inSampleSize = 1;
+            while (options.outWidth / (options.inSampleSize * 2) >= Math.max(1, maxWidth)
+                    || options.outHeight / (options.inSampleSize * 2) >= Math.max(1, maxHeight))
+                options.inSampleSize *= 2;
+            options.inJustDecodeBounds = false;
+            options.inPreferredConfig = Bitmap.Config.RGB_565;
+            return BitmapFactory.decodeFile(file.getAbsolutePath(), options);
+        }
         catch (RuntimeException | OutOfMemoryError ignored) { return null; }
     }
 
     private void pickUserWallpaper() {
-        if (android.os.Build.VERSION.SDK_INT >= 29) {
+        // Android 12 and below can browse shared images/videos in our remote-friendly
+        // picker with READ_EXTERNAL_STORAGE. Keep SAF on 13+ until its granular media
+        // permissions and partial-access behavior are handled by the local browser.
+        if (android.os.Build.VERSION.SDK_INT >= 33) {
             Intent picker = new Intent(Intent.ACTION_OPEN_DOCUMENT)
                     .addCategory(Intent.CATEGORY_OPENABLE)
                     .setType("*/*")
                     .putExtra(Intent.EXTRA_MIME_TYPES,
-                            new String[]{"image/jpeg", "image/png", "image/webp", "video/mp4"});
+                            new String[]{"image/jpeg", "image/png", "image/webp", "video/mp4",
+                                    "video/webm", "video/x-matroska"});
             try {
                 startActivityForResult(picker, PICK_WALLPAPER);
                 return;
@@ -306,23 +347,200 @@ public final class PersonalizationActivity extends Activity {
         decoder.execute(() -> {
             String id;
             try { id = UserWallpaper.importFile(this, uri); }
-            catch (Exception error) { id = null; }
+            catch (Exception | OutOfMemoryError error) { id = null; }
             String imported = id;
-            main.post(() -> {
-                if (closed) return;
-                if (imported == null) {
-                    Toast.makeText(this, R.string.wallpaper_user_failed, Toast.LENGTH_SHORT).show();
-                } else {
-                    BundledWallpapers.select(this, imported);
-                    finish();
-                }
+            showImportedWallpaper(imported, true);
+        });
+    }
+
+    private void showImportedWallpaper(String imported, boolean apply) {
+        List<String> updated = imported == null ? null : UserWallpaper.ids(this);
+        Bitmap[] updatedThumbs = updated == null ? null : new Bitmap[updated.size() + 2];
+        if (updated != null) for (int i = 0; i < updated.size(); i++)
+            updatedThumbs[i + 2] = decodeUserPreview(updated.get(i), 220, 130);
+        main.post(() -> {
+            if (closed) return;
+            if (imported == null) {
+                Toast.makeText(this, R.string.wallpaper_user_failed, Toast.LENGTH_SHORT).show();
+                if (!apply && lanStatus != null) lanStatus.setText(R.string.wallpaper_lan_import_failed);
+                return;
+            }
+            if (apply) {
+                BundledWallpapers.select(this, imported);
+                selected = imported;
+            } else {
+                Toast.makeText(this, R.string.wallpaper_lan_added, Toast.LENGTH_SHORT).show();
+                if (lanStatus != null) lanStatus.setText(R.string.wallpaper_lan_added);
+            }
+            userIds = updated;
+            thumbnails[2] = updatedThumbs;
+            userChoices.getAdapter().notifyDataSetChanged();
+            int position = updated.indexOf(imported) + 2;
+            userChoices.setSelectedPosition(position);
+            focusedIndexes[2] = position;
+            requestPreview(2, position);
+            userChoices.post(() -> {
+                RecyclerView.ViewHolder holder = userChoices.findViewHolderForAdapterPosition(position);
+                if (holder != null) holder.itemView.requestFocus();
             });
         });
+    }
+
+    private void openLanReceiver() {
+        String address = localAddress();
+        if (address == null) {
+            Toast.makeText(this, R.string.wallpaper_lan_unavailable, Toast.LENGTH_LONG).show();
+            return;
+        }
+        String code = String.format(java.util.Locale.ROOT, "%04d", new SecureRandom().nextInt(10_000));
+        try {
+            lanReceiver = new LanWallpaperReceiver(address, code, getCacheDir(), (file, mime) ->
+                    main.post(() -> onLanUploaded(file, mime)));
+            LinearLayout body = new LinearLayout(this);
+            body.setOrientation(LinearLayout.VERTICAL);
+            body.setPadding(dp(28), dp(26), dp(28), dp(24));
+            GradientDrawable panel = new GradientDrawable(GradientDrawable.Orientation.TL_BR,
+                    new int[]{Color.rgb(34, 53, 77), Color.rgb(16, 25, 39)});
+            panel.setCornerRadius(dp(22));
+            panel.setStroke(dp(1), Color.rgb(69, 95, 122));
+            body.setBackground(panel);
+            TextView title = lanText(R.string.wallpaper_lan_title, 26, Color.WHITE);
+            title.setTypeface(null, android.graphics.Typeface.BOLD);
+            body.addView(title);
+            TextView subtitle = lanText(R.string.wallpaper_lan_subtitle, 15, Color.rgb(174, 194, 216));
+            LinearLayout.LayoutParams subtitleParams = new LinearLayout.LayoutParams(-1, -2);
+            subtitleParams.topMargin = dp(8);
+            body.addView(subtitle, subtitleParams);
+            LinearLayout columns = new LinearLayout(this);
+            columns.setOrientation(LinearLayout.HORIZONTAL);
+            columns.setGravity(android.view.Gravity.CENTER_VERTICAL);
+            LinearLayout.LayoutParams columnsParams = new LinearLayout.LayoutParams(-1, -2);
+            columnsParams.topMargin = dp(24);
+            body.addView(columns, columnsParams);
+            LinearLayout qrFrame = new LinearLayout(this);
+            qrFrame.setPadding(dp(10), dp(10), dp(10), dp(10));
+            GradientDrawable qrBackground = new GradientDrawable();
+            qrBackground.setColor(Color.WHITE);
+            qrBackground.setCornerRadius(dp(16));
+            qrFrame.setBackground(qrBackground);
+            ImageView qr = new ImageView(this);
+            qr.setImageBitmap(qrCode(lanReceiver.url() + "#code=" + code));
+            qr.setContentDescription(getString(R.string.wallpaper_lan_scan));
+            qrFrame.addView(qr, new LinearLayout.LayoutParams(dp(190), dp(190)));
+            columns.addView(qrFrame);
+            LinearLayout details = new LinearLayout(this);
+            details.setOrientation(LinearLayout.VERTICAL);
+            LinearLayout.LayoutParams detailsParams = new LinearLayout.LayoutParams(0, -2, 1f);
+            detailsParams.leftMargin = dp(25);
+            columns.addView(details, detailsParams);
+            TextView scan = lanText(R.string.wallpaper_lan_scan, 19, Color.WHITE);
+            scan.setTypeface(null, android.graphics.Typeface.BOLD);
+            details.addView(scan);
+            TextView browser = lanText(R.string.wallpaper_lan_browser, 13, Color.rgb(174, 194, 216));
+            LinearLayout.LayoutParams browserParams = new LinearLayout.LayoutParams(-1, -2);
+            browserParams.topMargin = dp(17);
+            details.addView(browser, browserParams);
+            TextView url = lanText(lanReceiver.url(), 17, Color.rgb(126, 219, 236));
+            url.setTextIsSelectable(true);
+            LinearLayout.LayoutParams urlParams = new LinearLayout.LayoutParams(-1, -2);
+            urlParams.topMargin = dp(5);
+            details.addView(url, urlParams);
+            TextView codeLabel = lanText(R.string.wallpaper_lan_code, 13, Color.rgb(174, 194, 216));
+            LinearLayout.LayoutParams codeParams = new LinearLayout.LayoutParams(-1, -2);
+            codeParams.topMargin = dp(18);
+            details.addView(codeLabel, codeParams);
+            TextView codeView = lanText(code, 28, Color.WHITE);
+            codeView.setTypeface(android.graphics.Typeface.MONOSPACE, android.graphics.Typeface.BOLD);
+            if (android.os.Build.VERSION.SDK_INT >= 21) codeView.setLetterSpacing(0.12f);
+            details.addView(codeView);
+            TextView limits = lanText(R.string.wallpaper_lan_limits, 13, Color.rgb(148, 171, 196));
+            LinearLayout.LayoutParams limitsParams = new LinearLayout.LayoutParams(-1, -2);
+            limitsParams.topMargin = dp(20);
+            body.addView(limits, limitsParams);
+            TextView waiting = lanText(R.string.wallpaper_lan_waiting, 14, Color.rgb(126, 219, 236));
+            lanStatus = waiting;
+            LinearLayout.LayoutParams waitingParams = new LinearLayout.LayoutParams(-1, -2);
+            waitingParams.topMargin = dp(12);
+            body.addView(waiting, waitingParams);
+            lanDialog = new AlertDialog.Builder(this).setView(body).create();
+            lanDialog.setOnDismissListener(dialog -> stopLanReceiver());
+            lanDialog.show();
+            if (lanDialog.getWindow() != null) {
+                lanDialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+                lanDialog.getWindow().setLayout(
+                        Math.min(dp(760), getResources().getDisplayMetrics().widthPixels - dp(48)),
+                        ViewGroup.LayoutParams.WRAP_CONTENT);
+            }
+        } catch (IOException | WriterException | OutOfMemoryError error) {
+            stopLanReceiver();
+            Toast.makeText(this, R.string.wallpaper_lan_unavailable, Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private TextView lanText(int resource, int sp, int color) {
+        return lanText(getString(resource), sp, color);
+    }
+
+    private TextView lanText(String value, int sp, int color) {
+        TextView view = new TextView(this);
+        view.setText(value);
+        view.setTextSize(sp);
+        view.setTextColor(color);
+        return view;
+    }
+
+    private Bitmap qrCode(String value) throws WriterException {
+        BitMatrix bits = new QRCodeWriter().encode(value, BarcodeFormat.QR_CODE, 320, 320);
+        Bitmap bitmap = Bitmap.createBitmap(bits.getWidth(), bits.getHeight(), Bitmap.Config.RGB_565);
+        for (int y = 0; y < bits.getHeight(); y++)
+            for (int x = 0; x < bits.getWidth(); x++)
+                bitmap.setPixel(x, y, bits.get(x, y) ? Color.BLACK : Color.WHITE);
+        return bitmap;
+    }
+
+    private static String localAddress() {
+        try {
+            String fallback = null;
+            for (NetworkInterface nic : Collections.list(NetworkInterface.getNetworkInterfaces())) {
+                String name = nic.getName().toLowerCase(java.util.Locale.ROOT);
+                if (!nic.isUp() || nic.isLoopback() || name.startsWith("tun") || name.startsWith("ppp")
+                        || name.startsWith("rmnet")) continue;
+                for (java.net.InetAddress address : Collections.list(nic.getInetAddresses()))
+                    if (address instanceof Inet4Address && address.isSiteLocalAddress()) {
+                        if (name.startsWith("wlan") || name.startsWith("eth") || name.startsWith("en"))
+                            return address.getHostAddress();
+                        if (fallback == null) fallback = address.getHostAddress();
+                    }
+            }
+            return fallback;
+        } catch (Exception ignored) { }
+        return null;
+    }
+
+    private void onLanUploaded(File file, String mime) {
+        if (closed || lanDialog == null || !lanDialog.isShowing()) { file.delete(); return; }
+        if (lanStatus != null) lanStatus.setText(R.string.wallpaper_lan_importing);
+        decoder.execute(() -> {
+            String id;
+            try { id = UserWallpaper.importStaged(this, file, mime); }
+            catch (Exception | OutOfMemoryError error) { id = null; }
+            finally { file.delete(); }
+            showImportedWallpaper(id, false);
+        });
+    }
+
+    private void stopLanReceiver() {
+        if (lanReceiver != null) lanReceiver.close();
+        lanReceiver = null;
+        lanDialog = null;
+        lanStatus = null;
     }
 
     private int dp(float value) { return Math.round(value * getResources().getDisplayMetrics().density); }
 
     @Override protected void onPause() {
+        if (lanDialog != null) lanDialog.dismiss();
+        stopLanReceiver();
         videoPreview.stop();
         super.onPause();
     }
@@ -331,8 +549,8 @@ public final class PersonalizationActivity extends Activity {
         super.onResume();
         if (ready && selectedMotionResource != 0)
             videoPreview.select(selectedMotionResource);
-        else if (ready && userChoices.hasFocus() && UserWallpaper.isVideo(selected))
-            videoPreview.selectFile(UserWallpaper.video(this));
+        else if (ready && userChoices.hasFocus() && UserWallpaper.isVideo(focusedUserId))
+            videoPreview.selectFile(UserWallpaper.video(this, focusedUserId));
     }
 
     @Override protected void onDestroy() {
@@ -362,7 +580,9 @@ public final class PersonalizationActivity extends Activity {
             item.setOnFocusChangeListener((view, focused) -> {
                 card.setSelected(focused);
                 view.animate().cancel();
-                view.animate().scaleX(focused ? 1.045f : 1f).scaleY(focused ? 1.045f : 1f)
+                if (android.os.Build.VERSION.SDK_INT >= 21)
+                    view.setTranslationZ(focused ? dp(12) : 0);
+                view.animate().scaleX(focused ? 1.12f : 1f).scaleY(focused ? 1.12f : 1f)
                         .setDuration(focused ? 170 : 135)
                         .setInterpolator(new DecelerateInterpolator()).start();
                 if (focused) {
@@ -381,27 +601,34 @@ public final class PersonalizationActivity extends Activity {
 
         @Override public void onBindViewHolder(@NonNull ChoiceHolder holder, int position) {
             holder.image.setImageBitmap(thumbnails[group][position]);
-            holder.add.setVisibility(group == 2 ? View.VISIBLE : View.GONE);
+            holder.add.setVisibility(group == 2 && position < 2 ? View.VISIBLE : View.GONE);
+            if (group == 2 && position < 2) holder.add.setText(position == 0 ? "+" : "⇧");
             holder.name.setText(group == 0 ? BundledWallpapers.TITLES[position]
                     : group == 1 ? BundledWallpapers.MOTION_TITLES[position]
-                    : R.string.wallpaper_user_add);
+                    : position == 0 ? R.string.wallpaper_user_add
+                    : position == 1 ? R.string.wallpaper_lan_send
+                    : UserWallpaper.isVideo(userIds.get(position - 2))
+                    ? R.string.wallpaper_user_video : R.string.wallpaper_user_image);
             String id = group == 0 ? BundledWallpapers.IDS[position]
-                    : group == 1 ? BundledWallpapers.MOTION_IDS[position] : selected;
-            holder.selectedBadge.setVisibility(group == 2
-                    ? UserWallpaper.isImage(selected) || UserWallpaper.isVideo(selected)
-                        ? View.VISIBLE : View.GONE
-                    : id.equals(selected) ? View.VISIBLE : View.GONE);
+                    : group == 1 ? BundledWallpapers.MOTION_IDS[position]
+                    : position < 2 ? "" : userIds.get(position - 2);
+            holder.selectedBadge.setVisibility(position < 2 && group == 2
+                    ? View.GONE : id.equals(selected) ? View.VISIBLE : View.GONE);
             holder.itemView.setOnClickListener(view -> {
-                if (group == 2) { pickUserWallpaper(); return; }
+                if (group == 2 && position == 0) { pickUserWallpaper(); return; }
+                if (group == 2 && position == 1) { openLanReceiver(); return; }
                 BundledWallpapers.select(PersonalizationActivity.this, id);
                 finish();
             });
         }
 
-        @Override public long getItemId(int position) { return position; }
+        @Override public long getItemId(int position) {
+            return group == 2 ? position == 0 ? Long.MIN_VALUE
+                    : position == 1 ? Long.MIN_VALUE + 1 : userIds.get(position - 2).hashCode() : position;
+        }
         @Override public int getItemCount() {
             return group == 0 ? BundledWallpapers.IDS.length
-                    : group == 1 ? BundledWallpapers.MOTION_IDS.length : 1;
+                    : group == 1 ? BundledWallpapers.MOTION_IDS.length : userIds.size() + 2;
         }
     }
 

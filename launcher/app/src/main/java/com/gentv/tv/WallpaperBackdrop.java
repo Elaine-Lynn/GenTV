@@ -25,12 +25,13 @@ final class WallpaperBackdrop {
 
     static void fromHome(Context context, Bitmap frame) {
         if (frame == null || frame.isRecycled()) return;
-        Bitmap copy = frame.copy(Bitmap.Config.ARGB_8888, false);
+        Bitmap copy;
+        try { copy = frame.copy(Bitmap.Config.ARGB_8888, false); }
+        catch (OutOfMemoryError exhausted) { return; }
+        if (copy == null) return;
         synchronized (WallpaperBackdrop.class) {
-            Bitmap old = cached;
             cached = copy;
             cachedKey = key(context);
-            if (old != null) old.recycle();
         }
     }
 
@@ -48,10 +49,8 @@ final class WallpaperBackdrop {
                     result.recycle();
                     return;
                 }
-                Bitmap old = cached;
                 cached = result;
                 cachedKey = wanted;
-                if (old != null) old.recycle();
             }
         });
     }
@@ -70,7 +69,7 @@ final class WallpaperBackdrop {
 
     private static void apply(Activity activity, View target, boolean image, boolean overlay) {
         String wanted = key(activity);
-        Bitmap ready = copy(wanted);
+        Bitmap ready = shared(wanted);
         if (ready != null) { show(activity, target, ready, image, overlay); return; }
         WORKER.execute(() -> {
             Bitmap decoded = decode(activity.getApplicationContext());
@@ -86,9 +85,16 @@ final class WallpaperBackdrop {
         });
     }
 
-    private static synchronized Bitmap copy(String wanted) {
+    private static synchronized Bitmap shared(String wanted) {
         return cached != null && wanted.equals(cachedKey) && !cached.isRecycled()
-                ? cached.copy(Bitmap.Config.ARGB_8888, false) : null;
+                ? cached : null;
+    }
+
+    private static Bitmap copy(String wanted) {
+        Bitmap source = shared(wanted);
+        if (source == null) return null;
+        try { return source.copy(Bitmap.Config.ARGB_8888, false); }
+        catch (OutOfMemoryError exhausted) { return null; }
     }
 
     static Bitmap current(Context context) { return copy(key(context)); }
@@ -112,8 +118,8 @@ final class WallpaperBackdrop {
         File directory = Config.dir(context);
         File local = directory == null ? null : new File(directory, Config.WALLPAPER_NAME);
         String file = local == null ? "" : local.lastModified() + ":" + local.length();
-        if (UserWallpaper.isImage(selected)) local = UserWallpaper.image(context);
-        if (UserWallpaper.isVideo(selected)) local = UserWallpaper.videoPreview(context);
+        if (UserWallpaper.isImage(selected)) local = UserWallpaper.image(context, selected);
+        if (UserWallpaper.isVideo(selected)) local = UserWallpaper.videoPreview(context, selected);
         if (local != null) file += ':' + local.lastModified() + ":" + local.length();
         return selected + ':' + revision + ':' + file;
     }
@@ -126,9 +132,9 @@ final class WallpaperBackdrop {
                 resource = BundledWallpapers.MOTION_IMAGES[index];
         try {
             if (UserWallpaper.isImage(selected))
-                return WallpaperBlur.fromFile(UserWallpaper.image(context));
+                return WallpaperBlur.fromFile(UserWallpaper.image(context, selected));
             if (UserWallpaper.isVideo(selected))
-                return WallpaperBlur.fromFile(UserWallpaper.videoPreview(context));
+                return WallpaperBlur.fromFile(UserWallpaper.videoPreview(context, selected));
             Config config = Config.load(context);
             if (resource == 0 && config.wallpaper != null) {
                 Bitmap local = WallpaperBlur.fromFile(config.wallpaper);

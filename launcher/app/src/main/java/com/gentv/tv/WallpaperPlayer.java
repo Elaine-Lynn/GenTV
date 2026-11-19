@@ -66,7 +66,10 @@ final class WallpaperPlayer {
         this.root = root;
         files = new ArrayList<>(config.wallpapers);
         interval = config.wallpaperRotationMinutes * 60_000L;
-        bitmapConfig = config.wallpaperTrueColor ? Bitmap.Config.ARGB_8888 : Bitmap.Config.RGB_565;
+        android.app.ActivityManager memory = CompatApi.service(context, android.app.ActivityManager.class);
+        boolean constrained = CompatApi.constrainedHeap(memory);
+        bitmapConfig = constrained ? Bitmap.Config.RGB_565
+                : config.wallpaperTrueColor ? Bitmap.Config.ARGB_8888 : Bitmap.Config.RGB_565;
         // The dim is painted into the picture (decode), so no full-screen shade layer is drawn on every frame.
         dimColor = config.wallpaperDim > 0 ? (config.wallpaperDim * 255 / 100) << 24 : 0;
         order = config.wallpaperOrder;
@@ -82,8 +85,8 @@ final class WallpaperPlayer {
                     .remove("image").remove("changed").apply();
         }
         DisplayMetrics metrics = context.getResources().getDisplayMetrics();
-        width = metrics.widthPixels;
-        height = metrics.heightPixels;
+        width = constrained ? Math.min(1280, metrics.widthPixels) : metrics.widthPixels;
+        height = constrained ? Math.min(720, metrics.heightPixels) : metrics.heightPixels;
         image = new ImageView(context);
         image.setScaleType(ImageView.ScaleType.CENTER_CROP);
         image.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);

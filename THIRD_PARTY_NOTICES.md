@@ -20,6 +20,7 @@ GenTV has since changed package namespaces, integration, UI, delivery, updates a
 |---|---|---|
 | [Kadb](https://github.com/Flyfish233/Kadb) | Apache License 2.0 — [Apache-2.0.txt](licenses/Apache-2.0.txt) | ADB client used by the phone |
 | [ExoPlayer 2.19.1](https://github.com/google/ExoPlayer) | Apache License 2.0 — [Apache-2.0.txt](licenses/Apache-2.0.txt) | Local MP4 playback for the TV's dynamic wallpaper; legacy version retained for Android 4.2 compatibility |
+| [ZXing Core 3.3.3](https://github.com/zxing/zxing) | Apache License 2.0 — [Apache-2.0.txt](licenses/Apache-2.0.txt) | QR code generation for LAN wallpaper transfer; 3.3.x retained for Android 4.2 compatibility |
 | AndroidX, Kotlin and the Gradle wrapper | Apache License 2.0 | Other build and test dependencies keep their own licences; all are declared in the Gradle build files with their real coordinates |
 | [Outfit](https://github.com/Outfitio/Outfit-Fonts) | SIL Open Font License 1.1, copyright 2021 The Outfit Project Authors — [Outfit-OFL.txt](licenses/Outfit-OFL.txt) | TV typeface |
 | [Nunito](https://github.com/googlefonts/nunito) | SIL Open Font License 1.1, copyright 2014 The Nunito Project Authors — [Nunito-OFL.txt](licenses/Nunito-OFL.txt) | Phone typeface |

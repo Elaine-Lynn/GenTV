@@ -1444,8 +1444,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         if (!blur) {
             videoWallpaper.start();
             blurredWallpaper.animate().alpha(0f).setDuration(180).withEndAction(() -> {
-                if (!wallpaperBlurred && generation == wallpaperBlurGeneration)
+                if (!wallpaperBlurred && generation == wallpaperBlurGeneration) {
                     blurredWallpaper.setVisibility(View.GONE);
+                    blurredWallpaper.setImageDrawable(null);
+                }
             }).start();
             return;
         }
@@ -1454,10 +1456,17 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         blurredWallpaper.setAlpha(0f);
         blurredWallpaper.setVisibility(View.VISIBLE);
         wallpaperBlurWorker.execute(() -> {
-            Bitmap result = frame == null ? null : WallpaperBlur.fromFrame(frame);
-            if (result == null) result = remoteWallpaper.blurredFrame();
-            if (result == null) result = wallpaperPlayer.blurredFrame();
-            if (result == null) result = WallpaperBackdrop.current(this);
+            Bitmap result;
+            try {
+                result = frame == null ? null : WallpaperBlur.fromFrame(frame);
+                if (result == null) result = WallpaperBackdrop.current(this);
+                if (result == null) result = remoteWallpaper.blurredFrame();
+                if (result == null) result = wallpaperPlayer.blurredFrame();
+            } catch (OutOfMemoryError exhausted) {
+                // Blur is optional. Keep Home usable when an older TV runs short of bitmap heap.
+                if (frame != null && !frame.isRecycled()) frame.recycle();
+                return;
+            }
             Bitmap ready = result;
             root.post(() -> {
                 if (isDestroyed() || !wallpaperBlurred || generation != wallpaperBlurGeneration) {

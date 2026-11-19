@@ -26,6 +26,9 @@ import com.google.android.exoplayer2.video.VideoSize;
 /** Plays a selected built-in loop or the phone-supplied MP4 behind Home's controls. */
 final class VideoWallpaperPlayer implements TextureView.SurfaceTextureListener {
     private static final long MAX_BYTES = 100L * 1024 * 1024;
+    // The temporary still is only a transition placeholder, not the actual video texture.
+    private static final int HOLD_WIDTH = 480;
+    private static final int HOLD_HEIGHT = 270;
     private final Context context;
     private final File file;
     private final TextureView video;
@@ -45,7 +48,8 @@ final class VideoWallpaperPlayer implements TextureView.SurfaceTextureListener {
         this.context = context;
         File dir = Config.dir(context);
         file = UserWallpaper.isVideo(BundledWallpapers.selected(context))
-                ? UserWallpaper.video(context) : dir == null ? null : new File(dir, "wallpaper.mp4");
+                ? UserWallpaper.video(context, BundledWallpapers.selected(context))
+                : dir == null ? null : new File(dir, "wallpaper.mp4");
         video = new TextureView(context);
         heldFrame = new ImageView(context);
         heldFrame.setScaleType(ImageView.ScaleType.CENTER_CROP);
@@ -89,7 +93,7 @@ final class VideoWallpaperPlayer implements TextureView.SurfaceTextureListener {
         // bundled still preview flashes until ExoPlayer renders its first frame on return.
         if (heldBitmap == null && active && video.isAvailable() && video.getAlpha() > 0f) {
             try {
-                Bitmap frame = video.getBitmap(960, 540);
+                Bitmap frame = video.getBitmap(HOLD_WIDTH, HOLD_HEIGHT);
                 if (frame != null) {
                     releaseHeldFrame();
                     heldBitmap = frame;
@@ -111,7 +115,7 @@ final class VideoWallpaperPlayer implements TextureView.SurfaceTextureListener {
         // return a black bitmap from getBitmap() once the window has been paused.
         if (heldBitmap == null && active && video.isAvailable() && video.getAlpha() > 0f) {
             try {
-                Bitmap frame = video.getBitmap(960, 540);
+                Bitmap frame = video.getBitmap(HOLD_WIDTH, HOLD_HEIGHT);
                 if (frame != null) {
                     heldBitmap = frame;
                     heldFrame.setImageBitmap(frame);

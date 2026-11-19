@@ -76,6 +76,10 @@ final class CompatApi {
         return Build.VERSION.SDK_INT >= 19 ? memory.isLowRamDevice() : memory.getMemoryClass() <= 64;
     }
 
+    static boolean constrainedHeap(ActivityManager memory) {
+        return memory != null && HeapBudget.constrained(memory.getMemoryClass(), lowRam(memory));
+    }
+
     @SuppressWarnings("deprecation")
     static ColorStateList colorStateList(Context context, int id) {
         return context.getResources().getColorStateList(id);
