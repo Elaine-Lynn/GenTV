@@ -7,9 +7,15 @@ import android.os.Bundle;
 import android.provider.Settings;
 import android.view.View;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.leanback.widget.VerticalGridView;
+import androidx.recyclerview.widget.RecyclerView;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * The panel the remote's Settings button opens when {@code settings_key_panel} is on (HomeKeyService):
@@ -18,11 +24,21 @@ import android.widget.Toast;
  * closes the panel.
  */
 public final class QuickSettingsActivity extends Activity {
-    private enum Section { DEVICE, DESKTOP, SERVICES }
-    private LinearLayout rows;
-    private TextView title;
-    private Section section;
-    private int lastCategory;
+    private final List<Entry> entries = new ArrayList<>();
+
+    private static final class Entry {
+        final int icon;
+        final int title;
+        final int status;
+        final Runnable action;
+
+        Entry(int icon, int title, int status, Runnable action) {
+            this.icon = icon;
+            this.title = title;
+            this.status = status;
+            this.action = action;
+        }
+    }
 
     @Override
     protected void attachBaseContext(android.content.Context base) {
@@ -48,78 +64,58 @@ public final class QuickSettingsActivity extends Activity {
         View scrim = findViewById(R.id.scrim);
         scrim.setOnClickListener(v -> finish());
         scrim.setFocusable(false);
-        rows = findViewById(R.id.rows);
-        title = findViewById(R.id.quickTitle);
-        showCategories();
+        addSection(R.string.quick_group_device);
+        addDeviceRows();
+        addSection(R.string.quick_group_desktop);
+        addDesktopRows();
+        addSection(R.string.quick_group_services);
+        addServiceRows();
+        VerticalGridView grid = findViewById(R.id.rows);
+        grid.setNumColumns(1);
+        grid.setAdapter(new ToolboxAdapter());
+        grid.setSelectedPosition(1);
+        grid.requestFocus();
     }
 
-    private void showCategories() {
-        section = null;
-        rows.removeAllViews();
-        title.setText(R.string.quick_toolbox);
-        addRow(rows, R.drawable.ic_settings, R.string.quick_group_device,
-                R.string.quick_group_device_hint, () -> showSection(Section.DEVICE));
-        addRow(rows, R.drawable.ic_home_settings, R.string.quick_group_desktop,
-                R.string.quick_group_desktop_hint, () -> showSection(Section.DESKTOP));
-        addRow(rows, R.drawable.ic_cloud, R.string.quick_group_services,
-                R.string.quick_group_services_hint, () -> showSection(Section.SERVICES));
-        rows.getChildAt(Math.min(lastCategory, rows.getChildCount() - 1)).requestFocus();
-    }
-
-    private void showSection(Section target) {
-        section = target;
-        lastCategory = target.ordinal();
-        rows.removeAllViews();
-        title.setText(target == Section.DEVICE ? R.string.quick_group_device
-                : target == Section.DESKTOP ? R.string.quick_group_desktop
-                : R.string.quick_group_services);
-        addRow(rows, R.drawable.ic_back, R.string.quick_back, 0, this::showCategories);
-        if (target == Section.DEVICE) addDeviceRows();
-        else if (target == Section.DESKTOP) addDesktopRows();
-        else addServiceRows();
-        rows.getChildAt(1).requestFocus();
+    private void addSection(int label) {
+        entries.add(new Entry(0, label, 0, null));
     }
 
     private void addDeviceRows() {
-        addRow(rows, R.drawable.ic_input, R.string.inputs, 0,
+        addRow(R.drawable.ic_input, R.string.inputs, 0,
                 new Intent(this, MainActivity.class).setAction(MainActivity.ACTION_VIEW_INPUTS));
-        addRow(rows, R.drawable.ic_settings, R.string.tv_settings, 0, SystemSettings.intent(this, Settings.ACTION_SETTINGS));
-        addRow(rows, R.drawable.ic_picture, R.string.quick_picture, 0, SystemSettings.intent(this, Settings.ACTION_DISPLAY_SETTINGS));
-        addRow(rows, R.drawable.ic_wifi, R.string.quick_network, 0, SystemSettings.intent(this, Settings.ACTION_WIFI_SETTINGS));
-        addRow(rows, R.drawable.ic_apps, R.string.quick_apps, R.string.quick_apps_hint,
+        addRow(R.drawable.ic_settings, R.string.tv_settings, 0, SystemSettings.intent(this, Settings.ACTION_SETTINGS));
+        addRow(R.drawable.ic_picture, R.string.quick_picture, 0, SystemSettings.intent(this, Settings.ACTION_DISPLAY_SETTINGS));
+        addRow(R.drawable.ic_wifi, R.string.quick_network, 0, SystemSettings.intent(this, Settings.ACTION_WIFI_SETTINGS));
+        addRow(R.drawable.ic_apps, R.string.quick_apps, R.string.quick_apps_hint,
                 SystemSettings.intent(this, Settings.ACTION_MANAGE_APPLICATIONS_SETTINGS));
         android.media.AudioManager audio = (android.media.AudioManager)getSystemService(AUDIO_SERVICE);
         if (audio != null && (android.os.Build.VERSION.SDK_INT < 21 || !audio.isVolumeFixed())
                 && CompatApi.permissionGranted(this, android.Manifest.permission.MODIFY_AUDIO_SETTINGS)) {
-            addVolume(rows, R.drawable.ic_volume_down, R.string.desktop_volume_down, audio,
+            addVolume(R.drawable.ic_volume_down, R.string.desktop_volume_down, audio,
                     android.media.AudioManager.ADJUST_LOWER);
-            addVolume(rows, R.drawable.ic_volume_up, R.string.desktop_volume_up, audio,
+            addVolume(R.drawable.ic_volume_up, R.string.desktop_volume_up, audio,
                     android.media.AudioManager.ADJUST_RAISE);
         }
     }
 
     private void addDesktopRows() {
         // Through Home, so it rebuilds with the new choices when Launcher settings closes.
-        addRow(rows, R.drawable.ic_controls, DesktopMode.settingsTitle(this), 0,
+        addRow(R.drawable.ic_controls, DesktopMode.settingsTitle(this), 0,
                 new Intent(this, MainActivity.class).setAction(MainActivity.ACTION_LAUNCHER_SETTINGS));
-        addRow(rows, R.drawable.ic_home_settings, R.string.set_default_home, R.string.set_default_home_hint,
+        addRow(R.drawable.ic_home_settings, R.string.set_default_home, R.string.set_default_home_hint,
                 new Intent(this, HomeSettingsActivity.class));
-        addRow(rows, R.drawable.ic_personalize, R.string.quick_personalize, 0,
+        addRow(R.drawable.ic_personalize, R.string.quick_personalize, 0,
                 new Intent(this, PersonalizationActivity.class));
-        addRow(rows, R.drawable.ic_theme, R.string.desktop_mode_title, 0, this::showDesktopModes);
+        addRow(R.drawable.ic_theme, R.string.desktop_mode_title, 0, this::showDesktopModes);
     }
 
     private void addServiceRows() {
-        addRow(rows, R.drawable.ic_cloud, R.string.cloud_settings, 0, new Intent(this, CloudSettingsActivity.class));
-        addRow(rows, R.drawable.ic_weather, R.string.weather_settings_title, 0,
+        addRow(R.drawable.ic_cloud, R.string.cloud_settings, 0, new Intent(this, CloudSettingsActivity.class));
+        addRow(R.drawable.ic_weather, R.string.weather_settings_title, 0,
                 new Intent(this, WeatherSettingsActivity.class));
-        addRow(rows, R.drawable.ic_lock, R.string.child_lock_settings, 0,
+        addRow(R.drawable.ic_lock, R.string.child_lock_settings, 0,
                 new Intent(this, ChildSettingsActivity.class));
-    }
-
-    @Override public void onBackPressed() {
-        if (section != null) showCategories();
-        else super.onBackPressed();
     }
 
     /** Settings pressed again while the panel is up. */
@@ -137,18 +133,12 @@ public final class QuickSettingsActivity extends Activity {
         overridePendingTransition(0, 0);
     }
 
-    private void addVolume(LinearLayout rows, int icon, int label,
+    private void addVolume(int icon, int label,
                            android.media.AudioManager audio, int direction) {
-        View row = getLayoutInflater().inflate(R.layout.item_input, rows, false);
-        ((ImageView)row.findViewById(R.id.icon)).setImageResource(icon);
-        ((TextView)row.findViewById(R.id.title)).setText(label);
-        row.findViewById(R.id.dot).setVisibility(View.GONE);
-        row.findViewById(R.id.status).setVisibility(View.GONE);
-        row.setOnClickListener(v -> {
+        addRow(icon, label, 0, () -> {
             try { audio.adjustStreamVolume(android.media.AudioManager.STREAM_MUSIC, direction, android.media.AudioManager.FLAG_SHOW_UI); }
             catch (SecurityException e) { Toast.makeText(this,R.string.not_available,Toast.LENGTH_SHORT).show(); }
         });
-        rows.addView(row);
     }
 
     private void showDesktopModes() {
@@ -188,8 +178,8 @@ public final class QuickSettingsActivity extends Activity {
         finish();
     }
 
-    private void addRow(LinearLayout rows, int icon, int title, int status, Intent target) {
-        addRow(rows, icon, title, status, () -> {
+    private void addRow(int icon, int title, int status, Intent target) {
+        addRow(icon, title, status, () -> {
             try {
                 startActivity(target.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
             } catch (ActivityNotFoundException | SecurityException e) {
@@ -199,15 +189,39 @@ public final class QuickSettingsActivity extends Activity {
         });
     }
 
-    private void addRow(LinearLayout rows, int icon, int title, int status, Runnable action) {
-        View row = getLayoutInflater().inflate(R.layout.item_input, rows, false);
-        ((ImageView) row.findViewById(R.id.icon)).setImageResource(icon);
-        ((TextView) row.findViewById(R.id.title)).setText(title);
-        row.findViewById(R.id.dot).setVisibility(View.GONE);
-        TextView hint = row.findViewById(R.id.status);
-        if (status != 0) hint.setText(status);
-        else hint.setVisibility(View.GONE);
-        row.setOnClickListener(v -> action.run());
-        rows.addView(row);
+    private void addRow(int icon, int title, int status, Runnable action) {
+        entries.add(new Entry(icon, title, status, action));
+    }
+
+    private final class ToolboxAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+        @Override public int getItemViewType(int position) {
+            return entries.get(position).action == null ? 0 : 1;
+        }
+
+        @NonNull @Override public RecyclerView.ViewHolder onCreateViewHolder(@NonNull android.view.ViewGroup parent, int type) {
+            View view = getLayoutInflater().inflate(type == 0 ? R.layout.item_quick_section : R.layout.item_input,
+                    parent, false);
+            return new RecyclerView.ViewHolder(view) {};
+        }
+
+        @Override public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+            Entry entry = entries.get(position);
+            View view = holder.itemView;
+            if (entry.action == null) {
+                ((TextView) view).setText(entry.title);
+                return;
+            }
+            ((ImageView) view.findViewById(R.id.icon)).setImageResource(entry.icon);
+            ((TextView) view.findViewById(R.id.title)).setText(entry.title);
+            view.findViewById(R.id.dot).setVisibility(View.GONE);
+            TextView hint = view.findViewById(R.id.status);
+            if (entry.status != 0) {
+                hint.setText(entry.status);
+                hint.setVisibility(View.VISIBLE);
+            } else hint.setVisibility(View.GONE);
+            view.setOnClickListener(v -> entry.action.run());
+        }
+
+        @Override public int getItemCount() { return entries.size(); }
     }
 }

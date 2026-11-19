@@ -8,8 +8,7 @@
 
     <LinearLayout
         android:id="@+id/panel"
-        android:layout_width="wrap_content"
-        android:minWidth="290dp"
+        android:layout_width="360dp"
         android:layout_height="wrap_content"
         android:layout_gravity="top|end"
         android:layout_marginTop="105dp"
@@ -29,12 +28,12 @@
             android:paddingEnd="14dp"
             android:textColor="#FFFFFFFF"
             android:textSize="17sp"
+            android:text="@string/quick_toolbox"
             android:fontFamily="@string/font_medium" />
 
-        <LinearLayout
+        <com.gentv.tv.ToolboxGridView
             android:id="@+id/rows"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical" />
+            android:layout_height="wrap_content" />
     </LinearLayout>
 </FrameLayout>
