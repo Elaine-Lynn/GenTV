@@ -50,7 +50,17 @@ class Options(args: Array<String>) {
     fun flag(name: String) = get(name) == "true"
 }
 fun sha256(bytes: ByteArray) = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
-fun verifiedApk(options: Options): ByteArray {
+internal const val TV_CARE_MIN_SDK = 17
+private const val AUTO_HOME_MIN_SDK = 26
+
+data class VerifiedApk(val bytes: ByteArray, val minSdk: Int)
+
+fun requireCompatibleTv(sdk: Int, apkMinSdk: Int) {
+    require(sdk >= TV_CARE_MIN_SDK) { "GenTV TV requires Android 4.2 / API 17 or newer" }
+    require(sdk >= apkMinSdk) { "This TV APK requires API $apkMinSdk, but the device is API $sdk" }
+}
+
+fun verifiedApk(options: Options): VerifiedApk {
     val apk = File(options.require("apk")).canonicalFile
     val expected = options.require("sha256").lowercase()
     require(expected.matches(Regex("[a-f0-9]{64}")))
@@ -58,8 +68,8 @@ fun verifiedApk(options: Options): ByteArray {
     require(sha256(bytes) == expected) { "APK checksum mismatch" }
     val metadata = ApkMetadata.read(apk)
     require(metadata.packageName == "com.gentv.tv") { "APK is not a GenTV TV package" }
-    require(metadata.minSdk >= 26) { "Unexpected APK minimum SDK" }
-    return bytes
+    require(metadata.minSdk >= TV_CARE_MIN_SDK) { "Unexpected APK minimum SDK" }
+    return VerifiedApk(bytes, metadata.minSdk)
 }
 private fun result(status: String, detail: String, extras: Map<String, JsonElement> = emptyMap()) = buildJsonObject {
     put("status", status); put("detail", detail); extras.forEach { (key, value) -> put(key, value) }
@@ -119,13 +129,13 @@ suspend fun execute(options: Options, tv: TvShell, repo: File): JsonObject {
             }
         }
         "install" -> {
-            val bytes = verifiedApk(options)
+            val apk = verifiedApk(options)
             val sdk = tv.run("getprop ro.build.version.sdk").trim().toIntOrNull() ?: 0
-            require(sdk >= 26) { "GenTV requires Android 8+" }
+            requireCompatibleTv(sdk, apk.minSdk)
             if (!apply) result("plan", "Checksum and package verified; install GenTV without changing Home")
             else {
                 session.log.append(ActionRecord(System.currentTimeMillis(), Op.INSTALL, HomeApp.GENTV.pkg, Phase.INTENT))
-                tv.push(bytes, Commands.APK_TMP)
+                tv.push(apk.bytes, Commands.APK_TMP)
                 val output = try { tv.run(Commands.INSTALL_TMP) } finally { tv.run(Commands.REMOVE_TMP) }
                 val installed = output.contains("Success")
                 session.log.append(ActionRecord(System.currentTimeMillis(), Op.INSTALL, HomeApp.GENTV.pkg, if (installed) Phase.DONE else Phase.FAILED, detail = output))
@@ -135,12 +145,16 @@ suspend fun execute(options: Options, tv: TvShell, repo: File): JsonObject {
             }
         }
         "home" -> {
-            if (!apply) result("plan", "Complete staged GenTV Home takeover: install/select first, investigate vendor Home and network, then reversibly disable blockers only if necessary; physical UI confirmation required")
+            val sdk = tv.run("getprop ro.build.version.sdk").trim().toIntOrNull() ?: 0
+            require(sdk >= TV_CARE_MIN_SDK) { "GenTV TV requires Android 4.2 / API 17 or newer" }
+            if (sdk < AUTO_HOME_MIN_SDK) result("needs-device-action", "API 17–25: install and preview GenTV first; automated Home handover is unavailable. Keep the original Home until the TV's chooser and recovery path are verified")
+            else if (!apply) result("plan", "Complete staged GenTV Home takeover: install/select first, investigate vendor Home and network, then reversibly disable blockers only if necessary; physical UI confirmation required")
             else {
                 require(options.flag("ui-confirmed")) { "Confirm GenTV UI on the real TV before Home handover" }
                 if (options.get("apk") != null) {
-                    val bytes = verifiedApk(options)
-                    val outcome = care.takeover(bytes, emptyList(), bootConfirmed = options.flag("boot-confirmed"))
+                    val apk = verifiedApk(options)
+                    requireCompatibleTv(sdk, apk.minSdk)
+                    val outcome = care.takeover(apk.bytes, emptyList(), bootConfirmed = options.flag("boot-confirmed"))
                     val verified = outcome is HandoverOutcome.Done && care.verifyHome()
                     result(if (verified) "handed-over" else if (outcome is HandoverOutcome.SetupAppBlocked || outcome is HandoverOutcome.NeedsChoice) "needs-device-action" else "partial", "$outcome; resume this session after the indicated device step; physical remote and reboot checks remain required")
                 } else {

@@ -14,7 +14,7 @@ GenTV 现有保护来自 `Protected.kt`、`Protected.kt` 中的 Launchers、`Set
 
 - Samsung Tizen、LG webOS、VIDAA、Roku、SmartCast：不能运行 GenTV Android APK，停止 ADB 安装。可说明厂商设置中的隐私/个性化广告选项，另有平台方案必须单独确认，不能称为 GenTV 兼容。
 - Fire OS：部分设备可做清理，但 Home 接管受保护；遇到所有禁用命令被拒绝时停止，不改用卸载或 `pm hide` 猜测成功。
-- SDK <26：不能装 GenTV，不降低 minSdk 或下载来历不明的替代 APK。
+- SDK <17：不能安装当前 GenTV TV APK，不降低 minSdk 或下载来历不明的替代 APK。API 17–25 仅使用 `minSdkVersion` 与设备兼容的 TV APK 先安装预览；保留原 Home，未核实系统选择器和恢复路径前不自动接管。Android 4.2 尚未完成实机验收，机型资料里旧的 minSdk 26 说法不能代替当前 APK 校验。
 - 中国市场部分固件拒绝侧载或 HOME 类 APK：明确报告无法安装桌面，清理只有在独立授权和证据齐全时继续。
 - Google TV：setupwraith 可能拥有 Wi-Fi；禁用会删除网络并断开 ADB。先尝试保留其启用完成接管；确需停用时，先处理网络归属或核实实际有线默认网络，再续办。Home 命令成功但进入 RecoveryActivity 不算交接成功，恢复原 Home。
 - CVTE/Haier/JVC：不启动工厂菜单。先安装 GenTV、保留原桌面尝试切换；若固件必须停用原 Home，先单独重启并确认 ADB 和 Home 可返回，以 `--boot-confirmed` 续办。根据实际 HOME 声明识别组件，不按品牌一刀切，不在同一轮启用遥控器辅助服务。保护 `com.cltv.mal`、`com.mediatek.tis`、`com.mediatek.tv.service`、`com.mediatek.tv.agent`。

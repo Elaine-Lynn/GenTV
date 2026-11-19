@@ -57,6 +57,8 @@ python3 tools/tv_care.py install --serial TV_SERIAL --session SESSION --apk APK_
 
 计划核对无误后加 `--apply`，安装并启动。电视画面与方向键由用户确认，再交接 Home：
 
+API 17–25 使用与设备版本兼容的 TV APK 执行 `install` 预览，保留原 Home；适配器的 `home` 自动交接只在 API 26+ 使用。Android 4.2 尚无实机验收，不能仅凭安装命令成功就切换默认桌面。手机伴侣 App 自身仍要求 API 26+。
+
 ```sh
 python3 tools/tv_care.py home --serial TV_SERIAL --session SESSION
 python3 tools/tv_care.py home --serial TV_SERIAL --session SESSION --ui-confirmed --apply
@@ -167,7 +169,7 @@ python3 tools/tv_care.py benchmark --serial TV_SERIAL --output work/after.json -
 
 ## 老系统识别与会话绑定
 
-Home 查询按 `cmd`、旧版 `pm`、系统解析表逐级读取；只接受实际 HOME 声明，不猜组件。清理可在 Android 8 以下评估，GenTV 安装仍要求 API 26。
+Home 查询按 `cmd`、旧版 `pm`、系统解析表逐级读取；只接受实际 HOME 声明，不猜组件。GenTV TV 源码构建最低支持 API 17，安装前仍须核对 APK 的 `minSdkVersion` 与设备版本。API 17–25 可用 `install` 做保留原 Home 的预览验证；`home` 自动交接仅限 API 26+，旧设备须先核实固件的 Home 选择器和可恢复路径。Android 4.2 尚未完成实机验收，手机伴侣的最低版本仍是 API 26。
 
 硬件序列号不可用时，用户确认准确目标设备后执行 `backup ... --device-confirmed`，在设备 GenTV 临时目录建立随机身份标记，之后每次核对标记与稳定型号属性。fingerprint 缺失时从至少两项系统构建属性生成替代签名；这不是完整固件证明。无可辨识构建属性、标记丢失或身份变化时停止写入并重新识别，不按 IP/型号复用恢复。此电脑同一账户的维护操作统一互斥，避免身份建立前后或不同地址造成并行写入。
 

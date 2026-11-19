@@ -6,7 +6,7 @@ import java.nio.ByteOrder
 import java.io.ByteArrayOutputStream
 
 class ApkMetadataTest {
-    private fun fixture(pkg: String = "com.gentv.tv", sdk: Int = 26): ByteArray {
+    private fun fixture(pkg: String = "com.gentv.tv", sdk: Int = 17): ByteArray {
         fun buffer(size: Int) = ByteBuffer.allocate(size).order(ByteOrder.LITTLE_ENDIAN)
         val strings = listOf("manifest", "package", pkg, "uses-sdk", "minSdkVersion", "http://schemas.android.com/apk/res/android")
         val data = ByteArrayOutputStream(); val offsets = mutableListOf<Int>()
@@ -29,10 +29,10 @@ class ApkMetadataTest {
         val path = System.getenv("GENTV_TEST_APK") ?: return
         val metadata = ApkMetadata.read(java.io.File(path))
         assertEquals("com.gentv.tv", metadata.packageName)
-        assertEquals(26, metadata.minSdk)
+        assertEquals(17, metadata.minSdk)
     }
-    @Test fun readsLiteralIdentityWithoutSdkTools() { assertEquals(ApkMetadata.Identity("com.gentv.tv",26), ApkMetadata.parse(fixture())) }
-    @Test fun retainsForeignPackageAndOldSdkForCallerRejection() { assertEquals(ApkMetadata.Identity("other.app",23), ApkMetadata.parse(fixture("other.app",23))) }
+    @Test fun readsLiteralIdentityWithoutSdkTools() { assertEquals(ApkMetadata.Identity("com.gentv.tv",17), ApkMetadata.parse(fixture())) }
+    @Test fun retainsForeignPackageAndOldSdkForCallerRejection() { assertEquals(ApkMetadata.Identity("other.app",16), ApkMetadata.parse(fixture("other.app",16))) }
     @Test fun malformedSizesAndTruncationAreRejected() {
         for (bytes in listOf(fixture().dropLast(1).toByteArray(), fixture().apply { this[12] = -1; this[13] = -1; this[14] = -1; this[15] = 127 })) {
             try { ApkMetadata.parse(bytes); fail("malformed accepted") } catch (_: IllegalArgumentException) { }

@@ -23,7 +23,7 @@ adb -s SERIAL shell cmd package resolve-activity --brief -a android.intent.actio
 adb -s SERIAL shell cmd package query-activities --brief -a android.intent.action.MAIN -c android.intent.category.HOME
 ```
 
-失败/空输出不能当备份完成。记录明确的原 Home 组件及其包启用状态；选择器或多 Home 时先确认原桌面。记录设备 fingerprint 以避免把恢复记录用到另一台设备。备份设置是参考，不代表可以整表回灌。
+旧系统可能没有 `cmd package`；由适配器依次尝试旧 `pm` 和实际系统解析表，不能把 `cmd` 失败当作没有 Home。失败/空输出不能当备份完成。记录明确的原 Home 组件及其包启用状态；选择器或多 Home 时先确认原桌面。记录设备 fingerprint 以避免把恢复记录用到另一台设备。备份设置是参考，不代表可以整表回灌。
 
 电脑端先运行 `tools/tv_care.py backup --serial SERIAL --session SESSION` 建立新会话。所有写操作带相同 SESSION，默认计划；具体动作已授权后加 `--apply`。适配器复用 FileActionLog，修改前 fsync intent，修改后核对实际状态，断线后先对账。
 
@@ -43,7 +43,7 @@ APK 通常仍占存储；仅报告观察到的后台负担、广告变化和空�
 
 ## 4. GenTV 安装与 Home 交接
 
-优先官方兼容 APK 并校验 SHA256SUMS；否则按指南构建 Debug。SDK <26 或厂商拒绝 HOME APK 时停止桌面分支。`INSTALL_FAILED_UPDATE_INCOMPATIBLE` / `INSTALL_FAILED_VERSION_DOWNGRADE` 保留数据并按 `docs/release.md` 处理，不卸载、不强降级。
+优先官方兼容 APK 并校验 SHA256SUMS；否则按指南从 TV 源码构建 Debug。核对 APK 的 `minSdkVersion` 不高于设备 SDK；SDK <17 或厂商拒绝 HOME APK 时停止桌面分支。API 17–25 先只安装预览，保留原 Home；Android 4.2 尚无实机验收记录，不能把构建通过当作设备兼容证明。`INSTALL_FAILED_UPDATE_INCOMPATIBLE` / `INSTALL_FAILED_VERSION_DOWNGRADE` 保留数据并按 `docs/release.md` 处理，不卸载、不强降级。
 
 ```sh
 adb -s SERIAL install -r APK_PATH
@@ -52,14 +52,14 @@ adb -s SERIAL shell am start -W -n com.gentv.tv/.MainActivity
 
 检查原始 `Success`、`Status: ok`、实机画面、方向键与返回。截图使用 `adb -s SERIAL exec-out screencap -p`，以二进制保存，不经过文本转换。按照 GenTV 通信协议配置常用应用、主题和信号源。
 
-完整安装将 GenTV 设为默认 Home，记录 intent 和原组件后执行：
+API 26+ 的完整安装在确认 GenTV 画面和遥控器可用后，记录原 Home 并执行：
 
 ```sh
 adb -s SERIAL shell cmd package set-home-activity com.gentv.tv/.MainActivity
 adb -s SERIAL shell cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.HOME
 ```
 
-从系统设置按 Home，并读取 `dumpsys activity activities` 核对前台包；请用户按实体 Home 键确认。系统选择器可作为命令被拒后的正常替代。完整安装按 `docs/tv-care.md` 使用 `home --apk ... --sha256 ...` 自动分阶段接管，必要的可逆交接已在用户安装诉求内，不反复索要授权。普通切换失败后继续识别阻碍；缺少设备证据时完成所需步骤后续办，而不是直接判定不兼容。失败则恢复原 Home 并核验。预览/仅安装明确跳过切换。可选辅助服务单独说明其作用和已知遥控器影响。
+从系统设置按 Home，并读取 `dumpsys activity activities` 核对前台包；请用户按实体 Home 键确认。系统选择器可作为命令被拒后的正常替代。API 26+ 的完整安装按 `docs/tv-care.md` 使用 `home --apk ... --sha256 ...` 自动分阶段接管。API 17–25 的 `cmd package` 可能不存在，TV Care 适配器不自动改默认 Home、禁用原桌面或猜测替代命令；预览通过后如需切换，先核对该固件实际支持的系统 Home 选择器和恢复路径。失败则恢复原 Home 并核验。预览/仅安装明确跳过切换。可选辅助服务单独说明其作用和已知遥控器影响。
 
 ## 5. 可选 DNS 过滤
 
