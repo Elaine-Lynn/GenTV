@@ -14,22 +14,23 @@ final class BundledWallpapers {
             R.raw.wallpaper_glass_teal_preview, R.raw.wallpaper_glass_indigo_preview};
     static final int[] TITLES = {R.string.wallpaper_follow_current, R.string.wallpaper_classic,
             R.string.wallpaper_cobalt, R.string.wallpaper_teal, R.string.wallpaper_indigo};
-    static final String[] MOTION_IDS = {"motion_blue", "motion_teal", "motion_indigo",
-            "motion_cat", "motion_aquarium"};
+    static final String[] MOTION_IDS = {"motion_blue", "motion_teal"};
     static final int[] MOTION_IMAGES = {R.raw.wallpaper_motion_blue_preview,
-            R.raw.wallpaper_motion_teal_preview, R.raw.wallpaper_motion_indigo_preview,
-            R.raw.wallpaper_motion_cat_preview, R.raw.wallpaper_motion_aquarium_preview};
+            R.raw.wallpaper_motion_teal_preview};
     static final int[] MOTION_VIDEOS = {R.raw.wallpaper_motion_blue,
-            R.raw.wallpaper_motion_teal, R.raw.wallpaper_motion_indigo,
-            R.raw.wallpaper_motion_cat, R.raw.wallpaper_motion_aquarium};
+            R.raw.wallpaper_motion_teal};
     static final int[] MOTION_TITLES = {R.string.wallpaper_motion_blue,
-            R.string.wallpaper_motion_teal, R.string.wallpaper_motion_indigo,
-            R.string.wallpaper_motion_cat, R.string.wallpaper_motion_aquarium};
+            R.string.wallpaper_motion_teal};
 
     private BundledWallpapers() { }
 
     static String selected(Context context) {
-        return context.getSharedPreferences(Config.SETTINGS_NAME, Context.MODE_PRIVATE).getString(KEY, "");
+        String selected = context.getSharedPreferences(Config.SETTINGS_NAME, Context.MODE_PRIVATE)
+                .getString(KEY, "");
+        // Older installs may have selected one of the removed bundled clips.
+        if ("motion_indigo".equals(selected) || "motion_cat".equals(selected)
+                || "motion_aquarium".equals(selected)) return MOTION_IDS[0];
+        return selected;
     }
 
     static int resource(Context context) {

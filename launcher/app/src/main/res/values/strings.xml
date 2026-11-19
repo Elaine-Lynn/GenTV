@@ -212,9 +212,6 @@
     <string name="wallpaper_motion_title">Motion wallpapers</string>
     <string name="wallpaper_motion_blue">Blue light</string>
     <string name="wallpaper_motion_teal">Teal tide</string>
-    <string name="wallpaper_motion_indigo">Indigo arc</string>
-    <string name="wallpaper_motion_cat">Curious kitten</string>
-    <string name="wallpaper_motion_aquarium">Aquarium</string>
     <string name="wallpaper_user_title">Your wallpapers</string>
     <string name="wallpaper_user_add">Add from files</string>
     <string name="wallpaper_lan_send">Send over local network</string>

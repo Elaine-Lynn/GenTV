@@ -73,6 +73,7 @@ public final class PersonalizationActivity extends Activity {
     private int requestedResource;
     private int selectedMotionResource;
     private int previewSample;
+    private boolean lowRam;
     private boolean ready;
     private boolean closed;
     private LanWallpaperReceiver lanReceiver;
@@ -93,9 +94,9 @@ public final class PersonalizationActivity extends Activity {
         selected = BundledWallpapers.selected(this);
         userIds = UserWallpaper.ids(this);
         ActivityManager memory = CompatApi.service(this, ActivityManager.class);
-        boolean lowRam = CompatApi.constrainedHeap(memory);
+        lowRam = CompatApi.constrainedHeap(memory);
         previewSample = lowRam ? 2 : 1;
-        previews = new LruCache<Integer, Bitmap>(lowRam ? 8 * 1024 * 1024 : 28 * 1024 * 1024) {
+        previews = new LruCache<Integer, Bitmap>(lowRam ? 4 * 1024 * 1024 : 28 * 1024 * 1024) {
             @Override protected int sizeOf(Integer key, Bitmap value) { return value.getByteCount(); }
         };
         preview = findViewById(R.id.wallpaperPreview);
@@ -120,8 +121,7 @@ public final class PersonalizationActivity extends Activity {
         selectedMotionResource = videoAt(group, index);
         decoder.execute(() -> {
             Bitmap first = initialGroup == 2 ? decodeUserPreview(selected,
-                    getResources().getDisplayMetrics().widthPixels / previewSample,
-                    getResources().getDisplayMetrics().heightPixels / previewSample)
+                    userPreviewWidth(), userPreviewHeight())
                     : decode(requestedResource, previewSample);
             Bitmap initialPreview = first;
             Bitmap[][] loaded = {
@@ -135,7 +135,12 @@ public final class PersonalizationActivity extends Activity {
             for (int choice = 0; choice < userIds.size(); choice++)
                 loaded[2][choice + 2] = decodeUserPreview(userIds.get(choice), 220, 130);
             main.post(() -> {
-                if (closed) return;
+                if (closed) {
+                    if (initialPreview != null) initialPreview.recycle();
+                    for (Bitmap[] groupBitmaps : loaded)
+                        for (Bitmap bitmap : groupBitmaps) if (bitmap != null) bitmap.recycle();
+                    return;
+                }
                 thumbnails = loaded;
                 if (initialPreview != null) {
                     if (initialGroup != 2) previews.put(requestedResource, initialPreview);
@@ -154,7 +159,7 @@ public final class PersonalizationActivity extends Activity {
                     RecyclerView.ViewHolder holder = target.findViewHolderForAdapterPosition(initialIndex);
                     if (holder != null) holder.itemView.requestFocusFromTouch();
                 }, 60);
-                prefetch(initialGroup == 2 ? 0 : initialGroup);
+                if (!lowRam) prefetch(initialGroup == 2 ? 0 : initialGroup);
             });
         });
     }
@@ -231,10 +236,13 @@ public final class PersonalizationActivity extends Activity {
             String id = focusedUserId;
             decoder.execute(() -> {
                 Bitmap bitmap = decodeUserPreview(id,
-                        getResources().getDisplayMetrics().widthPixels / previewSample,
-                        getResources().getDisplayMetrics().heightPixels / previewSample);
+                        userPreviewWidth(), userPreviewHeight());
                 Bitmap result = bitmap;
-                main.post(() -> { if (!closed && id.equals(focusedUserId) && result != null) showBitmap(result); });
+                main.post(() -> {
+                    if (result == null) return;
+                    if (!closed && id.equals(focusedUserId)) showBitmap(result);
+                    else result.recycle();
+                });
             });
             return;
         }
@@ -254,7 +262,8 @@ public final class PersonalizationActivity extends Activity {
             Bitmap result = bitmap;
             main.post(() -> {
                 loading.remove(resource);
-                if (closed || result == null) return;
+                if (result == null) return;
+                if (closed) { result.recycle(); return; }
                 previews.put(resource, result);
                 if (requestedResource == resource) showBitmap(result);
             });
@@ -267,6 +276,16 @@ public final class PersonalizationActivity extends Activity {
             int count = group == 0 ? BundledWallpapers.IDS.length : BundledWallpapers.MOTION_IDS.length;
             for (int i = 0; i < count; i++) queuePreview(imageAt(group, i));
         }
+    }
+
+    private int userPreviewWidth() {
+        int width = getResources().getDisplayMetrics().widthPixels / previewSample;
+        return lowRam ? Math.min(640, width) : width;
+    }
+
+    private int userPreviewHeight() {
+        int height = getResources().getDisplayMetrics().heightPixels / previewSample;
+        return lowRam ? Math.min(360, height) : height;
     }
 
     private void showBitmap(Bitmap bitmap) {
@@ -359,7 +378,11 @@ public final class PersonalizationActivity extends Activity {
         if (updated != null) for (int i = 0; i < updated.size(); i++)
             updatedThumbs[i + 2] = decodeUserPreview(updated.get(i), 220, 130);
         main.post(() -> {
-            if (closed) return;
+            if (closed) {
+                if (updatedThumbs != null) for (Bitmap bitmap : updatedThumbs)
+                    if (bitmap != null) bitmap.recycle();
+                return;
+            }
             if (imported == null) {
                 Toast.makeText(this, R.string.wallpaper_user_failed, Toast.LENGTH_SHORT).show();
                 if (!apply && lanStatus != null) lanStatus.setText(R.string.wallpaper_lan_import_failed);

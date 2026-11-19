@@ -1,6 +1,7 @@
 package com.gentv.tv;
 
 import android.content.Context;
+import android.app.ActivityManager;
 import android.graphics.Matrix;
 import android.graphics.SurfaceTexture;
 import android.net.Uri;
@@ -14,6 +15,7 @@ import android.view.View;
 import java.io.File;
 
 import com.google.android.exoplayer2.ExoPlayer;
+import com.google.android.exoplayer2.DefaultLoadControl;
 import com.google.android.exoplayer2.MediaItem;
 import com.google.android.exoplayer2.PlaybackException;
 import com.google.android.exoplayer2.Player;
@@ -23,6 +25,7 @@ import com.google.android.exoplayer2.video.VideoSize;
 /** One muted video surface for the personalization preview. Focus changes never wait for decoding. */
 final class BundledVideoPreview implements TextureView.SurfaceTextureListener {
     private final Context context;
+    private final boolean constrainedHeap;
     private final TextureView video;
     private final Handler main = new Handler(Looper.getMainLooper());
     private final Runnable delayedStart = this::startIfReady;
@@ -40,6 +43,7 @@ final class BundledVideoPreview implements TextureView.SurfaceTextureListener {
 
     BundledVideoPreview(Context context, TextureView video) {
         this.context = context;
+        constrainedHeap = CompatApi.constrainedHeap(CompatApi.service(context, ActivityManager.class));
         this.video = video;
         video.setSurfaceTextureListener(this);
         video.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> crop());
@@ -49,6 +53,7 @@ final class BundledVideoPreview implements TextureView.SurfaceTextureListener {
         if (closed || requestedResource == resource && requestedFile == null && player != null) return;
         main.removeCallbacks(delayedStart);
         main.removeCallbacks(delayedStop);
+        if (constrainedHeap && player != null && playingResource != resource) release();
         ready = false;
         requestedResource = resource;
         requestedFile = null;
@@ -56,7 +61,8 @@ final class BundledVideoPreview implements TextureView.SurfaceTextureListener {
         video.setAlpha(0f);
         if (resource == 0) {
             // Keep the decoder off the focus path; rapid row changes cancel this cleanup.
-            main.postDelayed(delayedStop, 160);
+            if (constrainedHeap) { release(); video.setVisibility(View.GONE); }
+            else main.postDelayed(delayedStop, 160);
             return;
         }
         video.setVisibility(View.VISIBLE);
@@ -65,7 +71,7 @@ final class BundledVideoPreview implements TextureView.SurfaceTextureListener {
             return;
         }
         // Do not open a decoder while focus is merely passing over a thumbnail.
-        main.postDelayed(delayedStart, 160);
+        main.postDelayed(delayedStart, constrainedHeap ? 500 : 160);
     }
 
     void selectFile(File file) {
@@ -73,13 +79,14 @@ final class BundledVideoPreview implements TextureView.SurfaceTextureListener {
         if (file.equals(requestedFile) && player != null) return;
         main.removeCallbacks(delayedStart);
         main.removeCallbacks(delayedStop);
+        if (constrainedHeap && player != null && !file.equals(playingFile)) release();
         ready = false;
         requestedResource = 0;
         requestedFile = file;
         video.animate().cancel();
         video.setAlpha(0f);
         video.setVisibility(View.VISIBLE);
-        main.postDelayed(delayedStart, 160);
+        main.postDelayed(delayedStart, constrainedHeap ? 500 : 160);
     }
 
     void stop() {
@@ -110,7 +117,19 @@ final class BundledVideoPreview implements TextureView.SurfaceTextureListener {
         if (surface == null || !surface.isValid()
                 || requestedResource == 0 && requestedFile == null) return;
         if (player != null) release();
-        ExoPlayer next = new ExoPlayer.Builder(context).build();
+        ExoPlayer.Builder builder = new ExoPlayer.Builder(context);
+        if (constrainedHeap) builder.setLoadControl(new DefaultLoadControl.Builder()
+                .setBufferDurationsMs(500, 2500, 250, 500)
+                .setTargetBufferBytes(4 * 1024 * 1024)
+                .setPrioritizeTimeOverSizeThresholds(false)
+                .build());
+        ExoPlayer next;
+        try { next = builder.build(); }
+        catch (RuntimeException | OutOfMemoryError failure) {
+            Log.w("GenTV.VideoPreview", "Cannot initialize wallpaper preview");
+            video.setVisibility(View.GONE);
+            return;
+        }
         player = next;
         playingResource = requestedResource;
         playingFile = requestedFile;
@@ -135,14 +154,14 @@ final class BundledVideoPreview implements TextureView.SurfaceTextureListener {
                         video.animate().alpha(1f).setDuration(240).start();
                 }
                 @Override public void onPlayerError(PlaybackException error) {
-                    Log.w("GenTV.VideoPreview", "Cannot play wallpaper preview", error);
+                    Log.w("GenTV.VideoPreview", "Cannot play wallpaper preview");
                     if (player == next) stop();
                 }
             });
             next.prepare();
             next.play();
-        } catch (Exception error) {
-            Log.w("GenTV.VideoPreview", "Cannot open wallpaper preview", error);
+        } catch (Exception | OutOfMemoryError error) {
+            Log.w("GenTV.VideoPreview", "Cannot open wallpaper preview");
             stop();
         }
     }

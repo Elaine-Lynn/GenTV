@@ -1143,7 +1143,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             remoteWallpaper.start();
             videoWallpaper.start();
             updateWallpaperScrollState();
-            if (wallpaperBlurred) videoWallpaper.pause();
+            if (wallpaperBlurred) {
+                if (videoWallpaper.usesSmallHeap()) videoWallpaper.stop();
+                else videoWallpaper.pause();
+            }
         }
         // A returning window can lay out the dock at a new position while the
         // tile size stays unchanged; align the highlight after that layout.
@@ -1337,13 +1340,23 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         if (wallpaperPlayer != null) {
             wallpaperPlayer.stop();
             remoteWallpaper.stop();
-            Bitmap videoFrame = videoWallpaper.frameForBlur();
-            videoWallpaper.pause();
+            // Small-heap TVs use the already prepared wallpaper preview for other pages.
+            // Capturing and blurring a live frame while leaving Home adds avoidable allocations.
+            Bitmap videoFrame = videoWallpaper.usesSmallHeap() ? null : videoWallpaper.frameForBlur();
+            // A translucent toolbox can leave Home started. Release the decoder now: on small
+            // heaps its buffers plus a background blur can exhaust the process before onStop.
+            videoWallpaper.stop();
             if (videoFrame != null) wallpaperBlurWorker.execute(() -> {
-                Bitmap backdrop = WallpaperBlur.fromFrame(videoFrame);
-                if (backdrop != null) {
-                    WallpaperBackdrop.fromHome(this, backdrop);
-                    backdrop.recycle();
+                try {
+                    Bitmap backdrop = WallpaperBlur.fromFrame(videoFrame);
+                    if (backdrop != null) {
+                        WallpaperBackdrop.fromHome(this, backdrop);
+                        backdrop.recycle();
+                    }
+                } catch (RuntimeException | OutOfMemoryError failure) {
+                    // A blurred frame is optional; never let this worker take down Home.
+                } finally {
+                    if (!videoFrame.isRecycled()) videoFrame.recycle();
                 }
             });
         }
@@ -1452,7 +1465,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             return;
         }
         Bitmap frame = videoWallpaper.frameForBlur();
-        videoWallpaper.pause();
+        if (videoWallpaper.usesSmallHeap()) videoWallpaper.stop();
+        else videoWallpaper.pause();
         blurredWallpaper.setAlpha(0f);
         blurredWallpaper.setVisibility(View.VISIBLE);
         wallpaperBlurWorker.execute(() -> {

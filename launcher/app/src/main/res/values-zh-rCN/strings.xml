@@ -183,9 +183,6 @@
     <string name="wallpaper_motion_title">动态壁纸</string>
     <string name="wallpaper_motion_blue">蓝色流光</string>
     <string name="wallpaper_motion_teal">青色潮汐</string>
-    <string name="wallpaper_motion_indigo">靛紫光弧</string>
-    <string name="wallpaper_motion_cat">好奇黑猫</string>
-    <string name="wallpaper_motion_aquarium">观赏鱼缸</string>
     <string name="wallpaper_user_title">用户自定义</string>
     <string name="wallpaper_user_add">从本地文件添加</string>
     <string name="wallpaper_lan_send">局域网传输</string>

@@ -1,6 +1,7 @@
 package com.gentv.tv;
 
 import android.content.Context;
+import android.app.ActivityManager;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
 import android.graphics.SurfaceTexture;
@@ -17,6 +18,7 @@ import android.widget.ImageView;
 import java.io.File;
 
 import com.google.android.exoplayer2.ExoPlayer;
+import com.google.android.exoplayer2.DefaultLoadControl;
 import com.google.android.exoplayer2.MediaItem;
 import com.google.android.exoplayer2.PlaybackException;
 import com.google.android.exoplayer2.Player;
@@ -27,9 +29,10 @@ import com.google.android.exoplayer2.video.VideoSize;
 final class VideoWallpaperPlayer implements TextureView.SurfaceTextureListener {
     private static final long MAX_BYTES = 100L * 1024 * 1024;
     // The temporary still is only a transition placeholder, not the actual video texture.
-    private static final int HOLD_WIDTH = 480;
-    private static final int HOLD_HEIGHT = 270;
     private final Context context;
+    private final boolean constrainedHeap;
+    private final int holdWidth;
+    private final int holdHeight;
     private final File file;
     private final TextureView video;
     private final ImageView heldFrame;
@@ -46,6 +49,9 @@ final class VideoWallpaperPlayer implements TextureView.SurfaceTextureListener {
 
     VideoWallpaperPlayer(Context context, FrameLayout root) {
         this.context = context;
+        constrainedHeap = CompatApi.constrainedHeap(CompatApi.service(context, ActivityManager.class));
+        holdWidth = constrainedHeap ? 256 : 480;
+        holdHeight = constrainedHeap ? 144 : 270;
         File dir = Config.dir(context);
         file = UserWallpaper.isVideo(BundledWallpapers.selected(context))
                 ? UserWallpaper.video(context, BundledWallpapers.selected(context))
@@ -93,7 +99,7 @@ final class VideoWallpaperPlayer implements TextureView.SurfaceTextureListener {
         // bundled still preview flashes until ExoPlayer renders its first frame on return.
         if (heldBitmap == null && active && video.isAvailable() && video.getAlpha() > 0f) {
             try {
-                Bitmap frame = video.getBitmap(HOLD_WIDTH, HOLD_HEIGHT);
+                Bitmap frame = video.getBitmap(holdWidth, holdHeight);
                 if (frame != null) {
                     releaseHeldFrame();
                     heldBitmap = frame;
@@ -115,7 +121,7 @@ final class VideoWallpaperPlayer implements TextureView.SurfaceTextureListener {
         // return a black bitmap from getBitmap() once the window has been paused.
         if (heldBitmap == null && active && video.isAvailable() && video.getAlpha() > 0f) {
             try {
-                Bitmap frame = video.getBitmap(HOLD_WIDTH, HOLD_HEIGHT);
+                Bitmap frame = video.getBitmap(holdWidth, holdHeight);
                 if (frame != null) {
                     heldBitmap = frame;
                     heldFrame.setImageBitmap(frame);
@@ -139,6 +145,7 @@ final class VideoWallpaperPlayer implements TextureView.SurfaceTextureListener {
     }
 
     boolean isActive() { return active; }
+    boolean usesSmallHeap() { return constrainedHeap; }
 
     void close() {
         closed = true;
@@ -150,7 +157,13 @@ final class VideoWallpaperPlayer implements TextureView.SurfaceTextureListener {
 
     private void play() {
         if (!active || closed || player != null || surface == null || !surface.isValid()) return;
-        ExoPlayer next = new ExoPlayer.Builder(context).build();
+        ExoPlayer.Builder builder = new ExoPlayer.Builder(context);
+        if (constrainedHeap) builder.setLoadControl(new DefaultLoadControl.Builder()
+                .setBufferDurationsMs(1000, 5000, 500, 1000)
+                .setTargetBufferBytes(8 * 1024 * 1024)
+                .setPrioritizeTimeOverSizeThresholds(false)
+                .build());
+        ExoPlayer next = builder.build();
         player = next;
         try {
             next.setVideoSurface(surface);
