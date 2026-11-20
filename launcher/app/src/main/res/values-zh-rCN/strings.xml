@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="game_kart">卡丁车游戏</string>
+    <string name="game_install_required">请先安装 GenTV Kart 游戏组件。</string>
     <string name="app_name">GenTV</string>
     <string name="inputs">输入源</string>
     <string name="wifi">无线网络</string>

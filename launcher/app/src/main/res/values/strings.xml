@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="game_kart">Kart game</string>
+    <string name="game_install_required">Install the GenTV Kart game add-on first.</string>
     <string name="app_name">GenTV</string>
     <string name="inputs">Inputs</string>
     <string name="wifi">Wi-Fi</string>

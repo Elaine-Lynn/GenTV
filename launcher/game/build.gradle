@@ -1,0 +1,51 @@
+plugins { id 'com.android.application' }
+
+def secrets = new Properties()
+def signingFile = rootProject.file('../phone/keys/signing.properties')
+if (signingFile.exists()) signingFile.withInputStream { secrets.load(it) }
+
+android {
+    namespace 'com.gentv.game'
+    compileSdk 34
+    defaultConfig {
+        applicationId 'com.gentv.game'
+        minSdk 23
+        targetSdk 34
+        versionCode 1
+        versionName '1.0'
+    }
+    splits {
+        abi {
+            enable true
+            reset()
+            include 'armeabi-v7a', 'arm64-v8a'
+            universalApk false
+        }
+    }
+    packagingOptions { jniLibs { useLegacyPackaging true } }
+    signingConfigs {
+        production {
+            if (!secrets.isEmpty()) {
+                storeFile rootProject.file('../phone/keys/' + secrets.getProperty('storeFile'))
+                storePassword secrets.getProperty('storePassword')
+                keyAlias secrets.getProperty('keyAlias')
+                keyPassword secrets.getProperty('keyPassword')
+            }
+        }
+    }
+    buildTypes { release { signingConfig signingConfigs.production } }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    implementation 'org.mozilla.geckoview:geckoview:128.0.20240725162350'
+    implementation 'com.google.zxing:core:3.5.3'
+}
+
+gradle.taskGraph.whenReady { graph ->
+    if (graph.allTasks.any { it.project == project && it.name == 'packageRelease' } && secrets.isEmpty())
+        throw new GradleException('Formal signing is missing for the game APK')
+}
