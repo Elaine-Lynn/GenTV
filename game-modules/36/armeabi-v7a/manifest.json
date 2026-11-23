@@ -1,0 +1,21 @@
+{
+  "versionCode": 36,
+  "versionName": "3.7.14",
+  "packageName": "com.gentv.tv",
+  "signingCertificateSha256": "8d5b5378f9056880f3036d44bc2f4a48322141fbb8d8bc91951d61a4652d997f",
+  "abi": "armeabi-v7a",
+  "splits": [
+    {
+      "name": "game-master.apk",
+      "url": "https://github.com/Elaine-Lynn/GenTV/releases/download/game-modules-v3.7.14/game-master.apk",
+      "sha256": "222a5700ea2a4e40a42219a67dbca5e9aa2175ed0bc5136b04408fcd803313cd",
+      "sizeBytes": 13701788
+    },
+    {
+      "name": "game-armeabi_v7a.apk",
+      "url": "https://github.com/Elaine-Lynn/GenTV/releases/download/game-modules-v3.7.14/game-armeabi_v7a.apk",
+      "sha256": "7671a134acba294df54c7590a20735579835444eff97d0d09477cc3b3ef156cd",
+      "sizeBytes": 59655347
+    }
+  ]
+}
