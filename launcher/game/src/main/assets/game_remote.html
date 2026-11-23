@@ -1,6 +1,102 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="theme-color" content="#07101d"><title>GenTV 赛车遥控器</title>
-<style>
-:root{color-scheme:dark;--ink:#f4f8ff;--muted:#9aacc6;--mint:#a7ffcf;--cyan:#61d9f2}*{box-sizing:border-box}html,body{margin:0;min-height:100%}body{font:16px system-ui,-apple-system,sans-serif;color:var(--ink);background:radial-gradient(ellipse at 85% -10%,#19566a,transparent 42%),radial-gradient(ellipse at -10% 95%,#303960,transparent 42%),#07101d;user-select:none;-webkit-user-select:none}main{max-width:850px;margin:auto;padding:max(18px,env(safe-area-inset-top)) max(18px,env(safe-area-inset-right)) max(18px,env(safe-area-inset-bottom)) max(18px,env(safe-area-inset-left))}.eyebrow{color:var(--cyan);font-size:12px;font-weight:800;letter-spacing:.17em}.eyebrow:before{content:"";display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--mint);box-shadow:0 0 14px var(--mint);margin-right:9px}h1{font-size:clamp(28px,6vw,43px);letter-spacing:-.04em;margin:10px 0 4px}.subtitle{margin:0 0 18px;color:var(--muted);font-size:14px}.connect{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 17px;border:1px solid #365571;border-radius:19px;background:linear-gradient(120deg,#182f45,#101d31);box-shadow:0 16px 35px #02071355}.connect label{font-weight:700}.connect small{display:block;color:var(--muted);font-size:12px;margin-top:3px}input{width:112px;height:48px;border:2px solid #527c96;border-radius:12px;background:#071522;color:white;text-align:center;font-size:24px;font-weight:800;letter-spacing:.2em;outline:none}input:focus{border-color:var(--mint);box-shadow:0 0 0 4px #a7ffcf25}.status{min-height:26px;margin:10px 3px 16px;color:var(--muted);font-size:13px}.status:before{content:"";display:inline-block;width:8px;height:8px;margin-right:8px;border-radius:50%;background:#738ca5}.status.ok{color:var(--mint)}.status.ok:before{background:var(--mint);box-shadow:0 0 12px var(--mint)}.status.error{color:#ffacaa}.status.error:before{background:#ff7777}.deck{display:grid;grid-template-columns:1fr 1fr;gap:12px}.module{padding:14px;border:1px solid #304a66;border-radius:20px;background:linear-gradient(150deg,#172b42,#0c1b2f);box-shadow:inset 0 1px #ffffff12,0 14px 30px #0004}.module h2{margin:0 0 11px;font-size:12px;letter-spacing:.15em;color:#a4b8d2}.module h2 b{color:var(--cyan);margin-left:7px;letter-spacing:0}.pair{display:grid;grid-template-columns:1fr 1fr;gap:9px}button{font:inherit;cursor:pointer;border:0;touch-action:none;-webkit-tap-highlight-color:transparent}.key{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:2px;min-height:105px;border:1px solid #567896;border-bottom:4px solid #264461;border-radius:17px;background:linear-gradient(160deg,#2b4968,#192e4a);color:white;font-size:18px;font-weight:800;box-shadow:inset 0 1px #ffffff2a,0 8px 17px #0004;transition:transform .08s,background .08s}.key .symbol{font-size:29px;line-height:1}.key small{font-size:10px;letter-spacing:.13em;color:#aec6dc}.key.gas{background:linear-gradient(160deg,#b8ffe0,#43bf94);color:#063328;border-color:#bcffe2;border-bottom-color:#298968}.key.gas small{color:#22684e}.key.brake{background:linear-gradient(160deg,#536382,#334565)}.key.active,.key:active{transform:translateY(3px) scale(.985);border-bottom-width:1px;background:linear-gradient(160deg,#90f0ec,#45bad4);color:#082637;box-shadow:0 0 0 3px #76edee55,0 0 25px #54e7f566}.key:focus-visible{outline:3px solid var(--mint);outline-offset:3px}.actions{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:13px}.actions .key{min-height:82px}.drift{background:linear-gradient(145deg,#695591,#3b315e);border-color:#8e77bc}.nitro{background:linear-gradient(145deg,#f9bd70,#b87538);border-color:#ffd59a;color:#281708}.utility{display:flex;gap:9px;margin-top:14px}.utility .key{min-height:44px;flex:1;border-radius:12px;font-size:13px;background:#16273b}.note{margin:15px 2px 0;color:#849ab7;font-size:12px;line-height:1.5}@media(max-width:560px){.deck{gap:8px}.module{padding:9px;border-radius:16px}.module h2{font-size:10px}.key{min-height:96px;font-size:15px;border-radius:14px}.key .symbol{font-size:25px}.connect{padding:11px}}@media(max-height:520px) and (orientation:landscape){main{padding-top:8px;padding-bottom:8px}.eyebrow,h1,.subtitle,.note{display:none}.connect{padding:6px 12px}.connect small{display:none}input{height:34px;font-size:19px}.status{margin:4px 2px;min-height:19px}.module{padding:7px}.module h2{margin-bottom:4px}.key{min-height:62px}.actions{margin-top:6px}.actions .key{min-height:48px}.utility{margin-top:6px}.utility .key{min-height:33px}}
-.deck,.pair,.actions{grid-template-columns:repeat(2,minmax(0,1fr))}.module,.key{min-width:0}.utility .key{overflow:hidden}</style></head><body><main><div class="eyebrow">GenTV · KART CONTROLLER</div><h1>掌心方向盘</h1><p class="subtitle">扫码会自动填入电视验证码，也可以手动输入。</p><section class="connect"><div><label for="code">连接电视</label><small>验证码显示在电视游戏画面上</small></div><input id="code" aria-label="电视验证码" inputmode="numeric" maxlength="4" pattern="[0-9]*" autocomplete="one-time-code" placeholder="0000"></section><div id="status" class="status" role="status">按住任意控制键开始连接</div><div class="deck"><section class="module"><h2>方向控制 <b>STEER</b></h2><div class="pair"><button class="key" data-key="ArrowLeft"><span class="symbol">↶</span>向左<small>LEFT</small></button><button class="key" data-key="ArrowRight"><span class="symbol">↷</span>向右<small>RIGHT</small></button></div></section><section class="module"><h2>速度控制 <b>DRIVE</b></h2><div class="pair"><button class="key gas" data-key="ArrowUp"><span class="symbol">▲</span>加速<small>GAS</small></button><button class="key brake" data-key="ArrowDown"><span class="symbol">▼</span>刹车<small>BRAKE</small></button></div></section></div><div class="actions"><button class="key drift" data-key="Shift"><span class="symbol">↗</span>漂移<small>DRIFT · HOLD</small></button><button class="key nitro" data-key="Space"><span class="symbol">⚡</span>氮气 / 道具<small>NITRO · ITEM</small></button></div><div class="utility"><button class="key" data-key="Enter">确认 / 开始</button><button class="key" data-key="Escape">暂停</button><button class="key" data-key="r">回到赛道</button></div><p class="note">按住方向、油门、刹车或漂移可持续操作；松开即停止。</p></main><script>
-const code=document.getElementById('code'),status=document.getElementById('status'),held=new Map();const saved=location.hash.match(/code=(\d{4})/);if(saved){code.value=saved[1];history.replaceState(null,'',location.pathname)}function message(text,kind){status.textContent=text;status.className='status '+kind}function send(key,down){if(!/^\d{4}$/.test(code.value)){message('请输入电视上的 4 位验证码','error');return}fetch('/key',{method:'POST',headers:{'Content-Type':'text/plain'},body:'code='+code.value+'&key='+key+'&down='+(down?1:0),cache:'no-store'}).then(r=>message(r.ok?'已连接 · 正在控制电视':r.status===403?'验证码错误或连接已关闭':'连接失败，请重试',r.ok?'ok':'error')).catch(()=>message('无法连接电视，请检查局域网','error'))}function release(el){const key=el.dataset.key;if(!held.has(key))return;clearInterval(held.get(key));held.delete(key);el.classList.remove('active');send(key,false)}document.querySelectorAll('.key').forEach(el=>{el.addEventListener('pointerdown',e=>{e.preventDefault();if(held.has(el.dataset.key))return;el.setPointerCapture(e.pointerId);el.classList.add('active');send(el.dataset.key,true);held.set(el.dataset.key,setInterval(()=>send(el.dataset.key,true),500))});['pointerup','pointercancel','lostpointercapture'].forEach(event=>el.addEventListener(event,()=>release(el)))});window.addEventListener('pagehide',()=>document.querySelectorAll('.key').forEach(release));
-</script></body></html>
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <meta name="theme-color" content="#07101d">
+  <title>GenTV 游戏遥控器</title>
+  <style>
+    *{box-sizing:border-box}html,body{margin:0;min-height:100%;overscroll-behavior:none}
+    body{font:16px system-ui,-apple-system,sans-serif;color:#f4f8ff;background:radial-gradient(ellipse at 80% 0,#19566a,transparent 45%),#07101d;user-select:none;-webkit-user-select:none}
+    main{max-width:740px;margin:auto;padding:18px max(18px,env(safe-area-inset-right)) max(18px,env(safe-area-inset-bottom)) max(18px,env(safe-area-inset-left))}
+    h1{font-size:30px;margin:0 0 12px}.connect{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;border:1px solid #43637d;border-radius:18px;background:#15283c}
+    .connect>div{min-width:0}.connect small{display:block;margin-top:3px;color:#a8bbcd;font-size:12px}input{width:100px;flex:0 0 100px;height:46px;border:2px solid #6095a5;border-radius:12px;background:#071522;color:white;text-align:center;font-size:23px;letter-spacing:.15em}
+    .status{min-height:24px;margin:9px 2px;color:#a8bbcd;font-size:13px}.status.ok{color:#a7ffcf}.status.error{color:#ffacaa}
+    .tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:0 0 10px}.tab{min-width:0;min-height:42px;border:1px solid #456783;border-radius:12px;background:#15283c;color:#b7c9d9;font-weight:700}.tab[aria-selected="true"]{background:#a7ffcf;color:#073b30;border-color:#a7ffcf}
+    .controller{height:460px;overflow-y:auto;padding:14px;border:1px solid #34516d;border-radius:20px;background:#13283d}.mode[hidden]{display:none}.mode{min-height:100%}
+    .generic{max-width:390px;margin:auto;display:flex;flex-direction:column;justify-content:center}.generic .back{width:100%;min-height:52px;margin-top:10px;font-size:17px}
+    .kart{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.kart>div{min-width:0}.kart .key{width:100%}.kart .pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.kart .drive{display:grid;gap:8px}.kart .actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;grid-column:1/-1}.kart .actions .key{min-height:64px;font-size:15px}.kart .actions span{display:block;font-size:24px}
+    h2{margin:0 0 10px;color:#bfd2e2;font-size:14px}.pad{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.pad .up{grid-column:2}.pad .left{grid-column:1}.pad .center{grid-column:2}.pad .right{grid-column:3}.pad .down{grid-column:2}
+    button{font:inherit;touch-action:none;-webkit-tap-highlight-color:transparent;cursor:pointer}.key{min-width:0;min-height:76px;border:1px solid #6d91a9;border-bottom:4px solid #31536d;border-radius:16px;background:linear-gradient(145deg,#345674,#1a314d);color:white;font-size:25px;font-weight:800;box-shadow:inset 0 1px #ffffff33}
+    .key small{display:block;font-size:11px;font-weight:600;letter-spacing:.04em}.center,.gas{background:linear-gradient(145deg,#b8ffe0,#40bf97);color:#073b30;border-color:#b8ffe0;border-bottom-color:#288965}
+    .key.active,.key:active{transform:translateY(2px);border-bottom-width:1px;filter:brightness(1.25)}.key:focus-visible,input:focus{outline:3px solid #a7ffcf;outline-offset:2px}.note{margin:12px 2px 0;color:#91a7bd;font-size:12px}
+    @media(max-width:560px){.pad .key{min-height:70px}.kart .key{min-height:74px}.kart .actions .key{min-height:58px}}
+    @media(max-height:520px) and (orientation:landscape){main{padding-top:6px;padding-bottom:6px}h1,.note{display:none}.connect{padding:5px 12px}input{height:35px}.status{margin:4px 2px;min-height:18px}.controller{height:265px;padding:8px}.key,.kart .key{min-height:55px}.kart .actions .key{min-height:48px}.generic .back{min-height:40px}}
+  </style>
+</head>
+<body>
+<main>
+  <h1>游戏遥控器</h1>
+  <div class="connect"><div><strong>连接电视</strong><small>扫码自动填写，也可输入电视上的 4 位码</small></div><input id="code" aria-label="电视验证码" inputmode="numeric" maxlength="4" pattern="[0-9]*" placeholder="0000"></div>
+  <div id="status" class="status" role="status">按住方向键开始控制</div>
+  <div class="tabs" role="tablist" aria-label="操控界面">
+    <button class="tab" id="generic-tab" data-mode="generic" role="tab" aria-controls="generic" aria-selected="false">通用遥控器</button>
+    <button class="tab" id="kart-tab" data-mode="kart" role="tab" aria-controls="kart" aria-selected="true">卡丁车操控</button>
+  </div>
+  <div class="controller">
+    <section class="mode generic" id="generic" role="tabpanel" aria-labelledby="generic-tab" hidden>
+      <h2>上下左右 · 确认 · 返回</h2><div class="pad">
+        <button class="key up" data-key="ArrowUp" aria-label="上">↑</button>
+        <button class="key left" data-key="ArrowLeft" aria-label="左">←</button>
+        <button class="key center" data-key="Enter" aria-label="确认">确定</button>
+        <button class="key right" data-key="ArrowRight" aria-label="右">→</button>
+        <button class="key down" data-key="ArrowDown" aria-label="下">↓</button>
+      </div><button class="key back" data-key="Back" aria-label="返回桌面">返回</button>
+    </section>
+    <section class="mode kart" id="kart" role="tabpanel" aria-labelledby="kart-tab">
+      <div><h2>方向控制</h2><div class="pair">
+        <button class="key" data-key="ArrowLeft" aria-label="左转">←<small>左转</small></button>
+        <button class="key" data-key="ArrowRight" aria-label="右转">→<small>右转</small></button>
+      </div></div>
+      <div><h2>速度控制</h2><div class="drive">
+        <button class="key gas" data-key="ArrowUp">↑<small>加速</small></button>
+        <button class="key" data-key="ArrowDown">↓<small>刹车 / 倒车</small></button>
+      </div></div>
+      <div class="actions">
+        <button class="key" data-key="Shift"><span>↗</span>漂移</button>
+        <button class="key" data-key="Space"><span>⚡</span>氮气 / 道具</button>
+        <button class="key" data-key="Enter">确认 / 下一步</button>
+        <button class="key" data-key="Escape">暂停 / 返回</button>
+        <button class="key" data-key="r">回到赛道</button>
+      </div>
+    </section>
+  </div>
+  <p class="note">卡丁车按键与游戏键位对应：方向键、Shift 漂移、Space 氮气/道具、R 回到赛道。手机和电视需连接同一局域网。</p>
+</main>
+<script>
+const code=document.getElementById('code'),status=document.getElementById('status');
+const held=new Map(),pending=new Map();
+const saved=location.hash.match(/code=(\d{4})/);
+if(saved){code.value=saved[1];history.replaceState(null,'',location.pathname)}
+function message(text,kind){status.textContent=text;status.className='status '+kind}
+function send(key,down){
+  const previous=pending.get(key)||Promise.resolve();
+  const next=previous.catch(()=>{}).then(()=>fetch('/key',{
+    method:'POST',headers:{'Content-Type':'text/plain'},
+    body:'code='+code.value+'&key='+key+'&down='+(down?1:0),cache:'no-store'
+  })).then(r=>message(r.ok?'已连接 · 正在控制电视':r.status===403?'验证码错误或连接已关闭':r.status===503?'游戏正在加载，请稍后重试':'连接失败，请重试',r.ok?'ok':'error'))
+    .catch(()=>message('无法连接电视，请检查局域网','error'));
+  pending.set(key,next);
+}
+function release(el){
+  const key=el.dataset.key;if(!held.has(key))return;
+  clearInterval(held.get(key));held.delete(key);el.classList.remove('active');send(key,false);
+}
+document.querySelectorAll('.key').forEach(el=>{
+  el.addEventListener('pointerdown',e=>{
+    e.preventDefault();if(held.has(el.dataset.key))return;
+    if(!/^\d{4}$/.test(code.value)){message('请输入电视上的 4 位验证码','error');code.focus();return}
+    el.setPointerCapture(e.pointerId);el.classList.add('active');send(el.dataset.key,true);
+    held.set(el.dataset.key,setInterval(()=>send(el.dataset.key,true),500));
+  });
+  ['pointerup','pointercancel','lostpointercapture'].forEach(event=>el.addEventListener(event,()=>release(el)));
+});
+window.addEventListener('pagehide',()=>document.querySelectorAll('.key').forEach(release));
+document.querySelectorAll('.tab').forEach(tab=>tab.addEventListener('click',()=>{
+  document.querySelectorAll('.key').forEach(release);
+  document.querySelectorAll('.tab').forEach(item=>item.setAttribute('aria-selected',String(item===tab)));
+  document.querySelectorAll('.mode').forEach(item=>item.hidden=item.id!==tab.dataset.mode);
+}));
+</script>
+</body>
+</html>

@@ -65,6 +65,7 @@ android {
 }
 
 dependencies {
+    implementation project(':game')
     implementation 'androidx.multidex:multidex:2.0.1'
     implementation 'androidx.core:core:1.7.0'
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs_nio:2.0.1'
@@ -113,12 +114,14 @@ def prepareReleaseNotices = tasks.register('prepareReleaseNotices', Sync) {
     from(rootProject.file('../licenses/TV-NOTICE.txt'))
     from(rootProject.file('../licenses/aerial-tv-MIT.txt'))
     from(rootProject.file('../licenses/ChinaGeoJson-MIT.txt'))
+    from(rootProject.file('../licenses/Mozilla-MPL-2.0.txt'))
     into(layout.buildDirectory.dir('outputs/licenses/release'))
 }
 def packageReleaseDistribution = tasks.register('packageReleaseDistribution', Zip) {
     dependsOn('packageRelease', prepareReleaseNotices)
     from(layout.buildDirectory.file('outputs/apk/release/app-release.apk'))
     from(layout.buildDirectory.dir('outputs/licenses/release')) { into('licenses') }
+    from(rootProject.file('../THIRD_PARTY_NOTICES.md'))
     archiveFileName = 'GenTV-TV-release.zip'
     destinationDirectory = layout.buildDirectory.dir('outputs/distribution')
 }

@@ -20,7 +20,10 @@ import java.util.Locale;
 final class LanGameController implements Closeable {
     private static final Charset UTF8 = Charset.forName("UTF-8");
     private static final Charset ASCII = Charset.forName("US-ASCII");
-    interface Listener { void key(String key, boolean down); }
+    interface Listener {
+        boolean ready();
+        void key(String key, boolean down);
+    }
 
     private final ServerSocket server;
     private final Thread worker;
@@ -135,9 +138,12 @@ final class LanGameController implements Closeable {
         }
         if (!("ArrowUp".equals(key) || "ArrowDown".equals(key) || "ArrowLeft".equals(key)
                 || "ArrowRight".equals(key) || "Shift".equals(key) || "Space".equals(key)
-                || "Enter".equals(key) || "Escape".equals(key) || "r".equals(key))
+                || "Enter".equals(key) || "Escape".equals(key) || "Back".equals(key) || "r".equals(key))
                 || !("0".equals(down) || "1".equals(down))) {
             reply(out, 400, "Bad key", "text/plain"); return;
+        }
+        if (!"Back".equals(key) && !listener.ready()) {
+            reply(out, 503, "Game loading", "text/plain"); return;
         }
         listener.key(key, "1".equals(down));
         reply(out, 200, "OK", "text/plain");

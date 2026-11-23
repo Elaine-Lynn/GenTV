@@ -1,14 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
-    <application android:label="GenTV Kart" android:theme="@android:style/Theme.Material.NoActionBar"
-        android:usesCleartextTraffic="true">
-        <activity android:name=".KartGameActivity" android:exported="true"
-            android:screenOrientation="landscape">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
-            </intent-filter>
-        </activity>
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <application>
+        <activity android:name="com.gentv.game.KartGameActivity" android:exported="false"
+            android:theme="@android:style/Theme.Material.NoActionBar"
+            android:screenOrientation="landscape" />
     </application>
 </manifest>

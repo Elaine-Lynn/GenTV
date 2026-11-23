@@ -1,39 +1,9 @@
-plugins { id 'com.android.application' }
-
-def secrets = new Properties()
-def signingFile = rootProject.file('../phone/keys/signing.properties')
-if (signingFile.exists()) signingFile.withInputStream { secrets.load(it) }
+plugins { id 'com.android.library' }
 
 android {
     namespace 'com.gentv.game'
     compileSdk 34
-    defaultConfig {
-        applicationId 'com.gentv.game'
-        minSdk 23
-        targetSdk 34
-        versionCode 1
-        versionName '1.0'
-    }
-    splits {
-        abi {
-            enable true
-            reset()
-            include 'armeabi-v7a', 'arm64-v8a'
-            universalApk false
-        }
-    }
-    packagingOptions { jniLibs { useLegacyPackaging true } }
-    signingConfigs {
-        production {
-            if (!secrets.isEmpty()) {
-                storeFile rootProject.file('../phone/keys/' + secrets.getProperty('storeFile'))
-                storePassword secrets.getProperty('storePassword')
-                keyAlias secrets.getProperty('keyAlias')
-                keyPassword secrets.getProperty('keyPassword')
-            }
-        }
-    }
-    buildTypes { release { signingConfig signingConfigs.production } }
+    defaultConfig { minSdk 23 }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
@@ -41,11 +11,10 @@ android {
 }
 
 dependencies {
-    implementation 'org.mozilla.geckoview:geckoview:128.0.20240725162350'
-    implementation 'com.google.zxing:core:3.5.3'
-}
-
-gradle.taskGraph.whenReady { graph ->
-    if (graph.allTasks.any { it.project == project && it.name == 'packageRelease' } && secrets.isEmpty())
-        throw new GradleException('Formal signing is missing for the game APK')
+    // Universal GeckoView keeps TV and game in one APK across ARM variants.
+    implementation('org.mozilla.geckoview:geckoview:128.0.20240725162350') {
+        // WebAuthn/Google sign-in is unused by this keyboard-controlled game.
+        exclude group: 'com.google.android.gms'
+    }
+    implementation 'com.google.zxing:core:3.3.3'
 }
