@@ -4,6 +4,7 @@
   "packageName": "com.gentv.tv",
   "url": "https://github.com/Elaine-Lynn/GenTV/releases/download/v3.7.13/gentv-tv-3.7.13.apk",
   "sha256": "2ea8072795e577bd1334cda44365762a6a304cb7ac80a4e43edf397c7862ef42",
+  "sizeBytes": 18655742,
   "signingCertificateSha256": "8d5b5378f9056880f3036d44bc2f4a48322141fbb8d8bc91951d61a4652d997f",
   "minSdk": 17,
   "forceUpdate": false,
