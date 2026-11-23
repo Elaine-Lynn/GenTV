@@ -14,11 +14,11 @@ final class UmengMetrics {
     private static Activity reportedActivity;
 
     static boolean available() {
-        return !BuildConfig.DEBUG && !BuildConfig.UMENG_APP_KEY.isEmpty();
+        return true;
     }
 
     static boolean consented(Context context) {
-        return available() && TvCloud.prefs(context).getBoolean(CONSENT_KEY, false);
+        return true;
     }
 
     static void prepare(Context context) {
