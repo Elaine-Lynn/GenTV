@@ -36,6 +36,28 @@
     .kart .actions .gas.active,.kart .actions .gas:active{transform:scale(1.13)}.kart .actions svg{width:56%;height:56%;fill:none;stroke:currentColor;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
     @media (orientation:portrait){body.kart-active .connect{width:calc(100% - 24px)}body.kart-active .tabs{top:88px;width:calc(100% - 24px)}body.kart-active .status{top:143px}.kart .utility{top:190px}.kart .steer{width:39vw;height:100px}.kart .actions{grid-template-columns:repeat(2,18vw);grid-template-rows:repeat(2,18vw)}.kart .actions .gas{transform:scale(1.1)}}
     @media(max-height:520px) and (orientation:landscape){main:not(.unused){padding-top:6px;padding-bottom:6px}h1,.note{display:none}.connect{padding:5px 12px}input{height:35px}.status{margin:4px 2px;min-height:18px}.controller{height:265px;padding:8px}.key{min-height:55px}.generic .back{min-height:40px}body.kart-active main{padding:0}body.kart-active .controller{height:100%;padding:0}.kart .utility{top:64px}}
+    /* Both modes use the same full-screen canvas; only the controls change. */
+    html,body{height:100%;overflow:hidden}
+    main{position:relative;max-width:none;width:100%;height:100vh;height:100dvh;margin:0;padding:0}
+    h1,.note{display:none}
+    .connect{position:absolute;z-index:4;top:max(12px,env(safe-area-inset-top));left:max(12px,env(safe-area-inset-left));width:min(315px,48vw);padding:8px 11px;border:2px solid #ffffffaa;background:#19263acb;box-shadow:0 4px 16px #12243b55}
+    .connect small{font-size:10px}input{width:75px;flex-basis:75px;height:39px;font-size:19px}
+    .status{position:absolute;z-index:4;left:max(16px,env(safe-area-inset-left));top:76px;margin:0;padding:5px 9px;color:#fff;background:#12243bba;border-radius:9px;font-size:11px;min-height:0}
+    .tabs{position:absolute;z-index:4;top:max(12px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);width:min(285px,44vw);margin:0}
+    .tab{background:#22334bc9;color:#fff;border-color:#ffffff88;min-height:37px;font-size:12px}
+    .tab[aria-selected="true"]{background:#f0f5fb;color:#172438;border-color:#fff}
+    .controller{position:relative;width:100%;height:100%;min-height:0;overflow:hidden;padding:0;border:0;border-radius:0;background:#0c1a2b}
+    .generic{position:absolute;inset:0;z-index:1;max-width:none;margin:0;min-height:0;display:block;background:radial-gradient(ellipse at 50% 92%,#29606f80,transparent 52%),linear-gradient(145deg,#17354b,#0b192b 58%,#182b3e)}
+    .generic:before{content:"";position:absolute;inset:12% -15% -60%;border:2px solid #a9d1dd12;border-radius:50%;transform:rotate(-18deg);pointer-events:none}
+    .generic h2{position:absolute;top:22%;left:50%;transform:translateX(-50%);margin:0;white-space:nowrap;color:#d6eaf2a8;font-size:clamp(11px,1.4vw,16px);font-weight:500;letter-spacing:.12em}
+    .generic .pad{position:absolute;top:54%;left:50%;width:min(42vw,62vh,330px);aspect-ratio:1;transform:translate(-50%,-50%);display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);gap:clamp(5px,1vw,10px)}
+    .generic .pad .key{width:100%;height:100%;min-height:0;border:2px solid #dcecf3a8;border-radius:20px;background:linear-gradient(145deg,#6c8495a8,#34495caf);box-shadow:inset 0 2px #ffffff48,0 6px 18px #08141fa8;color:#f7fbff;font-size:clamp(26px,4.5vw,46px)}
+    .generic .pad .center{background:linear-gradient(145deg,#f9fcff,#c5dbe4);color:#173449;font-size:clamp(13px,2vw,22px);letter-spacing:.03em}
+    .generic .back{position:absolute;right:max(22px,env(safe-area-inset-right));bottom:max(22px,env(safe-area-inset-bottom));width:clamp(82px,10vw,120px);height:clamp(82px,10vw,120px);min-height:0;margin:0;border:3px solid #e5f2f5b4;border-radius:50%;background:#34495cb5;box-shadow:inset 0 2px #ffffff37,0 5px 18px #08141fa8;font-size:clamp(16px,2vw,22px)}
+    .generic .key.active,.generic .key:active{transform:scale(.94);filter:brightness(1.15)}
+    @media(max-width:1000px) and (orientation:landscape){.connect,body.kart-active .connect{width:min(270px,35vw)}.tabs,body.kart-active .tabs{width:min(300px,35vw)}}
+    @media(orientation:portrait){.connect{width:calc(100% - 24px)}.tabs{top:88px;width:calc(100% - 24px)}.status{top:143px}.generic h2{top:24%}.generic .pad{top:53%;width:min(72vw,42vh,320px)}.generic .back{width:86px;height:86px}}
+    @media(max-height:520px) and (orientation:landscape){.generic h2{display:none}.generic .pad{top:56%;width:min(42vw,58vh,250px)}}
   </style>
 </head>
 <body>
