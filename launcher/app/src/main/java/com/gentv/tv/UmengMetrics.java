@@ -2,6 +2,7 @@ package com.gentv.tv;
 
 import android.app.Activity;
 import android.content.Context;
+import android.util.Log;
 
 import com.umeng.analytics.MobclickAgent;
 import com.umeng.commonsdk.UMConfigure;
@@ -35,9 +36,9 @@ final class UmengMetrics {
     }
 
     static void setConsent(Context context, boolean enabled, Activity visible) {
-        if (!enabled) onActivityPaused(visible);
+//        if (!enabled) onActivityPaused(visible);
         TvCloud.prefs(context).edit().putBoolean(CONSENT_KEY, enabled).apply();
-        if (enabled && available()) {
+        if (available()) {
             initialize(context);
             onActivityResumed(visible, "privacy");
         }
