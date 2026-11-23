@@ -8,7 +8,7 @@ import java.security.MessageDigest;
 
 /** Recheck private cached APKs after permission settings and process recreation. */
 final class UpdatePackage {
-    static final long MAX_APK_BYTES = 128L * 1024 * 1024;
+    static final long MAX_APK_BYTES = 256L * 1024 * 1024;
     static String hex(byte[] bytes) {
         StringBuilder value=new StringBuilder();
         for(byte b:bytes) value.append(String.format(java.util.Locale.ROOT,"%02x",b&255));

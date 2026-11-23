@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-  <meta name="theme-color" content="#07101d">
+  <meta name="theme-color" content="#88b9e4">
   <title>GenTV 游戏遥控器</title>
   <style>
     *{box-sizing:border-box}html,body{margin:0;min-height:100%;overscroll-behavior:none}
@@ -12,16 +12,30 @@
     h1{font-size:30px;margin:0 0 12px}.connect{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;border:1px solid #43637d;border-radius:18px;background:#15283c}
     .connect>div{min-width:0}.connect small{display:block;margin-top:3px;color:#a8bbcd;font-size:12px}input{width:100px;flex:0 0 100px;height:46px;border:2px solid #6095a5;border-radius:12px;background:#071522;color:white;text-align:center;font-size:23px;letter-spacing:.15em}
     .status{min-height:24px;margin:9px 2px;color:#a8bbcd;font-size:13px}.status.ok{color:#a7ffcf}.status.error{color:#ffacaa}
-    .tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:0 0 10px}.tab{min-width:0;min-height:42px;border:1px solid #456783;border-radius:12px;background:#15283c;color:#b7c9d9;font-weight:700}.tab[aria-selected="true"]{background:#a7ffcf;color:#073b30;border-color:#a7ffcf}
+    .tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:0 0 10px}.tab{min-width:0;min-height:42px;border:1px solid #456783;border-radius:12px;background:#15283c;color:#b7c9d9;font-weight:700}.tab[aria-selected="true"]{background:#f0f5fb;color:#172438;border-color:#fff}
     .controller{height:460px;overflow-y:auto;padding:14px;border:1px solid #34516d;border-radius:20px;background:#13283d}.mode[hidden]{display:none}.mode{min-height:100%}
     .generic{max-width:390px;margin:auto;display:flex;flex-direction:column;justify-content:center}.generic .back{width:100%;min-height:52px;margin-top:10px;font-size:17px}
-    .kart{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.kart>div{min-width:0}.kart .key{width:100%}.kart .pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.kart .drive{display:grid;gap:8px}.kart .actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;grid-column:1/-1}.kart .actions .key{min-height:64px;font-size:15px}.kart .actions span{display:block;font-size:24px}
     h2{margin:0 0 10px;color:#bfd2e2;font-size:14px}.pad{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.pad .up{grid-column:2}.pad .left{grid-column:1}.pad .center{grid-column:2}.pad .right{grid-column:3}.pad .down{grid-column:2}
     button{font:inherit;touch-action:none;-webkit-tap-highlight-color:transparent;cursor:pointer}.key{min-width:0;min-height:76px;border:1px solid #6d91a9;border-bottom:4px solid #31536d;border-radius:16px;background:linear-gradient(145deg,#345674,#1a314d);color:white;font-size:25px;font-weight:800;box-shadow:inset 0 1px #ffffff33}
-    .key small{display:block;font-size:11px;font-weight:600;letter-spacing:.04em}.center,.gas{background:linear-gradient(145deg,#b8ffe0,#40bf97);color:#073b30;border-color:#b8ffe0;border-bottom-color:#288965}
-    .key.active,.key:active{transform:translateY(2px);border-bottom-width:1px;filter:brightness(1.25)}.key:focus-visible,input:focus{outline:3px solid #a7ffcf;outline-offset:2px}.note{margin:12px 2px 0;color:#91a7bd;font-size:12px}
-    @media(max-width:560px){.pad .key{min-height:70px}.kart .key{min-height:74px}.kart .actions .key{min-height:58px}}
-    @media(max-height:520px) and (orientation:landscape){main{padding-top:6px;padding-bottom:6px}h1,.note{display:none}.connect{padding:5px 12px}input{height:35px}.status{margin:4px 2px;min-height:18px}.controller{height:265px;padding:8px}.key,.kart .key{min-height:55px}.kart .actions .key{min-height:48px}.generic .back{min-height:40px}}
+    .key.active,.key:active{transform:scale(.95);filter:brightness(1.25)}.key:focus-visible,input:focus{outline:3px solid #fff;outline-offset:2px}.note{margin:12px 2px 0;color:#91a7bd;font-size:12px}
+    body.kart-active{background:#92bce7;overflow:hidden}body.kart-active main{position:relative;max-width:none;width:100%;height:100vh;height:100dvh;padding:0}
+    body.kart-active h1,body.kart-active .note{display:none}body.kart-active .connect{position:absolute;z-index:4;top:max(12px,env(safe-area-inset-top));left:max(12px,env(safe-area-inset-left));width:min(315px,48vw);padding:8px 11px;border:2px solid #ffffffaa;background:#19263acb;box-shadow:0 4px 16px #12243b55}
+    body.kart-active .connect small{font-size:10px}body.kart-active input{width:75px;flex-basis:75px;height:39px;font-size:19px}
+    body.kart-active .status{position:absolute;z-index:4;left:max(16px,env(safe-area-inset-left));top:76px;margin:0;padding:5px 9px;color:#fff;background:#12243bba;border-radius:9px;font-size:11px;min-height:0}
+    body.kart-active .tabs{position:absolute;z-index:4;top:max(12px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);width:min(285px,44vw);margin:0}.kart-active .tab{background:#22334bc9;color:#fff;border-color:#ffffff88;min-height:37px;font-size:12px}.kart-active .tab[aria-selected="true"]{background:#f0f5fb;color:#172438;border-color:#fff}
+    body.kart-active .controller{position:relative;width:100%;height:100%;min-height:0;overflow:hidden;padding:0;border:0;border-radius:0;background:linear-gradient(#91beed 0 41%,#80b7d3 41% 45%,#406fa6 45% 47%,#3d4553 47%)}
+    body.kart-active .controller:before{content:"";position:absolute;inset:42% -35% -40%;background:linear-gradient(90deg,#d92f2f 0 3%,#1b4f9b 3% 6%,#58606d 6% 47%,#e9edf0 48% 49%,#606773 50% 94%,#1b4f9b 94% 97%,#d92f2f 97%);clip-path:polygon(44% 0,56% 0,100% 100%,0 100%)}
+    .kart{position:absolute;inset:0;z-index:1}.kart .key{border-bottom-width:1px;color:#fff;box-shadow:inset 0 2px #ffffff22,0 5px 14px #12203b48}
+    .kart .utility{position:absolute;top:clamp(70px,14vh,130px);right:max(16px,env(safe-area-inset-right));display:flex;gap:8px}.kart .utility .key{min-height:0;height:42px;padding:0 12px;border:2px solid #ffffff94;border-radius:22px;background:#263853a9;font-size:14px}
+    .kart .steer{position:absolute;left:max(16px,env(safe-area-inset-left));bottom:max(16px,env(safe-area-inset-bottom));width:clamp(150px,24vw,315px);height:clamp(82px,13vw,165px);display:grid;grid-template-columns:1fr 1fr;border:3px solid #b7bbc5a9;border-radius:27px;background:#3038499c;overflow:hidden}
+    .kart .steer .key{height:100%;min-height:0;border:0;border-radius:0;background:transparent;font-size:clamp(30px,5vw,56px);box-shadow:none}.kart .steer .key+ .key{border-left:3px solid #b7bbc5a9}
+    .kart .actions{position:absolute;right:max(16px,env(safe-area-inset-right));bottom:max(16px,env(safe-area-inset-bottom));display:grid;grid-template-columns:repeat(2,clamp(64px,9vw,112px));grid-template-rows:repeat(2,clamp(64px,9vw,112px));gap:clamp(8px,1.5vw,20px);align-items:center;justify-items:center}
+    .kart .actions .key{width:100%;height:100%;min-height:0;border:3px solid #ffffff8c;border-radius:50%;background:#343e4b9c;font-size:clamp(25px,4vw,45px);font-weight:900}
+    .kart .actions .drift{background:#bb765ebd}.kart .actions .brake{background:#dc635fc9}.kart .actions .brake i{display:block;margin:auto;width:25%;height:25%;background:white;border-radius:5px}
+    .kart .actions .boost{color:#ffb62f}.kart .actions .gas{transform:scale(1.22);background:radial-gradient(circle at 35% 28%,#bceccb,#62ad84 48%,#246343);border:5px solid #eef9f1;outline:5px solid #244d4d9c;box-shadow:0 0 24px #aafccaa8,inset 0 2px 8px #ffffff8c;font-size:clamp(27px,4vw,44px);font-style:italic;text-shadow:0 2px 4px #173b31}
+    .kart .actions .gas.active,.kart .actions .gas:active{transform:scale(1.13)}.kart .actions svg{width:56%;height:56%;fill:none;stroke:currentColor;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+    @media (orientation:portrait){body.kart-active .connect{width:calc(100% - 24px)}body.kart-active .tabs{top:88px;width:calc(100% - 24px)}body.kart-active .status{top:143px}.kart .utility{top:190px}.kart .steer{width:39vw;height:100px}.kart .actions{grid-template-columns:repeat(2,18vw);grid-template-rows:repeat(2,18vw)}.kart .actions .gas{transform:scale(1.1)}}
+    @media(max-height:520px) and (orientation:landscape){main:not(.unused){padding-top:6px;padding-bottom:6px}h1,.note{display:none}.connect{padding:5px 12px}input{height:35px}.status{margin:4px 2px;min-height:18px}.controller{height:265px;padding:8px}.key{min-height:55px}.generic .back{min-height:40px}body.kart-active main{padding:0}body.kart-active .controller{height:100%;padding:0}.kart .utility{top:64px}}
   </style>
 </head>
 <body>
@@ -30,38 +44,39 @@
   <div class="connect"><div><strong>连接电视</strong><small>扫码自动填写，也可输入电视上的 4 位码</small></div><input id="code" aria-label="电视验证码" inputmode="numeric" maxlength="4" pattern="[0-9]*" placeholder="0000"></div>
   <div id="status" class="status" role="status">按住方向键开始控制</div>
   <div class="tabs" role="tablist" aria-label="操控界面">
-    <button class="tab" id="generic-tab" data-mode="generic" role="tab" aria-controls="generic" aria-selected="false">通用遥控器</button>
-    <button class="tab" id="kart-tab" data-mode="kart" role="tab" aria-controls="kart" aria-selected="true">卡丁车操控</button>
+    <button class="tab" id="generic-tab" data-mode="generic" role="tab" aria-controls="generic" aria-selected="true">通用遥控器</button>
+    <button class="tab" id="kart-tab" data-mode="kart" role="tab" aria-controls="kart" aria-selected="false">卡丁车操控</button>
   </div>
   <div class="controller">
-    <section class="mode generic" id="generic" role="tabpanel" aria-labelledby="generic-tab" hidden>
+    <section class="mode generic" id="generic" role="tabpanel" aria-labelledby="generic-tab">
       <h2>上下左右 · 确认 · 返回</h2><div class="pad">
         <button class="key up" data-key="ArrowUp" aria-label="上">↑</button>
         <button class="key left" data-key="ArrowLeft" aria-label="左">←</button>
         <button class="key center" data-key="Enter" aria-label="确认">确定</button>
         <button class="key right" data-key="ArrowRight" aria-label="右">→</button>
         <button class="key down" data-key="ArrowDown" aria-label="下">↓</button>
-      </div><button class="key back" data-key="Back" aria-label="返回桌面">返回</button>
+      </div><button class="key back" data-key="Back" aria-label="返回">返回</button>
     </section>
-    <section class="mode kart" id="kart" role="tabpanel" aria-labelledby="kart-tab">
-      <div><h2>方向控制</h2><div class="pair">
-        <button class="key" data-key="ArrowLeft" aria-label="左转">←<small>左转</small></button>
-        <button class="key" data-key="ArrowRight" aria-label="右转">→<small>右转</small></button>
-      </div></div>
-      <div><h2>速度控制</h2><div class="drive">
-        <button class="key gas" data-key="ArrowUp">↑<small>加速</small></button>
-        <button class="key" data-key="ArrowDown">↓<small>刹车 / 倒车</small></button>
-      </div></div>
-      <div class="actions">
-        <button class="key" data-key="Shift"><span>↗</span>漂移</button>
-        <button class="key" data-key="Space"><span>⚡</span>氮气 / 道具</button>
-        <button class="key" data-key="Enter">确认 / 下一步</button>
-        <button class="key" data-key="Escape">暂停 / 返回</button>
-        <button class="key" data-key="r">回到赛道</button>
+    <section class="mode kart" id="kart" role="tabpanel" aria-labelledby="kart-tab" hidden>
+      <div class="utility">
+        <button class="key" data-key="r" aria-label="回到赛道">R</button>
+        <button class="key" data-key="Enter" aria-label="确认或下一步">确认</button>
+        <button class="key" data-key="Escape" aria-label="暂停">暂停</button>
+        <button class="key" data-key="Back" aria-label="返回游戏主页">返回</button>
+      </div>
+      <div class="steer" aria-label="方向控制">
+        <button class="key" data-key="ArrowLeft" aria-label="左转">◀</button>
+        <button class="key" data-key="ArrowRight" aria-label="右转">▶</button>
+      </div>
+      <div class="actions" aria-label="游戏操作">
+        <button class="key drift" data-key="Shift" aria-label="漂移"><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M13 49 47 15m-9 0h9v9M11 18c13 1 18 6 19 18m-11 4c7-5 13-5 20 0"/></svg></button>
+        <button class="key brake" data-key="ArrowDown" aria-label="刹车或倒车"><i aria-hidden="true"></i></button>
+        <button class="key boost" data-key="Space" aria-label="氮气或道具">♨</button>
+        <button class="key gas" data-key="ArrowUp" aria-label="加速">GO</button>
       </div>
     </section>
   </div>
-  <p class="note">卡丁车按键与游戏键位对应：方向键、Shift 漂移、Space 氮气/道具、R 回到赛道。手机和电视需连接同一局域网。</p>
+  <p class="note">手机和电视需连接同一局域网。切换到卡丁车操控，可使用和游戏画面相同布局的方向键与操作键。</p>
 </main>
 <script>
 const code=document.getElementById('code'),status=document.getElementById('status');
@@ -69,6 +84,16 @@ const held=new Map(),pending=new Map();
 const saved=location.hash.match(/code=(\d{4})/);
 if(saved){code.value=saved[1];history.replaceState(null,'',location.pathname)}
 function message(text,kind){status.textContent=text;status.className='status '+kind}
+let connectedCode='',connectTimer;
+function connect(){
+  if(!/^\d{4}$/.test(code.value)||connectedCode===code.value)return;
+  fetch('/connect',{method:'POST',headers:{'Content-Type':'text/plain'},body:'code='+code.value,cache:'no-store'})
+    .then(r=>{if(r.ok){connectedCode=code.value;message('已连接电视 · 可以开始控制','ok')}
+      else message(r.status===403?'验证码错误或连接已关闭':'连接失败，请重试','error')})
+    .catch(()=>message('无法连接电视，请检查局域网','error'));
+}
+code.addEventListener('input',()=>{connectedCode='';clearTimeout(connectTimer);if(/^\d{4}$/.test(code.value))connectTimer=setTimeout(connect,250)});
+if(saved)setTimeout(connect,0);
 function send(key,down){
   const previous=pending.get(key)||Promise.resolve();
   const next=previous.catch(()=>{}).then(()=>fetch('/key',{
@@ -96,6 +121,7 @@ document.querySelectorAll('.tab').forEach(tab=>tab.addEventListener('click',()=>
   document.querySelectorAll('.key').forEach(release);
   document.querySelectorAll('.tab').forEach(item=>item.setAttribute('aria-selected',String(item===tab)));
   document.querySelectorAll('.mode').forEach(item=>item.hidden=item.id!==tab.dataset.mode);
+  document.body.classList.toggle('kart-active',tab.dataset.mode==='kart');
 }));
 </script>
 </body>

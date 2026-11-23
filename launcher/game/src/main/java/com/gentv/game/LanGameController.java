@@ -22,6 +22,7 @@ final class LanGameController implements Closeable {
     private static final Charset ASCII = Charset.forName("US-ASCII");
     interface Listener {
         boolean ready();
+        void connected();
         void key(String key, boolean down);
     }
 
@@ -32,6 +33,7 @@ final class LanGameController implements Closeable {
     private final String origin;
     private final Listener listener;
     private volatile boolean closed;
+    private boolean connected;
     private int failures;
 
     LanGameController(Context context, String address, String code, Listener listener) throws IOException {
@@ -113,7 +115,8 @@ final class LanGameController implements Closeable {
             }
             return;
         }
-        if (!"POST /key HTTP/1.1".equals(request) || length < 1 || length > 128) {
+        boolean connect = "POST /connect HTTP/1.1".equals(request);
+        if ((!connect && !"POST /key HTTP/1.1".equals(request)) || length < 1 || length > 128) {
             reply(out, 404, "Not found", "text/plain"); return;
         }
         byte[] bytes = new byte[length];
@@ -136,6 +139,11 @@ final class LanGameController implements Closeable {
             if (++failures >= 5) close();
             reply(out, 403, "Wrong TV code", "text/plain"); return;
         }
+        if (connect) {
+            markConnected();
+            reply(out, 200, "OK", "text/plain");
+            return;
+        }
         if (!("ArrowUp".equals(key) || "ArrowDown".equals(key) || "ArrowLeft".equals(key)
                 || "ArrowRight".equals(key) || "Shift".equals(key) || "Space".equals(key)
                 || "Enter".equals(key) || "Escape".equals(key) || "Back".equals(key) || "r".equals(key))
@@ -145,8 +153,15 @@ final class LanGameController implements Closeable {
         if (!"Back".equals(key) && !listener.ready()) {
             reply(out, 503, "Game loading", "text/plain"); return;
         }
+        markConnected();
         listener.key(key, "1".equals(down));
         reply(out, 200, "OK", "text/plain");
+    }
+
+    private void markConnected() {
+        if (connected) return;
+        connected = true;
+        listener.connected();
     }
 
     private static String line(InputStream in) throws IOException {

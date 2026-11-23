@@ -1,9 +1,16 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:dist="http://schemas.android.com/apk/distribution"
+    xmlns:tools="http://schemas.android.com/tools">
+    <dist:module dist:title="@string/game_kart">
+        <dist:delivery><dist:on-demand /></dist:delivery>
+        <dist:fusing dist:include="false" />
+    </dist:module>
+    <uses-sdk tools:overrideLibrary="org.mozilla.geckoview,org.mozilla.geckoview.thirdparty" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <application>
         <activity android:name="com.gentv.game.KartGameActivity" android:exported="false"
-            android:theme="@android:style/Theme.Material.NoActionBar"
+            android:theme="@style/Theme.GenTV"
             android:screenOrientation="landscape" />
     </application>
 </manifest>

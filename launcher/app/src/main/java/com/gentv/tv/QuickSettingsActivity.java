@@ -107,7 +107,7 @@ public final class QuickSettingsActivity extends Activity {
             if (android.os.Build.VERSION.SDK_INT < 23) {
                 Toast.makeText(this, R.string.game_requires_android_6, Toast.LENGTH_LONG).show();
             } else {
-                startActivity(new Intent(this, com.gentv.game.KartGameActivity.class));
+                startActivity(new Intent(this, GameModuleActivity.class));
             }
         });
         addRow(R.drawable.ic_cloud, R.string.cloud_settings, 0, new Intent(this, CloudSettingsActivity.class));

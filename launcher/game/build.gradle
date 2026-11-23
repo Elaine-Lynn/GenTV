@@ -1,9 +1,12 @@
-plugins { id 'com.android.library' }
+plugins { id 'com.android.dynamic-feature' }
 
 android {
     namespace 'com.gentv.game'
     compileSdk 34
-    defaultConfig { minSdk 23 }
+    defaultConfig { minSdk 17 }
+    buildTypes {
+        release { proguardFiles 'proguard-rules.pro' }
+    }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
@@ -11,10 +14,12 @@ android {
 }
 
 dependencies {
-    // Universal GeckoView keeps TV and game in one APK across ARM variants.
+    implementation project(':app')
+    // Shared AndroidX classes remain in the base APK; the game split carries GeckoView.
     implementation('org.mozilla.geckoview:geckoview:128.0.20240725162350') {
-        // WebAuthn/Google sign-in is unused by this keyboard-controlled game.
-        exclude group: 'com.google.android.gms'
+        transitive = false
     }
+    implementation('org.mozilla.geckoview:geckoview-exoplayer2:128.0.20240725162350') { transitive = false }
+    implementation 'org.yaml:snakeyaml:2.2'
     implementation 'com.google.zxing:core:3.3.3'
 }

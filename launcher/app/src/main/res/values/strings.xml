@@ -2,6 +2,16 @@
 <resources>
     <string name="game_kart">Kart game</string>
     <string name="game_requires_android_6">The Kart game needs Android 6 or newer.</string>
+    <string name="game_module_ready_to_download">The game needs an additional download for this TV. Continue to download and install it.</string>
+    <string name="game_module_download">Download game</string>
+    <string name="game_module_back">Back</string>
+    <string name="game_module_downloading">Downloading game module…</string>
+    <string name="game_module_installing">Waiting for Android to install the game module…</string>
+    <string name="game_module_permission">Allow installs from GenTV in Android settings, then try again.</string>
+    <string name="game_module_unavailable">The game download service is not configured in this build.</string>
+    <string name="game_module_unsupported_abi">This TV processor is not supported by the game.</string>
+    <string name="game_module_failed">Could not install the game module. Check the connection and try again.</string>
+    <string name="game_module_retry">Try again</string>
     <string name="app_name">GenTV</string>
     <string name="inputs">Inputs</string>
     <string name="wifi">Wi-Fi</string>

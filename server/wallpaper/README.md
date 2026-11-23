@@ -50,7 +50,9 @@ sh install-on-server.sh /var/tmp/wallpaper-source.tar.gz <sha256>
 ## 3.4 统计与更新
 
 - `GET /tv/update?platform=tv` 读取 `/var/lib/gentv-tv/update.json`，字段为 `versionCode`、`versionName`、`packageName`、`url`、`sha256`。手机使用 `platform=mobile`（或无参数），对应独立的 `update-mobile.json`；缺少清单返回503，避免把电视包推给手机。
-- APK放在 `/var/lib/gentv-tv/releases/`，通过 `/tv/releases/` 只读访问。客户端只接受同API前缀HTTPS地址、最大8 MiB、匹配SHA256、同包名、同签名且版本严格递增的APK；用户确认下载，再由Android确认安装。
+- 从 TV 3.7.14 起，主更新清单读取或验证失败时，客户端尝试同仓库 `update-manifest` 分支上的 `server/wallpaper/update-fallback.json`。它使用与主清单相同的字段格式，APK 指向正式 GitHub Release；下载仍校验包名、版本、签名、大小和 SHA-256。每次发布正式 TV 版本时同步更新该分支的 JSON，核对 Release 附件后再推送；现有 3.7.13 客户端本身没有备用源逻辑。
+- APK放在 `/var/lib/gentv-tv/releases/`，通过 `/tv/releases/` 只读访问。新版客户端只接受同API前缀HTTPS地址、最大256 MiB、匹配SHA256、同包名、同签名且版本严格递增的APK；用户确认下载，再由Android确认安装。旧版客户端仍受原有大小限制约束。
+- 从 TV 3.7.14 起，卡丁车游戏的 GeckoView 使用同包按需分包；清单在本仓库 `update-manifest` 分支，分包 APK 放在 `game-modules-v<版本>` GitHub Release。先发布对应版本与 ABI 的分包，再切换基础包更新清单。构建和上传步骤见 `docs/game-module.md`。
 - `POST /tv/stats` 接收 `{ "event":"session", "versionCode":13, "foregroundSeconds":42 }`；仅按UTC日期和版本累加会话数与秒数，SQLite位于 `/var/lib/gentv-tv/stats.sqlite3`。不保存请求原文、设备ID、安装ID或应用列表；该路由关闭Nginx访问日志。不提供公开统计读取接口。
 - 统计默认关闭，可在控制中心“更新与使用统计”开启。仅在前台会话结束时发送，失败丢弃；不是唯一用户数或新增设备数。桌面进入前台时每天最多检查一次更新；无后台服务。
 - `api.gentv.app.conf` 要求先配置域名DNS和TLS证书。`StateDirectory=gentv-tv` 由systemd创建可写数据目录；代码和媒体目录仍保持独立。

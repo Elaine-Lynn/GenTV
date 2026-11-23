@@ -106,13 +106,13 @@ public final class CloudSettingsActivity extends Activity {
         checking(R.string.cloud_checking); progress.setIndeterminate(true); progress.setVisibility(View.VISIBLE);
         TvCloud.IO.execute(() -> {
             try {
-                JSONObject update = TvCloud.json("update?platform=tv");
+                JSONObject update = TvCloud.updateManifest(this);
                 TvCloud.remember(this,update);
                 long version = update.getLong("versionCode");
                 boolean required=UpdatePolicy.required(BuildConfig.VERSION_CODE,version,update.optLong("minSupportedVersionCode",0),update.optBoolean("forceUpdate",false));
                 if(version <= BuildConfig.VERSION_CODE) { TvCloud.prefs(this).edit().putLong("requiredVersion",0).apply(); runOnUiThread(()->{mandatory(false);message(R.string.cloud_latest);}); return; }
                 String url = update.getString("url"), hash = update.getString("sha256");
-                if(!url.startsWith(TvCloud.BASE) || !hash.matches("[a-fA-F0-9]{64}")) throw new IOException("Invalid update");
+                if(!TvCloud.allowedUpdateUrl(url) || !hash.matches("[a-fA-F0-9]{64}")) throw new IOException("Invalid update");
                 runOnUiThread(()->{
                     if(isFinishing() || isDestroyed()) return;
                     TvCloud.prefs(this).edit().putLong("requiredVersion",required?version:0).apply();
@@ -132,7 +132,7 @@ public final class CloudSettingsActivity extends Activity {
             File file = new File(getCacheDir(),"updates/gentv.apk.part");
             HttpURLConnection c = null;
             try {
-                file.getParentFile().mkdirs(); c = TvCloud.open(url);
+                file.getParentFile().mkdirs(); c = TvCloud.openUpdate(url);
                 if(c.getResponseCode()!=200) throw new IOException("Download refused");
                 long length=c.getContentLength();
                 if(length>UpdatePackage.MAX_APK_BYTES) throw new IOException("APK too large");

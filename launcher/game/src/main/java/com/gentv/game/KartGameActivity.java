@@ -1,6 +1,7 @@
 package com.gentv.game;
 
 import android.app.Activity;
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
@@ -8,6 +9,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
+import android.hardware.input.InputManager;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.InputDevice;
@@ -19,6 +21,7 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.common.BitMatrix;
@@ -51,6 +54,15 @@ public final class KartGameActivity extends Activity {
     private FrameLayout root;
     private LanGameController controller;
     private LinearLayout connectionCard;
+    private InputManager inputManager;
+    private boolean phoneConnected;
+    private boolean returnedToGameHome;
+    private long lastExitBackAt;
+    private final InputManager.InputDeviceListener gamepadListener = new InputManager.InputDeviceListener() {
+        @Override public void onInputDeviceAdded(int deviceId) { updateConnectionCard(); }
+        @Override public void onInputDeviceRemoved(int deviceId) { updateConnectionCard(); }
+        @Override public void onInputDeviceChanged(int deviceId) { updateConnectionCard(); }
+    };
     private TextView loadMessage;
     private TextView controllerMessage;
     private volatile WebExtension.Port inputPort;
@@ -106,9 +118,13 @@ public final class KartGameActivity extends Activity {
         super.onStart();
         session.setActive(true);
         startController();
+        inputManager = (InputManager) getSystemService(Context.INPUT_SERVICE);
+        if (inputManager != null) inputManager.registerInputDeviceListener(gamepadListener, handler);
+        updateConnectionCard();
     }
 
     private void startController() {
+        phoneConnected = false;
         if (connectionCard != null) {
             root.removeView(connectionCard);
             connectionCard = null;
@@ -121,6 +137,12 @@ public final class KartGameActivity extends Activity {
                 controller = new LanGameController(this, address, code,
                         new LanGameController.Listener() {
                             @Override public boolean ready() { return inputPort != null; }
+                            @Override public void connected() {
+                                runOnUiThread(() -> {
+                                    phoneConnected = true;
+                                    updateConnectionCard();
+                                });
+                            }
                             @Override public void key(String key, boolean down) {
                                 runOnUiThread(() -> input(key, down));
                             }
@@ -131,6 +153,10 @@ public final class KartGameActivity extends Activity {
     }
 
     @Override protected void onStop() {
+        if (inputManager != null) {
+            inputManager.unregisterInputDeviceListener(gamepadListener);
+            inputManager = null;
+        }
         if (controller != null) { controller.close(); controller = null; }
         for (String key : new HashSet<>(held)) input(key, false);
         session.setActive(false);
@@ -204,6 +230,37 @@ public final class KartGameActivity extends Activity {
         root.addView(connectionCard, params);
     }
 
+    private void updateConnectionCard() {
+        if (connectionCard == null) return;
+        boolean gamepad = false;
+        if (inputManager != null) for (int id : inputManager.getInputDeviceIds()) {
+            InputDevice device = inputManager.getInputDevice(id);
+            // Some TV remotes advertise SOURCE_JOYSTICK. Only a gamepad source
+            // proves that a dedicated controller is connected.
+            if (device != null && !device.isVirtual() &&
+                    (device.getSources() & InputDevice.SOURCE_GAMEPAD) == InputDevice.SOURCE_GAMEPAD) {
+                gamepad = true;
+                break;
+            }
+        }
+        connectionCard.setVisibility(phoneConnected || gamepad ? View.GONE : View.VISIBLE);
+    }
+
+    private void handleBack() {
+        if (session == null) { finish(); return; }
+        if (!returnedToGameHome) {
+            returnedToGameHome = true;
+            lastExitBackAt = 0;
+            session.loadUri(GAME_URL);
+            Toast.makeText(this, "已返回游戏主页", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        long now = SystemClock.elapsedRealtime();
+        if (now - lastExitBackAt <= 2200) { finish(); return; }
+        lastExitBackAt = now;
+        Toast.makeText(this, "再按一次返回退出游戏", Toast.LENGTH_SHORT).show();
+    }
+
     private void showMessage(FrameLayout root, String message) {
         if (controllerMessage == null) {
             controllerMessage = label(message, 18, true);
@@ -217,17 +274,18 @@ public final class KartGameActivity extends Activity {
     private void input(String key, boolean down) {
         if (browser == null) return;
         if ("Back".equals(key)) {
-            if (down) finish();
+            if (down) handleBack();
             return;
         }
         if (down) {
+            returnedToGameHome = false;
+            lastExitBackAt = 0;
             lastPress.put(key, SystemClock.elapsedRealtime());
             if (!held.add(key)) return;
         } else {
             lastPress.remove(key);
             if (!held.remove(key)) return;
         }
-        if (connectionCard != null) connectionCard.setVisibility(View.GONE);
         if (inputPort != null) {
             try {
                 JSONObject message = new JSONObject();
@@ -264,14 +322,24 @@ public final class KartGameActivity extends Activity {
     }
 
     @Override public boolean dispatchKeyEvent(KeyEvent event) {
+        if (event.getKeyCode() == KeyEvent.KEYCODE_BACK) {
+            if (event.getAction() == KeyEvent.ACTION_DOWN && event.getRepeatCount() == 0) handleBack();
+            return true;
+        }
         if (event.getKeyCode() == KeyEvent.KEYCODE_MENU && event.getAction() == KeyEvent.ACTION_DOWN
                 && event.getRepeatCount() == 0 && connectionCard != null) {
             connectionCard.setVisibility(connectionCard.getVisibility() == View.VISIBLE ? View.GONE : View.VISIBLE);
             return true;
         }
         if (event.getKeyCode() == KeyEvent.KEYCODE_MENU) return true;
+        if (event.getAction() == KeyEvent.ACTION_DOWN && event.getRepeatCount() == 0) {
+            returnedToGameHome = false;
+            lastExitBackAt = 0;
+        }
         return super.dispatchKeyEvent(event);
     }
+
+    @Override public void onBackPressed() { handleBack(); }
 
     @Override protected void onDestroy() {
         handler.removeCallbacks(releaseStale);

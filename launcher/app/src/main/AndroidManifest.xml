@@ -2,9 +2,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- GeckoView is only launched from the API 23+ guarded game entry. -->
-    <uses-sdk tools:overrideLibrary="com.gentv.game,org.mozilla.geckoview,org.mozilla.geckoview.thirdparty,androidx.core.ktx,androidx.core,androidx.annotation.experimental,androidx.lifecycle.livedata,androidx.lifecycle.livedata.core,androidx.lifecycle.livedata.core.ktx,androidx.lifecycle.process,androidx.lifecycle.runtime,androidx.lifecycle.viewmodel" />
-
     <uses-feature android:name="android.software.leanback" android:required="false" />
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
     <uses-feature android:name="android.hardware.wifi" android:required="false" />
@@ -98,6 +95,9 @@
         <activity android:name=".ChildSettingsActivity" android:exported="false" />
         <activity android:name=".MetricsSettingsActivity" android:exported="false" />
         <activity android:name=".CloudSettingsActivity" android:exported="false" android:theme="@android:style/Theme.Translucent.NoTitleBar.Fullscreen" />
+        <activity android:name=".GameModuleActivity" android:exported="false"
+            android:launchMode="singleTop" android:screenOrientation="landscape"
+            android:theme="@style/Theme.GenTV" />
         <provider android:name="androidx.core.content.FileProvider" android:authorities="${applicationId}.updates" android:exported="false" android:grantUriPermissions="true">
             <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/update_paths" />
         </provider>
