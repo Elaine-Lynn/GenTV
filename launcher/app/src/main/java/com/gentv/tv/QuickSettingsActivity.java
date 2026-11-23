@@ -89,14 +89,6 @@ public final class QuickSettingsActivity extends Activity {
         addRow(R.drawable.ic_wifi, R.string.quick_network, 0, SystemSettings.intent(this, Settings.ACTION_WIFI_SETTINGS));
         addRow(R.drawable.ic_apps, R.string.quick_apps, R.string.quick_apps_hint,
                 SystemSettings.intent(this, Settings.ACTION_MANAGE_APPLICATIONS_SETTINGS));
-        android.media.AudioManager audio = (android.media.AudioManager)getSystemService(AUDIO_SERVICE);
-        if (audio != null && (android.os.Build.VERSION.SDK_INT < 21 || !audio.isVolumeFixed())
-                && CompatApi.permissionGranted(this, android.Manifest.permission.MODIFY_AUDIO_SETTINGS)) {
-            addVolume(R.drawable.ic_volume_down, R.string.desktop_volume_down, audio,
-                    android.media.AudioManager.ADJUST_LOWER);
-            addVolume(R.drawable.ic_volume_up, R.string.desktop_volume_up, audio,
-                    android.media.AudioManager.ADJUST_RAISE);
-        }
     }
 
     private void addDesktopRows() {
@@ -111,7 +103,7 @@ public final class QuickSettingsActivity extends Activity {
     }
 
     private void addServiceRows() {
-        addRow(R.drawable.ic_controls, R.string.game_kart, 0, () -> {
+        addRow(R.drawable.ic_gamepad, R.string.game_kart, 0, () -> {
             if (android.os.Build.VERSION.SDK_INT < 23) {
                 Toast.makeText(this, R.string.game_requires_android_6, Toast.LENGTH_LONG).show();
             } else {
@@ -138,14 +130,6 @@ public final class QuickSettingsActivity extends Activity {
         super.onPause();
         finish();
         overridePendingTransition(0, 0);
-    }
-
-    private void addVolume(int icon, int label,
-                           android.media.AudioManager audio, int direction) {
-        addRow(icon, label, 0, () -> {
-            try { audio.adjustStreamVolume(android.media.AudioManager.STREAM_MUSIC, direction, android.media.AudioManager.FLAG_SHOW_UI); }
-            catch (SecurityException e) { Toast.makeText(this,R.string.not_available,Toast.LENGTH_SHORT).show(); }
-        });
     }
 
     private void showDesktopModes() {

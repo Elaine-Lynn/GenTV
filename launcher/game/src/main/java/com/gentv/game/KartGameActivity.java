@@ -185,6 +185,7 @@ public final class KartGameActivity extends Activity {
         ImageView qr = new ImageView(this);
         qr.setImageBitmap(qrCode(url + "#code=" + code));
         LinearLayout.LayoutParams qrParams = new LinearLayout.LayoutParams(dp(140), dp(140));
+        qrParams.gravity = Gravity.CENTER_HORIZONTAL;
         qrParams.topMargin = dp(8);
         connectionCard.addView(qr, qrParams);
         TextView address = label(url, 11, false);

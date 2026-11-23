@@ -3,6 +3,15 @@
 # where crash reports arrive as screenshots.
 -dontobfuscate
 
+# GeckoView uses native JNI entry points and reflection beyond references visible to R8.
+# The former standalone game APK was not minified; retain its Java bridge intact.
+-keep class org.mozilla.** { *; }
+-keep class com.gentv.game.** { *; }
+
+# Umeng's SDK loads components reflectively after the user's separate consent.
+-keep class com.umeng.** { *; }
+-keep class org.repackage.** { *; }
+
 # GeckoView's optional WebAuthn path is excluded from this keyboard-only game.
 -dontwarn com.google.android.gms.fido.**
 -dontwarn com.google.android.gms.tasks.**
