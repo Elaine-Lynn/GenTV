@@ -42,6 +42,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * App tiles. The first {@link MainActivity#COLUMNS} positions are the pinned dock (favourites, fixed order,
@@ -49,6 +50,8 @@ import java.util.Set;
  * (by label), the rest is alphabetical.
  */
 public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+    /** Vendor Etna helper apps are system components, not user-facing Home tiles. */
+    private static final Pattern ETNA_PACKAGE = Pattern.compile("^com\\.dangbei\\.lerad\\.etna(?:\\..+)?$");
 
     interface TileListener {
         void onTileFocused(int position, View card);
@@ -293,7 +296,7 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         for (ResolveInfo ri : found) {
             if (ri.activityInfo == null) continue;
             String pkg = ri.activityInfo.packageName;
-            if (pkg.equals(ctx.getPackageName()) || !ri.activityInfo.exported
+            if (pkg.equals(ctx.getPackageName()) || ETNA_PACKAGE.matcher(pkg).matches() || !ri.activityInfo.exported
                     || !LibraryApps.visible(true, hidden.contains(pkg), added.contains(pkg), removed.contains(pkg))) continue;
             ComponentName component = new ComponentName(pkg, ri.activityInfo.name);
             if (DesktopStore.hidden(ctx, component.flattenToShortString())) continue;

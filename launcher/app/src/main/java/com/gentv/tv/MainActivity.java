@@ -3306,6 +3306,11 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
      * vpn_pill the VPN app has its own pill, so this one always opens Wi-Fi settings.
      */
     private void openNetworkPill() {
+        Intent nativeNetwork = SystemSettings.glowBoxNetworkIntent(this);
+        if (nativeNetwork != null) {
+            open(nativeNetwork);
+            return;
+        }
         Intent i = vpnPill ? null : vpnAppIntent();
         open(i != null ? i : systemIntent(Settings.ACTION_WIFI_SETTINGS));
     }

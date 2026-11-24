@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
+import android.os.Build;
 import android.provider.Settings;
 
 /** The standard settings intent, or, when nothing usable answers it, the first vendor settings entry
@@ -14,6 +15,8 @@ final class SystemSettings {
     private SystemSettings() {}
 
     static Intent intent(Context context, String action) {
+        Intent glowBox = glowBoxIntent(context, action);
+        if (glowBox != null) return glowBox;
         PackageManager pm = context.getPackageManager();
         Intent standard = new Intent(action);
         ResolveInfo resolved = pm.resolveActivity(standard, PackageManager.MATCH_DEFAULT_ONLY);
@@ -29,6 +32,8 @@ final class SystemSettings {
      *  Xiaomi's Account & Security, where the ADB switch lives - in the vendor's own settings app;
      *  MainActivity's Settings menu offers it as "Native settings" while one is installed. */
     static Intent vendorIntent(Context context) {
+        Intent glowBox = glowBoxIntent(context, Settings.ACTION_SETTINGS);
+        if (glowBox != null) return glowBox;
         PackageManager pm = context.getPackageManager();
         for (String value : context.getResources().getStringArray(R.array.settings_fallback_components)) {
             ComponentName component = ComponentName.unflattenFromString(value);
@@ -42,6 +47,34 @@ final class SystemSettings {
             return new Intent().setComponent(component);
         }
         return null;
+    }
+
+    /** XGH-A01 exposes its own settings panel instead of the standard Android settings actions. */
+    private static Intent glowBoxIntent(Context context, String action) {
+        if (!"GlowBox".equalsIgnoreCase(Build.BRAND) || !"XGH-A01".equalsIgnoreCase(Build.MODEL)) return null;
+        ComponentName component = new ComponentName("com.dangbei.haqusetting",
+                "com.dangbei.haqusetting.ui.HomeActivity");
+        try {
+            context.getPackageManager().getActivityInfo(component, 0);
+        } catch (PackageManager.NameNotFoundException e) {
+            return null;
+        }
+        if (Settings.ACTION_SETTINGS.equals(action)) return new Intent().setComponent(component);
+        if (Settings.ACTION_WIFI_SETTINGS.equals(action))
+            return XghSettingsRedirectActivity.intent(context, "side_function_tag_pre_wifi");
+        if (Settings.ACTION_DISPLAY_SETTINGS.equals(action))
+            return XghSettingsRedirectActivity.intent(context, "side_function_tag_pre_image");
+        if (XghSettingsRedirectActivity.ACTION_INPUT_SOURCE.equals(action))
+            return XghSettingsRedirectActivity.intent(context, "side_function_tag_pre_hdmi");
+        return null;
+    }
+
+    static Intent inputSourceIntent(Context context) {
+        return glowBoxIntent(context, XghSettingsRedirectActivity.ACTION_INPUT_SOURCE);
+    }
+
+    static Intent glowBoxNetworkIntent(Context context) {
+        return glowBoxIntent(context, Settings.ACTION_WIFI_SETTINGS);
     }
 
     /** The TV's App info page for pkg, or null where the firmware has none (CVTE's settings app, #1202). */
