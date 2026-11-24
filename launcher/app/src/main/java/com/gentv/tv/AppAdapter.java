@@ -77,7 +77,7 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         final String name;
         /** Ambient glow colour; 0 until sampled from the banner, or the card's accent from the start. */
         int ambient;
-        /** uniform_tiles card fill, top and bottom colour; null until sampled from the icon. */
+        /** Icon fallback card fill, top and bottom colour; null until sampled from the icon. */
         int[] backdrop;
 
         Entry(String label, ComponentName component, Drawable banner, Drawable icon) {
@@ -218,11 +218,11 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private final Map<String, String> launchActions;
     /** Hold OK opens the activity's tile menu (config.xml, tile_menu); false opens App info, as before. */
     private final boolean tileMenu;
-    /** Tile names and bundled banners that replace the app's own (config.xml, app_labels and app_banners). */
+    /** Tile names and bundled banners used when the app has no TV banner (config.xml). */
     private final Map<String, String> appLabels, appBanners;
-    /** Every app tile is its icon on a card tinted from that icon, never its banner (config.xml, uniform_tiles). */
+    /** Tint icon fallback tiles; apps with a valid TV banner still show that banner. */
     private final boolean uniformTiles;
-    /** Packages drawn from their icon and name even when they have a banner (config.xml icon_tiles). */
+    /** Packages drawn from their icon when no valid TV banner is available (config.xml icon_tiles). */
     private final Set<String> iconTiles;
     private final List<Entry> items = new ArrayList<>();
 
@@ -306,14 +306,12 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             label = DesktopStore.name(ctx, component.flattenToShortString(), label);
             if (!seen.add(component.flattenToShortString())) continue;
             boolean inFolder = grouped.contains(component.flattenToShortString());
-            // Folder lists use labels only. Decode artwork only when an app is actually on Home,
-            // and do not decode the original banner when a custom image already replaces it.
-            Drawable banner = inFolder ? null : DesktopExtras.image(ctx, component.flattenToShortString());
-            // uniform_tiles draws the icon, so an app's banner is never loaded. A module card keeps its banner.
-            if (!inFolder && banner == null && !(uniformTiles && card == null)) {
-                banner = bundledBanner(appBanners.get(pkg));
-                if (banner == null) banner = iconTiles.contains(pkg) ? iconBanner(ri.loadIcon(pm)) : loadBanner(pm, ri);
-            }
+            // Every app on Home uses its TV banner first, including configured and custom-image tiles.
+            // Folder members only need labels until they are placed on Home again.
+            Drawable banner = inFolder ? null : loadBanner(pm, ri);
+            if (!inFolder && banner == null) banner = DesktopExtras.image(ctx, component.flattenToShortString());
+            if (!inFolder && banner == null) banner = bundledBanner(appBanners.get(pkg));
+            if (!inFolder && banner == null && iconTiles.contains(pkg)) banner = iconBanner(ri.loadIcon(pm));
             // The icon is only drawn (and sampled for the glow) when there is no banner, so a tile with a
             // banner skips loading and decoding it.
             Drawable icon = !inFolder && banner == null ? ri.loadIcon(pm) : null;
@@ -392,7 +390,7 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         notifyDataSetChanged();
     }
 
-    /** icon_tiles: the app's icon centred on a dark banner-shaped tile, for apps whose own banner crops badly. */
+    /** icon_tiles: the app's icon centred on a dark banner-shaped tile when no TV banner exists. */
     private Drawable iconBanner(Drawable icon) {
         int w = 320, h = 180, side = 104;
         android.graphics.Bitmap bmp = android.graphics.Bitmap.createBitmap(w, h, android.graphics.Bitmap.Config.ARGB_8888);
@@ -412,8 +410,22 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     private Drawable loadBanner(PackageManager pm, ResolveInfo ri) {
         if (android.os.Build.VERSION.SDK_INT < 20) return null;
-        int id = ri.activityInfo.banner;
-        if (id == 0) id = ri.activityInfo.applicationInfo.banner;
+        Drawable banner = bannerResource(pm, ri, ri.activityInfo.banner);
+        if (usableBanner(banner)) return banner;
+        // A TV activity can declare a square or broken banner while the application has a
+        // usable 16:9 one. Try the application separately before falling back to the icon.
+        int appId = ri.activityInfo.applicationInfo.banner;
+        if (appId != ri.activityInfo.banner) {
+            banner = bannerResource(pm, ri, appId);
+            if (usableBanner(banner)) return banner;
+        }
+        banner = ri.activityInfo.loadBanner(pm);
+        if (usableBanner(banner)) return banner;
+        banner = ri.activityInfo.applicationInfo.loadBanner(pm);
+        return usableBanner(banner) ? banner : null;
+    }
+
+    private Drawable bannerResource(PackageManager pm, ResolveInfo ri, int id) {
         Drawable banner = null;
         if (id != 0) {
             try {
@@ -428,9 +440,12 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             } catch (PackageManager.NameNotFoundException | Resources.NotFoundException ignored) {
             }
         }
-        if (banner == null) banner = ri.activityInfo.loadBanner(pm);
+        return banner;
+    }
+
+    private static boolean usableBanner(Drawable banner) {
         // A square "banner" counts as none: the tile shows the app's icon and name instead of a blur.
-        return banner != null && isBannerShaped(banner.getIntrinsicWidth(), banner.getIntrinsicHeight()) ? banner : null;
+        return banner != null && isBannerShaped(banner.getIntrinsicWidth(), banner.getIntrinsicHeight());
     }
 
     /**
@@ -490,23 +505,18 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         name.setLayoutParams(nameLp);
         // A sideways row would stretch a match_parent item across the whole screen: give it a grid column's width.
         if (singleRow) v.getLayoutParams().width = inner / dockSize;
-        if (uniformTiles) {
-            // tvOS-style tile: a large centred mark, no caption inside the card.
-            View icon = v.findViewById(R.id.icon);
-            FrameLayout.LayoutParams iconLp = (FrameLayout.LayoutParams) icon.getLayoutParams();
-            iconLp.width = iconLp.height = Math.round(h * ICON_SHARE);
-            iconLp.bottomMargin = 0;
-            icon.setLayoutParams(iconLp);
-        } else if (h < Math.round(DESIGN_H_DP * density)) {
-            // Shrunk tiles (e.g. 5 or 6 columns): scale icon and bottom margin proportionally with tile height so the label does not overlap the icon.
+        if (h < Math.round(DESIGN_H_DP * density)) {
+            // Keep icon and caption side by side when narrow grid tiles shrink.
             View icon = v.findViewById(R.id.icon);
             FrameLayout.LayoutParams iconLp = (FrameLayout.LayoutParams) icon.getLayoutParams();
             float scale = (float) h / (DESIGN_H_DP * density);
-            iconLp.width = iconLp.height = Math.round(48f * density * scale);
-            iconLp.bottomMargin = Math.round(14f * density * scale);
+            iconLp.width = iconLp.height = Math.round(52f * density * scale);
+            iconLp.setMarginStart(Math.round(16f * density * scale));
             icon.setLayoutParams(iconLp);
             View label = v.findViewById(R.id.label);
-            label.setPadding(label.getPaddingLeft(), label.getPaddingTop(), label.getPaddingRight(), Math.round(4f * density));
+            FrameLayout.LayoutParams labelLp = (FrameLayout.LayoutParams) label.getLayoutParams();
+            labelLp.setMarginStart(Math.round(78f * density * scale));
+            label.setLayoutParams(labelLp);
         }
         return new Holder(v, listener, animations, advancedEffects, reducedMotion, restNameAlpha, focusOvershoot);
     }
@@ -547,9 +557,13 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         // A fully opaque banner covers the whole card (centerCrop), so the card's own fill under it is drawn for
         // nothing on every frame; keep it under banners with transparent parts and under icon tiles.
         h.card.setBackground(e.banner != null && e.banner.getOpacity() == PixelFormat.OPAQUE ? null : h.cardBackground);
-        if (uniformTiles && e.banner == null) {
-            if (e.backdrop == null) e.backdrop = backdrop(e.icon, ambientColorAt(position));
-            h.card.setBackground(new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, e.backdrop));
+        if (e.banner == null && e.icon != null) {
+            if (e.backdrop == null) e.backdrop = backdrop(e.icon, dominantColor(e.icon));
+            GradientDrawable fill = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, e.backdrop);
+            fill.setCornerRadius(cornerRadius(h.card.getLayoutParams().width,
+                    ctx.getResources().getDisplayMetrics().density));
+            h.card.setBackground(fill);
+            h.label.setTextColor(isLight(e.backdrop[1]) ? 0xFF1C1C1E : Color.WHITE);
         }
         if (e.banner != null) {
             h.banner.setImageDrawable(e.banner);
@@ -562,7 +576,7 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             h.icon.setImageDrawable(e.icon);
             h.icon.setVisibility(View.VISIBLE);
             h.label.setText(e.label);
-            h.label.setVisibility(uniformTiles ? View.GONE : View.VISIBLE);
+            h.label.setVisibility(View.VISIBLE);
         }
         h.card.setOnClickListener(v -> launch(e));
         h.card.setOnLongClickListener(v -> {
@@ -760,8 +774,8 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         return e.ambient;
     }
 
-    /** Share of the tile height the icon takes in uniform_tiles mode (onCreateViewHolder). */
-    private static final float ICON_SHARE = 0.62f;
+    /** Share of the design tile height occupied by the icon when no TV banner exists. */
+    private static final float ICON_SHARE = 52f / DESIGN_H_DP;
 
     /**
      * The colour covering most of an icon, for a card that should read as that app: a small saturated badge
@@ -802,9 +816,8 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     }
 
     /**
-     * The uniform tile's fill. Where the icon sits on a flat colour of its own (a white or coloured rounded
-     * square), the card takes that colour, so the mark reads as filling the tile as on tvOS. Otherwise a
-     * gradient of the icon's main colour, deepened so the mark stands out. The card clips the corners.
+     * Fill the space around a square icon with its edge colour. For transparent or detailed edges, use
+     * a darker gradient of the icon's dominant colour so its full shape remains legible.
      */
     private static int[] backdrop(Drawable live, int fallback) {
         int[] plate = iconPlate(live);
@@ -817,6 +830,11 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         int top = Color.HSVToColor(hsv);
         hsv[2] *= 0.6f;
         return new int[]{top, Color.HSVToColor(hsv)};
+    }
+
+    private static boolean isLight(int color) {
+        return (Color.red(color) * 299 + Color.green(color) * 587 + Color.blue(color) * 114)
+                / 1000 >= 170;
     }
 
     /**
