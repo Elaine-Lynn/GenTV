@@ -506,17 +506,12 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         // A sideways row would stretch a match_parent item across the whole screen: give it a grid column's width.
         if (singleRow) v.getLayoutParams().width = inner / dockSize;
         if (h < Math.round(DESIGN_H_DP * density)) {
-            // Keep icon and caption side by side when narrow grid tiles shrink.
+            // Preserve the square icon's proportion when the 16:9 card shrinks.
             View icon = v.findViewById(R.id.icon);
             FrameLayout.LayoutParams iconLp = (FrameLayout.LayoutParams) icon.getLayoutParams();
             float scale = (float) h / (DESIGN_H_DP * density);
-            iconLp.width = iconLp.height = Math.round(52f * density * scale);
-            iconLp.setMarginStart(Math.round(16f * density * scale));
+            iconLp.width = iconLp.height = Math.round(90f * density * scale);
             icon.setLayoutParams(iconLp);
-            View label = v.findViewById(R.id.label);
-            FrameLayout.LayoutParams labelLp = (FrameLayout.LayoutParams) label.getLayoutParams();
-            labelLp.setMarginStart(Math.round(78f * density * scale));
-            label.setLayoutParams(labelLp);
         }
         return new Holder(v, listener, animations, advancedEffects, reducedMotion, restNameAlpha, focusOvershoot);
     }
@@ -563,20 +558,16 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             fill.setCornerRadius(cornerRadius(h.card.getLayoutParams().width,
                     ctx.getResources().getDisplayMetrics().density));
             h.card.setBackground(fill);
-            h.label.setTextColor(isLight(e.backdrop[1]) ? 0xFF1C1C1E : Color.WHITE);
         }
         if (e.banner != null) {
             h.banner.setImageDrawable(e.banner);
             h.banner.setVisibility(View.VISIBLE);
             h.icon.setVisibility(View.GONE);
-            h.label.setVisibility(View.GONE);
         } else {
             h.banner.setImageDrawable(null);
             h.banner.setVisibility(View.GONE);
             h.icon.setImageDrawable(e.icon);
             h.icon.setVisibility(View.VISIBLE);
-            h.label.setText(e.label);
-            h.label.setVisibility(View.VISIBLE);
         }
         h.card.setOnClickListener(v -> launch(e));
         h.card.setOnLongClickListener(v -> {
@@ -775,7 +766,7 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     }
 
     /** Share of the design tile height occupied by the icon when no TV banner exists. */
-    private static final float ICON_SHARE = 52f / DESIGN_H_DP;
+    private static final float ICON_SHARE = 90f / DESIGN_H_DP;
 
     /**
      * The colour covering most of an icon, for a card that should read as that app: a small saturated badge
@@ -830,11 +821,6 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         int top = Color.HSVToColor(hsv);
         hsv[2] *= 0.6f;
         return new int[]{top, Color.HSVToColor(hsv)};
-    }
-
-    private static boolean isLight(int color) {
-        return (Color.red(color) * 299 + Color.green(color) * 587 + Color.blue(color) * 114)
-                / 1000 >= 170;
     }
 
     /**
@@ -978,7 +964,6 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         final Drawable cardBackground;
         final ImageView banner;
         final ImageView icon;
-        final TextView label;
         final TextView name;
         final boolean animations;
         final boolean advancedEffects;
@@ -994,7 +979,6 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             cardBackground = card.getBackground();
             banner = v.findViewById(R.id.banner);
             icon = v.findViewById(R.id.icon);
-            label = v.findViewById(R.id.label);
             name = v.findViewById(R.id.name);
             this.animations = animations;
             this.advancedEffects = advancedEffects;
