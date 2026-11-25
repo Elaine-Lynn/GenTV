@@ -4,7 +4,7 @@ English · [简体中文](PRIVACY.zh-CN.md)
 
 This page describes the network use of official GenTV builds. Builds made from this source without a configured GenTV API base, including forks, never contact the GenTV service.
 
-GenTV has no accounts, advertising or third-party analytics SDKs.
+GenTV has no accounts or advertising. The TV app can include the optional Umeng U-App analytics SDK. It is initialized only after you enable its separate switch in the TV privacy settings. The phone app does not use Umeng.
 
 ## GenTV TV
 
@@ -14,6 +14,7 @@ GenTV has no accounts, advertising or third-party analytics SDKs.
 | Update download | Only after you choose to download | The request for the release file. The APK's SHA-256, package name and signing certificate are verified before Android asks you to confirm installation. |
 | Online wallpapers | While the home screen shows online wallpapers | Requests for the wallpaper list (refreshed about every six hours) and the images. Downloaded images are cached on the TV. |
 | Usage statistics | Off by default in schema 3; enable in Settings after reviewing the revised disclosure. | When enabled: a local factory MAC if the OS permits access, a random installation ID, session ID, fixed page/action events, event time and order, app version, Android SDK and foreground duration. The ID stays local across upgrades and is reset on opt-out, clearing app data or reinstallation. Debug/emulator or manually marked reports are test traffic. |
+| Umeng U-App analytics | Separately off by default; available only when an Umeng AppKey is configured in a release build and you enable its switch in the TV privacy settings. | Umeng receives device identifiers (such as Android ID, OAID or a generated ID), network information, app version, and fixed GenTV screen/action events for usage analysis. GenTV does not pass app names or typed text as custom events. Umeng's SDK collection follows its [privacy policy](https://www.umeng.com/page/policy). Turning the switch off stops new GenTV events; restart GenTV to stop the initialized SDK. Previously sent data cannot be recalled. |
 
 ## GenTV Remote (phone)
 
@@ -23,6 +24,8 @@ GenTV has no accounts, advertising or third-party analytics SDKs.
 | Update download | Only after you choose to download | The request for the release file, verified by size and SHA-256 before installation |
 | Feedback | Only when you submit the feedback form | Your message and feedback type, the page you sent it from, an email address if you enter one, phone model, Android version, app version, a random install ID and any log or screenshot you choose to attach |
 | Usage statistics | Off by default in schema 3; enable in Settings after reviewing the revised disclosure. Debug builds never send statistics. | When enabled: a local factory MAC if the OS permits access, a random installation ID, a changing session ID, fixed page/feature events and their order/time, app version, Android SDK and foreground duration. No typed content is sent. Emulator and manually marked reports are test traffic. |
+
+The following details concern only usage statistics sent to the GenTV server, not Umeng analytics.
 
 The server immediately converts valid MAC addresses to an app-scoped HMAC using a random server secret and does not store or display raw MACs. MAC hashes take priority over installation IDs for deduplication and may link reinstallations. Empty, placeholder, randomized or inaccessible MACs fall back to installation IDs. MAC-based matching is not a guarantee of physical device counts: network interfaces can differ. Updating from the old collection requires enabling statistics again; old MAC-less records cannot be linked across reinstallations. Disabling does not remove historical links; contact GenTV to request remote-data deletion. Statistics never include IP addresses, serial numbers, TV names, Wi-Fi names, app lists, files, logs, screenshots or text you type. Turning statistics off clears unsent events and resets the statistics installation ID. Upgrades preserve this app-local ID; clearing data or reinstalling resets it. Upgrades preserve an explicit choice to disable statistics. Requests that have already been sent cannot be recalled by the app.
 

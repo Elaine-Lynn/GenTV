@@ -30,6 +30,17 @@
             android:textColor="#FFFFFFFF"
             android:textSize="56sp"
             android:visibility="gone" />
+        <ImageView
+            android:id="@+id/wallpaperPlay"
+            android:layout_width="34dp"
+            android:layout_height="34dp"
+            android:layout_gravity="bottom|end"
+            android:layout_margin="8dp"
+            android:padding="7dp"
+            android:background="@drawable/wallpaper_badge_bg"
+            android:src="@drawable/ic_wallpaper_play"
+            android:contentDescription="@string/wallpaper_user_video"
+            android:visibility="gone" />
         <TextView
             android:id="@+id/selectedBadge"
             android:layout_width="wrap_content"

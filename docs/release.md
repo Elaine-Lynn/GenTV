@@ -1,6 +1,6 @@
 # GenTV 正式签名与发布
 
-电视包 `com.gentv.tv`，官网与升级接口已发布 3.7.16 / code38；手机版 `com.gentv.mobile` 已发布 3.7.4 / code20。两者使用同一正式证书，但应用身份与更新清单独立。
+电视包 `com.gentv.tv`，GitHub Release 与升级接口已发布 3.7.17 / code39；手机版 `com.gentv.mobile` 已发布 3.7.4 / code20。两者使用同一正式证书，但应用身份与更新清单独立。
 
 正式证书 SHA-256 指纹（已用 v3.7.0 发布的 `gentv-tv-3.7.0.apk` 和 `gentv-mobile-3.7.1.apk` 核对）：
 
@@ -9,6 +9,10 @@
 ```
 
 每次发布后用 `apksigner verify --print-certs` 核对公网 APK 的证书与此一致。更换证书时必须同步更新本文件、README 和安装指南中的指纹。
+
+## 电视版 3.7.17
+
+从 `feature/v3.7.17` 发布 `v3.7.17`，电视包为 3.7.17 / code39、最低 API 17。个性化页面合并内置静态与动态壁纸列表，移除两项旧壁纸资源；正式版可在电视隐私设置中单独选择是否启用友盟统计，默认关闭。更新内容见[3.7.17 更新日志](release-notes-v3.7.17.md)，发布清单见[更新配置](releases/v3.7.17/config.json)。GitHub Release 附件、升级清单及公网 APK 均已按 SHA-256 和正式签名核验；完整自更新实机流程仍待验证。
 
 ## 电视版 3.7.16
 

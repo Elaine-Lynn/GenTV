@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Switch;
 
@@ -12,12 +13,16 @@ public final class MetricsSettingsActivity extends Activity {
     @Override protected void attachBaseContext(android.content.Context base) { super.attachBaseContext(LauncherLocale.wrap(base)); }
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
+        ScrollView scroll = new ScrollView(this); scroll.setFillViewport(true);
         LinearLayout panel = new LinearLayout(this); panel.setOrientation(LinearLayout.VERTICAL);
         panel.setGravity(Gravity.CENTER_VERTICAL); int pad=(int)(48*getResources().getDisplayMetrics().density);panel.setPadding(pad,pad,pad,pad);panel.setBackgroundColor(0xFF142028);
+        scroll.setBackgroundColor(0xFF142028); scroll.addView(panel);
         TextView title = new TextView(this);title.setText(R.string.metrics_title);title.setTextColor(-1);title.setTextSize(26);panel.addView(title);
         TextView hint = new TextView(this);hint.setText(R.string.metrics_hint);hint.setTextColor(0xFFCCD4DB);hint.setTextSize(17);hint.setPadding(0,20,0,24);panel.addView(hint);
         Switch consent = new Switch(this);consent.setText(R.string.metrics_share_statistics);consent.setTextColor(-1);consent.setTextSize(20);consent.setChecked(TvMetrics.enabled(this));consent.setEnabled(TvCloud.enabled());consent.setFocusable(true);consent.setOnCheckedChangeListener((v,on)->TvMetrics.consent(this,on));panel.addView(consent);
+        TextView umengHint = new TextView(this);umengHint.setText(UmengMetrics.available() ? R.string.metrics_umeng_hint : R.string.metrics_umeng_unavailable);umengHint.setTextColor(0xFFCCD4DB);umengHint.setTextSize(17);umengHint.setPadding(0,28,0,18);panel.addView(umengHint);
+        Switch umengConsent = new Switch(this);umengConsent.setText(R.string.metrics_umeng_consent);umengConsent.setTextColor(-1);umengConsent.setTextSize(20);umengConsent.setChecked(UmengMetrics.consented(this));umengConsent.setEnabled(UmengMetrics.available());umengConsent.setFocusable(true);umengConsent.setOnCheckedChangeListener((v,on)->UmengMetrics.setConsent(this,on,this));panel.addView(umengConsent);
         Switch test = new Switch(this);test.setText(R.string.metrics_test);test.setTextColor(-1);test.setTextSize(18);test.setPadding(0,24,0,24);test.setChecked(BuildConfig.DEBUG || TvMetrics.emulator() || TvCloud.prefs(this).getBoolean("metrics_test",false));test.setEnabled(!BuildConfig.DEBUG && !TvMetrics.emulator());test.setFocusable(true);test.setOnCheckedChangeListener((v,on)->TvCloud.prefs(this).edit().putBoolean("metrics_test",on).apply());panel.addView(test);
-        setContentView(panel);consent.requestFocus();
+        setContentView(scroll);(umengConsent.isEnabled() ? umengConsent : consent).requestFocus();
     }
 }
