@@ -46,6 +46,8 @@ final class VideoWallpaperPlayer implements TextureView.SurfaceTextureListener {
     private int videoHeight;
     private int bundledResource;
     private long lastLoopAt;
+    private long resumePositionMs;
+    private String playbackSource;
 
     VideoWallpaperPlayer(Context context, FrameLayout root) {
         this.context = context;
@@ -87,6 +89,12 @@ final class VideoWallpaperPlayer implements TextureView.SurfaceTextureListener {
                 && !UserWallpaper.isVideo(BundledWallpapers.selected(context))
                 || file == null || !file.isFile() || file.length() < 12
                 || file.length() > MAX_BYTES)) return;
+        String source = bundledResource != 0 ? "res:" + bundledResource
+                : file.getAbsolutePath() + ":" + file.length() + ":" + file.lastModified();
+        if (!source.equals(playbackSource)) {
+            playbackSource = source;
+            resumePositionMs = 0;
+        }
         active = true;
         paused = false;
         video.setAlpha(0f);
@@ -150,6 +158,7 @@ final class VideoWallpaperPlayer implements TextureView.SurfaceTextureListener {
     void close() {
         closed = true;
         stop();
+        resumePositionMs = 0;
         releaseHeldFrame();
         video.setSurfaceTextureListener(null);
         if (surface != null) { surface.release(); surface = null; }
@@ -171,6 +180,7 @@ final class VideoWallpaperPlayer implements TextureView.SurfaceTextureListener {
                     ? RawResourceDataSource.buildRawResourceUri(bundledResource)
                     : Uri.fromFile(file);
             next.setMediaItem(MediaItem.fromUri(uri));
+            if (resumePositionMs > 0) next.seekTo(resumePositionMs);
             next.setVolume(0f);
             next.setRepeatMode(Player.REPEAT_MODE_ONE);
             next.addListener(new Player.Listener() {
@@ -211,6 +221,7 @@ final class VideoWallpaperPlayer implements TextureView.SurfaceTextureListener {
         if (player != failed) return;
         Log.w("GenTV.VideoWallpaper", "Video wallpaper unavailable; showing still wallpaper");
         release();
+        resumePositionMs = 0;
         active = false;
         video.setVisibility(View.GONE);
     }
@@ -226,7 +237,12 @@ final class VideoWallpaperPlayer implements TextureView.SurfaceTextureListener {
     }
 
     private void release() {
-        if (player != null) { player.release(); player = null; }
+        if (player != null) {
+            long position = player.getCurrentPosition();
+            if (position > 0) resumePositionMs = position;
+            player.release();
+            player = null;
+        }
         lastLoopAt = 0;
         videoWidth = 0;
         videoHeight = 0;

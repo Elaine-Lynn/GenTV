@@ -10,6 +10,10 @@
 
 每次发布后用 `apksigner verify --print-certs` 核对公网 APK 的证书与此一致。更换证书时必须同步更新本文件、README 和安装指南中的指纹。
 
+## 电视版 3.7.15
+
+从 `feature/xiaoguanghe-r1` 发布 `v3.7.15`，电视包为 3.7.15 / code37、最低 API 17。首页优先使用电视横幅，改善工具箱返回时的视频壁纸续播，并进行性能优化。更新内容见[3.7.15 更新日志](release-notes-v3.7.15.md)，发布清单见[更新配置](releases/v3.7.15/config.json)。
+
 ## GitHub 电视版 3.7.13
 
 从 `feature/3.7.2-android4.2` 发布 `v3.7.13`，电视包为 3.7.13 / code35、最低 API 17，沿用现有正式证书。355 项 Release 单元测试、lintRelease、正式签名构建及仓库检查通过。Android 4.2 真机尚未验证；此次仅发布 GitHub Release，官网与应用内更新清单仍维持既有版本。更新内容、校验值及限制见[3.7.13 更新说明](release-notes-v3.7.13.md)。

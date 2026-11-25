@@ -70,7 +70,7 @@
     <!-- A tile's name instead of the app's own: "package=Name". It also shows above the dock. -->
     <string-array name="app_labels">
     </string-array>
-    <!-- A tile's artwork instead of the app's banner: "package=drawable", a banner_* drawable bundled with the
+    <!-- A tile's artwork when the app has no TV banner: "package=drawable", a banner_* drawable bundled with the
          launcher (res/drawable). banner_tv is a magenta field with the Live TV glyph. -->
     <string-array name="app_banners">
     </string-array>
@@ -377,8 +377,8 @@
 
     <!-- Installed launchable apps, including ordinary Android apps. Also settable in config.json. -->
     <bool name="app_library">true</bool>
-    <!-- Every app tile is its icon on a card tinted from that icon, name only under the focused tile,
-         instead of each app's own banner. Off by default; a theme can set "uniform_tiles": true. -->
+    <!-- Legacy theme option: use an icon's dominant colour for its focus glow.
+         Every app still prefers its TV banner; icon fallback cards always extend their edge colour. -->
     <bool name="uniform_tiles">false</bool>
     <!-- Optional direct Home picker in the app library: OK toggles the checkmark, checked apps first.
          Off by default; a theme can set "app_library_selection": true (also needs app_library). -->
@@ -479,7 +479,7 @@
          halo (the rim with a lighter outer glow). Can also be set with "glass_style": "rim" in a theme's config.json. -->
     <string name="glass_style" translatable="false">glass</string>
 
-    <!-- Tiles drawn from the app's icon and name instead of its banner (for banners that crop badly). -->
+    <!-- Tiles drawn from the app's icon and name when no usable TV banner exists. -->
     <string-array name="icon_tiles" translatable="false">
     </string-array>
 </resources>

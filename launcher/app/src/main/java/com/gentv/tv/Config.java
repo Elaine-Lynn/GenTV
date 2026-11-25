@@ -69,7 +69,7 @@ final class Config {
     final Map<String, String> launchActions;
     /** Package to the name its tile shows instead of the app's label (config.xml, app_labels). */
     final Map<String, String> appLabels;
-    /** Package to a bundled banner_* drawable its tile shows instead of the app's art (config.xml, app_banners). */
+    /** Package to a bundled banner_* drawable used when the app has no TV banner (config.xml). */
     final Map<String, String> appBanners;
     final String sourcePanelService;
     final String sourcePanelAction;
@@ -145,7 +145,7 @@ final class Config {
     final boolean appLibrarySelection;
     /** OK opens every app in the library; Add to Home stays in the hold menu (library_ok_opens). */
     final boolean libraryOkOpens;
-    /** Icon on a card tinted from that icon, instead of the app's banner (config.xml uniform_tiles). */
+    /** Legacy theme option: use the icon's dominant colour for its focus glow (config.xml uniform_tiles). */
     final boolean uniformTiles;
     /** Background colour behind everything, #RRGGBB; black unless a theme says otherwise. */
     final int backgroundColor;
