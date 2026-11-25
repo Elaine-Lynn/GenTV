@@ -82,6 +82,19 @@ def app(environ, start_response):
             start_response('503 Service Unavailable', [('Content-Length', '0'), ('Cache-Control', 'no-store')]); return []
         body = json.dumps(release, separators=(',', ':')).encode()
         kind = 'application/json; charset=utf-8'; cache = 'no-cache'
+    elif path == '/tv/plugins/game/update':
+        abi = parse_qs(environ.get('QUERY_STRING', '')).get('abi', [])
+        if abi not in (['armeabi-v7a'], ['arm64-v8a']):
+            start_response('400 Bad Request', [('Content-Length', '0')]); return []
+        manifest = STATE / 'plugins' / 'game' / ('update-' + abi[0] + '.json')
+        try:
+            if manifest.is_symlink(): raise ValueError('Invalid manifest')
+            release = json.loads(manifest.read_text(encoding='utf-8'))
+            if not isinstance(release, dict) or release.get('abi') != abi[0]: raise ValueError('Invalid ABI')
+        except (OSError, ValueError):
+            start_response('503 Service Unavailable', [('Content-Length', '0'), ('Cache-Control', 'no-store')]); return []
+        body = json.dumps(release, separators=(',', ':')).encode()
+        kind = 'application/json; charset=utf-8'; cache = 'no-cache'
     elif path == '/tv/wallpaper':
         items = []
         for p in pictures():

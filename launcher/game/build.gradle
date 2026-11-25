@@ -11,8 +11,8 @@ android {
         applicationId 'com.gentv.game.plugin'
         minSdk 28
         targetSdk 34
-        versionCode 37
-        versionName '3.7.15'
+        versionCode = (project.findProperty('gameVersionCode') ?: '1').toInteger()
+        versionName = (project.findProperty('gameVersionName') ?: '1.0.0')
     }
     splits {
         abi {

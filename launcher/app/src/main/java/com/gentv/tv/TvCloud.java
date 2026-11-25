@@ -74,6 +74,23 @@ final class TvCloud {
         connection.setRequestProperty("User-Agent", "GenTV/" + BuildConfig.VERSION_NAME);
         return connection;
     }
+    static JSONObject gameManifest(String abi) throws Exception {
+        if (!"armeabi-v7a".equals(abi) && !"arm64-v8a".equals(abi))
+            throw new IOException("Unsupported plugin ABI");
+        try {
+            return json("plugins/game/update?abi=" + abi);
+        } catch (Exception primaryFailure) {
+            HttpURLConnection connection = external(BuildConfig.GAME_MANIFEST_BASE_URL + "latest/" + abi + "/manifest.json");
+            try {
+                if (connection.getResponseCode() != 200) throw new IOException("Game update unavailable");
+                return new JSONObject(new String(read(connection.getInputStream(), 65536),
+                        java.nio.charset.Charset.forName("UTF-8")));
+            } catch (Exception fallbackFailure) {
+                fallbackFailure.addSuppressed(primaryFailure);
+                throw fallbackFailure;
+            } finally { connection.disconnect(); }
+        }
+    }
     static boolean allowedUpdateUrl(String url) {
         if (enabled() && url.startsWith(BASE + "releases/")
                 && url.substring((BASE + "releases/").length()).matches("[A-Za-z0-9._-]+\\.apk")) return true;
@@ -87,9 +104,12 @@ final class TvCloud {
     }
     static HttpURLConnection openGameModule(String url) throws IOException {
         if (!allowedGameModuleUrl(url)) throw new IOException("Unexpected game module URL");
+        if (enabled() && url.startsWith(BASE + "releases/")) return open(url);
         return followGithubRelease(url);
     }
     static boolean allowedGameModuleUrl(String url) {
+        if (enabled() && url.matches(java.util.regex.Pattern.quote(BASE + "releases/")
+                + "game-(?:armeabi_v7a|arm64_v8a)\\.apk")) return true;
         return url.matches("https://github\\.com/Elaine-Lynn/GenTV/releases/download/"
                 + "game-runtime-v[0-9]+\\.[0-9]+\\.[0-9]+/"
                 + "game-(?:armeabi_v7a|arm64_v8a)\\.apk");

@@ -52,7 +52,8 @@ def validate_contents(base_apk, game_apk, abi):
             raise ValueError(f'Other ABI libraries present: {game_apk}')
 
 
-def package(base_apk, game_dir, output, sdk, allow_debug):
+def package(base_apk, game_dir, output, sdk, allow_debug, min_host=37, max_host=2147483647):
+    if min_host <= 0 or max_host < min_host: raise ValueError("Invalid host compatibility range")
     tools = sdk / 'build-tools' / '34.0.0'
     aapt = tools / ('aapt.exe' if os.name == 'nt' else 'aapt')
     apksigner = tools / ('apksigner.bat' if os.name == 'nt' else 'apksigner')
@@ -66,13 +67,12 @@ def package(base_apk, game_dir, output, sdk, allow_debug):
     for abi in ('armeabi-v7a', 'arm64-v8a'):
         source = game_dir / f'game-{abi}-{variant}.apk'
         plugin = identity(aapt, source)
-        if plugin.get('name') != 'com.gentv.game.plugin' or any(
-                plugin.get(key) != host.get(key) for key in ('versionCode', 'versionName')):
+        if plugin.get('name') != 'com.gentv.game.plugin' or int(plugin.get('versionCode', '0')) <= 0:
             raise ValueError(f'Wrong game plugin identity or version: {source}')
         if signer(apksigner, source, allow_debug) != certificate:
             raise ValueError(f'Game plugin signer differs from launcher: {source}')
         validate_contents(base_apk, source, abi)
-        folder = output / host['versionCode'] / abi
+        folder = output / plugin['versionCode'] / abi
         folder.mkdir(parents=True, exist_ok=True)
         name = f"game-{abi.replace('-', '_')}.apk"
         target = folder / name
@@ -82,11 +82,12 @@ def package(base_apk, game_dir, output, sdk, allow_debug):
             shutil.copyfile(source, target)
         data = target.read_bytes()
         manifest = {
-            'versionCode': int(host['versionCode']), 'versionName': host['versionName'],
-            'hostPackageName': host['name'], 'pluginPackageName': plugin['name'],
+            'versionCode': int(plugin['versionCode']), 'versionName': plugin['versionName'],
+            'hostApiVersion': 1, 'minHostVersionCode': min_host, 'maxHostVersionCode': max_host,
+            'hostPackageName': host['name'], 'packageName': plugin['name'],
             'signingCertificateSha256': certificate, 'abi': abi,
             'plugin': {'name': name,
-                       'url': f"https://github.com/Elaine-Lynn/GenTV/releases/download/game-runtime-v{host['versionName']}/{name}",
+                       'url': f"https://github.com/Elaine-Lynn/GenTV/releases/download/game-runtime-v{plugin['versionName']}/{name}",
                        'sha256': hashlib.sha256(data).hexdigest(), 'sizeBytes': len(data)},
         }
         manifest_file = folder / 'manifest.json'
@@ -94,6 +95,12 @@ def package(base_apk, game_dir, output, sdk, allow_debug):
         if manifest_file.exists() and manifest_file.read_bytes() != encoded:
             raise ValueError(f'Refusing to overwrite different manifest: {manifest_file}')
         manifest_file.write_bytes(encoded)
+        latest = output / 'latest' / abi
+        latest.mkdir(parents=True, exist_ok=True)
+        (latest / 'manifest.json').write_bytes(encoded)
+        server = output / 'server'
+        server.mkdir(parents=True, exist_ok=True)
+        (server / f'update-{abi}.json').write_bytes(encoded)
         print(f'{abi}: {len(data):,} bytes -> {target}')
 
 
@@ -103,6 +110,8 @@ if __name__ == '__main__':
     parser.add_argument('--game-dir', type=Path, required=True)
     parser.add_argument('--output', type=Path, default=Path('work/game-runtime-release'))
     parser.add_argument('--sdk', type=Path, default=Path(os.environ.get('ANDROID_HOME', '')))
+    parser.add_argument('--min-host', type=int, default=37)
+    parser.add_argument('--max-host', type=int, default=2147483647)
     parser.add_argument('--allow-debug', action='store_true')
     args = parser.parse_args()
-    package(args.base_apk, args.game_dir, args.output, args.sdk, args.allow_debug)
+    package(args.base_apk, args.game_dir, args.output, args.sdk, args.allow_debug, args.min_host, args.max_host)

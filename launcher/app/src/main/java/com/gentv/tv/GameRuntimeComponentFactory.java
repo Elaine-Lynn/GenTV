@@ -23,8 +23,8 @@ public final class GameRuntimeComponentFactory extends android.app.AppComponentF
         String packageName = processName.split(":", 2)[0];
         int userId = Process.myUid() / 100000;
         File appData = new File("/data/user/" + userId + "/" + packageName);
-        String versionAndAbi = BuildConfig.VERSION_CODE + "/" + GameRuntimeStore.abi();
-        File archive = new File(appData, "files/game-runtime/" + versionAndAbi + "/game-"
+        String versionAndAbi = GameRuntimeStore.activeVersion(new File(appData, "files")) + "/" + GameRuntimeStore.abi();
+        File archive = new File(appData, "files/game-runtime/plugins/" + versionAndAbi + "/game-"
                 + GameRuntimeStore.abi().replace('-', '_') + ".apk");
         File nativeDirectory = new File(appData, "code_cache/game-runtime-libs/" + versionAndAbi);
         if (!archive.isFile() || !nativeDirectory.isDirectory()) {

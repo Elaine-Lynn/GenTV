@@ -26,8 +26,19 @@ final class GameRuntimeStore {
         return null;
     }
 
+    static long version(Context context) { return activeVersion(context.getFilesDir()); }
+
+    static long activeVersion(File files) {
+        try (InputStream in = new android.util.AtomicFile(new File(files, "game-runtime/active-" + abi())).openRead()) {
+            byte[] bytes = new byte[32];
+            int count = in.read(bytes);
+            long version = Long.parseLong(new String(bytes, 0, count, java.nio.charset.StandardCharsets.US_ASCII).trim());
+            return version > 0 ? version : 0;
+        } catch (Exception unavailable) { return 0; }
+    }
+
     static File directory(Context context) {
-        return new File(context.getFilesDir(), "game-runtime/" + BuildConfig.VERSION_CODE + "/" + abi());
+        return new File(context.getFilesDir(), "game-runtime/plugins/" + version(context) + "/" + abi());
     }
 
     static File archive(Context context) {
@@ -35,39 +46,48 @@ final class GameRuntimeStore {
     }
 
     static boolean ready(Context context) {
-        return abi() != null && archive(context).length() > 0
-                && new File(directory(context), "game_ready").isFile();
+        if (abi() == null || version(context) <= 0 || archive(context).length() <= 0) return false;
+        java.util.Properties metadata = new java.util.Properties();
+        try (InputStream in = new FileInputStream(new File(directory(context), "game_ready"))) {
+            metadata.load(in);
+            return GamePluginVersion.compatible(version(context), Integer.parseInt(metadata.getProperty("api")),
+                    Long.parseLong(metadata.getProperty("minHost")), Long.parseLong(metadata.getProperty("maxHost")),
+                    BuildConfig.VERSION_CODE);
+        } catch (Exception invalid) { return false; }
     }
 
-    static void stage(Context context, File downloadedArchive) throws IOException {
-        File directory = directory(context);
+    static void stage(Context context, File downloadedArchive, org.json.JSONObject manifest) throws Exception {
+        android.content.pm.PackageInfo info = context.getPackageManager().getPackageArchiveInfo(downloadedArchive.getPath(), 0);
+        if (info == null || info.versionCode < version(context)) throw new IOException("Plugin downgrade refused");
+        File directory = new File(context.getFilesDir(), "game-runtime/plugins/" + info.versionCode + "/" + abi());
         if (!directory.isDirectory() && !directory.mkdirs()) throw new IOException("Cannot create game directory");
-        File ready = new File(directory, "game_ready");
-        File destination = archive(context);
-        File backup = new File(destination.getPath() + ".bak");
-        File pending = new File(destination.getPath() + ".part");
+        File destination = new File(directory, "game-" + abi().replace('-', '_') + ".apk");
+        File pending = new File(directory, "game.part");
         copyToPending(downloadedArchive, pending);
-        if (backup.exists() && !backup.delete()) throw new IOException("Cannot replace game backup");
-        boolean hadArchive = destination.exists();
-        if (hadArchive && !destination.renameTo(backup)) throw new IOException("Cannot back up game component");
-        boolean installed = false;
-        try {
-            if (!pending.renameTo(destination)) throw new IOException("Cannot stage game archive");
-            if (!ready.isFile()) {
-                try (FileOutputStream out = new FileOutputStream(ready)) {
-                    out.write(1);
-                    out.getFD().sync();
-                }
-            }
-            installed = true;
-        } finally {
-            if (!installed && hadArchive) {
-                if (destination.exists() && !destination.delete()) throw new IOException("Cannot restore old game component");
-                if (!backup.renameTo(destination)) throw new IOException("Cannot restore old game component");
-            }
-            if (installed && backup.exists()) backup.delete();
-            if (pending.exists()) pending.delete();
+        if (!pending.renameTo(destination)) throw new IOException("Cannot stage game archive");
+        try (FileOutputStream out = new FileOutputStream(new File(directory, "game_ready"))) {
+            java.util.Properties metadata = new java.util.Properties();
+            metadata.setProperty("api", Integer.toString(manifest.getInt("hostApiVersion")));
+            metadata.setProperty("minHost", Long.toString(manifest.getLong("minHostVersionCode")));
+            metadata.setProperty("maxHost", Long.toString(manifest.getLong("maxHostVersionCode")));
+            metadata.store(out, null); out.getFD().sync();
         }
+        // Kill only this app's old game processes before changing the shared active pointer.
+        android.app.ActivityManager manager = (android.app.ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+        java.util.List<android.app.ActivityManager.RunningAppProcessInfo> processes = manager.getRunningAppProcesses();
+        if (processes != null) for (android.app.ActivityManager.RunningAppProcessInfo process : processes) {
+            if (process.uid == android.os.Process.myUid() && process.pid != android.os.Process.myPid()
+                    && process.processName.startsWith(context.getPackageName() + ":")
+                    && process.processName.substring(context.getPackageName().length() + 1)
+                        .matches("game_runtime|tab[0-9]+|media|gmplugin|socket|gpu|utility|ipdlunittest"))
+                android.os.Process.killProcess(process.pid);
+        }
+        android.util.AtomicFile active = new android.util.AtomicFile(new File(context.getFilesDir(), "game-runtime/active-" + abi()));
+        FileOutputStream out = active.startWrite();
+        try {
+            out.write(Long.toString(info.versionCode).getBytes(java.nio.charset.StandardCharsets.US_ASCII));
+            active.finishWrite(out);
+        } catch (IOException error) { active.failWrite(out); throw error; }
     }
 
     private static void copyToPending(File source, File pending) throws IOException {
@@ -84,7 +104,7 @@ final class GameRuntimeStore {
     static DexClassLoader loader(Context context) throws IOException {
         if (!ready(context)) throw new IOException("Game archive missing");
         File nativeDirectory = new File(context.getCodeCacheDir(),
-                "game-runtime-libs/" + BuildConfig.VERSION_CODE + "/" + abi());
+                "game-runtime-libs/" + version(context) + "/" + abi());
         if (!nativeDirectory.isDirectory() && !nativeDirectory.mkdirs())
             throw new IOException("Cannot create game native directory");
         try (ZipFile zip = new ZipFile(archive(context))) {

@@ -10,6 +10,8 @@
 
 ## 构建与发布
 
+后端文件清单、接口地址和发布顺序见 [插件更新部署](game-plugin-deployment.md)。
+
 使用同一份源码及正式签名构建主包与插件：
 
 ```sh
@@ -20,11 +22,22 @@ python3 tools/package_game_runtime.py \
   --game-dir launcher/game/build/outputs/apk/release
 ```
 
-脚本验证两个插件是完整 APK、包名和版本与主包匹配、签名相同、每个包仅含一个 ABI 的原生库，并确认主包没有游戏资源或 `libxul.so`。输出位于 Git 忽略的 `work/game-runtime-release/<versionCode>/<abi>/`，每个 ABI 有一个 APK 和一个含文件大小及 SHA-256 的 `manifest.json`。下载器再次验证清单、大小、SHA-256 和 Android 签名。
+插件独立使用 `versionCode`（默认为 1）和 `versionName`（默认为 1.0.0），与主包版本无关。通过 `-PgameVersionCode=2 -PgameVersionName=1.0.1` 发布下一版插件。`hostApiVersion=1` 表示主包提供的加载接口；修改接口时需升级该协议，普通游戏更新不需要升级主包。
 
-将两个 APK 作为本仓库 `game-runtime-v<versionName>` Release 的附件。将各 ABI 的 `manifest.json` 放到 `update-manifest` 分支的 `game-runtime/<versionCode>/<abi>/`。确认附件和清单可公开下载后，再发布引用它们的主包。旧 `game-modules-v*` 安装型 split 包不适用于此加载器。
+脚本验证完整 APK、正式签名、每个包仅含一个 ABI，并确认主包没有游戏资源或 `libxul.so`。输出位于 Git 忽略的 `work/game-runtime-release/<插件versionCode>/<abi>/`，包含组件 APK 和 `manifest.json`。使用 `--min-host 37 --max-host 2147483647` 指定兼容的主包范围；发布者必须按实际接口兼容情况填写范围。
 
-每次进入游戏时，主包读取当前版本和设备 ABI 对应的清单，并比较已保存组件与清单中的 SHA-256。内容变化时先下载并验证新文件，再替换私有目录中的旧文件；下载或校验失败时继续运行旧组件。游戏组件必须与主包使用相同的 `versionCode`、`versionName` 和签名，因此主包升级后必须发布对应版本的组件及清单。更新同一主包版本的组件时，需同步替换 Release 附件和清单，并确保新组件仍通过完整校验。
+## 独立更新接口
+
+主接口为 `GET <构建配置中的API_BASE_URL>plugins/game/update?abi=armeabi-v7a`，即服务端路径 `/tv/plugins/game/update`。支持 `armeabi-v7a`、`arm64-v8a`，不支持的 ABI 返回 400，尚无清单时返回 503。服务端从以下文件读取清单：
+
+- `$GENTV_STATE_DIR/plugins/game/update-armeabi-v7a.json`
+- `$GENTV_STATE_DIR/plugins/game/update-arm64-v8a.json`
+
+主接口不可用时读取 GitHub 备用清单：`update-manifest` 分支的 `game-runtime/latest/<abi>/manifest.json`。两个接口返回同样的 JSON。插件 APK 作为 `game-runtime-v<插件versionName>` Release 附件，或放在同 API 的 `/tv/releases/game-<abi下划线形式>.apk`。
+
+每次进入游戏检查更新。插件版本大于本地版本且兼容主包时，下载对应架构文件，验证大小、SHA-256、APK版本和签名，再写入独立版本目录并原子切换指针。下载、校验或切换失败时保留旧组件；不接受降级。同一插件版本文件不可修改，修复时必须提高插件版本号。主包升级后可以继续使用已下载的兼容插件，无需跟随主包重新下载。现有按主包版本保存的试验组件不迁移，首次使用新协议需重新下载一次。
+
+发布顺序：先上传插件附件，再把脚本输出的清单复制到服务端及 GitHub 的 `latest/<abi>/manifest.json`。只更新这些清单和附件即可发布插件更新。服务端部署时需同步更新 `app.py` 和 Nginx 路由；本地代码完成不代表线上接口已经部署。
 
 本地隔离测试可对 Debug 构建运行相同脚本并加 `--allow-debug`。Debug 插件仅用于本地 QA，不可发布给正式包。
 

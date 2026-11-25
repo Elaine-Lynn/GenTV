@@ -35,6 +35,8 @@ public final class GameModuleActivity extends Activity {
     private Button action;
     private ProgressBar progress;
     private boolean busy;
+    private long offeredVersion;
+    private JSONObject offeredManifest;
 
     @Override protected void attachBaseContext(android.content.Context base) {
         super.attachBaseContext(LauncherLocale.wrap(base));
@@ -158,10 +160,11 @@ public final class GameModuleActivity extends Activity {
         TvCloud.IO.execute(() -> {
             try {
                 File plugin = download(selectedAbi);
-                if (!hadComponent || !sha256(plugin).equalsIgnoreCase(sha256(GameRuntimeStore.archive(this)))) {
+                if (plugin == null) { runOnUiThread(this::launchGame); return; }
+                if (plugin != null) {
                     verifyArchive(plugin);
                     runOnUiThread(() -> status.setText(R.string.game_module_installing));
-                    GameRuntimeStore.stage(this, plugin);
+                    GameRuntimeStore.stage(this, plugin, offeredManifest);
                 }
                 runOnUiThread(this::launchGame);
             }
@@ -174,33 +177,33 @@ public final class GameModuleActivity extends Activity {
     }
 
     private File download(String selectedAbi) throws Exception {
-        String prefix = "https://github.com/Elaine-Lynn/GenTV/releases/download/game-runtime-v"
-                + BuildConfig.VERSION_NAME + "/";
-        String manifestUrl = BuildConfig.GAME_MANIFEST_BASE_URL + BuildConfig.VERSION_CODE + "/"
-                + selectedAbi + "/manifest.json";
-        HttpURLConnection manifestConnection = TvCloud.external(manifestUrl);
-        JSONObject manifest;
-        try {
-            if (manifestConnection.getResponseCode() != 200)
-                throw new java.io.IOException("Game module manifest unavailable");
-            manifest = new JSONObject(new String(TvCloud.read(manifestConnection.getInputStream(), 65536),
-                    java.nio.charset.StandardCharsets.UTF_8));
-        } finally { manifestConnection.disconnect(); }
-        if (manifest.getInt("versionCode") != BuildConfig.VERSION_CODE
-                || !BuildConfig.VERSION_NAME.equals(manifest.getString("versionName"))
+        JSONObject manifest = TvCloud.gameManifest(selectedAbi);
+        long version = manifest.getLong("versionCode");
+        if (!GamePluginVersion.compatible(version, manifest.getInt("hostApiVersion"),
+                manifest.getLong("minHostVersionCode"), manifest.getLong("maxHostVersionCode"),
+                BuildConfig.VERSION_CODE)
                 || !getPackageName().equals(manifest.getString("hostPackageName"))
+                || !"com.gentv.game.plugin".equals(manifest.getString("packageName"))
                 || !selectedAbi.equals(manifest.getString("abi"))
                 || !UpdatePackage.certificate(this).equalsIgnoreCase(manifest.getString("signingCertificateSha256")))
-            throw new IllegalArgumentException("Wrong game module version, ABI, package or signer");
+            throw new IllegalArgumentException("Incompatible game plugin");
+        if (GameRuntimeStore.ready(this) && !GamePluginVersion.newer(GameRuntimeStore.version(this), version)) {
+            if (GameRuntimeStore.ready(this)) return null;
+            throw new IllegalArgumentException("Invalid game plugin version");
+        }
+        String prefix = "https://github.com/Elaine-Lynn/GenTV/releases/download/game-runtime-v"
+                + manifest.getString("versionName") + "/";
+        offeredVersion = version;
+        offeredManifest = manifest;
         JSONObject item = manifest.getJSONObject("plugin");
         String name = "game-" + selectedAbi.replace('-', '_') + ".apk";
         String url = item.getString("url");
         String hash = item.getString("sha256");
         long size = item.getLong("sizeBytes");
-        if (!name.equals(item.getString("name")) || !(prefix + name).equals(url)
+        if (!name.equals(item.getString("name")) || (!(prefix + name).equals(url) && !(TvCloud.enabled() && (TvCloud.BASE + "releases/" + name).equals(url)))
                 || !hash.matches("[a-fA-F0-9]{64}") || size <= 0 || size > MAX_PLUGIN_BYTES)
             throw new IllegalArgumentException("Invalid game plugin metadata");
-        File directory = new File(getCacheDir(), "game-runtime-download/" + BuildConfig.VERSION_CODE + "/" + selectedAbi);
+        File directory = new File(getCacheDir(), "game-runtime-download/" + version + "/" + selectedAbi);
         if (!directory.isDirectory() && !directory.mkdirs()) throw new java.io.IOException("Cannot create module cache");
         File file = new File(directory, name);
         if (!file.isFile() || file.length() != size || !hash.equalsIgnoreCase(sha256(file))) {
@@ -245,13 +248,14 @@ public final class GameModuleActivity extends Activity {
         PackageInfo host = manager.getPackageInfo(getPackageName(), PackageManager.GET_SIGNATURES);
         PackageInfo archive = manager.getPackageArchiveInfo(file.getAbsolutePath(), PackageManager.GET_SIGNATURES);
         if (archive == null || !"com.gentv.game.plugin".equals(archive.packageName)
-                || archive.versionCode != BuildConfig.VERSION_CODE
+                || archive.versionCode != offeredVersion
                 || archive.signatures == null || host.signatures == null
                 || !Arrays.equals(archive.signatures, host.signatures))
             throw new SecurityException("Game plugin identity or signature mismatch");
     }
 
     private void launchGame() {
+        if (isFinishing() || isDestroyed()) return;
         try {
             startActivity(new Intent(this, GameRuntimeHostActivity.class));
             finish();
@@ -260,6 +264,7 @@ public final class GameModuleActivity extends Activity {
     }
 
     private void showError(int text) {
+        if (isFinishing() || isDestroyed()) return;
         busy = false;
         status.setText(text);
         progress.setVisibility(View.GONE);
