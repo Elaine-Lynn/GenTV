@@ -2,15 +2,16 @@
 <resources>
     <string name="game_kart">卡丁车游戏</string>
     <string name="game_requires_android_6">卡丁车游戏需要 Android 6 或更高版本。</string>
-    <string name="game_module_ready_to_download">此电视首次使用游戏需要下载对应的组件，随后由系统确认安装。</string>
+    <string name="game_module_ready_to_download">首次使用需要下载对应的游戏组件，下载后在 GenTV 内直接运行。</string>
     <string name="game_module_download">下载游戏组件</string>
     <string name="game_module_back">返回</string>
     <string name="game_module_downloading">正在下载游戏组件…</string>
-    <string name="game_module_installing">等待 Android 安装游戏组件…</string>
+    <string name="game_module_installing">正在准备游戏组件…</string>
     <string name="game_module_permission">请在系统设置允许 GenTV 安装应用，然后重试。</string>
     <string name="game_module_unavailable">此版本尚未配置游戏组件下载服务。</string>
     <string name="game_module_unsupported_abi">这台电视的处理器暂不支持此游戏。</string>
-    <string name="game_module_failed">游戏组件安装失败，请检查网络后重试。</string>
+    <string name="game_module_failed">游戏组件加载失败，请检查网络后重试。</string>
+    <string name="game_runtime_unsupported_android">此运行时游戏组件目前需要 Android 9 或更高版本。</string>
     <string name="game_module_retry">重试</string>
     <string name="app_name">GenTV</string>
     <string name="inputs">输入源</string>

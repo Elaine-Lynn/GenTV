@@ -1,32 +1,31 @@
-# 按需下载卡丁车游戏
+# 按需加载游戏插件
 
-从电视版 3.7.14 / code36 开始，基础 APK 不包含 GeckoView 的原生库和游戏代码，但保留内核启动必需的 `omni.ja` 资源。游戏仍是 `com.gentv.tv` 的一部分；首次进入游戏时，用户下载与电视 CPU 架构对应的两个已签名 split APK，由 Android 安装确认。没有独立的游戏应用图标或第二个包名。游戏仅在 Android 6 / API 23 及以上可启动，旧系统提示不支持。
+游戏运行时代码和资源由 `launcher/game` 构建。每种 ABI 生成一个完整的独立 APK 文件：`game-armeabi_v7a.apk` 或 `game-arm64_v8a.apk`。主应用下载对应文件，校验后存入私有目录，通过 `DexClassLoader` 加载代码和原生库；**不调用 Android 安装程序**。这个 APK 只是插件文件的容器，不是需要用户安装的另一个应用。
 
-## 构建与打包
+主 APK 保留下载校验、文件存储、Activity 宿主及 Gecko 子进程入口。游戏页面、手机遥控器、输入扩展、Gecko 代码、`omni.ja` 和对应 ABI 的 `.so` 均放在插件里。运行时加载要求 Android 9 / API 28 或更高版本。Android 8 会显示不支持提示。
 
-使用与正式基础包相同的源码和正式签名，构建 `:app:assembleRelease :app:bundleRelease :app:makeApkFromBundleForRelease`。基础包在 `launcher/app/build/outputs/apk/release/app-release.apk`，APK set 在 `launcher/app/build/intermediates/apks_from_bundle/release/makeApkFromBundleForRelease/bundle.apks`。
+## 资源命名
 
-设置 Android SDK 路径后运行：
+插件自有资源以 `game_` 开头，包括 `game_remote.html`、`game_input/` 和 `game_controls.js`。Gecko 强制使用的 `assets/omni.ja`、`libxul.so` 等文件名，以及 WebExtension 的 `manifest.json` 保留原名。这些文件只在游戏插件中，不进入主 APK。
+
+## 构建与发布
+
+使用同一份源码及正式签名构建主包与插件：
 
 ```sh
-python3 tools/package_game_modules.py \
+./launcher/gradlew -p launcher --no-daemon :app:assembleRelease :game:assembleRelease
+python3 tools/package_game_runtime.py \
   --sdk "$ANDROID_HOME" \
   --base-apk launcher/app/build/outputs/apk/release/app-release.apk \
-  --apks launcher/app/build/intermediates/apks_from_bundle/release/makeApkFromBundleForRelease/bundle.apks
+  --game-dir launcher/game/build/outputs/apk/release
 ```
 
-脚本核对基础 APK 和各分包的包名、版本与正式证书，确认基础 APK 没有 `libxul.so`，并且其 `omni.ja` 与游戏分包一致。默认输出位于未跟踪的 `work/game-modules/36/armeabi-v7a/` 和 `work/game-modules/36/arm64-v8a/`；每个目录包含 `game-master.apk`、对应的 ABI 分包和 `manifest.json`，其中有准确的大小与 SHA-256。重新构建同一版本时，使用新的 `--output work/<构建批次>` 目录；脚本会拒绝覆盖内容不同的旧文件。不要改名或重新压缩，下载后 Android 还会执行同包名、同版本和同签名校验。
+脚本验证两个插件是完整 APK、包名和版本与主包匹配、签名相同、每个包仅含一个 ABI 的原生库，并确认主包没有游戏资源或 `libxul.so`。输出位于 Git 忽略的 `work/game-runtime-release/<versionCode>/<abi>/`，每个 ABI 有一个 APK 和一个含文件大小及 SHA-256 的 `manifest.json`。下载器再次验证清单、大小、SHA-256 和 Android 签名。
 
-## GitHub 发布顺序
+将两个 APK 作为本仓库 `game-runtime-v<versionName>` Release 的附件。将各 ABI 的 `manifest.json` 放到 `update-manifest` 分支的 `game-runtime/<versionCode>/<abi>/`。确认附件和清单可公开下载后，再发布引用它们的主包。旧 `game-modules-v*` 安装型 split 包不适用于此加载器。
 
-1. 在本仓库创建 GitHub Release，标签 `game-modules-v3.7.14`；上传一份 `game-master.apk`、一份 `game-armeabi_v7a.apk`、一份 `game-arm64_v8a.apk`，来自同一次脚本输出。两个 ABI 目录中的 `game-master.apk` 内容相同。
-2. 将两个 `manifest.json` 分别放到本仓库 `update-manifest` 分支的 `game-modules/36/armeabi-v7a/` 和 `game-modules/36/arm64-v8a/`。核对 raw GitHub 清单公开可读、三个 Release 附件可下载，且 SHA-256 与清单一致。
-3. 再发布 3.7.14 的基础 APK，最后切换正式更新清单。不要把旧的 3.7.13 清单指向新的 code36 基础包，也不要用已有 3.7.13 APK 搭配 code36 游戏分包。
+本地隔离测试可对 Debug 构建运行相同脚本并加 `--allow-debug`。Debug 插件仅用于本地 QA，不可发布给正式包。
 
-基础包自更新仍沿用现有整包安装。每次基础包升级后，游戏分包需要与新 `versionCode` 匹配，按上述顺序先发布新版本游戏分包。旧版本分包保留给尚未升级的客户端。
+## 验收状态
 
-首次安装分包需要 Android 的“安装未知应用”权限和系统确认；应用不能绕过。网络或安装失败时保留已校验的本地缓存，用户可重试。游戏分包下载不依赖 GenTV 自建 API 域名。
-
-## 验收
-
-在 Android 6 及以上的 ARMv7 和 ARM64 设备上分别检查：基础包可以安装并启动首页；首次进入游戏下载正确 ABI 的两个分包；系统安装确认后游戏启动；再次进入无需下载；升级基础包后重新获取同版本游戏分包。Android 4.2–5.1 应仅运行基础桌面，不出现游戏安装操作。隔离 QA 已在 `192.168.31.85`（Android 9、ARMv7）完成基础包加两个分包的安装，游戏画面正常显示；联网下载和应用内安装确认仍需 GitHub 附件发布后验收。
+已在 `10.192.10.25:5555`（Android 9、ARMv7）将单个 Debug 插件存入 `com.gentv.tv.moduleqa` 的私有目录，未安装插件。游戏画面和二维码已显示，Gecko 子进程从插件 DEX 启动，手机遥控网页返回 HTTP 200。正式版的在线下载、签名校验、手机指令及 ARM64 真机仍需验收；当前尚未发布插件附件或清单。隔离 QA 包不替换设备上的正式桌面。

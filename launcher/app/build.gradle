@@ -9,7 +9,7 @@ if (signingFile.exists()) signingFile.withInputStream { releaseSecrets.load(it) 
 // -PgentvApiBaseUrl=..., GENTV_API_BASE_URL, or apiBaseUrl in the private phone/keys/signing.properties.
 def apiBaseUrl = (findProperty('gentvApiBaseUrl') ?: System.getenv('GENTV_API_BASE_URL') ?: releaseSecrets.getProperty('apiBaseUrl') ?: '').trim()
 def updateFallbackUrl = (findProperty('gentvUpdateFallbackUrl') ?: System.getenv('GENTV_UPDATE_FALLBACK_URL') ?: 'https://raw.githubusercontent.com/Elaine-Lynn/GenTV/update-manifest/server/wallpaper/update-fallback.json').trim()
-def gameManifestBase = 'https://raw.githubusercontent.com/Elaine-Lynn/GenTV/update-manifest/game-modules/'
+def gameManifestBase = 'https://raw.githubusercontent.com/Elaine-Lynn/GenTV/update-manifest/game-runtime/'
 if (!(updateFallbackUrl ==~ /https:\/\/raw\.githubusercontent\.com\/Elaine-Lynn\/GenTV\/[A-Za-z0-9._\/-]+\/server\/wallpaper\/update-fallback\.json/)) {
     throw new GradleException('gentvUpdateFallbackUrl must point to this repository on raw.githubusercontent.com')
 }
@@ -25,7 +25,6 @@ android {
     namespace 'com.gentv.tv'
     compileSdk 34
     buildFeatures { buildConfig true }
-    dynamicFeatures = [':game']
 
     defaultConfig {
         applicationId 'com.gentv.tv'
@@ -85,6 +84,7 @@ android {
 }
 
 dependencies {
+    implementation project(':game-api')
     implementation 'androidx.multidex:multidex:2.0.1'
     implementation 'androidx.core:core:1.7.0'
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs_nio:2.0.1'
@@ -108,29 +108,6 @@ dependencies {
     // Test only (never in the APK): plain JVM tests for the module card validators, src/test.
     testImplementation 'junit:junit:4.13.2'
 }
-
-// GeckoView loads omni.ja through the base APK's assets, even when its code and
-// native libraries are delivered in the on-demand game split. Keep this one
-// runtime archive in the base without bundling GeckoView's large native payload.
-configurations { geckoRuntimeArchive }
-dependencies {
-    geckoRuntimeArchive('org.mozilla.geckoview:geckoview:128.0.20240725162350') { transitive = false }
-}
-def prepareGeckoOmni = tasks.register('prepareGeckoOmni', Copy) {
-    from({ zipTree(configurations.geckoRuntimeArchive.singleFile) }) {
-        include 'assets/omni.ja'
-        eachFile { path = 'omni.ja' }
-        includeEmptyDirs = false
-    }
-    into(layout.buildDirectory.dir('generated/geckoOmni'))
-    doLast {
-        if (!layout.buildDirectory.file('generated/geckoOmni/omni.ja').get().asFile.isFile()) {
-            throw new GradleException('GeckoView omni.ja is missing from the runtime archive')
-        }
-    }
-}
-android.sourceSets.main.assets.srcDir(layout.buildDirectory.dir('generated/geckoOmni'))
-tasks.named('preBuild') { dependsOn(prepareGeckoOmni) }
 
 // A release must never silently fall back to an Android debug certificate.
 gradle.taskGraph.whenReady { graph ->

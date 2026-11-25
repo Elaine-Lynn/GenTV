@@ -12,6 +12,9 @@ import androidx.multidex.MultiDex;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import java.net.HttpURLConnection;
+import java.io.File;
+import android.content.res.AssetManager;
+import java.lang.reflect.Method;
 import java.nio.charset.Charset;
 import java.util.ArrayDeque;
 import java.util.UUID;
@@ -19,6 +22,7 @@ import java.util.UUID;
 /** Opt-in schema 3: optional factory MAC, installation ID fallback, no app names or input text. */
 public final class TvMetrics extends Application implements Application.ActivityLifecycleCallbacks {
     private static TvMetrics instance;
+    private AssetManager gameAssets;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final MetricsClock clock = new MetricsClock();
     private final ArrayDeque<JSONObject> pending = new ArrayDeque<>();
@@ -43,6 +47,35 @@ public final class TvMetrics extends Application implements Application.Activity
         instance = this;
         UmengMetrics.prepare(this);
         registerActivityLifecycleCallbacks(this);
+    }
+    @Override public String getPackageResourcePath() {
+        if (!inGameProcess()) return super.getPackageResourcePath();
+        // GeckoView's -greomni argument must point at the downloaded plugin archive.
+        // The launcher APK no longer carries its runtime archive.
+        File gameArchive = GameRuntimeStore.archive(this);
+        return gameArchive.isFile() ? gameArchive.getAbsolutePath() : super.getPackageResourcePath();
+    }
+    @Override public AssetManager getAssets() {
+        if (!inGameProcess()) return super.getAssets();
+        if (gameAssets != null) return gameAssets;
+        File archive = GameRuntimeStore.archive(this);
+        if (!archive.isFile()) return super.getAssets();
+        try {
+            AssetManager merged = AssetManager.class.newInstance();
+            Method addAssetPath = AssetManager.class.getMethod("addAssetPath", String.class);
+            addAssetPath.invoke(merged, super.getPackageResourcePath());
+            addAssetPath.invoke(merged, archive.getAbsolutePath());
+            gameAssets = merged;
+            return merged;
+        } catch (Exception error) {
+            android.util.Log.e("GenTVGameRuntime", "Cannot expose plugin assets", error);
+            return super.getAssets();
+        }
+    }
+    private boolean inGameProcess() {
+        if (Build.VERSION.SDK_INT < 28) return false;
+        String process = Application.getProcessName();
+        return process != null && process.startsWith(getPackageName() + ":");
     }
     static boolean enabled(Context c) { return TvCloud.enabled() && TvCloud.prefs(c).getBoolean("metrics_v3", false); }
     static boolean emulator() {

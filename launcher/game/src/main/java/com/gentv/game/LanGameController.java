@@ -103,7 +103,9 @@ final class LanGameController implements Closeable {
             reply(out, 403, "Wrong origin", "text/plain"); return;
         }
         if ("GET / HTTP/1.1".equals(request) || "GET / HTTP/1.0".equals(request)) {
-            try (InputStream page = context.getAssets().open("game_remote.html")) {
+            try (InputStream page = getClass().getClassLoader()
+                    .getResourceAsStream("assets/game_remote.html")) {
+                if (page == null) throw new IOException("Plugin controller page missing");
                 byte[] bytes = new byte[page.available()];
                 int read = 0;
                 while (read < bytes.length) {

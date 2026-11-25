@@ -77,6 +77,8 @@
 
     <application
         android:name=".TvMetrics"
+        android:appComponentFactory="com.gentv.tv.GameRuntimeComponentFactory"
+        tools:replace="android:appComponentFactory"
         android:networkSecurityConfig="@xml/network_security_config"
         android:label="@string/app_name"
         android:icon="@mipmap/ic_launcher"
@@ -98,6 +100,56 @@
         <activity android:name=".GameModuleActivity" android:exported="false"
             android:launchMode="singleTop" android:screenOrientation="landscape"
             android:theme="@style/Theme.GenTV" />
+        <activity android:name=".GameRuntimeHostActivity" android:exported="false"
+            android:process=":game_runtime" android:screenOrientation="landscape"
+            android:theme="@style/Theme.GenTV" />
+        <!-- Gecko subprocess implementations live in the uninstalled game plugin. -->
+        <service android:name="org.mozilla.gecko.process.GeckoChildProcessServices$tab0" android:process=":tab0" android:exported="false" tools:ignore="MissingClass" />
+        <service android:name="org.mozilla.gecko.process.GeckoChildProcessServices$tab1" android:process=":tab1" android:exported="false" tools:ignore="MissingClass" />
+        <service android:name="org.mozilla.gecko.process.GeckoChildProcessServices$tab2" android:process=":tab2" android:exported="false" tools:ignore="MissingClass" />
+        <service android:name="org.mozilla.gecko.process.GeckoChildProcessServices$tab3" android:process=":tab3" android:exported="false" tools:ignore="MissingClass" />
+        <service android:name="org.mozilla.gecko.process.GeckoChildProcessServices$tab4" android:process=":tab4" android:exported="false" tools:ignore="MissingClass" />
+        <service android:name="org.mozilla.gecko.process.GeckoChildProcessServices$tab5" android:process=":tab5" android:exported="false" tools:ignore="MissingClass" />
+        <service android:name="org.mozilla.gecko.process.GeckoChildProcessServices$tab6" android:process=":tab6" android:exported="false" tools:ignore="MissingClass" />
+        <service android:name="org.mozilla.gecko.process.GeckoChildProcessServices$tab7" android:process=":tab7" android:exported="false" tools:ignore="MissingClass" />
+        <service android:name="org.mozilla.gecko.process.GeckoChildProcessServices$tab8" android:process=":tab8" android:exported="false" tools:ignore="MissingClass" />
+        <service android:name="org.mozilla.gecko.process.GeckoChildProcessServices$tab9" android:process=":tab9" android:exported="false" tools:ignore="MissingClass" />
+        <service android:name="org.mozilla.gecko.process.GeckoChildProcessServices$tab10" android:process=":tab10" android:exported="false" tools:ignore="MissingClass" />
+        <service android:name="org.mozilla.gecko.process.GeckoChildProcessServices$tab11" android:process=":tab11" android:exported="false" tools:ignore="MissingClass" />
+        <service android:name="org.mozilla.gecko.process.GeckoChildProcessServices$tab12" android:process=":tab12" android:exported="false" tools:ignore="MissingClass" />
+        <service android:name="org.mozilla.gecko.process.GeckoChildProcessServices$tab13" android:process=":tab13" android:exported="false" tools:ignore="MissingClass" />
+        <service android:name="org.mozilla.gecko.process.GeckoChildProcessServices$tab14" android:process=":tab14" android:exported="false" tools:ignore="MissingClass" />
+        <service android:name="org.mozilla.gecko.process.GeckoChildProcessServices$tab15" android:process=":tab15" android:exported="false" tools:ignore="MissingClass" />
+        <service android:name="org.mozilla.gecko.process.GeckoChildProcessServices$tab16" android:process=":tab16" android:exported="false" tools:ignore="MissingClass" />
+        <service android:name="org.mozilla.gecko.process.GeckoChildProcessServices$tab17" android:process=":tab17" android:exported="false" tools:ignore="MissingClass" />
+        <service android:name="org.mozilla.gecko.process.GeckoChildProcessServices$tab18" android:process=":tab18" android:exported="false" tools:ignore="MissingClass" />
+        <service android:name="org.mozilla.gecko.process.GeckoChildProcessServices$tab19" android:process=":tab19" android:exported="false" tools:ignore="MissingClass" />
+        <service android:name="org.mozilla.gecko.process.GeckoChildProcessServices$tab20" android:process=":tab20" android:exported="false" tools:ignore="MissingClass" />
+        <service android:name="org.mozilla.gecko.process.GeckoChildProcessServices$tab21" android:process=":tab21" android:exported="false" tools:ignore="MissingClass" />
+        <service android:name="org.mozilla.gecko.process.GeckoChildProcessServices$tab22" android:process=":tab22" android:exported="false" tools:ignore="MissingClass" />
+        <service android:name="org.mozilla.gecko.process.GeckoChildProcessServices$tab23" android:process=":tab23" android:exported="false" tools:ignore="MissingClass" />
+        <service android:name="org.mozilla.gecko.process.GeckoChildProcessServices$tab24" android:process=":tab24" android:exported="false" tools:ignore="MissingClass" />
+        <service android:name="org.mozilla.gecko.process.GeckoChildProcessServices$tab25" android:process=":tab25" android:exported="false" tools:ignore="MissingClass" />
+        <service android:name="org.mozilla.gecko.process.GeckoChildProcessServices$tab26" android:process=":tab26" android:exported="false" tools:ignore="MissingClass" />
+        <service android:name="org.mozilla.gecko.process.GeckoChildProcessServices$tab27" android:process=":tab27" android:exported="false" tools:ignore="MissingClass" />
+        <service android:name="org.mozilla.gecko.process.GeckoChildProcessServices$tab28" android:process=":tab28" android:exported="false" tools:ignore="MissingClass" />
+        <service android:name="org.mozilla.gecko.process.GeckoChildProcessServices$tab29" android:process=":tab29" android:exported="false" tools:ignore="MissingClass" />
+        <service android:name="org.mozilla.gecko.process.GeckoChildProcessServices$tab30" android:process=":tab30" android:exported="false" tools:ignore="MissingClass" />
+        <service android:name="org.mozilla.gecko.process.GeckoChildProcessServices$tab31" android:process=":tab31" android:exported="false" tools:ignore="MissingClass" />
+        <service android:name="org.mozilla.gecko.process.GeckoChildProcessServices$tab32" android:process=":tab32" android:exported="false" tools:ignore="MissingClass" />
+        <service android:name="org.mozilla.gecko.process.GeckoChildProcessServices$tab33" android:process=":tab33" android:exported="false" tools:ignore="MissingClass" />
+        <service android:name="org.mozilla.gecko.process.GeckoChildProcessServices$tab34" android:process=":tab34" android:exported="false" tools:ignore="MissingClass" />
+        <service android:name="org.mozilla.gecko.process.GeckoChildProcessServices$tab35" android:process=":tab35" android:exported="false" tools:ignore="MissingClass" />
+        <service android:name="org.mozilla.gecko.process.GeckoChildProcessServices$tab36" android:process=":tab36" android:exported="false" tools:ignore="MissingClass" />
+        <service android:name="org.mozilla.gecko.process.GeckoChildProcessServices$tab37" android:process=":tab37" android:exported="false" tools:ignore="MissingClass" />
+        <service android:name="org.mozilla.gecko.process.GeckoChildProcessServices$tab38" android:process=":tab38" android:exported="false" tools:ignore="MissingClass" />
+        <service android:name="org.mozilla.gecko.process.GeckoChildProcessServices$tab39" android:process=":tab39" android:exported="false" tools:ignore="MissingClass" />
+        <service android:name="org.mozilla.gecko.media.MediaManager" android:process=":media" android:exported="false" tools:ignore="MissingClass" />
+        <service android:name="org.mozilla.gecko.process.GeckoChildProcessServices$gmplugin" android:process=":gmplugin" android:exported="false" tools:ignore="MissingClass" />
+        <service android:name="org.mozilla.gecko.process.GeckoChildProcessServices$socket" android:process=":socket" android:exported="false" tools:ignore="MissingClass" />
+        <service android:name="org.mozilla.gecko.process.GeckoChildProcessServices$gpu" android:process=":gpu" android:exported="false" tools:ignore="MissingClass" />
+        <service android:name="org.mozilla.gecko.process.GeckoChildProcessServices$utility" android:process=":utility" android:exported="false" tools:ignore="MissingClass" />
+        <service android:name="org.mozilla.gecko.process.GeckoChildProcessServices$ipdlunittest" android:process=":ipdlunittest" android:exported="false" tools:ignore="MissingClass" />
         <provider android:name="androidx.core.content.FileProvider" android:authorities="${applicationId}.updates" android:exported="false" android:grantUriPermissions="true">
             <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/update_paths" />
         </provider>

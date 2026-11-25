@@ -5,7 +5,6 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
-import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
@@ -26,6 +25,7 @@ import android.widget.Toast;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
+import com.gentv.tv.GameRuntimeEntry;
 
 import org.mozilla.geckoview.GeckoRuntime;
 import org.mozilla.geckoview.GeckoSession;
@@ -43,12 +43,13 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
-/** GeckoView game host; kept separate so the API 17 TV launcher stays installable. */
-public final class KartGameActivity extends Activity {
+/** Game implementation loaded from the uninstalled game archive by the host activity. */
+public final class KartGameScreen implements GameRuntimeEntry {
     private static final String GAME_URL = "https://kart.igame86.com/play/";
     private static final String INPUT_EXTENSION = "resource://android/assets/game_input/";
     private static final String INPUT_EXTENSION_ID = "game-input@gentv.local";
     private static GeckoRuntime runtime;
+    private Activity host;
     private GeckoSession session;
     private GeckoView browser;
     private FrameLayout root;
@@ -81,18 +82,18 @@ public final class KartGameActivity extends Activity {
         }
     };
 
-    @Override protected void onCreate(Bundle state) {
-        super.onCreate(state);
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_FULLSCREEN
+    @Override public void create(Activity activity) {
+        host = activity;
+        host.getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        host.getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_FULLSCREEN
                 | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
-        root = new FrameLayout(this);
+        root = new FrameLayout(host);
         root.setBackgroundColor(0xff0d1326);
-        browser = new GeckoView(this);
+        browser = new GeckoView(host);
         browser.setFocusable(true);
         browser.setFocusableInTouchMode(true);
         root.addView(browser, new FrameLayout.LayoutParams(-1, -1));
-        setContentView(root);
+        host.setContentView(root);
         session = new GeckoSession();
         session.setContentDelegate(new GeckoSession.ContentDelegate() {});
         session.getSettings().setUserAgentMode(GeckoSessionSettings.USER_AGENT_MODE_DESKTOP);
@@ -106,7 +107,7 @@ public final class KartGameActivity extends Activity {
                 else browser.requestFocus();
             }
         });
-        if (runtime == null) runtime = GeckoRuntime.create(this);
+        if (runtime == null) runtime = GeckoRuntime.create(host);
         session.open(runtime);
         browser.setSession(session);
         installInputBridge();
@@ -114,11 +115,10 @@ public final class KartGameActivity extends Activity {
         handler.postDelayed(releaseStale, 500);
     }
 
-    @Override protected void onStart() {
-        super.onStart();
+    @Override public void start() {
         session.setActive(true);
         startController();
-        inputManager = (InputManager) getSystemService(Context.INPUT_SERVICE);
+        inputManager = (InputManager) host.getSystemService(Context.INPUT_SERVICE);
         if (inputManager != null) inputManager.registerInputDeviceListener(gamepadListener, handler);
         updateConnectionCard();
     }
@@ -134,17 +134,17 @@ public final class KartGameActivity extends Activity {
         if (address != null) {
             String code = String.format(Locale.ROOT, "%04d", new SecureRandom().nextInt(10_000));
             try {
-                controller = new LanGameController(this, address, code,
+                controller = new LanGameController(host, address, code,
                         new LanGameController.Listener() {
                             @Override public boolean ready() { return inputPort != null; }
                             @Override public void connected() {
-                                runOnUiThread(() -> {
+                                host.runOnUiThread(() -> {
                                     phoneConnected = true;
                                     updateConnectionCard();
                                 });
                             }
                             @Override public void key(String key, boolean down) {
-                                runOnUiThread(() -> input(key, down));
+                                host.runOnUiThread(() -> input(key, down));
                             }
                         });
                 showConnection(root, controller.url(), code);
@@ -152,7 +152,7 @@ public final class KartGameActivity extends Activity {
         } else showMessage(root, "连接局域网后可使用手机遥控器");
     }
 
-    @Override protected void onStop() {
+    @Override public void stop() {
         if (inputManager != null) {
             inputManager.unregisterInputDeviceListener(gamepadListener);
             inputManager = null;
@@ -160,12 +160,11 @@ public final class KartGameActivity extends Activity {
         if (controller != null) { controller.close(); controller = null; }
         for (String key : new HashSet<>(held)) input(key, false);
         session.setActive(false);
-        super.onStop();
     }
 
     private void installInputBridge() {
         runtime.getWebExtensionController().ensureBuiltIn(INPUT_EXTENSION, INPUT_EXTENSION_ID).accept(
-                extension -> runOnUiThread(() -> {
+                extension -> host.runOnUiThread(() -> {
                     if (session == null) return;
                     session.getWebExtensionController().setMessageDelegate(extension,
                         new WebExtension.MessageDelegate() {
@@ -199,7 +198,7 @@ public final class KartGameActivity extends Activity {
     }
 
     private void showConnection(FrameLayout root, String url, String code) {
-        connectionCard = new LinearLayout(this);
+        connectionCard = new LinearLayout(host);
         connectionCard.setOrientation(LinearLayout.VERTICAL);
         connectionCard.setPadding(dp(14), dp(12), dp(14), dp(12));
         GradientDrawable background = new GradientDrawable();
@@ -208,7 +207,7 @@ public final class KartGameActivity extends Activity {
         background.setStroke(dp(2), 0xff5ed8dd);
         connectionCard.setBackground(background);
         connectionCard.addView(label("扫码连接手机遥控器", 17, true));
-        ImageView qr = new ImageView(this);
+        ImageView qr = new ImageView(host);
         qr.setImageBitmap(qrCode(url + "#code=" + code));
         LinearLayout.LayoutParams qrParams = new LinearLayout.LayoutParams(dp(140), dp(140));
         qrParams.gravity = Gravity.CENTER_HORIZONTAL;
@@ -247,18 +246,18 @@ public final class KartGameActivity extends Activity {
     }
 
     private void handleBack() {
-        if (session == null) { finish(); return; }
+        if (session == null) { host.finish(); return; }
         if (!returnedToGameHome) {
             returnedToGameHome = true;
             lastExitBackAt = 0;
             session.loadUri(GAME_URL);
-            Toast.makeText(this, "已返回游戏主页", Toast.LENGTH_SHORT).show();
+            Toast.makeText(host, "已返回游戏主页", Toast.LENGTH_SHORT).show();
             return;
         }
         long now = SystemClock.elapsedRealtime();
-        if (now - lastExitBackAt <= 2200) { finish(); return; }
+        if (now - lastExitBackAt <= 2200) { host.finish(); return; }
         lastExitBackAt = now;
-        Toast.makeText(this, "再按一次返回退出游戏", Toast.LENGTH_SHORT).show();
+        Toast.makeText(host, "再按一次返回退出游戏", Toast.LENGTH_SHORT).show();
     }
 
     private void showMessage(FrameLayout root, String message) {
@@ -318,7 +317,7 @@ public final class KartGameActivity extends Activity {
         KeyEvent event = new KeyEvent(started, now,
                 down ? KeyEvent.ACTION_DOWN : KeyEvent.ACTION_UP, code, 0, 0,
                 KeyCharacterMap.VIRTUAL_KEYBOARD, 0, 0, InputDevice.SOURCE_KEYBOARD);
-        dispatchKeyEvent(event);
+        host.dispatchKeyEvent(event);
     }
 
     @Override public boolean dispatchKeyEvent(KeyEvent event) {
@@ -336,12 +335,10 @@ public final class KartGameActivity extends Activity {
             returnedToGameHome = false;
             lastExitBackAt = 0;
         }
-        return super.dispatchKeyEvent(event);
+        return false;
     }
 
-    @Override public void onBackPressed() { handleBack(); }
-
-    @Override protected void onDestroy() {
+    @Override public void destroy() {
         handler.removeCallbacks(releaseStale);
         if (controller != null) controller.close();
         for (String key : new HashSet<>(held)) input(key, false);
@@ -349,12 +346,11 @@ public final class KartGameActivity extends Activity {
         if (session != null) { session.close(); session = null; }
         browser = null;
         root = null;
-        super.onDestroy();
     }
 
-    private int dp(int value) { return Math.round(value * getResources().getDisplayMetrics().density); }
+    private int dp(int value) { return Math.round(value * host.getResources().getDisplayMetrics().density); }
     private TextView label(String value, int size, boolean bold) {
-        TextView text = new TextView(this);
+        TextView text = new TextView(host);
         text.setText(value); text.setTextSize(size); text.setTextColor(Color.WHITE);
         if (bold) text.setTypeface(null, android.graphics.Typeface.BOLD);
         return text;

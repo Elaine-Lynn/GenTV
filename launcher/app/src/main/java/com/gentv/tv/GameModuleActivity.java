@@ -1,16 +1,14 @@
 package com.gentv.tv;
 
 import android.app.Activity;
-import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
-import android.content.pm.PackageInstaller;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.StateListDrawable;
 import android.os.Build;
 import android.os.Bundle;
-import android.provider.Settings;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.FrameLayout;
@@ -19,7 +17,6 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.File;
@@ -28,26 +25,16 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.security.MessageDigest;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
 
-/** Installs the signed, ABI-specific game splits into this existing package. */
+/** Downloads one ABI-specific game plugin into private storage without installation. */
 @android.annotation.TargetApi(23)
 public final class GameModuleActivity extends Activity {
-    private static final String RESULT_ACTION = "com.gentv.tv.GAME_MODULE_INSTALL_RESULT";
-    private static final long MAX_SPLIT_BYTES = 100L * 1024 * 1024;
-    private static final long MAX_TOTAL_BYTES = 140L * 1024 * 1024;
+    private static final long MAX_PLUGIN_BYTES = 180L * 1024 * 1024;
     private TextView status;
     private Button action;
     private ProgressBar progress;
     private boolean busy;
-
-    private static final class Split {
-        final String name;
-        final File file;
-        final long size;
-        Split(String name, File file, long size) { this.name = name; this.file = file; this.size = size; }
-    }
 
     @Override protected void attachBaseContext(android.content.Context base) {
         super.attachBaseContext(LauncherLocale.wrap(base));
@@ -57,16 +44,14 @@ public final class GameModuleActivity extends Activity {
         super.onCreate(state);
         if (Build.VERSION.SDK_INT < 23) { finish(); return; }
         buildUi();
-        if (installed()) { launchGame(); return; }
-        if (RESULT_ACTION.equals(getIntent().getAction())) { handleResult(getIntent()); return; }
+        if (Build.VERSION.SDK_INT < 28) {
+            status.setText(R.string.game_runtime_unsupported_android);
+            action.setVisibility(View.GONE);
+            return;
+        }
+        if (GameRuntimeStore.ready(this)) { launchGame(); return; }
         action.setOnClickListener(v -> prepare());
         action.requestFocus();
-    }
-
-    @Override protected void onNewIntent(Intent intent) {
-        super.onNewIntent(intent);
-        setIntent(intent);
-        if (RESULT_ACTION.equals(intent.getAction())) handleResult(intent);
     }
 
     private void buildUi() {
@@ -161,51 +146,29 @@ public final class GameModuleActivity extends Activity {
 
     private int dp(int value) { return Math.round(value * getResources().getDisplayMetrics().density); }
 
-    private String abi() {
-        for (String candidate : Build.SUPPORTED_ABIS) {
-            if ("arm64-v8a".equals(candidate) || "armeabi-v7a".equals(candidate)) return candidate;
-        }
-        return null;
-    }
-
-    private boolean installed() {
-        try {
-            PackageInfo info = getPackageManager().getPackageInfo(getPackageName(), 0);
-            if (info.splitNames == null) return false;
-            String selectedAbi = abi();
-            boolean master = false, nativeCode = false;
-            for (String name : info.splitNames) {
-                if ("game".equals(name)) master = true;
-                if (selectedAbi != null && ("game.config." + selectedAbi.replace('-', '_')).equals(name)) nativeCode = true;
-            }
-            return master && nativeCode;
-        } catch (Exception ignored) { }
-        return false;
-    }
-
     private void prepare() {
         if (busy) return;
-        String selectedAbi = abi();
+        String selectedAbi = GameRuntimeStore.abi();
         if (selectedAbi == null) { showError(R.string.game_module_unsupported_abi); return; }
-        if (Build.VERSION.SDK_INT >= 26 && !getPackageManager().canRequestPackageInstalls()) {
-            startActivity(new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
-                    android.net.Uri.parse("package:" + getPackageName())));
-            status.setText(R.string.game_module_permission);
-            return;
-        }
         busy = true;
         action.setEnabled(false);
         progress.setVisibility(View.VISIBLE);
         status.setText(R.string.game_module_downloading);
         TvCloud.IO.execute(() -> {
-            try { install(download(selectedAbi)); }
-            catch (Exception error) { android.util.Log.e("GenTVGameModule", "Module install failed", error);
+            try {
+                File plugin = download(selectedAbi);
+                verifyArchive(plugin);
+                runOnUiThread(() -> status.setText(R.string.game_module_installing));
+                GameRuntimeStore.stage(this, plugin);
+                runOnUiThread(this::launchGame);
+            }
+            catch (Exception error) { android.util.Log.e("GenTVGameModule", "Module loading failed", error);
                 runOnUiThread(() -> showError(R.string.game_module_failed)); }
         });
     }
 
-    private List<Split> download(String selectedAbi) throws Exception {
-        String prefix = "https://github.com/Elaine-Lynn/GenTV/releases/download/game-modules-v"
+    private File download(String selectedAbi) throws Exception {
+        String prefix = "https://github.com/Elaine-Lynn/GenTV/releases/download/game-runtime-v"
                 + BuildConfig.VERSION_NAME + "/";
         String manifestUrl = BuildConfig.GAME_MANIFEST_BASE_URL + BuildConfig.VERSION_CODE + "/"
                 + selectedAbi + "/manifest.json";
@@ -219,65 +182,46 @@ public final class GameModuleActivity extends Activity {
         } finally { manifestConnection.disconnect(); }
         if (manifest.getInt("versionCode") != BuildConfig.VERSION_CODE
                 || !BuildConfig.VERSION_NAME.equals(manifest.getString("versionName"))
-                || !getPackageName().equals(manifest.getString("packageName"))
+                || !getPackageName().equals(manifest.getString("hostPackageName"))
                 || !selectedAbi.equals(manifest.getString("abi"))
                 || !UpdatePackage.certificate(this).equalsIgnoreCase(manifest.getString("signingCertificateSha256")))
             throw new IllegalArgumentException("Wrong game module version, ABI, package or signer");
-        JSONArray files = manifest.getJSONArray("splits");
-        if (files.length() != 2) throw new IllegalArgumentException("Expected two game splits");
-        String[] names = {"game-master.apk", "game-" + selectedAbi.replace('-', '_') + ".apk"};
-        List<Split> ready = new ArrayList<>();
-        long expectedTotal = 0;
-        for (int i = 0; i < 2; i++) {
-            JSONObject item = files.getJSONObject(i);
-            String name = item.getString("name");
-            long size = item.getLong("sizeBytes");
-            if (!names[i].equals(name) || !(prefix + name).equals(item.getString("url"))
-                    || !item.getString("sha256").matches("[a-fA-F0-9]{64}")
-                    || size <= 0 || size > MAX_SPLIT_BYTES || (expectedTotal += size) > MAX_TOTAL_BYTES)
-                throw new IllegalArgumentException("Invalid game split metadata");
-        }
-        final long totalSize = expectedTotal;
-        File directory = new File(getCacheDir(), "game-modules/" + BuildConfig.VERSION_CODE + "/" + selectedAbi);
+        JSONObject item = manifest.getJSONObject("plugin");
+        String name = "game-" + selectedAbi.replace('-', '_') + ".apk";
+        String url = item.getString("url");
+        String hash = item.getString("sha256");
+        long size = item.getLong("sizeBytes");
+        if (!name.equals(item.getString("name")) || !(prefix + name).equals(url)
+                || !hash.matches("[a-fA-F0-9]{64}") || size <= 0 || size > MAX_PLUGIN_BYTES)
+            throw new IllegalArgumentException("Invalid game plugin metadata");
+        File directory = new File(getCacheDir(), "game-runtime-download/" + BuildConfig.VERSION_CODE + "/" + selectedAbi);
         if (!directory.isDirectory() && !directory.mkdirs()) throw new java.io.IOException("Cannot create module cache");
-        for (int i = 0; i < 2; i++) {
-            JSONObject item = files.getJSONObject(i);
-            String name = item.getString("name");
-            String url = item.getString("url");
-            String hash = item.getString("sha256");
-            long size = item.getLong("sizeBytes");
-            File file = new File(directory, name);
-            if (!file.isFile() || file.length() != size || !hash.equalsIgnoreCase(sha256(file))) {
-                File partial = new File(directory, name + ".part");
-                HttpURLConnection connection = TvCloud.openGameModule(url);
-                try {
-                    if (connection.getResponseCode() != 200 || connection.getContentLength() > MAX_SPLIT_BYTES)
-                        throw new java.io.IOException("Game split download refused");
-                    MessageDigest digest = MessageDigest.getInstance("SHA-256");
-                    long received = 0;
-                    try (InputStream in = connection.getInputStream(); OutputStream out = new FileOutputStream(partial)) {
-                        byte[] buffer = new byte[32768]; int count;
-                        while ((count = in.read(buffer)) != -1) {
-                            received += count;
-                            if (received > size) throw new java.io.IOException("Game split too large");
-                            digest.update(buffer, 0, count); out.write(buffer, 0, count);
-                            int percent = (int) ((readyBytes(ready) + received) * 100 / totalSize);
-                            runOnUiThread(() -> progress.setProgress(percent));
-                        }
+        File file = new File(directory, name);
+        if (!file.isFile() || file.length() != size || !hash.equalsIgnoreCase(sha256(file))) {
+            File partial = new File(directory, name + ".part");
+            HttpURLConnection connection = TvCloud.openGameModule(url);
+            try {
+                if (connection.getResponseCode() != 200 || connection.getContentLength() > MAX_PLUGIN_BYTES)
+                    throw new java.io.IOException("Game plugin download refused");
+                MessageDigest digest = MessageDigest.getInstance("SHA-256");
+                long received = 0;
+                try (InputStream in = connection.getInputStream(); OutputStream out = new FileOutputStream(partial)) {
+                    byte[] buffer = new byte[32768]; int count;
+                    while ((count = in.read(buffer)) != -1) {
+                        received += count;
+                        if (received > size) throw new java.io.IOException("Game plugin too large");
+                        digest.update(buffer, 0, count); out.write(buffer, 0, count);
+                        int percent = (int) (received * 100 / size);
+                        runOnUiThread(() -> progress.setProgress(percent));
                     }
-                    if (received != size || !hash.equalsIgnoreCase(UpdatePackage.hex(digest.digest())))
-                        throw new java.io.IOException("Game split checksum mismatch");
-                    if (file.exists() && !file.delete()) throw new java.io.IOException("Cannot replace cached split");
-                    if (!partial.renameTo(file)) throw new java.io.IOException("Cannot cache game split");
-                } finally { connection.disconnect(); partial.delete(); }
-            }
-            ready.add(new Split(name, file, size));
+                }
+                if (received != size || !hash.equalsIgnoreCase(UpdatePackage.hex(digest.digest())))
+                    throw new java.io.IOException("Game plugin checksum mismatch");
+                if (file.exists() && !file.delete()) throw new java.io.IOException("Cannot replace cached plugin");
+                if (!partial.renameTo(file)) throw new java.io.IOException("Cannot cache game plugin");
+            } finally { connection.disconnect(); partial.delete(); }
         }
-        return ready;
-    }
-
-    private static long readyBytes(List<Split> splits) {
-        long total = 0; for (Split split : splits) total += split.size; return total;
+        return file;
     }
 
     private static String sha256(File file) throws Exception {
@@ -289,50 +233,23 @@ public final class GameModuleActivity extends Activity {
         return UpdatePackage.hex(digest.digest());
     }
 
-    private void install(List<Split> splits) throws Exception {
-        runOnUiThread(() -> status.setText(R.string.game_module_installing));
-        PackageInstaller installer = getPackageManager().getPackageInstaller();
-        PackageInstaller.SessionParams params = new PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_INHERIT_EXISTING);
-        params.setAppPackageName(getPackageName());
-        params.setSize(readyBytes(splits));
-        int id = installer.createSession(params);
-        try (PackageInstaller.Session session = installer.openSession(id)) {
-            for (Split split : splits) {
-                try (InputStream in = new java.io.FileInputStream(split.file);
-                     OutputStream out = session.openWrite(split.name, 0, split.size)) {
-                    byte[] buffer = new byte[32768]; int count;
-                    while ((count = in.read(buffer)) != -1) out.write(buffer, 0, count);
-                    session.fsync(out);
-                }
-            }
-            Intent result = new Intent(this, GameModuleActivity.class).setAction(RESULT_ACTION)
-                    .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-            int flags = PendingIntent.FLAG_UPDATE_CURRENT;
-            if (Build.VERSION.SDK_INT >= 31) flags |= PendingIntent.FLAG_MUTABLE;
-            session.commit(PendingIntent.getActivity(this, id, result, flags).getIntentSender());
-        } catch (Exception error) { installer.abandonSession(id); throw error; }
-    }
-
-    private void handleResult(Intent intent) {
-        int result = intent.getIntExtra(PackageInstaller.EXTRA_STATUS, PackageInstaller.STATUS_FAILURE);
-        if (result == PackageInstaller.STATUS_PENDING_USER_ACTION) {
-            Intent confirm = intent.getParcelableExtra(Intent.EXTRA_INTENT);
-            if (confirm != null) startActivity(confirm);
-            else showError(R.string.game_module_failed);
-        } else if (result == PackageInstaller.STATUS_SUCCESS || installed()) {
-            launchGame();
-        } else {
-            android.util.Log.e("GenTVGameModule", "PackageInstaller status " + result + ": "
-                    + intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE));
-            showError(R.string.game_module_failed);
-        }
+    @SuppressWarnings("deprecation")
+    private void verifyArchive(File file) throws Exception {
+        PackageManager manager = getPackageManager();
+        PackageInfo host = manager.getPackageInfo(getPackageName(), PackageManager.GET_SIGNATURES);
+        PackageInfo archive = manager.getPackageArchiveInfo(file.getAbsolutePath(), PackageManager.GET_SIGNATURES);
+        if (archive == null || !"com.gentv.game.plugin".equals(archive.packageName)
+                || archive.versionCode != BuildConfig.VERSION_CODE
+                || archive.signatures == null || host.signatures == null
+                || !Arrays.equals(archive.signatures, host.signatures))
+            throw new SecurityException("Game plugin identity or signature mismatch");
     }
 
     private void launchGame() {
         try {
-            startActivity(new Intent().setClassName(getPackageName(), "com.gentv.game.KartGameActivity"));
+            startActivity(new Intent(this, GameRuntimeHostActivity.class));
             finish();
-        } catch (Exception error) { android.util.Log.e("GenTVGameModule", "Game split unavailable", error);
+        } catch (Exception error) { android.util.Log.e("GenTVGameModule", "Game runtime unavailable", error);
             showError(R.string.game_module_failed); }
     }
 

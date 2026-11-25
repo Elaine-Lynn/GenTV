@@ -16,3 +16,4 @@ dependencyResolutionManagement {
 rootProject.name = "GenTVHome"
 include ':app'
 include ':game'
+include ':game-api'
