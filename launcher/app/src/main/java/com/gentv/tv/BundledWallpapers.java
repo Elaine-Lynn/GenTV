@@ -6,29 +6,28 @@ import android.content.SharedPreferences;
 /** Optional built-in backgrounds. An empty choice keeps the existing phone/theme/remote wallpaper behavior. */
 final class BundledWallpapers {
     static final String KEY = "bundled_wallpaper";
-    static final String[] IDS = {"", "classic", "cobalt", "teal", "indigo"};
+    static final String[] IDS = {"", "classic", "cobalt", "teal"};
     static final int[] IMAGES = {R.raw.wallpaper_default, R.raw.wallpaper_default,
-            R.raw.wallpaper_glass_cobalt, R.raw.wallpaper_glass_teal, R.raw.wallpaper_glass_indigo};
+            R.raw.wallpaper_glass_cobalt, R.raw.wallpaper_glass_teal};
     static final int[] IMAGE_PREVIEWS = {R.raw.wallpaper_default_preview,
             R.raw.wallpaper_default_preview, R.raw.wallpaper_glass_cobalt_preview,
-            R.raw.wallpaper_glass_teal_preview, R.raw.wallpaper_glass_indigo_preview};
+            R.raw.wallpaper_glass_teal_preview};
     static final int[] TITLES = {R.string.wallpaper_follow_current, R.string.wallpaper_classic,
-            R.string.wallpaper_cobalt, R.string.wallpaper_teal, R.string.wallpaper_indigo};
-    static final String[] MOTION_IDS = {"motion_blue", "motion_teal"};
-    static final int[] MOTION_IMAGES = {R.raw.wallpaper_motion_blue_preview,
-            R.raw.wallpaper_motion_teal_preview};
-    static final int[] MOTION_VIDEOS = {R.raw.wallpaper_motion_blue,
-            R.raw.wallpaper_motion_teal};
-    static final int[] MOTION_TITLES = {R.string.wallpaper_motion_blue,
-            R.string.wallpaper_motion_teal};
+            R.string.wallpaper_cobalt, R.string.wallpaper_teal};
+    static final String[] MOTION_IDS = {"motion_blue"};
+    static final int[] MOTION_IMAGES = {R.raw.wallpaper_motion_blue_preview};
+    static final int[] MOTION_VIDEOS = {R.raw.wallpaper_motion_blue};
+    static final int[] MOTION_TITLES = {R.string.wallpaper_motion_blue};
 
     private BundledWallpapers() { }
 
     static String selected(Context context) {
         String selected = context.getSharedPreferences(Config.SETTINGS_NAME, Context.MODE_PRIVATE)
                 .getString(KEY, "");
+        // An older selection keeps a blue wallpaper after the retired asset is removed.
+        if ("indigo".equals(selected)) return "cobalt";
         // Older installs may have selected one of the removed bundled clips.
-        if ("motion_indigo".equals(selected) || "motion_cat".equals(selected)
+        if ("motion_teal".equals(selected) || "motion_indigo".equals(selected) || "motion_cat".equals(selected)
                 || "motion_aquarium".equals(selected)) return MOTION_IDS[0];
         return selected;
     }

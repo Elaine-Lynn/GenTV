@@ -51,6 +51,8 @@ import com.google.zxing.qrcode.QRCodeWriter;
 /** Large preview and two Leanback thumbnail rows; image decoding never blocks focus scrolling. */
 public final class PersonalizationActivity extends Activity {
     private static final int PICK_WALLPAPER = 31;
+    private static final int VISIBLE_STILL_COUNT = 3; // classic, cobalt, teal
+    private static final int BUNDLED_COUNT = VISIBLE_STILL_COUNT + BundledWallpapers.MOTION_IDS.length;
     private final Handler main = new Handler(Looper.getMainLooper());
     private final ExecutorService decoder = Executors.newSingleThreadExecutor();
     private final Set<Integer> loading = new HashSet<>();
@@ -63,7 +65,6 @@ public final class PersonalizationActivity extends Activity {
     private ImageView preview;
     private ImageView previousPreview;
     private HorizontalGridView stillChoices;
-    private HorizontalGridView motionChoices;
     private HorizontalGridView userChoices;
     private BundledVideoPreview videoPreview;
     private Bitmap shownBitmap;
@@ -102,18 +103,16 @@ public final class PersonalizationActivity extends Activity {
         preview = findViewById(R.id.wallpaperPreview);
         previousPreview = findViewById(R.id.wallpaperPreviousPreview);
         stillChoices = findViewById(R.id.wallpaperChoices);
-        motionChoices = findViewById(R.id.wallpaperMotionChoices);
         userChoices = findViewById(R.id.wallpaperUserChoices);
         videoPreview = new BundledVideoPreview(this, findViewById(R.id.wallpaperVideoPreview));
         configure(stillChoices);
-        configure(motionChoices);
         configure(userChoices);
 
         int group = 0, index = 0;
-        for (int i = 0; i < BundledWallpapers.IDS.length; i++)
-            if (BundledWallpapers.IDS[i].equals(selected)) index = i;
+        for (int i = 0; i < VISIBLE_STILL_COUNT; i++)
+            if (BundledWallpapers.IDS[i + 1].equals(selected)) index = i;
         for (int i = 0; i < BundledWallpapers.MOTION_IDS.length; i++)
-            if (BundledWallpapers.MOTION_IDS[i].equals(selected)) { group = 1; index = i; }
+            if (BundledWallpapers.MOTION_IDS[i].equals(selected)) index = VISIBLE_STILL_COUNT + i;
         int userIndex = userIds.indexOf(selected);
         if (userIndex >= 0) { group = 2; index = userIndex + 2; focusedUserId = selected; }
         final int initialGroup = group, initialIndex = index;
@@ -129,9 +128,10 @@ public final class PersonalizationActivity extends Activity {
                     new Bitmap[BundledWallpapers.MOTION_IDS.length],
                     new Bitmap[userIds.size() + 2]
             };
-            for (int column = 0; column < 2; column++)
-                for (int choice = 0; choice < loaded[column].length; choice++)
-                    loaded[column][choice] = decode(thumbnailAt(column, choice), column == 0 ? 1 : 4);
+            for (int choice = 0; choice < VISIBLE_STILL_COUNT; choice++)
+                loaded[0][choice + 1] = decode(BundledWallpapers.IMAGE_PREVIEWS[choice + 1], 1);
+            for (int choice = 0; choice < loaded[1].length; choice++)
+                loaded[1][choice] = decode(BundledWallpapers.MOTION_IMAGES[choice], 4);
             for (int choice = 0; choice < userIds.size(); choice++)
                 loaded[2][choice + 2] = decodeUserPreview(userIds.get(choice), 220, 130);
             main.post(() -> {
@@ -147,11 +147,9 @@ public final class PersonalizationActivity extends Activity {
                     showBitmap(initialPreview);
                 }
                 stillChoices.setAdapter(new ChoiceAdapter(0));
-                motionChoices.setAdapter(new ChoiceAdapter(1));
                 userChoices.setAdapter(new ChoiceAdapter(2));
                 ready = true;
-                HorizontalGridView target = initialGroup == 0 ? stillChoices
-                        : initialGroup == 1 ? motionChoices : userChoices;
+                HorizontalGridView target = initialGroup == 0 ? stillChoices : userChoices;
                 target.setSelectedPosition(initialIndex);
                 focusedIndexes[initialGroup] = initialIndex;
                 visitedRows[initialGroup] = true;
@@ -159,7 +157,7 @@ public final class PersonalizationActivity extends Activity {
                     RecyclerView.ViewHolder holder = target.findViewHolderForAdapterPosition(initialIndex);
                     if (holder != null) holder.itemView.requestFocusFromTouch();
                 }, 60);
-                if (!lowRam) prefetch(initialGroup == 2 ? 0 : initialGroup);
+                if (!lowRam) prefetch();
             });
         });
     }
@@ -183,22 +181,24 @@ public final class PersonalizationActivity extends Activity {
         if (!ready || event.getAction() != KeyEvent.ACTION_DOWN
                 || (key != KeyEvent.KEYCODE_DPAD_UP && key != KeyEvent.KEYCODE_DPAD_DOWN))
             return super.dispatchKeyEvent(event);
-        HorizontalGridView[] rows = {stillChoices, motionChoices, userChoices};
+        HorizontalGridView[] rows = {stillChoices, userChoices};
         View focused = getCurrentFocus();
-        for (int group = 0; group < rows.length; group++) {
+        for (int row = 0; row < rows.length; row++) {
+            int group = row == 0 ? 0 : 2;
             RecyclerView.ViewHolder holder = focused == null ? null
-                    : rows[group].findContainingViewHolder(focused);
+                    : rows[row].findContainingViewHolder(focused);
             if (holder == null) continue;
-            int destination = group + (key == KeyEvent.KEYCODE_DPAD_DOWN ? 1 : -1);
-            if (destination < 0 || destination >= rows.length) return true;
+            int destinationRow = row + (key == KeyEvent.KEYCODE_DPAD_DOWN ? 1 : -1);
+            if (destinationRow < 0 || destinationRow >= rows.length) return true;
+            int destination = destinationRow == 0 ? 0 : 2;
             int current = holder.getBindingAdapterPosition();
             if (current == RecyclerView.NO_POSITION) current = focusedIndexes[group];
             focusedIndexes[group] = current;
             visitedRows[group] = true;
-            int count = rows[destination].getAdapter().getItemCount();
+            int count = rows[destinationRow].getAdapter().getItemCount();
             int index = Math.min(visitedRows[destination] ? focusedIndexes[destination] : current, count - 1);
             rowNavigationKey = key;
-            HorizontalGridView target = rows[destination];
+            HorizontalGridView target = rows[destinationRow];
             target.setSelectedPosition(index);
             target.post(() -> {
                 RecyclerView.ViewHolder next = target.findViewHolderForAdapterPosition(index);
@@ -211,17 +211,14 @@ public final class PersonalizationActivity extends Activity {
     }
 
     private int imageAt(int group, int index) {
-        return group == 0 ? BundledWallpapers.IMAGES[index]
-                : group == 1 ? BundledWallpapers.MOTION_IMAGES[index] : 0;
-    }
-
-    private int thumbnailAt(int group, int index) {
-        return group == 0 ? BundledWallpapers.IMAGE_PREVIEWS[index]
-                : BundledWallpapers.MOTION_IMAGES[index];
+        if (group != 0) return 0;
+        return index < VISIBLE_STILL_COUNT ? BundledWallpapers.IMAGES[index + 1]
+                : BundledWallpapers.MOTION_IMAGES[index - VISIBLE_STILL_COUNT];
     }
 
     private int videoAt(int group, int index) {
-        return group == 1 ? BundledWallpapers.MOTION_VIDEOS[index] : 0;
+        return group == 0 && index >= VISIBLE_STILL_COUNT
+                ? BundledWallpapers.MOTION_VIDEOS[index - VISIBLE_STILL_COUNT] : 0;
     }
 
     private void requestPreview(int group, int index) {
@@ -270,12 +267,8 @@ public final class PersonalizationActivity extends Activity {
         });
     }
 
-    private void prefetch(int firstGroup) {
-        for (int pass = 0; pass < 2; pass++) {
-            int group = pass == 0 ? firstGroup : 1 - firstGroup;
-            int count = group == 0 ? BundledWallpapers.IDS.length : BundledWallpapers.MOTION_IDS.length;
-            for (int i = 0; i < count; i++) queuePreview(imageAt(group, i));
-        }
+    private void prefetch() {
+        for (int i = 0; i < BUNDLED_COUNT; i++) queuePreview(imageAt(0, i));
     }
 
     private int userPreviewWidth() {
@@ -609,8 +602,7 @@ public final class PersonalizationActivity extends Activity {
                         .setDuration(focused ? 170 : 135)
                         .setInterpolator(new DecelerateInterpolator()).start();
                 if (focused) {
-                    HorizontalGridView row = group == 0 ? stillChoices
-                            : group == 1 ? motionChoices : userChoices;
+                    HorizontalGridView row = group == 0 ? stillChoices : userChoices;
                     int position = row.getChildAdapterPosition(view);
                     if (position != RecyclerView.NO_POSITION) {
                         focusedIndexes[group] = position;
@@ -623,17 +615,27 @@ public final class PersonalizationActivity extends Activity {
         }
 
         @Override public void onBindViewHolder(@NonNull ChoiceHolder holder, int position) {
-            holder.image.setImageBitmap(thumbnails[group][position]);
+            boolean bundledMotion = group == 0 && position >= VISIBLE_STILL_COUNT;
+            boolean userVideo = group == 2 && position >= 2
+                    && UserWallpaper.isVideo(userIds.get(position - 2));
+            Bitmap thumbnail = group == 0
+                    ? bundledMotion ? thumbnails[1][position - VISIBLE_STILL_COUNT]
+                    : thumbnails[0][position + 1]
+                    : thumbnails[2][position];
+            holder.image.setImageBitmap(thumbnail);
+            holder.play.setVisibility(bundledMotion || userVideo ? View.VISIBLE : View.GONE);
             holder.add.setVisibility(group == 2 && position < 2 ? View.VISIBLE : View.GONE);
             if (group == 2 && position < 2) holder.add.setText(position == 0 ? "+" : "⇧");
-            holder.name.setText(group == 0 ? BundledWallpapers.TITLES[position]
-                    : group == 1 ? BundledWallpapers.MOTION_TITLES[position]
+            holder.name.setText(group == 0 ? bundledMotion
+                    ? BundledWallpapers.MOTION_TITLES[position - VISIBLE_STILL_COUNT]
+                    : BundledWallpapers.TITLES[position + 1]
                     : position == 0 ? R.string.wallpaper_user_add
                     : position == 1 ? R.string.wallpaper_lan_send
-                    : UserWallpaper.isVideo(userIds.get(position - 2))
+                    : userVideo
                     ? R.string.wallpaper_user_video : R.string.wallpaper_user_image);
-            String id = group == 0 ? BundledWallpapers.IDS[position]
-                    : group == 1 ? BundledWallpapers.MOTION_IDS[position]
+            String id = group == 0 ? bundledMotion
+                    ? BundledWallpapers.MOTION_IDS[position - VISIBLE_STILL_COUNT]
+                    : BundledWallpapers.IDS[position + 1]
                     : position < 2 ? "" : userIds.get(position - 2);
             holder.selectedBadge.setVisibility(position < 2 && group == 2
                     ? View.GONE : id.equals(selected) ? View.VISIBLE : View.GONE);
@@ -650,13 +652,13 @@ public final class PersonalizationActivity extends Activity {
                     : position == 1 ? Long.MIN_VALUE + 1 : userIds.get(position - 2).hashCode() : position;
         }
         @Override public int getItemCount() {
-            return group == 0 ? BundledWallpapers.IDS.length
-                    : group == 1 ? BundledWallpapers.MOTION_IDS.length : userIds.size() + 2;
+            return group == 0 ? BUNDLED_COUNT : userIds.size() + 2;
         }
     }
 
     private static final class ChoiceHolder extends RecyclerView.ViewHolder {
         final ImageView image;
+        final ImageView play;
         final TextView add;
         final TextView name;
         final TextView selectedBadge;
@@ -664,6 +666,7 @@ public final class PersonalizationActivity extends Activity {
         ChoiceHolder(View item) {
             super(item);
             image = item.findViewById(R.id.wallpaperImage);
+            play = item.findViewById(R.id.wallpaperPlay);
             add = item.findViewById(R.id.wallpaperAdd);
             name = item.findViewById(R.id.wallpaperName);
             selectedBadge = item.findViewById(R.id.selectedBadge);
