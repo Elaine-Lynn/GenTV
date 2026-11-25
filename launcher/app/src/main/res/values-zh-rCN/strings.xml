@@ -24,6 +24,11 @@
     <string name="advanced_effects_state">高级动态效果：%1$s</string>
     <string name="open_on_start_label">开机时打开</string>
     <string name="open_on_start_state">开机时打开：%1$s</string>
+    <string name="open_on_start_remove">开机时不再打开</string>
+    <string name="open_on_start_saved">已设置开机时打开：%1$s</string>
+    <string name="open_on_start_removed">已取消开机时打开：%1$s</string>
+    <string name="open_on_start_removed_generic">已关闭开机时打开</string>
+    <string name="open_on_start_save_failed">开机启动应用保存失败</string>
     <string name="advanced_effects_warning">增加卡片上浮、图标缩放和背景颜色平滑过渡；可能增加内存占用，实际变化取决于电视。</string>
     <string name="follow_theme">跟随主题（重置电视端设置）</string>
     <string name="follow_theme_hint">恢复当前主题或内置的布局与动效设置。推送或重置主题也会清除电视端的这些设置。</string>
