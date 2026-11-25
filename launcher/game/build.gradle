@@ -11,8 +11,8 @@ android {
         applicationId 'com.gentv.game.plugin'
         minSdk 28
         targetSdk 34
-        versionCode 36
-        versionName '3.7.14'
+        versionCode 37
+        versionName '3.7.15'
     }
     splits {
         abi {

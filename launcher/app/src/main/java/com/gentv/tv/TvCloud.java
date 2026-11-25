@@ -91,8 +91,8 @@ final class TvCloud {
     }
     static boolean allowedGameModuleUrl(String url) {
         return url.matches("https://github\\.com/Elaine-Lynn/GenTV/releases/download/"
-                + "game-modules-v[0-9]+\\.[0-9]+\\.[0-9]+/"
-                + "game-(?:master|armeabi_v7a|arm64_v8a)\\.apk");
+                + "game-runtime-v[0-9]+\\.[0-9]+\\.[0-9]+/"
+                + "game-(?:armeabi_v7a|arm64_v8a)\\.apk");
     }
     private static HttpURLConnection followGithubRelease(String url) throws IOException {
         for (int hop = 0; hop < 4; hop++) {

@@ -6,6 +6,7 @@
     <string name="game_module_download">Download game</string>
     <string name="game_module_back">Back</string>
     <string name="game_module_downloading">Downloading game module…</string>
+    <string name="game_module_checking">Checking for game component updates…</string>
     <string name="game_module_installing">Preparing game component…</string>
     <string name="game_module_permission">Allow installs from GenTV in Android settings, then try again.</string>
     <string name="game_module_unavailable">The game download service is not configured in this build.</string>

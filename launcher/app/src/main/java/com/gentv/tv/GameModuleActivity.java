@@ -49,9 +49,9 @@ public final class GameModuleActivity extends Activity {
             action.setVisibility(View.GONE);
             return;
         }
-        if (GameRuntimeStore.ready(this)) { launchGame(); return; }
         action.setOnClickListener(v -> prepare());
         action.requestFocus();
+        if (GameRuntimeStore.ready(this)) prepare();
     }
 
     private void buildUi() {
@@ -150,20 +150,26 @@ public final class GameModuleActivity extends Activity {
         if (busy) return;
         String selectedAbi = GameRuntimeStore.abi();
         if (selectedAbi == null) { showError(R.string.game_module_unsupported_abi); return; }
+        boolean hadComponent = GameRuntimeStore.ready(this);
         busy = true;
         action.setEnabled(false);
         progress.setVisibility(View.VISIBLE);
-        status.setText(R.string.game_module_downloading);
+        status.setText(hadComponent ? R.string.game_module_checking : R.string.game_module_downloading);
         TvCloud.IO.execute(() -> {
             try {
                 File plugin = download(selectedAbi);
-                verifyArchive(plugin);
-                runOnUiThread(() -> status.setText(R.string.game_module_installing));
-                GameRuntimeStore.stage(this, plugin);
+                if (!hadComponent || !sha256(plugin).equalsIgnoreCase(sha256(GameRuntimeStore.archive(this)))) {
+                    verifyArchive(plugin);
+                    runOnUiThread(() -> status.setText(R.string.game_module_installing));
+                    GameRuntimeStore.stage(this, plugin);
+                }
                 runOnUiThread(this::launchGame);
             }
             catch (Exception error) { android.util.Log.e("GenTVGameModule", "Module loading failed", error);
-                runOnUiThread(() -> showError(R.string.game_module_failed)); }
+                runOnUiThread(() -> {
+                    if (hadComponent && GameRuntimeStore.ready(this)) launchGame();
+                    else showError(R.string.game_module_failed);
+                }); }
         });
     }
 

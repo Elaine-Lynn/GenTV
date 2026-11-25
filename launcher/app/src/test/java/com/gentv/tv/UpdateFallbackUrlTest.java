@@ -15,12 +15,16 @@ public final class UpdateFallbackUrlTest {
         assertFalse(TvCloud.allowedUpdateUrl("https://github.com/Elaine-Lynn/GenTV/releases/download/"
                 + "v3.7.13/../../gentv-tv-3.7.13.apk"));
     }
-    @Test public void acceptsOnlyExpectedGameSplitAssets() {
+    @Test public void acceptsOnlyExpectedGameRuntimeAssets() {
         assertTrue(TvCloud.allowedGameModuleUrl("https://github.com/Elaine-Lynn/GenTV/releases/download/"
-                + "game-modules-v3.7.14/game-armeabi_v7a.apk"));
+                + "game-runtime-v3.7.15/game-armeabi_v7a.apk"));
+        assertTrue(TvCloud.allowedGameModuleUrl("https://github.com/Elaine-Lynn/GenTV/releases/download/"
+                + "game-runtime-v3.7.15/game-arm64_v8a.apk"));
         assertFalse(TvCloud.allowedGameModuleUrl("https://github.com/Elaine-Lynn/GenTV/releases/download/"
                 + "game-modules-v3.7.14/../game-master.apk"));
         assertFalse(TvCloud.allowedGameModuleUrl("https://github.com/other/GenTV/releases/download/"
-                + "game-modules-v3.7.14/game-master.apk"));
+                + "game-runtime-v3.7.15/game-armeabi_v7a.apk"));
+        assertFalse(TvCloud.allowedGameModuleUrl("https://github.com/Elaine-Lynn/GenTV/releases/download/"
+                + "game-modules-v3.7.15/game-armeabi_v7a.apk"));
     }
 }

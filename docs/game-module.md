@@ -24,6 +24,8 @@ python3 tools/package_game_runtime.py \
 
 将两个 APK 作为本仓库 `game-runtime-v<versionName>` Release 的附件。将各 ABI 的 `manifest.json` 放到 `update-manifest` 分支的 `game-runtime/<versionCode>/<abi>/`。确认附件和清单可公开下载后，再发布引用它们的主包。旧 `game-modules-v*` 安装型 split 包不适用于此加载器。
 
+每次进入游戏时，主包读取当前版本和设备 ABI 对应的清单，并比较已保存组件与清单中的 SHA-256。内容变化时先下载并验证新文件，再替换私有目录中的旧文件；下载或校验失败时继续运行旧组件。游戏组件必须与主包使用相同的 `versionCode`、`versionName` 和签名，因此主包升级后必须发布对应版本的组件及清单。更新同一主包版本的组件时，需同步替换 Release 附件和清单，并确保新组件仍通过完整校验。
+
 本地隔离测试可对 Debug 构建运行相同脚本并加 `--allow-debug`。Debug 插件仅用于本地 QA，不可发布给正式包。
 
 ## 验收状态

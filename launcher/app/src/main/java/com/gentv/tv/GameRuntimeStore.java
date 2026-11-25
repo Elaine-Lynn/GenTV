@@ -43,16 +43,34 @@ final class GameRuntimeStore {
         File directory = directory(context);
         if (!directory.isDirectory() && !directory.mkdirs()) throw new IOException("Cannot create game directory");
         File ready = new File(directory, "game_ready");
-        if (ready.exists() && !ready.delete()) throw new IOException("Cannot replace game component");
-        copyAtomically(downloadedArchive, archive(context));
-        try (FileOutputStream out = new FileOutputStream(ready)) {
-            out.write(1);
-            out.getFD().sync();
+        File destination = archive(context);
+        File backup = new File(destination.getPath() + ".bak");
+        File pending = new File(destination.getPath() + ".part");
+        copyToPending(downloadedArchive, pending);
+        if (backup.exists() && !backup.delete()) throw new IOException("Cannot replace game backup");
+        boolean hadArchive = destination.exists();
+        if (hadArchive && !destination.renameTo(backup)) throw new IOException("Cannot back up game component");
+        boolean installed = false;
+        try {
+            if (!pending.renameTo(destination)) throw new IOException("Cannot stage game archive");
+            if (!ready.isFile()) {
+                try (FileOutputStream out = new FileOutputStream(ready)) {
+                    out.write(1);
+                    out.getFD().sync();
+                }
+            }
+            installed = true;
+        } finally {
+            if (!installed && hadArchive) {
+                if (destination.exists() && !destination.delete()) throw new IOException("Cannot restore old game component");
+                if (!backup.renameTo(destination)) throw new IOException("Cannot restore old game component");
+            }
+            if (installed && backup.exists()) backup.delete();
+            if (pending.exists()) pending.delete();
         }
     }
 
-    private static void copyAtomically(File source, File destination) throws IOException {
-        File pending = new File(destination.getPath() + ".part");
+    private static void copyToPending(File source, File pending) throws IOException {
         if (pending.exists() && !pending.delete()) throw new IOException("Cannot replace pending game archive");
         try (InputStream in = new FileInputStream(source); FileOutputStream out = new FileOutputStream(pending)) {
             byte[] bytes = new byte[32768];
@@ -60,8 +78,7 @@ final class GameRuntimeStore {
             while ((count = in.read(bytes)) != -1) out.write(bytes, 0, count);
             out.getFD().sync();
         }
-        if (!pending.setReadOnly() || !pending.renameTo(destination))
-            throw new IOException("Cannot stage game archive " + destination.getName());
+        if (!pending.setReadOnly()) throw new IOException("Cannot protect game archive");
     }
 
     static DexClassLoader loader(Context context) throws IOException {
