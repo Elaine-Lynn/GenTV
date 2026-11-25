@@ -155,6 +155,21 @@ def packageReleaseDistribution = tasks.register('packageReleaseDistribution', Zi
 }
 tasks.matching { it.name == 'assembleRelease' }.configureEach { finalizedBy(packageReleaseDistribution) }
 
+// v3.7.12 rejects downloaded updates larger than 8 MiB. Keep this bridge
+// release within its existing updater's limit until older clients have moved on.
+def verifyLegacyUpdateSize = tasks.register('verifyLegacyUpdateSize') {
+    dependsOn('packageRelease')
+    doLast {
+        def apk = layout.buildDirectory.file('outputs/apk/release/app-release.apk').get().asFile
+        def limit = 8L * 1024 * 1024
+        if (apk.length() > limit) {
+            throw new GradleException("TV release APK is ${apk.length()} bytes; v3.7.12 accepts at most ${limit} bytes")
+        }
+        println "TV release APK fits v3.7.12 updater: ${apk.length()} / ${limit} bytes"
+    }
+}
+tasks.matching { it.name == 'assembleRelease' }.configureEach { finalizedBy(verifyLegacyUpdateSize) }
+
 // One routing catalog is shared by standalone TV APKs and the phone installer.
 def prepareInputProfiles = tasks.register('prepareInputProfiles', Copy) {
     from(rootProject.file('../phone/framework/data/source-profiles.json'))
