@@ -66,6 +66,11 @@
     <string name="advanced_effects_state">Advanced effects: %1$s</string>
     <string name="open_on_start_label">Open on start</string>
     <string name="open_on_start_state">Open on start: %1$s</string>
+    <string name="open_on_start_remove">Don’t open on start</string>
+    <string name="open_on_start_saved">%1$s will open on the next start</string>
+    <string name="open_on_start_removed">%1$s will no longer open on start</string>
+    <string name="open_on_start_removed_generic">Open on start turned off</string>
+    <string name="open_on_start_save_failed">Couldn’t save the startup app</string>
     <string name="advanced_effects_warning">Adds a lifted tile, icon zoom and smooth colour transitions. May increase memory use; the actual difference depends on your TV.</string>
     <string name="follow_theme">Follow theme (reset on-TV choices)</string>
     <string name="follow_theme_hint">Uses the current theme or built-in layout and motion settings. Pushing or resetting a theme also clears your on-TV choices.</string>

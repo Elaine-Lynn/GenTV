@@ -1,6 +1,6 @@
 # GenTV 正式签名与发布
 
-电视包 `com.gentv.tv`，官网与升级接口已发布 3.7.12 / code34；手机版 `com.gentv.mobile` 已发布 3.7.4 / code20。两者使用同一正式证书，但应用身份与更新清单独立。
+电视包 `com.gentv.tv`，官网与升级接口已发布 3.7.16 / code38；手机版 `com.gentv.mobile` 已发布 3.7.4 / code20。两者使用同一正式证书，但应用身份与更新清单独立。
 
 正式证书 SHA-256 指纹（已用 v3.7.0 发布的 `gentv-tv-3.7.0.apk` 和 `gentv-mobile-3.7.1.apk` 核对）：
 
@@ -9,6 +9,10 @@
 ```
 
 每次发布后用 `apksigner verify --print-certs` 核对公网 APK 的证书与此一致。更换证书时必须同步更新本文件、README 和安装指南中的指纹。
+
+## 电视版 3.7.16
+
+从 `feature/v3.7.16` 发布 `v3.7.16`，电视包为 3.7.16 / code38、最低 API 17。首页应用菜单可设置一个开机时打开的应用，并显示选中状态与 Toast 提示。更新内容见[3.7.16 更新日志](release-notes-v3.7.16.md)，发布清单见[更新配置](releases/v3.7.16/config.json)。
 
 ## 电视版 3.7.15
 

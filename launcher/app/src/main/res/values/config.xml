@@ -37,15 +37,16 @@
     <string name="live_tv_package" translatable="false">com.mediatek.wwtv.tvcenter</string>
 
     <!-- Open the Live TV app above the first time Home comes up after the TV is switched on, for sets that are
-         mostly used for broadcast TV. Once per boot: Home after that stays Home. Can also be set with
+         mostly used for broadcast TV. An explicit app choice or Off overrides this default.
+         Once per boot: Home after that stays Home. Can also be set with
          "boot_to_live_tv": true in a theme's config.json. -->
     <bool name="boot_to_live_tv">false</bool>
 
     <!-- An "Open on start" row in Launcher settings: pick any app on the TV, and the first time Home comes up
-         after the TV starts it opens that app instead. Once per boot, like boot_to_live_tv (which wins when
-         both are set); Home after that stays Home, and an app that is gone or disabled leaves Home on screen.
-         Off by default; a theme can set "open_on_start_choice": true. -->
-    <bool name="open_on_start_choice">false</bool>
+         after the TV starts it opens that app instead. An explicit app choice takes precedence over boot_to_live_tv.
+         Home after that stays Home; a missing or disabled app leaves Home on screen. A theme can hide the settings
+         row with "open_on_start_choice": false; the Home tile menu remains available. -->
+    <bool name="open_on_start_choice">true</bool>
 
     <!-- Some TVs give their Live TV app no leanback entry point at all, so `live_tv_package` above
          resolves to nothing (TCL Android TV 9 on China-market sets is one). This action is then sent
