@@ -1,0 +1,12 @@
+{
+  "versionCode": 37,
+  "versionName": "3.7.15",
+  "packageName": "com.gentv.tv",
+  "url": "https://api.gentv.app/tv/releases/gentv-tv-3.7.15.apk",
+  "sha256": "25e8f8d00a65749a7f9dbba64fb849537cd58ca08315c679f204b172002aabb2",
+  "signingCertificateSha256": "8d5b5378f9056880f3036d44bc2f4a48322141fbb8d8bc91951d61a4652d997f",
+  "minSdk": 17,
+  "sizeBytes": 8058457,
+  "forceUpdate": false,
+  "minSupportedVersionCode": 0
+}
