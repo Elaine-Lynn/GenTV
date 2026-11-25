@@ -12,7 +12,7 @@
 
 ## 电视版 3.7.15
 
-从 `feature/xiaoguanghe-r1` 发布 `v3.7.15`，电视包为 3.7.15 / code37、最低 API 17。首页优先使用电视横幅，隐藏 Etna 辅助应用，适配小光盒 R1 的定制设置入口，并改善工具箱返回时的视频壁纸续播。更新内容见[3.7.15 更新日志](release-notes-v3.7.15.md)，发布清单见[更新配置](releases/v3.7.15/config.json)。
+从 `feature/xiaoguanghe-r1` 发布 `v3.7.15`，电视包为 3.7.15 / code37、最低 API 17。首页优先使用电视横幅，适配小光盒 R1 的定制设置入口，并改善工具箱返回时的视频壁纸续播。更新内容见[3.7.15 更新日志](release-notes-v3.7.15.md)，发布清单见[更新配置](releases/v3.7.15/config.json)。
 
 ## GitHub 电视版 3.7.13
 
