@@ -1,7 +1,8 @@
-# Shrink and optimise, but keep class and method names: the size win comes from dropping unused
-# AndroidX code, not from renaming, and readable stack traces matter more in a sideloaded app
-# where crash reports arrive as screenshots.
+# Shrink and optimise without renaming the launcher's classes and methods. The game plugin
+# compiles separately against this interface, and readable stack traces aid sideloaded TVs.
 -dontobfuscate
+# Preserve the host/plugin binary contract even when no implementation exists in the host APK.
+-keep interface com.gentv.tv.GameRuntimeEntry { *; }
 
 # Umeng's SDK loads components reflectively after the user's separate consent.
 -keep class com.umeng.** { *; }

@@ -58,10 +58,9 @@ android {
             if (findProperty('gentvModuleQaSuffix') == 'true') applicationIdSuffix '.moduleqa'
         }
         release {
-            // R8 currently duplicates GeckoView classes between base and the on-demand split.
-            // Keep release modules distinct; the base APK still excludes GeckoView's native payload.
-            minifyEnabled false
-            shrinkResources false
+            // Game and GeckoView code live in the downloaded runtime plugin; shrink the host as on main.
+            minifyEnabled true
+            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.production
         }
@@ -91,11 +90,7 @@ dependencies {
     implementation 'androidx.recyclerview:recyclerview:1.3.2'
     implementation 'androidx.leanback:leanback:1.0.0'
     implementation 'androidx.dynamicanimation:dynamicanimation:1.0.0'
-    // Its manifest registers a startup provider in the base APK. The provider
-    // must be loadable before an on-demand game split has been installed.
-    implementation('androidx.lifecycle:lifecycle-process:2.3.1') { transitive = false }
-    // Its manifest registers a startup provider in the base APK. The provider
-    // must be loadable before an on-demand game split has been installed.
+    // Its manifest startup provider must be available before the game plugin is downloaded.
     implementation('androidx.lifecycle:lifecycle-process:2.3.1') { transitive = false }
     // The legacy ExoPlayer line supports API 17; Media3's current video minimum is API 23.
     // Only core is needed for silent local MP4 wallpapers (no UI or streaming modules).
