@@ -38,7 +38,12 @@ public final class TvMetrics extends Application implements Application.Activity
         super.attachBaseContext(base);
         MultiDex.install(this);
     }
-    @Override public void onCreate() { super.onCreate(); instance = this; registerActivityLifecycleCallbacks(this); }
+    @Override public void onCreate() {
+        super.onCreate();
+        instance = this;
+        UmengMetrics.prepare(this);
+        registerActivityLifecycleCallbacks(this);
+    }
     static boolean enabled(Context c) { return TvCloud.enabled() && TvCloud.prefs(c).getBoolean("metrics_v3", false); }
     static boolean emulator() {
         return Build.FINGERPRINT.startsWith("generic") || Build.FINGERPRINT.contains("emulator")
@@ -56,6 +61,7 @@ public final class TvMetrics extends Application implements Application.Activity
         } else instance.clock.stop();
     }
     static void action(Context c, String value) {
+        UmengMetrics.action(c, value);
         if (instance != null && enabled(c)) { instance.event("action", value, 0); instance.flush(); }
     }
     private static String screen(Activity a) {
@@ -122,6 +128,7 @@ public final class TvMetrics extends Application implements Application.Activity
     @Override public void onActivityResumed(Activity a) {
         if (a instanceof AerialScreensaverActivity) return; // passive playback is not active usage
         visible = a;
+        UmengMetrics.onActivityResumed(a, screen(a));
         if (enabled(this)) {
             if (lastPause == 0 || SystemClock.elapsedRealtime()-lastPause >= 1800000) {
                 pending.clear(); session = UUID.randomUUID().toString(); sequence = 0; event("app_open", "", 0);
@@ -132,6 +139,7 @@ public final class TvMetrics extends Application implements Application.Activity
     }
     @Override public void onActivityPaused(Activity a) {
         if (visible != a) return;
+        UmengMetrics.onActivityPaused(a);
         duration("session_duration"); clock.stop(); lastPause = SystemClock.elapsedRealtime(); visible = null;
         handler.removeCallbacks(heartbeat); flush();
     }

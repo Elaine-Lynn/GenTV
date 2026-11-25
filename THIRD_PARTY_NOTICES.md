@@ -29,6 +29,8 @@ GenTV has since changed package namespaces, integration, UI, delivery, updates a
 
 ## Third-party names
 
+The optional TV analytics integration uses [Umeng U-App](https://devs.umeng.com/sdk) (`com.umeng.umsdk:common` and `com.umeng.umsdk:asms`). It is disabled by default and requires separate consent in the TV privacy settings; see [Privacy](PRIVACY.md) and [友盟隐私政策](https://www.umeng.com/page/policy).
+
 Television manufacturers, system services, streaming apps and their package identifiers appear where GenTV must recognise, protect or display them. These names and trademarks belong to their owners. The device lists are inherited community records, not GenTV compatibility certification.
 
 Online wallpapers served by the GenTV wallpaper service are not part of this repository.

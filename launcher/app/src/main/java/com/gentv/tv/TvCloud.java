@@ -9,7 +9,7 @@ import java.io.*;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSocketFactory;
 
-/** Small foreground-only client; no services, hardware identifiers or third-party SDKs. */
+/** Small foreground-only client for the GenTV API; optional Umeng metrics are separate. */
 final class TvCloud {
     /** Empty in builds without a configured GenTV API; every cloud feature is then off. */
     static final String BASE = BuildConfig.API_BASE_URL;

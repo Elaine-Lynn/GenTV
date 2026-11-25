@@ -5,9 +5,14 @@ plugins {
 def releaseSecrets = new Properties()
 def signingFile = rootProject.file('../phone/keys/signing.properties')
 if (signingFile.exists()) signingFile.withInputStream { releaseSecrets.load(it) }
-// Updates, online wallpapers and statistics stay off unless a GenTV API base is configured:
+// GenTV-hosted updates, online wallpapers and statistics stay off unless its API base is configured:
 // -PgentvApiBaseUrl=..., GENTV_API_BASE_URL, or apiBaseUrl in the private phone/keys/signing.properties.
 def apiBaseUrl = (findProperty('gentvApiBaseUrl') ?: System.getenv('GENTV_API_BASE_URL') ?: releaseSecrets.getProperty('apiBaseUrl') ?: '').trim()
+// Umeng uses a separate optional AppKey and an independent on-TV consent switch.
+def umengAppKey = (findProperty('gentvUmengAppKey') ?: System.getenv('GENTV_UMENG_APP_KEY') ?: releaseSecrets.getProperty('umengAppKey') ?: '').trim()
+if (umengAppKey && !(umengAppKey ==~ /[0-9a-fA-F]{24}/)) {
+    throw new GradleException('gentvUmengAppKey must be a 24-character hexadecimal AppKey')
+}
 if (apiBaseUrl && !(apiBaseUrl ==~ /https:\/\/[A-Za-z0-9.-]+(:[0-9]+)?\/([A-Za-z0-9._~-]+\/)*/)) {
     throw new GradleException('gentvApiBaseUrl must be an https URL ending in /')
 }
@@ -22,11 +27,12 @@ android {
         minSdk 17
         multiDexEnabled true
         targetSdk 34
-        versionCode 38
-        versionName '3.7.16'
+        versionCode 39
+        versionName '3.7.17'
         testInstrumentationRunner 'com.gentv.tv.DesktopIntegration'
         buildConfigField 'boolean', 'CHILD_TIMER_TEST_MODE', 'false'
         buildConfigField 'String', 'API_BASE_URL', '"' + apiBaseUrl + '"'
+        buildConfigField 'String', 'UMENG_APP_KEY', '"' + umengAppKey + '"'
     }
 
     signingConfigs {
@@ -76,6 +82,8 @@ dependencies {
     implementation 'com.google.android.exoplayer:exoplayer-core:2.19.1'
     // 3.3.x is the last ZXing line compatible with the launcher's API 17 minimum.
     implementation 'com.google.zxing:core:3.3.3'
+    implementation 'com.umeng.umsdk:common:10.0.1'
+    implementation 'com.umeng.umsdk:asms:1.8.7.2'
     // Test only (never in the APK): plain JVM tests for the module card validators, src/test.
     testImplementation 'junit:junit:4.13.2'
 }
