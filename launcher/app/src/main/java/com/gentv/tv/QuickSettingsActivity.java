@@ -82,8 +82,10 @@ public final class QuickSettingsActivity extends Activity {
     }
 
     private void addDeviceRows() {
+        Intent inputSource = SystemSettings.inputSourceIntent(this);
         addRow(R.drawable.ic_input, R.string.inputs, 0,
-                new Intent(this, MainActivity.class).setAction(MainActivity.ACTION_VIEW_INPUTS));
+                inputSource != null ? inputSource
+                        : new Intent(this, MainActivity.class).setAction(MainActivity.ACTION_VIEW_INPUTS));
         addRow(R.drawable.ic_settings, R.string.tv_settings, 0, SystemSettings.intent(this, Settings.ACTION_SETTINGS));
         addRow(R.drawable.ic_picture, R.string.quick_picture, 0, SystemSettings.intent(this, Settings.ACTION_DISPLAY_SETTINGS));
         addRow(R.drawable.ic_wifi, R.string.quick_network, 0, SystemSettings.intent(this, Settings.ACTION_WIFI_SETTINGS));

@@ -32,8 +32,8 @@ android {
         ndk { abiFilters 'armeabi-v7a', 'arm64-v8a' }
         multiDexEnabled true
         targetSdk 34
-        versionCode 36
-        versionName '3.7.14'
+        versionCode 37
+        versionName '3.7.15'
         testInstrumentationRunner 'com.gentv.tv.DesktopIntegration'
         buildConfigField 'boolean', 'CHILD_TIMER_TEST_MODE', 'false'
         buildConfigField 'String', 'API_BASE_URL', '"' + apiBaseUrl + '"'

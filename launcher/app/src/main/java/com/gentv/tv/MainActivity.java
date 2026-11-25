@@ -1343,9 +1343,11 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             // Small-heap TVs use the already prepared wallpaper preview for other pages.
             // Capturing and blurring a live frame while leaving Home adds avoidable allocations.
             Bitmap videoFrame = videoWallpaper.usesSmallHeap() ? null : videoWallpaper.frameForBlur();
-            // A translucent toolbox can leave Home started. Release the decoder now: on small
-            // heaps its buffers plus a background blur can exhaust the process before onStop.
-            videoWallpaper.stop();
+            // Keep the decoder ready behind a translucent toolbox on TVs with enough memory,
+            // as when the Home grid moves to its second screen. onStop releases it if Home
+            // actually becomes hidden; small heaps still release it immediately.
+            if (videoWallpaper.usesSmallHeap()) videoWallpaper.stop();
+            else videoWallpaper.pause();
             if (videoFrame != null) wallpaperBlurWorker.execute(() -> {
                 try {
                     Bitmap backdrop = WallpaperBlur.fromFrame(videoFrame);
@@ -3306,6 +3308,11 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
      * vpn_pill the VPN app has its own pill, so this one always opens Wi-Fi settings.
      */
     private void openNetworkPill() {
+        Intent nativeNetwork = SystemSettings.glowBoxNetworkIntent(this);
+        if (nativeNetwork != null) {
+            open(nativeNetwork);
+            return;
+        }
         Intent i = vpnPill ? null : vpnAppIntent();
         open(i != null ? i : systemIntent(Settings.ACTION_WIFI_SETTINGS));
     }
