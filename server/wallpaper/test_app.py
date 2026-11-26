@@ -49,7 +49,10 @@ class WallpaperApiTest(unittest.TestCase):
         self.assertEqual(groups[0]['items'][1]['id'], 'arowana-loop')
         self.assertEqual(groups[0]['items'][1]['path'], 'wallpapers/' + app.AROWANA_VIDEO)
         self.assertEqual(groups[0]['items'][1]['preview'], 'wallpapers/' + app.AROWANA_PREVIEW)
+        self.assertEqual(len(groups[0]['items']), 4)
         self.assertEqual(groups[3]['items'][0]['id'], 'default')
+        self.assertEqual([i['id'] for i in groups[4]['items']],
+                         ['shuffle-all', 'shuffle-pets', 'shuffle-nature', 'shuffle-dreamy', 'shuffle-images'])
         self.assertEqual(len(json.loads(self.get()[1])['wallpapers']), 1)
         self.assertEqual(self.get('/tv/wallpapers/' + app.CAT_VIDEO)[1], b'fixture')
         self.assertEqual(self.get('/tv/wallpapers/' + app.AROWANA_VIDEO)[1], b'fixture')
