@@ -8,3 +8,9 @@ for name,table,column,cutoff in [('mobile.sqlite3','events','received',int(time.
         with sqlite3.connect(path,timeout=30) as db:
             if db.execute('SELECT name FROM sqlite_master WHERE type="table" AND name=?',(table,)).fetchone():
                 db.execute(f'DELETE FROM {table} WHERE {column} < ?',(cutoff,))
+
+path=state/'analytics.sqlite3'
+if path.exists():
+    import analytics
+    with sqlite3.connect(path,timeout=30) as db:
+        analytics.prune(db,int(time.time()*1000))

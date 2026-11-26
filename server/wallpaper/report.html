@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>GenTV · 使用统计</title>
+<style>
+:root{color-scheme:light;--ink:#193b36;--muted:#60756e;--green:#147d68;--blue:#4165ca;--line:#dbe5df;--paper:#f3f6f2}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:14px/1.7 "PingFang SC","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--green)}
+header{background:#173d35;color:#fff}
+nav{max-width:1440px;margin:auto;padding:20px 48px;display:flex;align-items:center;justify-content:space-between;gap:18px}
+.brand{font:700 28px Georgia,serif;letter-spacing:-1px}.brand span{color:#98d6b5}
+.brand-label{font:12px "PingFang SC",sans-serif!important;letter-spacing:2px!important;color:#c1d6ce!important;margin-left:18px}
+.private{font-size:11px;letter-spacing:2px;color:#bfd4ca}
+main{max-width:1440px;margin:auto;padding:42px 48px}
+.intro{display:flex;justify-content:space-between;gap:24px;align-items:end;margin-bottom:26px}
+.eyebrow{font:11px Georgia,serif;letter-spacing:3px;color:var(--green)}
+h1{font-size:36px;font-weight:600;letter-spacing:-1px;line-height:1.4;margin:10px 0}h2{line-height:1.5}
+p{margin:0;color:var(--muted)}
+.stamp{font-size:12px;line-height:1.9;color:var(--muted);text-align:right}
+.notice{border:1px solid #e7dfc7;border-left:3px solid #b79949;background:#fbf8ed;padding:13px 18px;font-size:12px;color:#766434;margin-bottom:24px;line-height:1.9}
+.filter-panel{padding:22px 24px;background:#e8eee7;border:1px solid #d8e1d7;border-radius:10px}
+.filter-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:15px}
+.filter-heading strong{font-size:13px;font-weight:600}
+.quick-ranges{display:flex;gap:8px;flex-wrap:wrap}.quick-ranges a{padding:4px 11px;text-decoration:none;background:#f8fbf6;border:1px solid #d4dfd4;border-radius:5px;font-size:12px}
+.quick-ranges a:hover{background:white;border-color:var(--green)}
+.filters{display:flex;gap:12px;align-items:end;flex-wrap:wrap}
+label{font-size:12px;color:#4b655a;display:flex;flex-direction:column;gap:6px;flex:1;min-width:140px}
+input,select,button,.download{font:inherit;border:1px solid #cbd8ce;border-radius:6px;padding:10px 12px;background:#fff;color:var(--ink);min-height:44px}
+input,select{width:100%;min-width:0}button{background:var(--green);color:white;border-color:var(--green);cursor:pointer;padding-inline:23px;white-space:nowrap}
+button:hover{background:#106653}button:active,.quick-ranges a:active,.download:active{transform:translateY(1px)}
+.download{text-decoration:none;font-size:12px;display:inline-flex;align-items:center;justify-content:center;gap:10px;white-space:nowrap}.download:hover{border-color:var(--green)}
+:focus-visible{outline:3px solid #4165ca;outline-offset:3px}
+.scope{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:24px 0 0;font-size:12px;color:var(--muted)}
+.scope-badge{border:1px solid #c8dbce;background:#e9f3eb;color:#275a45;border-radius:4px;padding:3px 9px;font-weight:600}
+.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:16px 0 26px}
+.metric{background:#fff;border:1px solid var(--line);padding:21px 22px;border-radius:8px;min-width:0;position:relative}
+.metric span{font-size:12px;color:var(--muted)}
+.metric strong{display:block;font:500 clamp(25px,2.5vw,38px)/1.55 "Avenir Next","PingFang SC",sans-serif;letter-spacing:-.6px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere;margin:5px 0}
+.metric small{display:block;font-size:11px;line-height:1.7;color:#718477}
+.metrics[aria-label="新版安装与活跃汇总"] .metric:first-child{background:#173d35;border-color:#173d35;color:white}
+.metrics[aria-label="新版安装与活跃汇总"] .metric:first-child span,.metrics[aria-label="新版安装与活跃汇总"] .metric:first-child small{color:#bfd8c9}
+.metric:nth-child(5) strong,.metric:nth-child(6) strong,.metrics[aria-label="区间汇总"] .metric:nth-child(2) strong{font-size:clamp(19px,1.8vw,27px);line-height:2.15}
+.metric:last-child strong{font-size:clamp(22px,2.1vw,32px)}
+.panel{background:white;border:1px solid var(--line);border-radius:9px;margin-top:20px;overflow:hidden;min-width:0}
+.panel-head{padding:22px 24px 18px;display:flex;align-items:center;justify-content:space-between;gap:18px}
+.panel-head h2{font-size:16px;font-weight:600;margin:0}.subtitle{font-size:12px;line-height:1.8;color:var(--muted)}
+.legend{display:flex;gap:18px;font-size:12px;color:var(--muted);flex-shrink:0}
+.legend span:before{content:"";display:inline-block;width:17px;height:3px;border-radius:2px;background:var(--green);margin:0 7px 3px 0}
+.legend span:last-child:before{background:var(--blue)}
+.chart-hint{display:none;font-size:11px;margin:0 6px 8px;color:var(--muted)}.chart{padding:0 24px 18px;overflow-x:auto}
+svg{width:100%;min-width:580px;height:auto;display:block}
+svg text{fill:#6b8175;font:11px "PingFang SC",sans-serif}svg .grid{stroke:#e5ece6;stroke-width:1}
+svg polyline{fill:none;stroke-width:2.5;stroke-linejoin:round;stroke-linecap:round}
+svg circle{stroke:white;stroke-width:1}
+.table-scroll{overflow:auto;max-height:480px;overscroll-behavior-x:contain}
+table{width:100%;border-collapse:separate;border-spacing:0;font-variant-numeric:tabular-nums;font-size:13px;text-align:right}
+th,td{padding:12px 24px;border-top:1px solid #eaf0eb;white-space:nowrap}
+th{font-size:11px;font-weight:500;background:#f6f9f4;color:var(--muted);position:sticky;top:0;z-index:1}
+th:first-child,td:first-child{text-align:left}tbody tr:hover{background:#f3f8f2}
+.empty{text-align:center!important;padding:38px 24px;color:var(--muted);font-size:13px;line-height:1.9}
+.columns{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:20px}.columns .panel{align-self:start}
+.explanation{padding:24px;display:grid;grid-template-columns:1fr 1fr;gap:32px}
+.explanation h3{font-size:13px;margin:0 0 8px}.explanation p{font-size:12px;line-height:1.9}
+.section-heading{margin-top:42px;padding-top:30px;border-top:1px solid #cddbd0;margin-bottom:0}
+.section-heading h2{margin:0 0 6px;font-size:22px}.section-heading p{font-size:12px}
+footer{display:flex;justify-content:space-between;gap:20px;border-top:1px solid var(--line);margin-top:30px;padding-top:18px;font-size:11px;color:var(--muted)}
+.skip{position:absolute;top:-80px;left:16px;z-index:10;background:white;padding:10px 18px}.skip:focus{top:12px}
+@media(min-width:1600px){main{padding-top:50px}}
+@media(max-width:1100px){main{padding:32px}nav{padding:20px 32px}.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.metric strong{font-size:34px}.metric:nth-child(5) strong,.metric:nth-child(6) strong,.metrics[aria-label="区间汇总"] .metric:nth-child(2) strong{font-size:26px}.columns{grid-template-columns:1fr}}
+@media(max-width:600px){nav{padding:16px 20px}.brand{font-size:25px}.brand-label{margin-left:10px;letter-spacing:0!important}.private{font-size:10px;letter-spacing:0}
+main{padding:26px 16px}.intro{display:block}.stamp{text-align:left;margin-top:14px;font-size:11px}h1{font-size:29px}.intro p{font-size:12px}
+.notice{padding:12px 14px}.filter-panel{padding:16px}.filter-heading{align-items:start;flex-direction:column;gap:9px}.filters{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 10px}label{min-width:0;font-size:11px}input,select{font-size:13px;padding:10px 8px}.filters button,.filters .download{width:100%;padding-inline:8px;font-size:12px}
+.scope{gap:8px;margin-top:20px}.metrics{gap:10px;margin-top:12px}.metric{padding:16px 13px}.metric span{font-size:11px}.metric strong{font-size:30px;letter-spacing:-.5px}
+.metric:nth-child(5) strong,.metric:nth-child(6) strong,.metrics[aria-label="区间汇总"] .metric:nth-child(2) strong{font-size:20px;line-height:1.9;min-height:47px;display:flex;align-items:center}.metric:last-child strong{font-size:23px}.metric small{font-size:10px}
+.panel-head{padding:18px 16px 14px;align-items:start;flex-direction:column;gap:8px}.panel-head h2{font-size:15px}.subtitle{font-size:11px}.chart{padding:0 10px 12px}.chart-hint{display:block}
+th,td{padding:12px 16px}.explanation{grid-template-columns:1fr;padding:18px;gap:20px}.section-heading{margin-top:32px;padding-top:24px}.section-heading .download{margin-top:14px}footer{flex-direction:column;gap:4px}.columns{gap:0}}
+</style></head><body>
+<a class="skip" href="#content">跳到报表内容</a><header><nav aria-label="报表导航"><div class="brand">Gen<span>TV</span> <span class="brand-label">使用统计</span></div><div class="private">内部报表 / 只读</div></nav></header>
+<main id="content"><div class="intro"><div><div class="eyebrow">GENTV / ANALYTICS</div><h1>从新增到长期使用</h1><p>新增 · 活跃 · 留存 · 使用时长 · 操作路径</p></div><div class="stamp">更新于 {{UPDATED}}<br>按 UTC 自然日统计 · 当日数据持续累积</div></div>
+<div class="notice"><strong>统计口径：</strong>GenTV Agent 按匿名安装 ID 去重。电视桌面和手机伴侣优先按有效 MAC 的加密哈希去重，不可读取时回退安装 ID，默认排除测试流量。新增为去重实例首次观测，并非实际安装时间或准确物理设备数；无 MAC 时重装、清除数据或重置安装 ID 仍可能重复计新。历史无 MAC 记录不能跨重装补推。旧版数据不能代表安装台数，单独展示在下方。</div>
+<section class="filter-panel" aria-label="统计筛选"><div class="filter-heading"><strong>选择统计范围</strong><div class="quick-ranges" aria-label="快捷日期范围">{{QUICKRANGES}}</div></div><form class="filters" method="get" action="/tv/report/"><label>开始日期 · UTC<input type="date" name="start" value="{{START}}" max="{{TODAY}}" required></label><label>结束日期 · UTC<input type="date" name="end" value="{{END}}" max="{{TODAY}}" required></label><label>应用<select name="app"><option value="gentv_tv" {{TVSELECTED}}>GenTV Launcher</option><option value="gentv_mobile" {{MOBILESELECTED}}>GenTV 手机伴侣</option><option value="gentv_agent" {{AGENTSELECTED}}>GenTV Agent</option></select></label><label>流量<select name="traffic"><option value="production" {{PRODSELECTED}}>已验证正式流量</option><option value="test" {{TESTSELECTED}}>测试流量</option><option value="unverified" {{UNVERIFIEDSELECTED}}>未验证来源 / 历史流量</option></select></label><button type="submit">查询 / 刷新</button><a class="download" href="/tv/report/export.csv?start={{START}}&amp;end={{END}}&amp;app={{APP}}&amp;traffic={{TRAFFIC}}">导出每日明细 <span aria-hidden="true">↓ CSV</span></a></form></section>
+<div class="scope"><span class="scope-badge">{{APP_LABEL}} · {{TRAFFIC_LABEL}}</span><span>{{START}} — {{END}}</span><span>{{GROWTHSTATUS}} · 各应用独立去重</span></div>
+<section class="metrics" aria-label="新版安装与活跃汇总">{{GROWTHCARDS}}</section>
+<section class="panel"><div class="panel-head"><h2>新增与活跃趋势</h2><div class="legend"><span>新增去重实例</span><span>日活跃实例</span></div></div><div class="chart"><p class="chart-hint">窄屏可横向滑动查看完整趋势，下方提供每日明细</p>{{GROWTHCHART}}</div></section>
+<section class="panel"><div class="panel-head"><h2>每日新增与活跃</h2><span class="subtitle">UTC 自然日 · 同一安装在同一天只算一次活跃</span></div>{{GROWTHDAILY}}</section>
+<section class="panel"><div class="panel-head"><h2>新增队列留存</h2><span class="subtitle">D1 / D7 / D30：新增后的第 N 天再次活跃 · 观察日结束后计算</span></div>{{COHORTS}}</section>
+<div class="columns"><section class="panel"><div class="panel-head"><h2>新版应用版本分布</h2><span class="subtitle">跨版本使用的安装会在各版本分别计入</span></div>{{GROWTHVERSIONS}}</section><section class="panel"><div class="panel-head"><h2>常见操作路径</h2><span class="subtitle">最近 30 天与所选日期交集 · 会话内相邻步骤 Top 30</span></div>{{PATHS}}</section></div>
+<section class="panel"><div class="panel-head"><h2>新版功能事件</h2><span class="subtitle">最近 30 天与所选日期交集 · Top 50</span></div>{{FEATURES}}</section>
+{{QUESTIONS}}
+<section class="panel"><div class="explanation"><div><h3>留存与时长口径</h3><p>新增按所选流量中首次观测日期分组；D1/D7/D30 为准确第 N 天活跃比例，并非期间任意回访。前台每分钟累计一次时长，离开页面补计剩余时间。强制结束或断网可能少计；这是桌面或手机应用的前台时间，不是电视总观看时长。</p></div><div><h3>采集覆盖与保存期限</h3><p>本版 MAC 辅助统计默认关闭，需阅读新说明并重新开启。服务器不保存或展示原始 MAC；系统可能限制读取，网络接口变化也可能影响去重。模拟器自动标记测试，实体测试机可手动标记；默认报表排除测试。匿名路径和问题明细保留 30 天，按安装分组的日活明细保留 400 天。旧版无 ID 的数据无法补填留存；没有数据时不显示伪造的 0 安装。</p></div></div></section>
+<!-- legacy-start -->
+<div class="intro section-heading"><div><h2>旧版匿名汇总</h2><p>旧客户端的原始统计口径 · 无法去重或区分测试，与上方新版数据不相加</p></div><a class="download" href="/tv/report/export.csv?kind=legacy&amp;start={{START}}&amp;end={{END}}">导出旧版 CSV ↓</a></div>
+<section class="metrics" aria-label="区间汇总">{{CARDS}}</section>
+<section class="panel"><div class="panel-head"><div><h2>每日使用趋势</h2><span class="subtitle">{{START}} — {{END}} · 次数</span></div><div class="legend"><span>电视会话</span><span>手机启动</span></div></div><div class="chart"><p class="chart-hint">窄屏可横向滑动查看完整趋势，下方提供每日明细</p>{{CHART}}</div></section>
+<section class="panel"><div class="panel-head"><h2>每日明细</h2><span class="subtitle">日期倒序 · 0 表示无对应上报</span></div>{{DAILY}}</section>
+<div class="columns"><section class="panel"><div class="panel-head"><h2>电视版本分布</h2><span class="subtitle">按会话量汇总</span></div>{{VERSIONS}}</section><section class="panel"><div class="panel-head"><h2>手机事件分布</h2><span class="subtitle">区间内按版本、事件与结果汇总</span></div>{{EVENTS}}</section></div>
+<section class="panel"><div class="panel-head"><h2>如何理解旧版数据</h2></div><div class="explanation"><div><h3>会话不等于设备</h3><p>电视桌面结束一次前台使用后上报会话与时长。同一台电视可以产生多次会话；手机启动、连接及清理也均可重复计数。旧版接口无法统计独立安装设备或新增安装。</p></div><div><h3>没有上报不等于没有使用</h3><p>电视端统计默认关闭，网络失败的会话不补传。手机事件也受统计授权与网络影响。旧版测试事件无法区分；这部分仅供观察使用趋势，不是完整安装量。</p></div></div></section>
+<!-- legacy-end -->
+<footer><span>{{STATUS}}</span><span>GenTV · 仅读取匿名汇总，不展示反馈内容或设备信息</span></footer></main></body></html>

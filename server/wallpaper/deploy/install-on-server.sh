@@ -15,6 +15,11 @@ sudo -n install -d -m 755 "$release" "$base/media"
 sudo -n install -d -m 700 "$backup" /var/backups/gentv-tv
 sudo -n tar -xzf "$archive" -C "$release"
 sudo -n python3 -m venv "$release/venv"
+for asset in gentv-default.jpg catWallpaperLoop1080p.mp4 catWallpaperLoop1080p-preview.jpg arowanaWallpaperLoop1080p.mp4 arowanaWallpaperLoop1080p-preview.jpg; do
+    if [ -f "$release/media/$asset" ]; then
+        sudo -n install -m 644 "$release/media/$asset" "$base/media/$asset"
+    fi
+done
 sudo -n "$release/venv/bin/pip" install -r "$release/requirements.txt"
 sudo -n chmod -R a+rX "$release"
 previous=$(readlink -f "$base/current")
@@ -48,7 +53,11 @@ rollback() {
 }
 trap rollback EXIT
 trap 'exit 1' HUP INT TERM
-printf '%s\n' 'PUBLIC_BASE_URL=https://api.gentv.app/tv' 'WALLPAPER_DIR=/srv/gentv/wallpaper/media' | sudo -n tee /etc/gentv-wallpaper.env >/dev/null
+if ! sudo -n test -f /etc/gentv-wallpaper.env; then
+  printf '%s\n' 'PUBLIC_BASE_URL=https://api.gentv.app/tv' 'WALLPAPER_DIR=/srv/gentv/wallpaper/media' | sudo -n tee /etc/gentv-wallpaper.env >/dev/null
+fi
+# Preserve private configuration, including the optional AMap Web service key.
+sudo -n chmod 600 /etc/gentv-wallpaper.env
 for unit in gentv-wallpaper.service gentv-retention.service gentv-retention.timer gentv-backup.service gentv-backup.timer gentv-health.service gentv-health.timer; do sudo -n install -m 644 "$release/deploy/$unit" "/etc/systemd/system/$unit"; done
 sudo -n install -m 644 "$release/deploy/nginx-wallpaper.locations.conf" /etc/nginx/snippets/gentv-tv-api.locations.conf
 sudo -n python3 - <<'PYPROXY'

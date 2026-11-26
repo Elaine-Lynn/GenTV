@@ -1,7 +1,9 @@
 """GenTV TV API: read-only wallpaper/releases and anonymous aggregate session counters."""
+from contextlib import closing
 import mobile
+import analytics
+import location
 from rate_limit import limited
-from functools import lru_cache
 import hashlib
 import json
 import mimetypes
@@ -17,6 +19,7 @@ BASE = os.environ.get('PUBLIC_BASE_URL', 'https://api.gentv.app/tv').rstrip('/')
 STATE = Path(os.environ.get('GENTV_STATE_DIR', '/var/lib/gentv-tv'))
 ALLOWED = {'.jpg', '.jpeg', '.png', '.webp'}
 MAX_BYTES = 8 * 1024 * 1024
+MAX_VIDEO_BYTES = 100 * 1024 * 1024
 
 def pictures():
     if not MEDIA.is_dir():
@@ -24,14 +27,63 @@ def pictures():
     return [p for p in sorted(MEDIA.iterdir()) if not p.name.startswith('.') and p.suffix.lower() in ALLOWED
             and p.is_file() and not p.is_symlink() and 0 < p.stat().st_size <= MAX_BYTES][:100]
 
-@lru_cache(maxsize=128)
-def content_version(path, signature):
-    # Stat values only invalidate the server's hash memo; public versions depend on bytes alone.
+def content_version(path):
+    # Timestamp metadata can collide on Linux: always derive the public version from bytes.
     with path.open('rb') as source:
         data = source.read(MAX_BYTES + 1)
     if not 0 < len(data) <= MAX_BYTES:
         raise ValueError('Invalid wallpaper size')
     return hashlib.sha256(data).hexdigest()
+
+CAT_VIDEO = 'catWallpaperLoop1080p.mp4'
+CAT_PREVIEW = 'catWallpaperLoop1080p-preview.jpg'
+AROWANA_VIDEO = 'arowanaWallpaperLoop1080p.mp4'
+AROWANA_PREVIEW = 'arowanaWallpaperLoop1080p-preview.jpg'
+DEFAULT_IMAGE = 'gentv-default.jpg'
+VIDEOS = {CAT_VIDEO, AROWANA_VIDEO}
+RESERVED_IMAGES = {DEFAULT_IMAGE, CAT_PREVIEW, AROWANA_PREVIEW}
+
+def catalog():
+    def item(id, title, en, kind, **extra):
+        return dict(id=id, title=title, titleEn=en, kind=kind, **extra)
+
+    def group(id, title, en, items):
+        return dict(id=id, title=title, titleEn=en, items=items)
+
+    def asset(name):
+        return f'wallpapers/{quote(name)}'
+
+    def placeholder(id, title, en):
+        return item(id, title, en, 'placeholder')
+
+    images = [item('default', '默认壁纸', 'Default wallpaper', 'image',
+                   path=asset(DEFAULT_IMAGE), preview=asset(DEFAULT_IMAGE))]
+    for picture in pictures():
+        if picture.name in RESERVED_IMAGES:
+            continue
+        images.append(item('image-' + picture.name, picture.stem, picture.stem, 'image',
+                           path=asset(picture.name), preview=asset(picture.name)))
+        if len(images) >= 24:
+            break
+    return {'categories': [
+        group('pets', '萌宠', 'Pets', [
+            item('cat-loop', '小猫', 'Kitten', 'video', path=asset(CAT_VIDEO),
+                 preview=asset(CAT_PREVIEW)),
+            item('arowana-loop', '金龙鱼', 'Arowana', 'video', path=asset(AROWANA_VIDEO),
+                 preview=asset(AROWANA_PREVIEW)),
+            placeholder('pet-rabbit', '草地兔子', 'Meadow rabbit')]),
+        group('nature', '自然', 'Nature', [
+            placeholder('nature-sea', '海岸', 'Coast'),
+            placeholder('nature-forest', '森林', 'Forest'),
+            placeholder('nature-mountain', '远山', 'Mountains')]),
+        group('dreamy', '唯美', 'Dreamy', [
+            placeholder('dreamy-sakura', '樱花', 'Cherry blossoms'),
+            placeholder('dreamy-starlight', '星光', 'Starlight'),
+            placeholder('dreamy-clouds', '云间', 'Above the clouds')]),
+        group('images', '图片', 'Pictures', images),
+        group('shuffle', '随机播放', 'Shuffle', [
+            item('all-videos', '全部动态壁纸', 'All motion wallpapers', 'shuffle')]),
+    ]}
 
 def app(environ, start_response):
     method = environ.get('REQUEST_METHOD', 'GET')
@@ -40,8 +92,16 @@ def app(environ, start_response):
         path = path.encode('latin-1').decode('utf-8')
     except (UnicodeEncodeError, UnicodeDecodeError):
         pass
+    if path == '/tv/analytics':
+        return mobile.handle_analytics(environ,start_response,STATE)
     if path in ('/tv/events','/tv/feedback'):
         return mobile.handle(environ,start_response,STATE)
+    if path == '/tv/location':
+        if method != 'GET':
+            start_response('405 Method Not Allowed', [('Allow', 'GET'), ('Content-Length', '0')]); return []
+        if limited('location', environ):
+            start_response('429 Too Many Requests', [('Retry-After', '60'), ('Content-Length', '0')]); return []
+        return location.handle(environ, start_response)
     if path == '/tv/stats':
         if method != 'POST':
             start_response('405 Method Not Allowed', [('Allow', 'POST'), ('Content-Length', '0')]); return []
@@ -58,7 +118,7 @@ def app(environ, start_response):
             start_response('400 Bad Request', [('Content-Length', '0')]); return []
         try:
             STATE.mkdir(parents=True, exist_ok=True)
-            with sqlite3.connect(STATE / 'stats.sqlite3', timeout=5) as db:
+            with closing(sqlite3.connect(STATE / 'stats.sqlite3', timeout=5)) as db, db:
                 db.execute('CREATE TABLE IF NOT EXISTS daily(day TEXT, version INTEGER, sessions INTEGER, seconds INTEGER, PRIMARY KEY(day,version))')
                 db.execute('INSERT INTO daily VALUES(?,?,1,?) ON CONFLICT(day,version) DO UPDATE SET sessions=sessions+1,seconds=seconds+excluded.seconds',
                            (datetime.now(timezone.utc).strftime('%Y-%m-%d'), version, seconds))
@@ -83,11 +143,18 @@ def app(environ, start_response):
         body = json.dumps(release, separators=(',', ':')).encode()
         kind = 'application/json; charset=utf-8'; cache = 'no-cache'
     elif path == '/tv/wallpaper':
+        if parse_qs(environ.get('QUERY_STRING', '')).get('view') == ['catalog']:
+            payload = json.dumps(catalog(), ensure_ascii=False).encode()
+            start_response('200 OK', [('Content-Type', 'application/json; charset=utf-8'),
+                                      ('Cache-Control', 'no-cache'),
+                                      ('Content-Length', str(len(payload)))])
+            return [] if method == 'HEAD' else [payload]
         items = []
         for p in pictures():
             try:
-                stat = p.stat()
-                version = content_version(p, (stat.st_ino, stat.st_size, stat.st_mtime_ns, stat.st_ctime_ns))
+                if p.name in RESERVED_IMAGES:
+                    continue
+                version = content_version(p)
             except (OSError, ValueError):
                 continue
             items.append({'id': version, 'url': f'{BASE}/wallpapers/{quote(p.name)}?v={version}'})
@@ -97,13 +164,17 @@ def app(environ, start_response):
         name = path[len('/tv/wallpapers/'):]
         # WSGI already decodes PATH_INFO. Accept one filename only; never follow links.
         file = MEDIA / name
-        if '/' in name or '\\' in name or file not in pictures():
+        is_video = name in VIDEOS and file.is_file() and not file.is_symlink()
+        if '/' in name or '\\' in name or (file not in pictures() and not is_video):
             start_response('404 Not Found', [('Content-Length', '0')]); return []
+        limit = MAX_VIDEO_BYTES if is_video else MAX_BYTES
         try:
+            if file.stat().st_size > limit:
+                start_response('404 Not Found', [('Content-Length', '0')]); return []
             body = file.read_bytes()
         except OSError:
             start_response('404 Not Found', [('Content-Length', '0')]); return []
-        if len(body) > MAX_BYTES:
+        if len(body) > limit:
             start_response('404 Not Found', [('Content-Length', '0')]); return []
         kind = mimetypes.guess_type(name)[0] or 'application/octet-stream'; cache = 'public, max-age=86400'
     else:
