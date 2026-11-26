@@ -3997,7 +3997,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             });
         }
         addSettingsMenuRow(rows, popup, R.string.desktop_control_center, () -> QuickSettingsGlass.open(this));
-        addSettingsMenuRow(rows, popup, R.string.home_content_title, () -> startActivity(new Intent(this, HomeContentSettingsActivity.class)));
+        if (HomeContentRegistry.supported()) addSettingsMenuRow(rows, popup, R.string.home_content_title,
+                () -> startActivity(new Intent(this, HomeContentSettingsActivity.class)));
         if (moduleCards) addSettingsMenuRow(rows, popup, R.string.module_cards, this::showModuleCards);
         if (dockRow) addSettingsMenuRow(rows, popup, R.string.dock_edit, this::startDockEdit);
         addSettingsMenuRow(rows, popup, R.string.reorder, this::toggleReorder);
@@ -4041,7 +4042,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             pickUp(at);
             Toast.makeText(this, R.string.reorder_hint, Toast.LENGTH_LONG).show();
         });
-        addSettingsMenuRow(rows, popup, R.string.home_content_title,
+        if (HomeContentRegistry.supported()) addSettingsMenuRow(rows, popup, R.string.home_content_title,
                 () -> startActivity(new Intent(this, HomeContentSettingsActivity.class)));
         if (appLibraryEnabled) addSettingsMenuRow(rows, popup, R.string.library_remove_shortcut, () -> {
             if (LibraryApps.save(this, pkg, false)) reloadApps(false);

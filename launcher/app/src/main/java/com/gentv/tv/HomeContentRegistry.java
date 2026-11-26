@@ -70,8 +70,11 @@ final class HomeContentRegistry {
         byte[] digest=MessageDigest.getInstance("SHA-256").digest(signatures[0].toByteArray());
         StringBuilder b=new StringBuilder();for(byte v:digest)b.append(String.format(java.util.Locale.ROOT,"%02x",v&255));return b.toString();
     }
+    /** Gen plug-in apps need Android 5.0 (API 21): before it, Message.sendingUid cannot identify the provider. */
+    static boolean supported(){return Build.VERSION.SDK_INT>=21;}
     static List<Extension> all(Context context) {
         Map<String,Extension> result=new LinkedHashMap<>();
+        if(!supported())return new ArrayList<>();
         for(String category:new String[]{Intent.CATEGORY_LEANBACK_LAUNCHER,Intent.CATEGORY_LAUNCHER})
             for(ResolveInfo r:context.getPackageManager().queryIntentActivities(new Intent(Intent.ACTION_MAIN).addCategory(category),0)) {
                 Extension e=find(context,new ComponentName(r.activityInfo.packageName,r.activityInfo.name).flattenToShortString());
@@ -89,7 +92,7 @@ final class HomeContentRegistry {
         edit.apply();
     }
     static SharedPreferences prefs(Context c){return c.getSharedPreferences(PREFS,Context.MODE_PRIVATE);}
-    static boolean enabled(Context c){return prefs(c).getBoolean("enabled",true);}
+    static boolean enabled(Context c){return supported()&&prefs(c).getBoolean("enabled",true);}
     static boolean allowed(Context c,Extension e){return e.identity().equals(prefs(c).getString(e.key(),""));}
     static String channelKey(Extension e){return "channel:"+e.key()+":"+e.signer;}
     static void allow(Context c,Extension e,boolean allow){

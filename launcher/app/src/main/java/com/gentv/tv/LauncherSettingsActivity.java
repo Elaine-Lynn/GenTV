@@ -51,7 +51,10 @@ public final class LauncherSettingsActivity extends Activity {
         WallpaperBackdrop.apply(this,
                 ((android.view.ViewGroup) findViewById(android.R.id.content)).getChildAt(0));
         choices = getSharedPreferences(Config.SETTINGS_NAME, MODE_PRIVATE);
-        findViewById(R.id.homeContentChoice).setOnClickListener(v -> startActivity(new Intent(this, HomeContentSettingsActivity.class)));
+        View homeContentChoice = findViewById(R.id.homeContentChoice);
+        if (HomeContentRegistry.supported()) {
+            homeContentChoice.setOnClickListener(v -> startActivity(new Intent(this, HomeContentSettingsActivity.class)));
+        } else homeContentChoice.setVisibility(View.GONE);
         Config config = Config.load(this);
         boolean pondMode = DesktopMode.current(this) == DesktopMode.POND;
         if (pondMode) {

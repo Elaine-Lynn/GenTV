@@ -134,8 +134,10 @@ public final class QuickSettingsActivity extends Activity {
                 this::showDesktopModes);
 
         LinearLayout coreRow2 = horizontalRow(rows, 8);
-        bentoTile(coreRow2, R.drawable.ic_qs_extensions, R.string.quick_extensions,
-                () -> launch(new Intent(this, HomeContentSettingsActivity.class)));
+        if (HomeContentRegistry.supported()) {
+            bentoTile(coreRow2, R.drawable.ic_qs_extensions, R.string.quick_extensions,
+                    () -> launch(new Intent(this, HomeContentSettingsActivity.class)));
+        }
         bentoTile(coreRow2, R.drawable.ic_qs_system, R.string.tv_settings,
                 () -> launch(SystemSettings.intent(this, Settings.ACTION_SETTINGS)));
 
