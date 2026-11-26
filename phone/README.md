@@ -30,7 +30,7 @@ Older installed applications and recovery records keep their real identities. Th
 
 ## Services and boundaries
 
-Website and download entry: `https://www.gentv.me`. The API base is build configuration (`-PgentvApiBaseUrl`, `GENTV_API_BASE_URL`, or `apiBaseUrl` in the private `keys/signing.properties`); without it, updates, feedback and statistics are off. Official releases use `https://api.gentv.app/tv/`; mobile update path: `update?platform=mobile`, feedback: `feedback`, optional usage events: `events`. Source configuration is not a fresh online service verification.
+Website and download entry: `https://www.gentv.me`. The API base is build configuration (`-PgentvApiBaseUrl`, `GENTV_API_BASE_URL`, or `apiBaseUrl` in the private `keys/signing.properties`); without it, updates, feedback and statistics are off. Official releases use `https://api.gentv.app/tv/`; mobile update path: `update?platform=mobile`, feedback: `feedback`, optional schema 2 usage events: `analytics` (legacy clients keep `events`). Source configuration is not a fresh online service verification.
 
 Android TV / Google TV device support depends on model and firmware. Device lists are inherited references, not GenTV certification. Backups and logs contain sensitive local information; preserve the original recovery records. Emulator and unit-test success do not prove real-TV pairing, Home, HDMI, remote keys or recovery.
 

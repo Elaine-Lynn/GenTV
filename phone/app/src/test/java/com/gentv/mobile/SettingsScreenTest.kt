@@ -60,9 +60,9 @@ class SettingsScreenTest {
     @Test fun analyticsIsOffByDefaultAndCanBeToggled() {
         var enabled = false
         compose.setContent { GenTVTheme { SettingsScreen(UpdateStatus.Idle, {}, {}, {}, onAnalyticsChanged = { enabled = it }, analyticsAvailable = true) } }
-        compose.onNode(isToggleable()).performScrollTo().assertIsOff().performClick().assertIsOn()
+        compose.onAllNodes(isToggleable())[0].performScrollTo().assertIsOff().performClick().assertIsOn()
         assertTrue(enabled)
-        compose.onNode(isToggleable()).performClick().assertIsOff()
+        compose.onAllNodes(isToggleable())[0].performClick().assertIsOff()
         assertFalse(enabled)
     }
 
