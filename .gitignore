@@ -23,3 +23,6 @@ work/
 **/__pycache__/
 server/wallpaper/media/*
 !server/wallpaper/media/.gitkeep
+!server/wallpaper/media/catWallpaperLoop1080p.mp4
+!server/wallpaper/media/catWallpaperLoop1080p-preview.jpg
+!server/wallpaper/media/gentv-default.jpg
