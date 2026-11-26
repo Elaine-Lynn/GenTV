@@ -36,6 +36,10 @@
             <action android:name="android.settings.SETTINGS" />
         </intent>
         <intent>
+            <action android:name="android.settings.HOME_SETTINGS" />
+        </intent>
+        <package android:name="com.huawei.android.internal.app" />
+        <intent>
             <action android:name="android.settings.WIFI_SETTINGS" />
         </intent>
         <intent>
@@ -116,12 +120,17 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.HOME" />
                 <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-            <!-- Support both standard Android TV and box launchers that query LAUNCHER. -->
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
+                <!-- Some TV firmware sends HOME together with COMMON_HOME or LAUNCHER.
+                     Keep the categories in one filter to avoid duplicate launcher entries. -->
+                <category android:name="android.intent.category.COMMON_HOME" />
                 <category android:name="android.intent.category.LAUNCHER" />
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+            </intent-filter>
+            <!-- Coocaa's private home selection category. -->
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.HOME.CC" />
+                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
 

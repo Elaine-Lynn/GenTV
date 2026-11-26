@@ -1,0 +1,6 @@
+<resources>
+    <string name="home_setup_choose">Choose GenTV in the system screen, then select Always if offered.</string>
+    <string name="home_setup_not_changed">GenTV is not the system default home yet. You can try another system picker, or cancel.</string>
+    <string name="home_setup_try_next">Try another method</string>
+    <string name="home_setup_unavailable">No more supported Home setup screens are available. If your TV offers a default Home option in system settings, choose GenTV there.</string>
+</resources>
