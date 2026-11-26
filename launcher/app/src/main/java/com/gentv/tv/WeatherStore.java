@@ -43,6 +43,8 @@ final class WeatherStore {
     static void attempted(Context context, long now) { prefs(context).edit().putLong(ATTEMPTED, now).apply(); }
     static long updated(Context context) { return prefs(context).getLong(UPDATED, 0); }
     static long lastAttempt(Context context) { return prefs(context).getLong(ATTEMPTED, 0); }
+    static long locationAttempt(Context context) { return prefs(context).getLong("locationAttempt", 0); }
+    static void locationAttempted(Context context, long now) { prefs(context).edit().putLong("locationAttempt", now).apply(); }
     static WeatherApi.Current cached(Context context) {
         SharedPreferences prefs = prefs(context);
         return prefs.getLong(UPDATED, 0) > 0

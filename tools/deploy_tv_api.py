@@ -11,7 +11,7 @@ host=a.host
 root=Path(__file__).resolve().parents[1]
 output=tempfile.TemporaryDirectory(prefix='gentv-deploy-')
 archive=Path(output.name)/'source.tar.gz'
-subprocess.run(['tar','-czf',str(archive),'-C',str(root/'server/wallpaper'),'app.py','mobile.py','rate_limit.py','backup.py','health.py','retention.py','requirements.txt','deploy'],check=True)
+subprocess.run(['tar','-czf',str(archive),'-C',str(root/'server/wallpaper'),'app.py','mobile.py','location.py','rate_limit.py','backup.py','health.py','retention.py','requirements.txt','deploy'],check=True)
 subprocess.run(['scp',*remote,str(archive),host+':/var/tmp/gentv-tv-api-source.tar.gz'],check=True)
 sha=hashlib.sha256(archive.read_bytes()).hexdigest()
 script='''set -eu

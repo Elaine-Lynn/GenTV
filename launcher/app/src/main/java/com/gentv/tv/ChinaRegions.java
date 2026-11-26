@@ -36,6 +36,16 @@ final class ChinaRegions {
         }
     }
 
+    static WeatherApi.City matchCity(List<Region> provinces, String provinceName, String cityName) throws IOException {
+        for (Region province : provinces) {
+            if (!province.name.equals(provinceName)) continue;
+            for (Region city : province.children) {
+                if (city.name.equals(cityName)) return new WeatherApi.City(city.name, city.latitude, city.longitude);
+            }
+        }
+        throw new IOException("Located city is not in bundled region data");
+    }
+
     private static List<Region> parse(JSONArray data) throws Exception {
         List<Region> regions = new ArrayList<>(data.length());
         for (int i = 0; i < data.length(); i++) {

@@ -216,6 +216,7 @@
     <string name="weather_settings_title">城市</string>
     <string name="weather_no_city">请依次选择省、市、区县。</string>
     <string name="weather_pick_city">设置城市 · 查看天气</string>
+    <string name="weather_locating">正在识别城市…</string>
     <string name="weather_selected_city">当前城市：%1$s</string>
     <string name="weather_province">省 / 直辖市 / 自治区</string>
     <string name="weather_city">市 / 地区</string>

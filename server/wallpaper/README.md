@@ -76,3 +76,6 @@ sh install-on-server.sh /var/tmp/wallpaper-source.tar.gz <sha256>
 写入端点有 Nginx 入口限流与每来源内存配额；Cloudflare 可信代理网段仅从官方 API 获取并验证 CIDR，Nginx 覆盖客户端传入的来源头。来源仅以随机密钥哈希短暂存在内存，不存入统计表。共享网络仍共享配额。
 
 正式 TV 更新清单增加 `signingCertificateSha256`、`minSdk`、`sizeBytes`。旧 debug TV 客户端使用独立 legacy 清单，参见 `docs/release.md`。强制策略默认关闭，客户端只有通过完整清单验证后才接受，24 小时后需重新验证策略。
+## 自动识别天气城市
+
+可选的高德 IP 定位代理接口与配置见 [高德自动城市配置](../../docs/amap-city-location.md)。Key 仅放在服务端环境变量 `AMAP_WEB_SERVICE_KEY` 中。
