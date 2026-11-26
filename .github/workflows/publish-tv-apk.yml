@@ -76,7 +76,7 @@ jobs:
           for file in release/*; do
             name="${file##*/}"
             echo "::notice::Checking $name"
-            asset_names="$(gh api "repos/$GH_REPO/releases/tags/$RELEASE_TAG" --jq '.assets[].name')"
+            asset_names="$(gh release view "$RELEASE_TAG" --json assets --jq '.assets[].name')"
             if grep -Fxq "$name" <<< "$asset_names"; then
               if ! gh release download "$RELEASE_TAG" --pattern "$name" --dir downloaded; then
                 echo "::error::Could not download existing release asset $name"
