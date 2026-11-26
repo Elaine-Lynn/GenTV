@@ -436,11 +436,14 @@ final class HomeContentController {
     private void clearPresentation(boolean immediate){
         if(channelPreview!=null){channelPreview.release();channelPreview=null;}
         firstAction=null;snapshot=null;acceptingImages=false;
+        // Only a pane that was shown may hand the shelf back. Every focus move stops the previous session, and a
+        // spurious "hidden" here cancels the dock title's fade-out before it swaps in the newly focused app's name.
+        boolean shown=pane!=null;
         if(outgoing!=null){outgoing.animate().cancel();content.removeView(outgoing);outgoing=null;}
         if(pane!=null){View old=pane;pane=null;disable(old);old.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS);
             old.animate().cancel();if(immediate)content.removeView(old);else{outgoing=old;old.animate().alpha(0).translationX(reduced?0:-dp(20)*direction).translationY(reduced||direction!=0?0:dp(16)).setDuration(duration(180)).withEndAction(()->{content.removeView(old);if(outgoing==old)outgoing=null;}).start();}}
         if(immediate){for(int i=backgrounds.getChildCount()-1;i>=0;i--)removeImage((ImageView)backgrounds.getChildAt(i));}else fadeBackground();
-        host.contentVisible(false);
+        if(shown)host.contentVisible(false);
         // Bitmaps may still be referenced by an outgoing frame. Drop ownership; Android frees them once views retire.
         images.clear();imageBytes=0;
     }
