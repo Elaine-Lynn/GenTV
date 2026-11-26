@@ -10,6 +10,7 @@ import android.graphics.Shader;
 import android.graphics.Typeface;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.animation.LinearInterpolator;
@@ -29,16 +30,19 @@ final class MemoryCleanupView extends View {
     private final Runnable dismiss;
     private final boolean motion;
     private ValueAnimator animator;
+    private ValueAnimator departureAnimator;
     private ValueAnimator resultAnimator;
     private float resultVisibility;
     private boolean hiding;
     private MemoryCleanup.Task cleanup;
-    private float progress;
-    private boolean finished, disposed, operationDone, animationDone, success;
+    private float departure;
+    private long startedAt;
+    private boolean finished, disposed, operationDone, departing, success;
     private int exitedProcesses;
     private final int port;
     private long reclaimedMb;
     private final Runnable autoClose = this::close;
+    private final Runnable beginDeparture = this::finishCleanup;
     private float cachedGlowW, cachedGlowH;
     private float cachedResultGlowR;
     private boolean cachedResultGlowSuccess;
@@ -69,6 +73,7 @@ final class MemoryCleanupView extends View {
 
     @Override protected void onAttachedToWindow() {
         super.onAttachedToWindow();
+        startedAt = SystemClock.uptimeMillis();
         cleanup = MemoryCleanup.start(getContext(), port, (ok, freed, exited) -> handler.post(() -> {
             if (disposed) return;
             operationDone = true;
@@ -79,21 +84,54 @@ final class MemoryCleanupView extends View {
         }));
         if (motion) {
             animator = ValueAnimator.ofFloat(0, 1);
-            animator.setDuration(2350);
+            animator.setDuration(2200);
+            animator.setRepeatCount(ValueAnimator.INFINITE);
             animator.setInterpolator(new LinearInterpolator());
-            animator.addUpdateListener(a -> { progress = (float) a.getAnimatedValue(); invalidate(); });
+            animator.addUpdateListener(a -> invalidate());
             animator.start();
         }
-        handler.postDelayed(() -> { animationDone = true; finishCleanup(); }, motion ? 2400 : 500);
     }
 
     private void finishCleanup() {
-        if (disposed || finished || !operationDone || !animationDone) return;
+        if (disposed || finished || departing || !operationDone) return;
+        long remaining = motion ? 650 - (SystemClock.uptimeMillis() - startedAt) : 0;
+        if (remaining > 0) {
+            handler.removeCallbacks(beginDeparture);
+            handler.postDelayed(beginDeparture, remaining);
+            return;
+        }
+        departing = true;
+        if (animator != null) animator.cancel();
+        if (!motion) {
+            departure = 1f;
+            showResult();
+            handler.postDelayed(autoClose, 1400);
+            return;
+        }
+        departureAnimator = ValueAnimator.ofFloat(0f, 1f);
+        departureAnimator.setDuration(success ? 620 : 320);
+        departureAnimator.setInterpolator(new LinearInterpolator());
+        departureAnimator.addUpdateListener(a -> {
+            departure = (float) a.getAnimatedValue();
+            if (departure >= .50f && !finished) showResult();
+            invalidate();
+        });
+        departureAnimator.addListener(new android.animation.AnimatorListenerAdapter() {
+            @Override public void onAnimationEnd(android.animation.Animator animation) {
+                if (disposed || hiding) return;
+                if (!finished) showResult();
+                handler.postDelayed(autoClose, 1400);
+            }
+        });
+        departureAnimator.start();
+    }
+
+    private void showResult() {
         finished = true;
         String result = resultText();
         setContentDescription(result);
         announceForAccessibility(result);
-        animateResult(1f, 340, () -> handler.postDelayed(autoClose, 1800));
+        animateResult(1f, 280, () -> { });
     }
 
     @Override protected void onDraw(Canvas canvas) {
@@ -104,8 +142,13 @@ final class MemoryCleanupView extends View {
         float unit = Math.min(w / 360f, h / 460f);
         float cx = w * 0.5f;
 
-        if (!finished) {
-            float t = motion ? progress : 0.36f;
+        if (!finished || departing && departure < 1f) {
+            float seconds = motion ? (SystemClock.uptimeMillis() - startedAt) / 1000f : 0f;
+            float t = departing && success ? .30f + .70f * departure : .30f;
+            float rocketAlpha = 1f - smoothStep(.42f, 1f, departure);
+            if (rocketAlpha < .99f) {
+                CompatApi.saveLayerAlpha(canvas, w, h, Math.round(rocketAlpha * 255f));
+            } else canvas.save();
 
             // Smooth C2 envelopes — zero abrupt slope kinks between ignition, spooling and liftoff.
             float ignite = smootherStep(0.00f, 0.22f, t);
@@ -115,19 +158,20 @@ final class MemoryCleanupView extends View {
             float departEase = (float) Math.pow(depart, 2.25);
 
             // Subtle downward thrust compression before lifting smoothly out the top of the panel.
-            float crouch = 0.014f * (float) Math.sin(Math.PI * smoothStep(0.12f, 0.46f, t));
+            float crouch = departing && success
+                    ? .009f * (float) Math.sin(Math.PI * smoothStep(0f, .28f, departure)) : 0f;
             float altitude = motion
-                    ? (0.52f + crouch - 0.96f * departEase)
+                    ? (0.45f + crouch - (departing && success ? 0.96f * departEase : 0f))
                     : 0.45f;
 
-            // Natural low-frequency rocket vibration during spool-up, fading cleanly once airborne.
-            float shakeEnv = motion ? (ignite * (1f - smoothStep(0.46f, 0.72f, t))) : 0f;
+            // Slow breathing while work runs; no launch until the real cleanup callback.
+            float shakeEnv = motion ? 1f - smoothStep(0f, .36f, departure) : 0f;
             float shake = motion
-                    ? ((float) Math.sin(t * TWO_PI * 13.5f) * 0.65f
-                    + (float) Math.sin(t * TWO_PI * 21.0f + 0.9f) * 0.35f) * 1.45f * shakeEnv
+                    ? (float) Math.sin(seconds * TWO_PI * .42f) * .65f * shakeEnv
                     : 0f;
 
-            float cy = h * altitude;
+            float cy = h * altitude + (motion
+                    ? (float) Math.sin(seconds * TWO_PI * .55f) * 3f * unit * shakeEnv : 0f);
 
             // Soft cyan ambient atmosphere inside the right-side glass panel.
             float ambientAlpha = (0.15f + 0.22f * ignite + 0.14f * spool) * (1f - 0.72f * smoothStep(0.70f, 1.00f, t));
@@ -150,10 +194,10 @@ final class MemoryCleanupView extends View {
             canvas.drawPath(rocket, ink);
 
             // Organic nozzle-anchored thruster flame (dynamic Bezier, never distorting stroke width).
-            drawOrganicFlame(canvas, t, ignite, spool, surge);
+            drawOrganicFlame(canvas, seconds * .24f, ignite, spool, surge);
 
             // Subtle vertical slipstream lines sweeping down as the rocket climbs.
-            float streakAlpha = (0.14f * spool + 0.50f * surge) * (1f - 0.6f * smoothStep(0.84f, 1.0f, t));
+            float streakAlpha = departing && success ? .40f * surge : 0f;
             if (streakAlpha > 0.02f) {
                 ink.setStyle(Paint.Style.STROKE);
                 ink.setStrokeWidth(0.85f);
@@ -174,14 +218,14 @@ final class MemoryCleanupView extends View {
 
             // Clean panel caption anchored gently at the bottom while cleaning runs.
             float captionAlpha = motion
-                    ? (animationDone ? 0.85f : (0.72f * smoothStep(0.0f, 0.15f, t) * (1f - 0.45f * smoothStep(0.78f, 1.0f, t))))
+                    ? .85f * smoothStep(0f, .25f, seconds)
                     : 0.85f;
             int captionColor = android.graphics.Color.argb(Math.round(captionAlpha * 255f), 220, 236, 248);
             drawText(canvas, getResources().getString(R.string.memory_cleaning), cx,
                     h - 38f * unit, 14f * unit, captionColor, fontRegular);
-        } else {
-            drawResult(canvas, w, h, unit);
+            canvas.restore();
         }
+        if (finished) drawResult(canvas, w, h, unit);
     }
 
     /**
@@ -430,6 +474,11 @@ final class MemoryCleanupView extends View {
         if (finished) {
             hiding = true;
             handler.removeCallbacks(autoClose);
+            departure = 1f;
+            if (departureAnimator != null) {
+                departureAnimator.removeAllListeners();
+                departureAnimator.cancel();
+            }
             animateResult(0f, 260, this::dismissNow);
         } else {
             dismissNow();
@@ -446,6 +495,11 @@ final class MemoryCleanupView extends View {
         if (cleanup != null) cleanup.cancel();
         handler.removeCallbacksAndMessages(null);
         if (animator != null) { animator.cancel(); animator.removeAllUpdateListeners(); }
+        if (departureAnimator != null) {
+            departureAnimator.removeAllListeners();
+            departureAnimator.cancel();
+            departureAnimator.removeAllUpdateListeners();
+        }
         if (resultAnimator != null) {
             resultAnimator.removeAllListeners();
             resultAnimator.cancel();

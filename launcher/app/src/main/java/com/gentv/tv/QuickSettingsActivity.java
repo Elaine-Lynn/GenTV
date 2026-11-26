@@ -612,6 +612,12 @@ public final class QuickSettingsActivity extends Activity {
         View previousFocus = getCurrentFocus();
         FrameLayout panel = findViewById(R.id.panel);
         ViewGroup panelScroll = findViewById(R.id.panelScroll);
+        // A match-parent animation must not stretch the wrap-content glass panel.
+        int previousPanelHeight = panel.getLayoutParams().height;
+        if (panel.getHeight() > 0) {
+            panel.getLayoutParams().height = panel.getHeight();
+            panel.requestLayout();
+        }
         android.animation.TimeInterpolator ease = CompatApi.easeOut();
         panelScroll.setDescendantFocusability(ViewGroup.FOCUS_BLOCK_DESCENDANTS);
         if (animateFocus) {
@@ -631,6 +637,8 @@ public final class QuickSettingsActivity extends Activity {
             if (!memoryAnimation.succeeded()) getPreferences(MODE_PRIVATE).edit().remove("memory_adb_port").apply();
             panel.removeView(memoryAnimation);
             memoryAnimation = null;
+            panel.getLayoutParams().height = previousPanelHeight;
+            panel.requestLayout();
             panelScroll.setDescendantFocusability(ViewGroup.FOCUS_AFTER_DESCENDANTS);
             if (animateFocus) {
                 panelScroll.animate().cancel();
