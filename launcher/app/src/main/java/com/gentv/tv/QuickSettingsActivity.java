@@ -130,8 +130,6 @@ public final class QuickSettingsActivity extends Activity {
         LinearLayout coreRow1 = horizontalRow(rows, 10);
         bentoTile(coreRow1, R.drawable.ic_qs_sliders, R.string.quick_gentv_settings,
                 () -> openLauncher(null));
-        bentoTile(coreRow1, R.drawable.ic_qs_palette, R.string.quick_personalize,
-                this::showDesktopModes);
 
         LinearLayout coreRow2 = horizontalRow(rows, 8);
         if (HomeContentRegistry.supported()) {
@@ -443,7 +441,6 @@ public final class QuickSettingsActivity extends Activity {
         LinearLayout r2 = plateRow(plate);
         utilityItem(r2, R.drawable.ic_qs_shield, R.string.quick_child,
                 () -> launch(new Intent(this, ChildSettingsActivity.class)));
-        utilityItem(r2, R.drawable.ic_qs_location, R.string.quick_city, this::showCity);
 
         addHairlineDivider(plate);
 
@@ -675,9 +672,7 @@ public final class QuickSettingsActivity extends Activity {
         super.onStop();
     }
 
-    private void showCity() {
-        launch(new Intent(this, WeatherSettingsActivity.class));
-    }
+
 
     private void showAbout() {
         showGlassDialog(
@@ -796,38 +791,7 @@ public final class QuickSettingsActivity extends Activity {
         return button;
     }
 
-    private void showDesktopModes() {
-        DesktopMode current = DesktopMode.current(this);
-        View previousFocus = getCurrentFocus();
-        View choices = getLayoutInflater().inflate(R.layout.dialog_desktop_mode, new FrameLayout(this), false);
-        View simple = choices.findViewById(R.id.desktopModeSimple);
-        View pond = choices.findViewById(R.id.desktopModePond);
-        choices.findViewById(R.id.simpleModeCheck).setVisibility(current == DesktopMode.SIMPLE ? View.VISIBLE : View.INVISIBLE);
-        choices.findViewById(R.id.pondModeCheck).setVisibility(current == DesktopMode.POND ? View.VISIBLE : View.INVISIBLE);
-        ((ImageView) choices.findViewById(R.id.modeGlassBackdrop)).setImageResource(
-                current == DesktopMode.POND ? R.drawable.theme_preview_pond_blur : R.drawable.theme_preview_simple_blur);
-        Dialog dialog = new Dialog(this);
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        dialog.setContentView(choices);
-        simple.setOnClickListener(v -> selectDesktopMode(dialog, current, DesktopMode.SIMPLE));
-        pond.setOnClickListener(v -> selectDesktopMode(dialog, current, DesktopMode.POND));
-        dialog.setOnDismissListener(d -> {
-            if (previousFocus != null) previousFocus.requestFocus();
-        });
-        dialog.show();
-        Window window = dialog.getWindow();
-        if (window != null) {
-            window.setBackgroundDrawableResource(android.R.color.transparent);
-            window.setDimAmount(0.38f);
-            int available = getResources().getDisplayMetrics().widthPixels - dp(48);
-            window.setLayout(Math.min(available, dp(680)), ViewGroup.LayoutParams.WRAP_CONTENT);
-        }
-        (current == DesktopMode.POND ? pond : simple).requestFocus();
-    }
 
-    private void selectDesktopMode(Dialog dialog, DesktopMode current, DesktopMode selected) {
-        dialog.dismiss();
-        if (selected == current) return;
-        selected.select(this);
-    }
+
+
 }

@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/** Mainland province, city and district centres bundled for offline selection. */
+/** Province and city centres used only to resolve automatic IP location. */
 final class ChinaRegions {
     static final class Region {
         final String name;

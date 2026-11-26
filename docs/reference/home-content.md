@@ -34,7 +34,7 @@ On a real exported, enabled `MAIN` + `LEANBACK_LAUNCHER` or `LAUNCHER` activity:
 
 The owner opens **Launcher settings → Desktop content**, enables this app, then places its icon in the first row. Permission is bound to activity, service and current signing certificate. Signing identity or service changes require another explicit permission. Catalogue installation does not imply permission to display content. Module Card permission does not imply GHCP permission. A global switch disables all desktop content.
 
-No auto-reorder occurs. Content is currently disabled in pond mode and while child protection is enabled. A layout with insufficient space hides content instead of covering controls.
+No auto-reorder occurs. Content is disabled while child protection is enabled. A layout with insufficient space hides content instead of covering controls.
 
 ## 2. Messenger transport
 

@@ -50,7 +50,7 @@ final class WeatherWidget {
         long age = System.currentTimeMillis() - WeatherStore.updated(activity);
         WeatherApi.Current current = WeatherStore.cached(activity);
         if (city.isEmpty()) {
-            label.setText(fetching ? R.string.weather_locating : R.string.weather_pick_city);
+            label.setText(fetching ? R.string.weather_locating : R.string.weather_unavailable);
             label.setVisibility(View.VISIBLE);
             return;
         }
@@ -122,7 +122,7 @@ final class WeatherWidget {
             main.post(() -> {
                 fetching = false;
                 if (closed) return;
-                // The user may have selected a city while this request was in flight.
+                // Preserve a saved city if it changed while this request was in flight.
                 if (located != null && WeatherStore.city(activity).isEmpty()) WeatherStore.select(activity, located);
                 if (!active) return;
                 render();

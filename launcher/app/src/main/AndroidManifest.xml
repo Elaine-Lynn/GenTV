@@ -130,8 +130,6 @@
             android:exported="false"
             android:excludeFromRecents="true"
             android:screenOrientation="landscape" />
-        <activity android:name=".WeatherSettingsActivity" android:exported="false"
-            android:excludeFromRecents="true" android:screenOrientation="landscape" />
         <activity android:name=".PersonalizationActivity" android:exported="false"
             android:excludeFromRecents="true" android:screenOrientation="landscape" />
         <activity android:name=".LocalWallpaperPickerActivity" android:exported="false"

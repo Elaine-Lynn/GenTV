@@ -109,7 +109,6 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         super.attachBaseContext(LauncherLocale.wrap(base));   // locale
     }
 
-
     private static final int LAUNCHER_SETTINGS_REQUEST = 42;
     /** Sent by QuickSettingsActivity: open Launcher settings from here so Home rebuilds when they close. */
     static final String ACTION_LAUNCHER_SETTINGS = "com.gentv.tv.action.LAUNCHER_SETTINGS";
@@ -161,8 +160,6 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private AppAdapter adapter;
     private RecyclerView grid;
     private FrameLayout root;
-    private com.gentv.tv.pond.PondSurface pond;
-    private final List<View> pondButtons = new ArrayList<>();
     private WallpaperPlayer wallpaperPlayer;
     private VideoWallpaperPlayer videoWallpaper;
     private RemoteWallpaper remoteWallpaper;
@@ -435,30 +432,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         getWindow().setBackgroundDrawable(null);
         sky = findViewById(R.id.sky);
         sky.setIntensity(cfg.skyIntensity);
-        if (DesktopMode.current(this) == DesktopMode.POND) {
-            android.app.ActivityManager manager = CompatApi.service(this, android.app.ActivityManager.class);
-            if (manager != null && manager.getDeviceConfigurationInfo().reqGlEsVersion >= 0x20000) {
-                SharedPreferences choices = getSharedPreferences(Config.SETTINGS_NAME, MODE_PRIVATE);
-                pond = new com.gentv.tv.pond.PondSurface(this,
-                        PondOption.COUNT.read(choices), PondOption.SPEED.read(choices),
-                        PondOption.FPS.read(choices), PondOption.RESOLUTION.read(choices),
-                        () -> fallBackFromPond(cfg), fish -> {
-                    int catches = choices.getInt("pond_catches", 0) + 1;
-                    int points = choices.getInt("pond_points", 0) + fish.merit;
-                    choices.edit().putInt("pond_catches", catches).putInt("pond_points", points).apply();
-                    if (headerResumed && !isDestroyed()) Toast.makeText(this, R.string.pond_caught, Toast.LENGTH_SHORT).show();
-                });
-                root.addView(pond, 0, new FrameLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-                sky.setVisibility(View.GONE);
-            } else {
-                Toast.makeText(this, R.string.pond_unavailable, Toast.LENGTH_SHORT).show();
-            }
-        }
-        if (pond == null) setUpWallpapers(cfg);
+
+        setUpWallpapers(cfg);
         TextView weatherSummary = findViewById(R.id.weatherSummary);
         weatherWidget = new WeatherWidget(this, weatherSummary);
-        weatherSummary.setOnClickListener(v -> startActivity(new Intent(this, WeatherSettingsActivity.class)));
         glass = findViewById(R.id.glass);
         glass.setStyle(cfg.glassStyle);
         if (festive) glass.setAccent(festival.accentColor());
@@ -466,8 +443,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         // The glow is one bitmap, so its alpha can be applied while drawing it. Otherwise every frame of
         // a fade renders it into a full-screen offscreen buffer first.
         CompatApi.forceOverlappingRendering(ambient, false);
-        ambientGlow = pond == null && cfg.ambientGlow;
-        appGlow = pond == null && cfg.appGlow;
+        ambientGlow = cfg.ambientGlow;
+        appGlow = cfg.appGlow;
         if (!ambientGlow) ambient.setVisibility(View.GONE);
         heroName = findViewById(R.id.heroName);
         hero = findViewById(R.id.hero);
@@ -481,7 +458,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         glowStyle = cfg.glowStyle;
         heroDotsShown = cfg.cinematicDots;
         cinematicWhiteFocus = cfg.cinematicWhiteFocus;
-        heroArtAlpha = pond == null ? cfg.cinematicArt / 100f : 0f;
+        heroArtAlpha = cfg.cinematicArt / 100f;
         if (cinematic) setUpCinematicShelf(cfg.cinematicScrim);
         // dock_title false: the name above the dock (and the cinematic lines under it) never shows; the glow
         // still follows the dock.
@@ -746,7 +723,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         });
         launcherSettingsButton = cfg.launcherSettingsButton;
         if (launcherSettingsButton) {
-            ((TextView) btnSettings).setText(DesktopMode.settingsTitle(this));
+            ((TextView) btnSettings).setText(R.string.launcher_settings);
             ((TextView) btnSettings).setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_home_settings_pill, 0, 0, 0);
         }
         btnSettings.setOnClickListener(v -> {
@@ -844,12 +821,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             btnSettings.setOnClickListener(v -> QuickSettingsGlass.open(this));
         }
         if (cfg.iconOnlyInputs) makeIconOnly((TextView) btnInputs);
-        if (pond != null) {
-            addPondButton(R.string.pond_feed_short, R.drawable.ic_pond_feed, () -> pond.feed());
-            addPondButton(R.string.pond_fish_short, R.drawable.ic_pond_hook, () -> pond.fish());
-            addPondButton(R.string.pond_achievements, R.drawable.ic_pond_award, this::showPondAchievements);
-            positionPondButtons();
-        }
+
         btnSettings.setOnLongClickListener(v -> {
             showSettingsMenu();
             return true;
@@ -867,15 +839,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                 return true;
             }
             int firstButton = btnInputs.getVisibility() == View.VISIBLE ? R.id.btnInputs : firstTopButton().getId();
-            if (!rtlMenuBar && !pondButtons.isEmpty()) {
-                ViewGroup bar = findViewById(R.id.topButtons);
-                for (int i = 0; i < bar.getChildCount(); i++) {
-                    View child = bar.getChildAt(i);
-                    if (child.getVisibility() != View.VISIBLE) continue;
-                    firstButton = child.getId();
-                    break;
-                }
-            }
+
             int leftButton = rtlMenuBar ? R.id.btnSettings : firstButton;
             int rightButton = rtlMenuBar ? firstButton : R.id.btnSettings;
             if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT) return v.getId() == leftButton;
@@ -888,7 +852,6 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         btnReorder.setOnKeyListener(pillKeys);
         btnLibraryTop.setOnKeyListener(pillKeys);
         for (View button : topAppButtons) button.setOnKeyListener(pillKeys);
-        for (View button : pondButtons) button.setOnKeyListener(pillKeys);
         if (advancedEffects) {
             List<View> pills = new ArrayList<>(Arrays.asList(btnInputs, btnWifi, btnVpn, btnReorder, btnLibraryTop, btnSettings));
             pills.addAll(topAppButtons);
@@ -903,7 +866,6 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         homeContent = new HomeContentController(this, root, animations, reducedMotion, new HomeContentController.Host() {
             @Override public boolean allowedNow() {
                 return headerResumed && hasWindowFocus() && !isFinishing() && !isDestroyed()
-                        && pond == null && DesktopMode.current(MainActivity.this) == DesktopMode.SIMPLE
                         && !reordering && appLibrary == null && !screensaverOpening
                         && (openPopup == null || !openPopup.isShowing()) && cardPrompt == null
                         && !ChildLock.locked(MainActivity.this)
@@ -1068,31 +1030,6 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         WallpaperBackdrop.prepare(this);
     }
 
-    private void fallBackFromPond(Config cfg) {
-        if (pond == null || isDestroyed() || isFinishing()) return;
-        pond.onPause();
-        root.removeView(pond);
-        pond = null;
-        ViewGroup bar = findViewById(R.id.topButtons);
-        for (View button : pondButtons) bar.removeView(button);
-        pondButtons.clear();
-        restartIdleScreensaver();
-        heroArtAlpha = cfg.cinematicArt / 100f;
-        ambientGlow = cfg.ambientGlow;
-        appGlow = cfg.appGlow;
-        ambient.setVisibility(ambientGlow ? View.VISIBLE : View.GONE);
-        sky.setVisibility(View.VISIBLE);
-        sky.update();
-        setUpWallpapers(cfg);
-        if (headerResumed) {
-            wallpaperPlayer.start();
-            if (videoWallpaper != null) videoWallpaper.start();
-            remoteWallpaper.start();
-            videoWallpaper.start();
-        }
-        Toast.makeText(this, R.string.pond_unavailable, Toast.LENGTH_SHORT).show();
-    }
-
     @Override
     protected void onStart() {
         super.onStart();
@@ -1110,7 +1047,6 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         updateClockVisibility();
         tileRefresh.onStart();
     }
-
 
     @Override
     protected void onResume() {
@@ -1174,19 +1110,17 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         }
         if (showStats) startStats();
         sky.update();
-        if (pond != null) {
-            pond.onResume();
-        } else {
-            wallpaperPlayer.start();
-            if (videoWallpaper != null) videoWallpaper.start();
-            remoteWallpaper.start();
-            videoWallpaper.start();
-            updateWallpaperScrollState();
-            if (wallpaperBlurred) {
-                if (videoWallpaper.usesSmallHeap()) videoWallpaper.stop();
-                else videoWallpaper.pause();
-            }
+
+        wallpaperPlayer.start();
+        if (videoWallpaper != null) videoWallpaper.start();
+        remoteWallpaper.start();
+        videoWallpaper.start();
+        updateWallpaperScrollState();
+        if (wallpaperBlurred) {
+            if (videoWallpaper.usesSmallHeap()) videoWallpaper.stop();
+            else videoWallpaper.pause();
         }
+
         // A returning window can lay out the dock at a new position while the
         // tile size stays unchanged; align the highlight after that layout.
         grid.post(this::refitGlass);
@@ -1356,7 +1290,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private void restartIdleScreensaver() {
         if (root == null) return;
         root.removeCallbacks(showIdleScreensaver);
-        if (pond != null || inWallpaperMode || !headerResumed || !hasWindowFocus()) {
+        if (inWallpaperMode || !headerResumed || !hasWindowFocus()) {
             screensaverIdle.pause();
             return;
         }
@@ -1378,7 +1312,6 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         root.removeCallbacks(showIdleScreensaver);
         screensaverIdle.pause();
         endReorder();   // Home or another app while reordering keeps the order so far
-        if (pond != null) pond.onPause();
         if (wallpaperPlayer != null) {
             wallpaperPlayer.stop();
             if (videoWallpaper != null) videoWallpaper.pause();
@@ -1486,7 +1419,6 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         if (homeContent != null) homeContent.close();
         super.onDestroy();
         unregisterReceiver(packageReceiver);
-        if (pond != null) root.removeView(pond);
         if (wallpaperPlayer != null) {
             wallpaperPlayer.close();
             if (videoWallpaper != null) videoWallpaper.close();
@@ -2087,7 +2019,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     }
 
     private void openScreensaver() {
-        if (pond != null || !headerResumed || !hasWindowFocus() || screensaverOpening || reordering
+        if (!headerResumed || !hasWindowFocus() || screensaverOpening || reordering
                 || appLibrary != null
                 || (openPopup != null && openPopup.isShowing())
                 || (cardPrompt != null && cardPrompt.isShowing())) return;
@@ -2200,7 +2132,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         glassTargetY = y;
         // Cinematic shelf: the highlight glows in the dock app's colour, plain white in the grid (and on the dock with
         // cinematic_white_focus). app_glow: every tile. In a single row every tile is the dock's kind.
-        boolean coloured = pond == null && !festive
+        boolean coloured = !festive
                 && (appGlow || cinematic && !cinematicWhiteFocus && (singleRow || position < COLUMNS));
         int accent = coloured ? adapter.ambientColorAt(position) : 0;
         if ((cinematic || appGlow) && !festive && accent != glassAccent) {
@@ -3468,7 +3400,6 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         btnVpn.setVisibility(View.VISIBLE);
     }
 
-
     /** Every settings entry shares the standard intent and the vendor fallback (SystemSettings). */
     private Intent systemIntent(String standardAction) {
         return SystemSettings.intent(this, standardAction);
@@ -3502,7 +3433,6 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private void updateInputIndicator(boolean any, boolean connected) {
         boolean visible = compactHeaderIcons ? connected : any;
         btnInputs.setVisibility(showInputsPill && visible ? View.VISIBLE : View.GONE);
-        positionPondButtons();
         btnInputs.setContentDescription(getString(compactHeaderIcons ? R.string.hdmi_connected : R.string.inputs));
         if (inputSignal != null) {
             if (showInputsPill && connected && headerResumed && !reducedMotion
@@ -3516,7 +3446,6 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         return !topMenu && btnInputs.getVisibility() == View.VISIBLE
                 ? btnInputs : findViewById(R.id.btnSettings);
     }
-
 
     /** boot_to_live_tv, or the Open on start app: the first time Home comes up after the TV starts, open that app
      *  instead. Once per boot, keyed on Settings.Global.BOOT_COUNT and committed to disk before the app starts: on a
@@ -3975,13 +3904,12 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         }
         addInputRow(rows, popup, R.drawable.ic_swap_vert, getString(R.string.reorder), -1, this::toggleReorder);
         if (launcherSettingsButton) {
-            addInputRow(rows, popup, R.drawable.ic_home_settings_pill, getString(DesktopMode.settingsTitle(this)), -1,
+            addInputRow(rows, popup, R.drawable.ic_home_settings_pill, getString(R.string.launcher_settings), -1,
                     () -> startActivityForResult(new Intent(this, LauncherSettingsActivity.class), LAUNCHER_SETTINGS_REQUEST));
         } else {
             addInputRow(rows, popup, R.drawable.ic_settings, getString(R.string.settings), -1,
                     () -> open(systemIntent(Settings.ACTION_SETTINGS)));
         }
-        if (pond != null) addSettingsMenuRow(rows, popup, R.string.desktop_mode_pond, () -> root.post(this::showPondActions));
         panel.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
         popup.setWidth(Math.max((int) (220 * density), Math.min(panel.getMeasuredWidth(), (int) (360 * density))));
         dropIn(popup, panel, anchor, getResources().getBoolean(R.bool.rtl_menu_bar) ? Gravity.START : Gravity.END);
@@ -3994,7 +3922,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         View panel = getLayoutInflater().inflate(R.layout.popup_inputs, root, false);
         LinearLayout rows = panel.findViewById(R.id.rows);
         PopupWindow popup = glassPopup(panel, (int) (200 * density));
-        if (!launcherSettingsButton) addSettingsMenuRow(rows, popup, DesktopMode.settingsTitle(this), () -> startActivityForResult(
+        if (!launcherSettingsButton) addSettingsMenuRow(rows, popup, R.string.launcher_settings, () -> startActivityForResult(
                 new Intent(this, LauncherSettingsActivity.class), LAUNCHER_SETTINGS_REQUEST));
         // Firmware that ships its own settings app next to the AOSP one (Xiaomi China is one): the
         // vendor app holds pages the AOSP settings has no row for, such as Account & Security with
@@ -4013,7 +3941,6 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         addSettingsMenuRow(rows, popup, R.string.reorder, this::toggleReorder);
         // A launcher may not restart the TV itself; the Home key helper can open the system power menu instead.
         if (HomeKeyService.canOpenPowerMenu()) addSettingsMenuRow(rows, popup, R.string.power_menu, HomeKeyService::openPowerMenu);
-        if (pond != null) addSettingsMenuRow(rows, popup, R.string.desktop_mode_pond, () -> root.post(this::showPondActions));
         panel.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
         popup.setWidth(Math.max((int) (200 * density), panel.getMeasuredWidth()));
         // Hebrew puts Settings at the left of the header: grow the menu inward from it.
@@ -4111,61 +4038,6 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         int at=adapter.positionOf(key); if(at<0)return;
         focusTile(at);pickUp(at);
         Toast.makeText(this,R.string.reorder_hint,Toast.LENGTH_LONG).show();
-    }
-
-    private void addPondButton(int label, int icon, Runnable action) {
-        ViewGroup bar = findViewById(R.id.topButtons);
-        View button = getLayoutInflater().inflate(R.layout.top_pond_button, bar, false);
-        button.setId(View.generateViewId());
-        button.setContentDescription(getText(label));
-        ImageView image = button.findViewById(R.id.pondButtonIcon);
-        image.setImageResource(icon);
-        TextView name = button.findViewById(R.id.pondButtonLabel);
-        name.setText(label);
-        button.setOnFocusChangeListener((v, focused) ->
-                name.setVisibility(focused ? View.VISIBLE : View.INVISIBLE));
-        button.setOnClickListener(v -> action.run());
-        pondButtons.add(button);
-    }
-
-    private void positionPondButtons() {
-        if (pondButtons.isEmpty()) return;
-        ViewGroup bar = findViewById(R.id.topButtons);
-        View anchor = btnInputs.getVisibility() == View.VISIBLE ? btnInputs : btnWifi;
-        int first = bar.indexOfChild(pondButtons.get(0));
-        if (first >= 0 && first + pondButtons.size() == bar.indexOfChild(anchor)) return;
-        View focused = getCurrentFocus();
-        for (View button : pondButtons) bar.removeView(button);
-        for (View button : pondButtons) bar.addView(button, bar.indexOfChild(anchor));
-        if (pondButtons.contains(focused)) focused.requestFocus();
-    }
-
-    private void showPondAchievements() {
-        SharedPreferences choices = getSharedPreferences(Config.SETTINGS_NAME, MODE_PRIVATE);
-        new android.app.AlertDialog.Builder(this)
-                .setTitle(R.string.pond_achievements)
-                .setMessage(getString(R.string.pond_achievements_summary,
-                        choices.getInt("pond_catches", 0), choices.getInt("pond_points", 0)))
-                .setPositiveButton(android.R.string.ok, null)
-                .show();
-    }
-
-    private void showPondActions() {
-        if (pond == null || !headerResumed) return;
-        View panel = getLayoutInflater().inflate(R.layout.popup_inputs, root, false);
-        LinearLayout rows = panel.findViewById(R.id.rows);
-        View anchor = findViewById(R.id.btnSettings);
-        PopupWindow popup = glassPopup(panel, (int) (220 * density));
-        popup.setOnDismissListener(() -> {
-            if (openPopup == popup) openPopup = null;
-            if (headerResumed) anchor.requestFocus();
-        });
-        addSettingsMenuRow(rows, popup, R.string.pond_feed, () -> { if (pond != null) pond.feed(); });
-        addSettingsMenuRow(rows, popup, R.string.pond_ripple, () -> { if (pond != null) pond.ripple(); });
-        addSettingsMenuRow(rows, popup, R.string.pond_fish, () -> { if (pond != null) pond.fish(); });
-        dropIn(popup, panel, anchor,
-                getResources().getBoolean(R.bool.rtl_menu_bar) ? Gravity.START : Gravity.END);
-        rows.getChildAt(0).requestFocus();
     }
 
     private void addSettingsMenuRow(LinearLayout rows, PopupWindow popup, int title, Runnable action) {

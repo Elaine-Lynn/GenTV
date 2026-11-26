@@ -324,7 +324,7 @@
                 android:ellipsize="end"
                 android:visibility="gone"
                 android:focusable="false"
-                android:clickable="true" />
+                android:clickable="false" />
 
             <LinearLayout
                 android:id="@+id/topButtons"

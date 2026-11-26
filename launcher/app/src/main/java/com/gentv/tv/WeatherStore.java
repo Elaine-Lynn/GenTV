@@ -3,7 +3,7 @@ package com.gentv.tv;
 import android.content.Context;
 import android.content.SharedPreferences;
 
-/** The manually selected city and the last successful current-weather reading. */
+/** The saved weather city and the last successful current-weather reading. */
 final class WeatherStore {
     private static final String FILE = "weather";
     private static final String CITY = "city";
@@ -29,10 +29,7 @@ final class WeatherStore {
         changed(context);
     }
 
-    static void clear(Context context) {
-        prefs(context).edit().clear().apply();
-        changed(context);
-    }
+
 
     static void save(Context context, WeatherApi.Current weather, long now) {
         prefs(context).edit().putInt(TEMPERATURE, weather.temperature).putInt(CODE, weather.code)
