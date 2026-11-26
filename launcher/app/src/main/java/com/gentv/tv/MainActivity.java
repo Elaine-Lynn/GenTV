@@ -164,8 +164,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private com.gentv.tv.pond.PondSurface pond;
     private final List<View> pondButtons = new ArrayList<>();
     private WallpaperPlayer wallpaperPlayer;
-    private RemoteWallpaper remoteWallpaper;
     private VideoWallpaperPlayer videoWallpaper;
+    private RemoteWallpaper remoteWallpaper;
     private WeatherWidget weatherWidget;
     private ImageView blurredWallpaper;
     private final ExecutorService wallpaperBlurWorker = Executors.newSingleThreadExecutor();
@@ -281,6 +281,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     /** boot_to_live_tv: open the Live TV app on the first Home of each boot. */
     private boolean bootToLiveTv;
     private ChildLock childLock;
+    private HomeContentController homeContent;
+    private int homeContentPosition = -1;
+    private int homeContentReturnKey = -1;
     /** hidden_apps as the adapter sees them (config.xml or a theme's config.json): a hidden app gets no card either. */
     private Set<String> hiddenApps = Collections.emptySet();
     private List<Cards.Card> cards = Collections.emptyList();
@@ -340,6 +343,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private final BroadcastReceiver packageReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
+            if (homeContent != null) homeContent.stop(true);
+            HomeContentRegistry.packageRemoved(context, intent);
             // Updates send REMOVED followed by ADDED; keep the tile until the new APK is ready.
             if (Intent.ACTION_PACKAGE_REMOVED.equals(intent.getAction())
                     && intent.getBooleanExtra(Intent.EXTRA_REPLACING, false)) return;
@@ -835,7 +840,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             greeting.addOnLayoutChangeListener((v,l,t,r,b,ol,ot,or,ob) -> alignCompactHeaderIcons());
             findViewById(R.id.topButtons).addOnLayoutChangeListener((v,l,t,r,b,ol,ot,or,ob) -> alignCompactHeaderIcons());
             btnSettings.setContentDescription(getString(R.string.desktop_control_center));
-            btnSettings.setOnClickListener(v -> startActivity(new Intent(this,QuickSettingsActivity.class)));
+            btnSettings.setOnClickListener(v -> QuickSettingsGlass.open(this));
         }
         if (cfg.iconOnlyInputs) makeIconOnly((TextView) btnInputs);
         if (pond != null) {
@@ -894,10 +899,36 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         }
         if (festive) applyFestiveSkin((TextView) btnInputs, (TextView) btnSettings);
 
+        homeContent = new HomeContentController(this, root, animations, reducedMotion, new HomeContentController.Host() {
+            @Override public boolean allowedNow() {
+                return headerResumed && hasWindowFocus() && !isFinishing() && !isDestroyed()
+                        && pond == null && DesktopMode.current(MainActivity.this) == DesktopMode.SIMPLE
+                        && !reordering && appLibrary == null && !screensaverOpening
+                        && (openPopup == null || !openPopup.isShowing()) && cardPrompt == null
+                        && !ChildLock.locked(MainActivity.this)
+                        && !ChildLock.state(MainActivity.this).getBoolean(ChildSettingsActivity.ENABLED, false)
+                        && HomeContentRegistry.enabled(MainActivity.this);
+            }
+            @Override public void returnToTile(String key) {
+                int at = adapter.positionOf(key);
+                if (at >= 0) focusTile(at); else if (adapter.appCount() > 0) focusTile(0); else firstTopButton().requestFocus();
+            }
+            @Override public void topBar() { firstTopButton().requestFocus(); }
+            @Override public void contentVisible(boolean visible) {
+                if (visible) hideHero();
+                else if (headerResumed && (singleRow || lastFocused < COLUMNS) && getCurrentFocus() != null
+                        && getCurrentFocus().getId() == R.id.card) {
+                    hero.animate().cancel(); hero.setAlpha(1f);
+                }
+            }
+            @Override public void openContent(Intent intent) { open(intent); }
+        });
+
         // Hide the glass when focus leaves the tiles.
         getWindow().getDecorView().getViewTreeObserver().addOnGlobalFocusChangeListener((oldF, newF) -> {
             boolean onTile = newF != null && newF.getId() == R.id.card;
             if (!onTile) hideGlass();
+            if (homeContent != null && !onTile && !homeContent.owns(newF)) homeContent.stop(true);
         });
 
         packageFilter.addAction(Intent.ACTION_PACKAGE_ADDED);
@@ -977,7 +1008,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private boolean openLauncherSettingsIfAsked(Intent intent) {
         if (intent == null || !ACTION_LAUNCHER_SETTINGS.equals(intent.getAction())) return false;
         setIntent(new Intent(Intent.ACTION_MAIN));
-        startActivityForResult(new Intent(this, LauncherSettingsActivity.class), LAUNCHER_SETTINGS_REQUEST);
+        startActivityForResult(new Intent(this, LauncherSettingsActivity.class)
+                .putExtra("quick_settings_focus", intent.getStringExtra("quick_settings_focus")), LAUNCHER_SETTINGS_REQUEST);
         return true;
     }
 
@@ -1007,6 +1039,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
     private void setUpWallpapers(Config cfg) {
         wallpaperPlayer = new WallpaperPlayer(this, root, cfg);
+        videoWallpaper = new VideoWallpaperPlayer(this, root);
         String wallpaperEndpoint=TvCloud.enabled()?TvCloud.BASE+"wallpaper":"";
         long wallpaperInterval=RemoteWallpaper.INTERVAL_MS;
         boolean wallpaperTest=false;
@@ -1047,6 +1080,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         setUpWallpapers(cfg);
         if (headerResumed) {
             wallpaperPlayer.start();
+            if (videoWallpaper != null) videoWallpaper.start();
             remoteWallpaper.start();
             videoWallpaper.start();
         }
@@ -1137,6 +1171,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             pond.onResume();
         } else {
             wallpaperPlayer.start();
+            if (videoWallpaper != null) videoWallpaper.start();
             remoteWallpaper.start();
             videoWallpaper.start();
             updateWallpaperScrollState();
@@ -1204,6 +1239,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
      *                 on a return to the same tiles it would only mark a change that didn't happen.
      */
     private void reloadApps(boolean animate, boolean rebuild, boolean entrance) {
+        if (homeContent != null) homeContent.stop(true);
         cancelPendingFocusScroll();
         RecyclerView.ViewHolder footer = grid.findViewHolderForAdapterPosition(adapter.appCount());
         final boolean restoreLibrary = adapter.isLibraryAt(adapter.appCount()) && footer != null
@@ -1326,6 +1362,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     protected void onPause() {
         if (inWallpaperMode) finishWallpaperMode();
         super.onPause();
+        homeContentReturnKey = -1;
+        if (homeContent != null) homeContent.stop(true);
         childLock.dismiss();
         if(headerResumed) unregisterReceiver(signalReceiver);
         headerResumed=false;
@@ -1336,6 +1374,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         if (pond != null) pond.onPause();
         if (wallpaperPlayer != null) {
             wallpaperPlayer.stop();
+            if (videoWallpaper != null) videoWallpaper.pause();
             remoteWallpaper.stop();
             // Small-heap TVs use the already prepared wallpaper preview for other pages.
             // Capturing and blurring a live frame while leaving Home adds avoidable allocations.
@@ -1391,9 +1430,16 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
      * rebuild it when Home comes back. Not at UI_HIDDEN, the ordinary trip to an app, where keeping the
      * tiles is what makes the return instant.
      */
+    /** Drop recreatable artwork without disturbing the active wallpaper or app navigation. */
+    void releaseMemoryForCleanup() {
+        if (homeContent != null) homeContent.trimImages();
+        heroArtCache.clear();
+    }
+
     @Override
     public void onTrimMemory(int level) {
         super.onTrimMemory(level);
+        if (homeContent != null && level >= android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW) homeContent.trimImages();
         // RUNNING_LOW and CRITICAL also arrive while Home is visible when an accessibility service keeps the
         // process in the foreground; never blank the screen the owner is looking at.
         if (!MemoryTrimPolicy.shouldRelease(level, started)) return;
@@ -1415,6 +1461,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
         restartIdleScreensaver();
+        if (homeContent != null) {
+            if (!hasFocus) homeContent.stop(true);
+            else root.post(this::resumeHomeContent);
+        }
         if (hasFocus) {
             startPendingSettingsReorder();
             if (libraryFocusPending && appLibrary == null) focusLibrary();
@@ -1424,11 +1474,13 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
     @Override
     protected void onDestroy() {
+        if (homeContent != null) homeContent.close();
         super.onDestroy();
         unregisterReceiver(packageReceiver);
         if (pond != null) root.removeView(pond);
         if (wallpaperPlayer != null) {
             wallpaperPlayer.close();
+            if (videoWallpaper != null) videoWallpaper.close();
             remoteWallpaper.close();
             videoWallpaper.close();
         }
@@ -1504,8 +1556,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         for (int code : settingsKeycodes) {
             if (event.getKeyCode() != code) continue;
             if (event.getAction() == KeyEvent.ACTION_UP && !event.isCanceled()) {
-                open(settingsKeyPanel ? new Intent(this, QuickSettingsActivity.class)
-                        : systemIntent(Settings.ACTION_SETTINGS));
+                if (settingsKeyPanel) QuickSettingsGlass.open(this);
+                else open(systemIntent(Settings.ACTION_SETTINGS));
             }
             return true;
         }
@@ -1531,6 +1583,18 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             return true;
         }
         restartIdleScreensaver();
+        if (homeContentReturnKey == event.getKeyCode()) {
+            if (event.getAction() == KeyEvent.ACTION_UP) homeContentReturnKey = -1;
+            return true;
+        }
+        if (!reordering && homeContent != null && homeContent.inContent()
+                && (event.getKeyCode() == KeyEvent.KEYCODE_BACK || event.getKeyCode() == KeyEvent.KEYCODE_ESCAPE
+                    || event.getKeyCode() == KeyEvent.KEYCODE_DPAD_DOWN && !homeContent.canMoveDown())) {
+            if (event.getAction() == KeyEvent.ACTION_DOWN) {
+                homeContentReturnKey = event.getKeyCode(); homeContent.back();
+            }
+            return true;
+        }
         // Vendor keys (TCL Netflix button, 4062) never reach the key services, only the focused window.
         if (event.getKeyCode() >= 1000 && RemoteKeys.handle(this, event, homeAppKeys.get(event.getKeyCode()), null)) return true;
         if (handleSettingsKey(event)) return true;
@@ -1863,6 +1927,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     @Override
     public void onBackPressed() {
         if (inWallpaperMode) { closeWallpaperMode(); return; }
+        if (homeContent != null && homeContent.back()) return;
         // Back from later rows returns to the first row; Back on the first screen shows the wallpaper.
         GridLayoutManager layout = (GridLayoutManager) grid.getLayoutManager();
         int focused = focusedTilePosition();
@@ -2017,9 +2082,18 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                 || appLibrary != null
                 || (openPopup != null && openPopup.isShowing())
                 || (cardPrompt != null && cardPrompt.isShowing())) return;
+        boolean contentFrame = homeContent != null && homeContent.hasContentPixels();
+        if (homeContent != null) homeContent.stop(true);
         screensaverOpening = true;
         root.removeCallbacks(showIdleScreensaver);
         screensaverIdle.pause();
+        if (contentFrame) {
+            // PixelCopy can return the previous submitted frame. Never retain extension pixels in the saver.
+            AerialScreensaverActivity.setEntryFrame(null);
+            startActivity(new Intent(this, AerialScreensaverActivity.class));
+            AerialScreensaverActivity.enterTransition(this);
+            return;
+        }
         android.graphics.Bitmap frame = android.graphics.Bitmap.createBitmap(
                 Math.max(1, root.getWidth()), Math.max(1, root.getHeight()), android.graphics.Bitmap.Config.ARGB_8888);
         if (Build.VERSION.SDK_INT < 26) {
@@ -2079,6 +2153,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
     @Override
     public void onTileFocused(int position, View card) {
+        int contentDirection = homeContentPosition < 0 ? 0 : Integer.compare(position, homeContentPosition) * (rtlAppGrid ? -1 : 1);
+        homeContentPosition = position;
         lastFocused = position;
         lastFocusedKey = adapter.keyAt(position);
         // Focus can move before RecyclerView sends a scroll callback, so update both transitions here.
@@ -2140,6 +2216,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             springY.animateToFinalPosition(y - glassScrollShift);
         }
         View item = (View) card.getParent();
+        float contentDockTop = r.top;
         if (dockRow && (singleRow || position < COLUMNS)) {
             // Dock: park it at the bottom of the screen and show the top shelf for this app. In a single row
             // every tile is in the dock's row, which never scrolls vertically.
@@ -2152,7 +2229,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                 if (!animations || reducedMotion) grid.scrollBy(0, dy);
                 else grid.smoothScrollBy(0, dy);
             }
-            showHero(position, scroll ? r.top - dy : r.top);
+            contentDockTop = scroll ? r.top - dy : r.top;
+            showHero(position, contentDockTop);
         } else {
             // Below the dock (or in a plain grid) the glow follows the tile without the big name; letting it
             // fade out left the grid on plain black.
@@ -2160,6 +2238,25 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             // Scroll just enough so the whole glass (not only the tile) is visible.
             revealRect.set(0, -(int) pad * 2, item.getWidth(), item.getHeight() + (int) pad);
             grid.requestChildRectangleOnScreen(item, revealRect, reducedMotion);
+        }
+        if (homeContent != null) {
+            if (singleRow || position < COLUMNS) {
+                Rect header = new Rect();
+                clockBlock.getDrawingRect(header); root.offsetDescendantRectToMyCoords(clockBlock, header);
+                Rect tools = new Rect(); View toolbar = findViewById(R.id.topButtons);
+                toolbar.getDrawingRect(tools); root.offsetDescendantRectToMyCoords(toolbar, tools);
+                int top = Math.max(header.bottom, tools.bottom) + (int) (20 * density);
+                homeContent.focus(adapter.keyAt(position), contentDirection, top, (int) contentDockTop);
+                if (homeContent.visible()) hideHero();
+            } else homeContent.stop(false);
+        }
+    }
+
+    private void resumeHomeContent() {
+        if (homeContent == null || grid == null || adapter == null || homeContent.inContent()) return;
+        int pos = focusedTilePosition();
+        if (pos >= 0 && pos < adapter.appCount()) {
+            View v = getCurrentFocus(); if (v != null && v.getId() == R.id.card) onTileFocused(pos, v);
         }
     }
 
@@ -2180,7 +2277,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         float x = r.exactCenterX() - (card.getWidth() * scale + 2 * pad) / 2f;
         float y = r.exactCenterY() - (card.getHeight() * scale + 2 * pad) / 2f
                 - (advancedEffects ? 4f * density : 0f);
-        if (!glassShown || card.getWidth() != glassCardW || glass.getWidth() != w || glass.getHeight() != h
+        if (homeContent != null || !glassShown || card.getWidth() != glassCardW || glass.getWidth() != w || glass.getHeight() != h
                 || Math.abs(glassTargetX - x) > 1f || Math.abs(glassTargetY - y) > 1f) {
             onTileFocused(pos, card);
         }
@@ -2710,6 +2807,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
     @Override
     public boolean onTileVerticalKey(int position, int keyCode) {
+        if (keyCode == KeyEvent.KEYCODE_DPAD_UP && (singleRow || position < COLUMNS)
+                && homeContent != null && homeContent.enter()) return true;
         int count = adapter.appCount();
         int target;
         if (singleRow) {
@@ -2989,7 +3088,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             else res = R.string.good_night;
         }
         String festiveGreeting = festive ? festival.greetingText(getResources()) : "";
-        if (getResources().getBoolean(R.bool.compact_header_icons)) {
+        // An explicitly configured name takes precedence over compact header branding.
+        if (getResources().getBoolean(R.bool.compact_header_icons) && greetingName.isEmpty()) {
             SpannableString brand = new SpannableString("GenTV");
             brand.setSpan(new android.text.style.ForegroundColorSpan(0xFF69B9F0),3,5,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             greeting.setAllCaps(false);
@@ -3854,7 +3954,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         LinearLayout rows = panel.findViewById(R.id.rows);
         PopupWindow popup = glassPopup(panel, (int) (220 * density));
         addInputRow(rows, popup, R.drawable.ic_settings, getString(R.string.desktop_control_center), -1,
-                () -> startActivity(new Intent(this, QuickSettingsActivity.class)));
+                () -> QuickSettingsGlass.open(this));
         // Inputs opens its own list once this one has closed.
         if (showInputsMenuRow) addInputRow(rows, popup, R.drawable.ic_input, getString(R.string.inputs), -1, () -> root.post(this::showInputs));
         addInputRow(rows, popup, R.drawable.ic_wifi, getString(R.string.quick_network), -1, this::openNetworkPill);
@@ -3896,7 +3996,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                 if (vendor != null) open(vendor);
             });
         }
-        addSettingsMenuRow(rows, popup, R.string.desktop_control_center, () -> startActivity(new Intent(this, QuickSettingsActivity.class)));
+        addSettingsMenuRow(rows, popup, R.string.desktop_control_center, () -> QuickSettingsGlass.open(this));
+        addSettingsMenuRow(rows, popup, R.string.home_content_title, () -> startActivity(new Intent(this, HomeContentSettingsActivity.class)));
         if (moduleCards) addSettingsMenuRow(rows, popup, R.string.module_cards, this::showModuleCards);
         if (dockRow) addSettingsMenuRow(rows, popup, R.string.dock_edit, this::startDockEdit);
         addSettingsMenuRow(rows, popup, R.string.reorder, this::toggleReorder);
@@ -3940,6 +4041,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             pickUp(at);
             Toast.makeText(this, R.string.reorder_hint, Toast.LENGTH_LONG).show();
         });
+        addSettingsMenuRow(rows, popup, R.string.home_content_title,
+                () -> startActivity(new Intent(this, HomeContentSettingsActivity.class)));
         if (appLibraryEnabled) addSettingsMenuRow(rows, popup, R.string.library_remove_shortcut, () -> {
             if (LibraryApps.save(this, pkg, false)) reloadApps(false);
             else Toast.makeText(this, R.string.library_save_failed, Toast.LENGTH_LONG).show();

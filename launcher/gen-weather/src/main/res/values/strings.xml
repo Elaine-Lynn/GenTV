@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Gen Weather</string>
+    <string name="feels_like">Feels like %1$s</string>
+    <string name="high_low">H %1$s   L %2$s</string>
+    <string name="air_quality">Air quality</string>
+    <string name="aqi_detail">AQI %1$d</string>
+    <string name="wind">Wind</string>
+    <string name="wind_unit">km/h · %1$s</string>
+    <string name="wind_desktop">Wind %1$s · Sunset %2$s</string>
+    <string name="sunset">Sunset</string>
+    <string name="uv_short">UV %1$d · %2$s</string>
+    <string name="now">Now</string>
+    <string name="today">Today</string>
+    <string name="seven_day_forecast">7-Day Forecast</string>
+    <string name="synced_to_home">Synced to GenTV Home</string>
+    <string name="humidity_label">Humidity %1$d%%</string>
+    <string name="sunrise_label">Sunrise %1$s</string>
+    <string name="data_source">Open-Meteo Global Weather</string>
+    <string name="loading">Updating weather…</string>
+    <string name="offline_cached">Showing cached forecast</string>
+    <string name="offline_error">Unable to reach weather service</string>
+    <string name="manage_cities">Global Cities</string>
+    <string name="search_hint">Search any city worldwide (e.g. Tokyo, Paris, 杭州)</string>
+    <string name="search_button">Search</string>
+    <string name="auto_locate">Locate by IP</string>
+    <string name="locating">Locating…</string>
+    <string name="located_toast">Located: %1$s</string>
+    <string name="locate_failed">Could not determine location from IP</string>
+    <string name="popular_cities">Popular Global Cities</string>
+    <string name="saved_cities">Saved Cities</string>
+    <string name="search_results">Search Results</string>
+    <string name="no_results">No matching cities found</string>
+    <string name="remove_city">Remove</string>
+    <string name="refresh">Refresh</string>
+    <string name="refreshing">Updating…</string>
+    <string name="updated_at">Updated %1$s</string>
+    <string name="hourly_probe">%1$s · %2$s · %3$s</string>
+    <string name="added_mark">Added</string>
+    <string name="close">Close</string>
+</resources>

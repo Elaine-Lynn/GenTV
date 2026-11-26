@@ -14,3 +14,9 @@ dependencyResolutionManagement {
 }
 rootProject.name = "GenTVHome"
 include ':app'
+
+// Reference GHCP provider. Built explicitly; never bundled into the TV or phone app.
+include ':home-content-example'
+
+// Global Apple-style TV weather app implementing GHCP 1. Built independently; never bundled into :app.
+include ':gen-weather'

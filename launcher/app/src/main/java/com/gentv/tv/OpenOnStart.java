@@ -1,14 +1,24 @@
 package com.gentv.tv;
 
+import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.content.SharedPreferences;
 import android.provider.Settings;
+import android.widget.Toast;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.text.Collator;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 /** The one app Home opens on its first appearance after each boot. */
 final class OpenOnStart {
@@ -19,6 +29,48 @@ final class OpenOnStart {
     static final String BOOT_KEY = "live_tv_boot";
 
     private OpenOnStart() {
+    }
+
+    /** Shared startup-app picker for Launcher settings and the quick panel. TV and phone launchable apps are listed;
+     *  only confirmation saves, and the pick takes effect from the next boot. */
+    static void showPicker(Activity activity, Runnable onSaved) {
+        PackageManager pm = activity.getPackageManager();
+        Map<String, String> packages = new TreeMap<>();
+        for (String category : new String[]{Intent.CATEGORY_LEANBACK_LAUNCHER, Intent.CATEGORY_LAUNCHER}) {
+            for (ResolveInfo entry : pm.queryIntentActivities(new Intent(Intent.ACTION_MAIN).addCategory(category), 0)) {
+                String pkg = entry.activityInfo.packageName;
+                if (pkg.equals(activity.getPackageName()) || packages.containsKey(pkg)) continue;
+                if (!entry.activityInfo.enabled || !entry.activityInfo.applicationInfo.enabled) continue;
+                packages.put(pkg, entry.loadLabel(pm).toString());
+            }
+        }
+        final List<String> apps = new ArrayList<>(packages.keySet());
+        final Collator collator = Collator.getInstance();
+        Collections.sort(apps, (a, b) -> collator.compare(packages.get(a), packages.get(b)));
+        String current = activity.getSharedPreferences(Config.SETTINGS_NAME, Context.MODE_PRIVATE).getString(KEY, "");
+        String[] labels = new String[apps.size() + 1];
+        labels[0] = activity.getString(R.string.off);
+        int selected = 0;
+        for (int i = 0; i < apps.size(); i++) {
+            labels[i + 1] = packages.get(apps.get(i));
+            if (apps.get(i).equals(current)) selected = i + 1;
+        }
+        final int[] pending = {selected};
+        new AlertDialog.Builder(activity)
+                .setTitle(R.string.open_on_start_label)
+                .setSingleChoiceItems(labels, selected, (dialog, which) -> pending[0] = which)
+                .setPositiveButton(android.R.string.ok, (dialog, which) -> {
+                    int pick = pending[0];
+                    if (!save(activity, pick == 0 ? "" : apps.get(pick - 1))) {
+                        Toast.makeText(activity, R.string.open_on_start_save_failed, Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    Toast.makeText(activity, pick == 0 ? activity.getString(R.string.open_on_start_removed_generic)
+                            : activity.getString(R.string.open_on_start_saved, labels[pick]), Toast.LENGTH_SHORT).show();
+                    if (onSaved != null) onSaved.run();
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
     }
 
     /** Whether the first Home of this boot opens {@code pkg}: a known boot not handled yet, and an app that is not

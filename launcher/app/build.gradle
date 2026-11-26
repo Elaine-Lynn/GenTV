@@ -86,6 +86,7 @@ dependencies {
     implementation 'com.umeng.umsdk:asms:1.8.7.2'
     // Test only (never in the APK): plain JVM tests for the module card validators, src/test.
     testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.json:json:20180813'
 }
 
 // A release must never silently fall back to an Android debug certificate.

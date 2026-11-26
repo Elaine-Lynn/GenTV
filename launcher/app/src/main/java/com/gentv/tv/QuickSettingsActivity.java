@@ -1,123 +1,148 @@
 package com.gentv.tv;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.Dialog;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
+import android.content.res.ColorStateList;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Typeface;
+import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.StateListDrawable;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.text.TextUtils;
+import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.Window;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
-import androidx.leanback.widget.VerticalGridView;
-import androidx.recyclerview.widget.RecyclerView;
-
-import java.util.ArrayList;
-import java.util.List;
+import androidx.dynamicanimation.animation.DynamicAnimation;
+import androidx.dynamicanimation.animation.SpringAnimation;
+import androidx.dynamicanimation.animation.SpringForce;
 
 /**
- * The panel the remote's Settings button opens when {@code settings_key_panel} is on (HomeKeyService):
- * a few glass rows under the Settings pill, over Home or whatever app is playing. Translucent and in a
- * task of its own, so the app behind keeps running and Back returns to it. Pressing Settings again
- * closes the panel.
+ * Floating Apple tvOS-style Control Center panel opened from the top-right controls icon or the
+ * remote's Settings button when {@code settings_key_panel} is enabled. Runs in a translucent
+ * companion task so playback or Home behind it stays intact; Back or tapping outside dismisses it.
  */
 public final class QuickSettingsActivity extends Activity {
-    private final List<Entry> entries = new ArrayList<>();
+    private static final int INK_DARK = 0xFF121418;
+    private static final int INK_DARK_MUTED = 0x99121418;
+    private static final int INK_LIGHT = 0xFFF5F7FA;
+    private static final int INK_LIGHT_SOFT = 0xDBFFFFFF;
+    private static final int INK_LIGHT_MUTED = 0xBDFFFFFF;
+    private static final int INK_LIGHT_CAPTION = 0x70FFFFFF;
+    private static final int FOCUS_WHITE = 0xF7FFFFFF;
+    private static final int PRESSED_WHITE = 0xDDFFFFFF;
 
-    private static final class Entry {
-        final int icon;
-        final int title;
-        final int status;
-        final Runnable action;
-
-        Entry(int icon, int title, int status, Runnable action) {
-            this.icon = icon;
-            this.title = title;
-            this.status = status;
-            this.action = action;
-        }
-    }
+    private MemoryCleanupView memoryAnimation;
+    private boolean animateFocus;
+    private Typeface fontMedium;
+    private Typeface fontRegular;
 
     @Override
     protected void attachBaseContext(android.content.Context base) {
-        super.attachBaseContext(LauncherLocale.wrap(base));   // locale
+        super.attachBaseContext(LauncherLocale.wrap(base));
     }
-
 
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
         setContentView(R.layout.activity_quick_settings);
-        WallpaperBackdrop.applyOverlay(this, findViewById(android.R.id.content));
-        if (getResources().getBoolean(R.bool.rtl_menu_bar)) {
-            View panel = findViewById(R.id.panel);
-            android.widget.FrameLayout.LayoutParams position =
-                    (android.widget.FrameLayout.LayoutParams) panel.getLayoutParams();
-            position.gravity = android.view.Gravity.TOP | android.view.Gravity.LEFT;
-            int inset = position.getMarginEnd();
-            position.setMarginEnd(0);
-            position.setMargins(inset, position.topMargin, 0, position.bottomMargin);
-            panel.setLayoutParams(position);
-        }
+        Config appearance = Config.load(this);
+        animateFocus = appearance.animations && !appearance.reducedMotion;
+        fontMedium = UiFont.get(this, R.string.font_medium);
+        fontRegular = UiFont.get(this, R.string.font_regular);
+
         View scrim = findViewById(R.id.scrim);
-        scrim.setOnClickListener(v -> finish());
+        scrim.setOnClickListener(v -> {
+            if (memoryAnimation != null) memoryAnimation.close();
+            else finish();
+        });
         scrim.setFocusable(false);
-        addSection(R.string.quick_group_device);
-        addDeviceRows();
-        addSection(R.string.quick_group_desktop);
-        addDesktopRows();
-        addSection(R.string.quick_group_services);
-        addServiceRows();
-        VerticalGridView grid = findViewById(R.id.rows);
-        grid.setNumColumns(1);
-        grid.setAdapter(new ToolboxAdapter());
-        grid.setSelectedPosition(1);
-        grid.requestFocus();
-    }
 
-    private void addSection(int label) {
-        entries.add(new Entry(0, label, 0, null));
-    }
+        View glassPanel = findViewById(R.id.panel);
+        glassPanel.setFocusable(false);
+        CompatApi.disableDefaultFocusHighlight(glassPanel);
+                final float panelRadius = dpF(30);
+        CompatApi.roundClip(glassPanel, panelRadius);
 
-    private void addDeviceRows() {
-        Intent inputSource = SystemSettings.inputSourceIntent(this);
-        addRow(R.drawable.ic_input, R.string.inputs, 0,
-                inputSource != null ? inputSource
-                        : new Intent(this, MainActivity.class).setAction(MainActivity.ACTION_VIEW_INPUTS));
-        addRow(R.drawable.ic_settings, R.string.tv_settings, 0, SystemSettings.intent(this, Settings.ACTION_SETTINGS));
-        addRow(R.drawable.ic_picture, R.string.quick_picture, 0, SystemSettings.intent(this, Settings.ACTION_DISPLAY_SETTINGS));
-        addRow(R.drawable.ic_wifi, R.string.quick_network, 0, SystemSettings.intent(this, Settings.ACTION_WIFI_SETTINGS));
-        addRow(R.drawable.ic_apps, R.string.quick_apps, R.string.quick_apps_hint,
-                SystemSettings.intent(this, Settings.ACTION_MANAGE_APPLICATIONS_SETTINGS));
-        android.media.AudioManager audio = (android.media.AudioManager)getSystemService(AUDIO_SERVICE);
-        if (audio != null && (android.os.Build.VERSION.SDK_INT < 21 || !audio.isVolumeFixed())
-                && CompatApi.permissionGranted(this, android.Manifest.permission.MODIFY_AUDIO_SETTINGS)) {
-            addVolume(R.drawable.ic_volume_down, R.string.desktop_volume_down, audio,
-                    android.media.AudioManager.ADJUST_LOWER);
-            addVolume(R.drawable.ic_volume_up, R.string.desktop_volume_up, audio,
-                    android.media.AudioManager.ADJUST_RAISE);
+        Bitmap wallpaperPreview = QuickSettingsGlass.takePreview();
+        // True ~50% translucent Apple smoked glass directly over the live translucent window.
+        glassPanel.setBackground(QuickSettingsGlass.surface(panelRadius, dpF(1), true));
+
+        if (getResources().getBoolean(R.bool.rtl_menu_bar)) {
+            applyLeftEdgePosition(glassPanel);
         }
-    }
 
-    private void addDesktopRows() {
-        // Through Home, so it rebuilds with the new choices when Launcher settings closes.
-        addRow(R.drawable.ic_controls, DesktopMode.settingsTitle(this), 0,
-                new Intent(this, MainActivity.class).setAction(MainActivity.ACTION_LAUNCHER_SETTINGS));
-        addRow(R.drawable.ic_home_settings, R.string.set_default_home, R.string.set_default_home_hint,
-                new Intent(this, HomeSettingsActivity.class));
-        addRow(R.drawable.ic_personalize, R.string.quick_personalize, 0,
-                new Intent(this, PersonalizationActivity.class));
-        addRow(R.drawable.ic_theme, R.string.desktop_mode_title, 0, this::showDesktopModes);
-    }
+        if (animateFocus) {
+            scrim.setAlpha(0f);
+            scrim.animate().alpha(1f).setDuration(200)
+                    .setInterpolator(CompatApi.easeOut()).start();
+            glassPanel.setAlpha(0f);
+            glassPanel.setTranslationY(-dpF(8));
+            glassPanel.setScaleX(0.97f);
+            glassPanel.setScaleY(0.97f);
+            glassPanel.post(() -> {
+                boolean rtl = getResources().getBoolean(R.bool.rtl_menu_bar);
+                glassPanel.setPivotX(rtl ? 0f : glassPanel.getWidth());
+                glassPanel.setPivotY(0f);
+                glassPanel.animate()
+                        .alpha(1f)
+                        .translationY(0f)
+                        .scaleX(1f)
+                        .scaleY(1f)
+                        .setDuration(220)
+                        .setInterpolator(CompatApi.easeOut())
+                        .start();
+            });
+        }
 
-    private void addServiceRows() {
-        addRow(R.drawable.ic_cloud, R.string.cloud_settings, 0, new Intent(this, CloudSettingsActivity.class));
-        addRow(R.drawable.ic_weather, R.string.weather_settings_title, 0,
-                new Intent(this, WeatherSettingsActivity.class));
-        addRow(R.drawable.ic_lock, R.string.child_lock_settings, 0,
-                new Intent(this, ChildSettingsActivity.class));
+        LinearLayout rows = findViewById(R.id.rows);
+
+        // Editorial minimal header
+        rows.addView(buildHeader());
+
+        // Zone 1: 4 floating Apple Control Center circular medallions
+        LinearLayout quickStrip = horizontalRow(rows, 14);
+        Intent inputSource = SystemSettings.inputSourceIntent(this);
+        View firstFocus = medallion(quickStrip, R.drawable.ic_qs_input, R.string.inputs,
+                () -> launch(inputSource != null ? inputSource
+                        : new Intent(this, MainActivity.class).setAction(MainActivity.ACTION_VIEW_INPUTS)));
+        medallion(quickStrip, R.drawable.ic_qs_wifi, R.string.quick_network,
+                () -> launch(SystemSettings.intent(this, Settings.ACTION_WIFI_SETTINGS)));
+        medallion(quickStrip, R.drawable.ic_qs_display, R.string.quick_display,
+                () -> launch(SystemSettings.intent(this, Settings.ACTION_DISPLAY_SETTINGS)));
+        medallion(quickStrip, R.drawable.ic_qs_memory, R.string.quick_memory, this::showMemory);
+
+        // Zone 2: Wallpaper & screensaver hero tile with live thumbnail preview
+        rows.addView(buildWallpaperHero(wallpaperPreview));
+
+        // Zone 3: 2x2 core bento control tiles
+        LinearLayout coreRow1 = horizontalRow(rows, 10);
+        bentoTile(coreRow1, R.drawable.ic_qs_sliders, R.string.quick_gentv_settings,
+                () -> openLauncher(null));
+        bentoTile(coreRow1, R.drawable.ic_qs_palette, R.string.quick_personalize,
+                this::showDesktopModes);
+
+        LinearLayout coreRow2 = horizontalRow(rows, 8);
+        bentoTile(coreRow2, R.drawable.ic_qs_extensions, R.string.quick_extensions,
+                () -> launch(new Intent(this, HomeContentSettingsActivity.class)));
+        bentoTile(coreRow2, R.drawable.ic_qs_system, R.string.tv_settings,
+                () -> launch(SystemSettings.intent(this, Settings.ACTION_SETTINGS)));
+
+        // Zone 4: Unified frosted utility plate (3x2 borderless grouped actions)
+        rows.addView(buildUtilityPlate());
+
+        firstFocus.requestFocus();
     }
 
     /** Settings pressed again while the panel is up. */
@@ -135,26 +160,639 @@ public final class QuickSettingsActivity extends Activity {
         overridePendingTransition(0, 0);
     }
 
-    private void addVolume(int icon, int label,
-                           android.media.AudioManager audio, int direction) {
-        addRow(icon, label, 0, () -> {
-            try { audio.adjustStreamVolume(android.media.AudioManager.STREAM_MUSIC, direction, android.media.AudioManager.FLAG_SHOW_UI); }
-            catch (SecurityException e) { Toast.makeText(this,R.string.not_available,Toast.LENGTH_SHORT).show(); }
+    @SuppressLint("RtlHardcoded")
+    private void applyLeftEdgePosition(View glassPanel) {
+        FrameLayout.LayoutParams position = (FrameLayout.LayoutParams) glassPanel.getLayoutParams();
+        position.gravity = Gravity.TOP | Gravity.LEFT;
+        int inset = position.getMarginEnd();
+        position.setMarginEnd(0);
+        position.setMargins(inset, position.topMargin, 0, position.bottomMargin);
+        glassPanel.setLayoutParams(position);
+    }
+
+    private View buildHeader() {
+        LinearLayout header = new LinearLayout(this);
+        header.setOrientation(LinearLayout.HORIZONTAL);
+        header.setGravity(Gravity.CENTER_VERTICAL);
+        header.setPadding(dp(6), dp(2), dp(6), dp(2));
+
+        TextView title = new TextView(this);
+        title.setText(R.string.desktop_control_center);
+        title.setTextColor(INK_LIGHT);
+        title.setTextSize(15.5f);
+        title.setTypeface(fontMedium);
+        CompatApi.letterSpacing(title, -0.01f);
+        title.setSingleLine(true);
+        header.addView(title, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+
+        TextView brand = new TextView(this);
+        brand.setText(String.format(java.util.Locale.US, "%s  %s",
+                getString(R.string.app_name), BuildConfig.VERSION_NAME));
+        brand.setTextColor(INK_LIGHT_CAPTION);
+        brand.setTextSize(11f);
+        brand.setTypeface(fontRegular);
+        CompatApi.letterSpacing(brand, 0.03f);
+        brand.setSingleLine(true);
+        header.addView(brand, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        return header;
+    }
+
+    private LinearLayout horizontalRow(LinearLayout parent, int topMarginDp) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setClipChildren(false);
+        row.setClipToPadding(false);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        params.topMargin = dp(topMarginDp);
+        parent.addView(row, params);
+        return row;
+    }
+
+    /** Floating circular Apple Control Center medallion with caption underneath. */
+    private View medallion(LinearLayout parent, int iconRes, int labelRes, Runnable action) {
+        LinearLayout cell = new LinearLayout(this);
+        cell.setId(View.generateViewId());
+        cell.setOrientation(LinearLayout.VERTICAL);
+        cell.setGravity(Gravity.CENTER_HORIZONTAL);
+        cell.setClipChildren(false);
+        cell.setClipToPadding(false);
+        cell.setPadding(dp(2), dp(2), dp(2), dp(2));
+        cell.setFocusable(true);
+        cell.setClickable(true);
+        CompatApi.disableDefaultFocusHighlight(cell);
+
+        FrameLayout orb = new FrameLayout(this);
+        GradientDrawable orbIdle = circleShape(0x1FFFFFFF, 0x2AFFFFFF);
+        GradientDrawable orbFocused = circleShape(FOCUS_WHITE, 0x00FFFFFF);
+        orb.setBackground(orbIdle);
+        LinearLayout.LayoutParams orbParams = new LinearLayout.LayoutParams(dp(48), dp(48));
+        cell.addView(orb, orbParams);
+
+        ImageView glyph = new ImageView(this);
+        glyph.setImageResource(iconRes);
+        CompatApi.imageTint(glyph, ColorStateList.valueOf(INK_LIGHT));
+        FrameLayout.LayoutParams glyphParams = new FrameLayout.LayoutParams(dp(21), dp(21), Gravity.CENTER);
+        orb.addView(glyph, glyphParams);
+
+        TextView label = new TextView(this);
+        label.setText(labelRes);
+        label.setTextColor(INK_LIGHT_MUTED);
+        label.setTextSize(11f);
+        label.setTypeface(fontMedium);
+        CompatApi.letterSpacing(label, -0.01f);
+        label.setGravity(Gravity.CENTER);
+        label.setMaxLines(1);
+        label.setEllipsize(TextUtils.TruncateAt.END);
+        LinearLayout.LayoutParams labelParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        labelParams.topMargin = dp(7);
+        cell.addView(label, labelParams);
+
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+        if (parent.getChildCount() > 0) params.setMarginStart(dp(6));
+        parent.addView(cell, params);
+
+        cell.setOnFocusChangeListener((view, focused) -> {
+            orb.setBackground(focused ? orbFocused : orbIdle);
+            CompatApi.elevation(orb, focused ? dpF(8) : 0f);
+            CompatApi.imageTint(glyph, ColorStateList.valueOf(focused ? INK_DARK : INK_LIGHT));
+            label.setTextColor(focused ? 0xFFFFFFFF : INK_LIGHT_MUTED);
+            animateScale(orb, focused ? 1.10f : 1f);
+            label.animate().translationY(focused ? dpF(1.5f) : 0f)
+                    .setDuration(animateFocus ? 140 : 0).start();
         });
+        cell.setOnClickListener(v -> action.run());
+        return cell;
+    }
+
+    /** Full-width Wallpaper & screensaver hero module with framed live wallpaper thumbnail. */
+    private View buildWallpaperHero(Bitmap livePreview) {
+        LinearLayout card = new LinearLayout(this);
+        card.setId(View.generateViewId());
+        card.setOrientation(LinearLayout.HORIZONTAL);
+        card.setGravity(Gravity.CENTER_VERTICAL);
+        card.setPadding(dp(12), dp(10), dp(12), dp(10));
+        card.setFocusable(true);
+        card.setClickable(true);
+        CompatApi.disableDefaultFocusHighlight(card);
+        card.setBackground(pillSurface(0x18FFFFFF, 0x24FFFFFF, 16));
+
+        FrameLayout badge = new FrameLayout(this);
+        GradientDrawable badgeIdle = circleShape(0x18FFFFFF, 0x16FFFFFF);
+        GradientDrawable badgeFocused = circleShape(0x12000000, 0x00000000);
+        badge.setBackground(badgeIdle);
+        card.addView(badge, new LinearLayout.LayoutParams(dp(34), dp(34)));
+
+        ImageView glyph = new ImageView(this);
+        glyph.setImageResource(R.drawable.ic_qs_wallpaper);
+        CompatApi.imageTint(glyph, ColorStateList.valueOf(INK_LIGHT));
+        badge.addView(glyph, new FrameLayout.LayoutParams(dp(18), dp(18), Gravity.CENTER));
+
+        TextView title = new TextView(this);
+        title.setText(R.string.quick_wallpaper);
+        title.setTextColor(INK_LIGHT);
+        title.setTextSize(14f);
+        title.setTypeface(fontMedium);
+        title.setMaxLines(1);
+        title.setEllipsize(TextUtils.TruncateAt.END);
+        LinearLayout.LayoutParams titleParams = new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+        titleParams.setMarginStart(dp(12));
+        titleParams.setMarginEnd(dp(10));
+        card.addView(title, titleParams);
+
+        // Miniature framed wallpaper preview pill (live wallpaper when opened from Home)
+        FrameLayout thumbFrame = new FrameLayout(this);
+        final float thumbRadius = dpF(9);
+                CompatApi.roundClip(thumbFrame, thumbRadius);
+        ImageView thumb = new ImageView(this);
+        thumb.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        Bitmap previewBitmap = livePreview != null ? livePreview : decodeFallbackWallpaper();
+        if (previewBitmap != null) {
+            thumb.setImageBitmap(previewBitmap);
+        }
+        thumbFrame.addView(thumb, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+
+        View thumbBorder = new View(this);
+        GradientDrawable thumbBorderIdle = strokeOnly(0x45FFFFFF, 9);
+        GradientDrawable thumbBorderFocused = strokeOnly(0x28000000, 9);
+        thumbBorder.setBackground(thumbBorderIdle);
+        thumbFrame.addView(thumbBorder, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+
+        LinearLayout.LayoutParams thumbParams = new LinearLayout.LayoutParams(dp(64), dp(38));
+        thumbParams.setMarginEnd(dp(8));
+        card.addView(thumbFrame, thumbParams);
+
+        ImageView chevron = new ImageView(this);
+        chevron.setImageResource(R.drawable.ic_qs_chevron);
+        CompatApi.imageTint(chevron, ColorStateList.valueOf(0x70FFFFFF));
+        card.addView(chevron, new LinearLayout.LayoutParams(dp(15), dp(15)));
+
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(56));
+        params.topMargin = dp(14);
+        card.setLayoutParams(params);
+
+        card.setOnFocusChangeListener((view, focused) -> {
+            CompatApi.elevation(view, focused ? dpF(8) : 0f);
+            badge.setBackground(focused ? badgeFocused : badgeIdle);
+            CompatApi.imageTint(glyph, ColorStateList.valueOf(focused ? INK_DARK : INK_LIGHT));
+            title.setTextColor(focused ? INK_DARK : INK_LIGHT);
+            CompatApi.imageTint(chevron, ColorStateList.valueOf(focused ? INK_DARK_MUTED : 0x70FFFFFF));
+            thumbBorder.setBackground(focused ? thumbBorderFocused : thumbBorderIdle);
+            animateScale(view, focused ? 1.022f : 1f);
+        });
+        card.setOnClickListener(v -> launch(new Intent(this, WallpaperGalleryActivity.class)));
+        return card;
+    }
+
+    /** 2-column core bento glass module (clean, chevron-free Apple Control Center style). */
+    private void bentoTile(LinearLayout parent, int iconRes, int labelRes, Runnable action) {
+        LinearLayout card = new LinearLayout(this);
+        card.setId(View.generateViewId());
+        card.setOrientation(LinearLayout.HORIZONTAL);
+        card.setGravity(Gravity.CENTER_VERTICAL);
+        card.setPadding(dp(13), dp(8), dp(11), dp(8));
+        card.setFocusable(true);
+        card.setClickable(true);
+        CompatApi.disableDefaultFocusHighlight(card);
+        card.setBackground(pillSurface(0x17FFFFFF, 0x1EFFFFFF, 15));
+
+        ImageView glyph = new ImageView(this);
+        glyph.setImageResource(iconRes);
+        CompatApi.imageTint(glyph, ColorStateList.valueOf(INK_LIGHT));
+        card.addView(glyph, new LinearLayout.LayoutParams(dp(18), dp(18)));
+
+        TextView title = new TextView(this);
+        title.setText(labelRes);
+        title.setTextColor(INK_LIGHT);
+        title.setTextSize(13.5f);
+        title.setTypeface(fontMedium);
+        title.setMaxLines(1);
+        title.setEllipsize(TextUtils.TruncateAt.END);
+        LinearLayout.LayoutParams textParams = new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+        textParams.setMarginStart(dp(10));
+        card.addView(title, textParams);
+
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, dp(45), 1f);
+        if (parent.getChildCount() > 0) params.setMarginStart(dp(9));
+        parent.addView(card, params);
+
+        card.setOnFocusChangeListener((view, focused) -> {
+            CompatApi.elevation(view, focused ? dpF(8) : 0f);
+            CompatApi.imageTint(glyph, ColorStateList.valueOf(focused ? INK_DARK : INK_LIGHT));
+            title.setTextColor(focused ? INK_DARK : INK_LIGHT);
+            animateScale(view, focused ? 1.028f : 1f);
+        });
+        card.setOnClickListener(v -> action.run());
+    }
+
+    /** Unified translucent grouped plate holding the 6 secondary system & utility actions. */
+    private View buildUtilityPlate() {
+        LinearLayout plate = new LinearLayout(this);
+        plate.setOrientation(LinearLayout.VERTICAL);
+        plate.setClipChildren(false);
+        plate.setClipToPadding(false);
+        plate.setBackground(roundRect(0x14FFFFFF, 0x1AFFFFFF, 18));
+        plate.setPadding(dp(5), dp(5), dp(5), dp(5));
+
+        LinearLayout.LayoutParams plateParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        plateParams.topMargin = dp(10);
+        plate.setLayoutParams(plateParams);
+
+        LinearLayout r1 = plateRow(plate);
+        utilityItem(r1, R.drawable.ic_qs_startup, R.string.quick_start_app,
+                () -> OpenOnStart.showPicker(this, null));
+        utilityItem(r1, R.drawable.ic_qs_home, R.string.quick_default_home,
+                () -> launch(new Intent(this, HomeSettingsActivity.class)));
+
+        addHairlineDivider(plate);
+
+        LinearLayout r2 = plateRow(plate);
+        utilityItem(r2, R.drawable.ic_qs_shield, R.string.quick_child,
+                () -> launch(new Intent(this, ChildSettingsActivity.class)));
+        utilityItem(r2, R.drawable.ic_qs_location, R.string.quick_city, this::showCity);
+
+        addHairlineDivider(plate);
+
+        LinearLayout r3 = plateRow(plate);
+        utilityItem(r3, R.drawable.ic_qs_update, R.string.cloud_settings,
+                () -> launch(new Intent(this, CloudSettingsActivity.class)));
+        utilityItem(r3, R.drawable.ic_qs_info, R.string.quick_about, this::showAbout);
+
+        return plate;
+    }
+
+    private LinearLayout plateRow(LinearLayout plate) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setClipChildren(false);
+        row.setClipToPadding(false);
+        plate.addView(row, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        return row;
+    }
+
+    private void addHairlineDivider(LinearLayout plate) {
+        View divider = new View(this);
+        divider.setBackgroundColor(0x12FFFFFF);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, Math.max(1, Math.round(dpF(0.6f))));
+        params.setMargins(dp(12), dp(2), dp(12), dp(2));
+        plate.addView(divider, params);
+    }
+
+    private void utilityItem(LinearLayout row, int iconRes, int labelRes, Runnable action) {
+        LinearLayout item = new LinearLayout(this);
+        item.setId(View.generateViewId());
+        item.setOrientation(LinearLayout.HORIZONTAL);
+        item.setGravity(Gravity.CENTER_VERTICAL);
+        item.setPadding(dp(10), dp(6), dp(8), dp(6));
+        item.setFocusable(true);
+        item.setClickable(true);
+        CompatApi.disableDefaultFocusHighlight(item);
+        item.setBackground(pillSurface(0x00000000, 0x00000000, 12));
+
+        ImageView glyph = new ImageView(this);
+        glyph.setImageResource(iconRes);
+        CompatApi.imageTint(glyph, ColorStateList.valueOf(0xCCFFFFFF));
+        item.addView(glyph, new LinearLayout.LayoutParams(dp(16), dp(16)));
+
+        TextView title = new TextView(this);
+        title.setText(labelRes);
+        title.setTextColor(INK_LIGHT_SOFT);
+        title.setTextSize(12.5f);
+        title.setTypeface(fontRegular);
+        title.setMaxLines(1);
+        title.setEllipsize(TextUtils.TruncateAt.END);
+        LinearLayout.LayoutParams textParams = new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+        textParams.setMarginStart(dp(9));
+        item.addView(title, textParams);
+
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, dp(38), 1f);
+        if (row.getChildCount() > 0) params.setMarginStart(dp(4));
+        row.addView(item, params);
+
+        item.setOnFocusChangeListener((view, focused) -> {
+            CompatApi.elevation(view, focused ? dpF(6) : 0f);
+            CompatApi.imageTint(glyph, ColorStateList.valueOf(focused ? INK_DARK : 0xCCFFFFFF));
+            title.setTextColor(focused ? INK_DARK : INK_LIGHT_SOFT);
+            title.setTypeface(focused ? fontMedium : fontRegular);
+            animateScale(view, focused ? 1.024f : 1f);
+        });
+        item.setOnClickListener(v -> action.run());
+    }
+
+    private void animateScale(View view, float target) {
+        if (!animateFocus) {
+            view.setScaleX(target);
+            view.setScaleY(target);
+            return;
+        }
+        springAxis(view, DynamicAnimation.SCALE_X, R.id.panel, target);
+        springAxis(view, DynamicAnimation.SCALE_Y, R.id.rows, target);
+    }
+
+    private void springAxis(View view, DynamicAnimation.ViewProperty property, int tagKey, float target) {
+        Object existing = view.getTag(tagKey);
+        SpringAnimation anim;
+        if (existing instanceof SpringAnimation) {
+            anim = (SpringAnimation) existing;
+        } else {
+            anim = new SpringAnimation(view, property, target);
+            SpringForce force = new SpringForce(target)
+                    .setDampingRatio(0.74f)
+                    .setStiffness(480f);
+            anim.setSpring(force);
+            view.setTag(tagKey, anim);
+        }
+        anim.animateToFinalPosition(target);
+    }
+
+    private Bitmap decodeFallbackWallpaper() {
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inSampleSize = 4;
+        return BitmapFactory.decodeResource(getResources(), R.raw.wallpaper_default, options);
+    }
+
+    private int dp(int value) {
+        return Math.round(value * getResources().getDisplayMetrics().density);
+    }
+
+    private float dpF(float value) {
+        return value * getResources().getDisplayMetrics().density;
+    }
+
+    private GradientDrawable roundRect(int fillColor, int borderColor, int radiusDp) {
+        GradientDrawable shape = new GradientDrawable();
+        shape.setColor(fillColor);
+        shape.setCornerRadius(dpF(radiusDp));
+        if (borderColor != 0) {
+            shape.setStroke(Math.max(1, Math.round(dpF(0.75f))), borderColor);
+        }
+        return shape;
+    }
+
+    private GradientDrawable strokeOnly(int borderColor, int radiusDp) {
+        GradientDrawable shape = new GradientDrawable();
+        shape.setColor(0x00000000);
+        shape.setCornerRadius(dpF(radiusDp));
+        shape.setStroke(Math.max(1, Math.round(dpF(0.75f))), borderColor);
+        return shape;
+    }
+
+    private GradientDrawable circleShape(int fillColor, int borderColor) {
+        GradientDrawable shape = new GradientDrawable();
+        shape.setShape(GradientDrawable.OVAL);
+        shape.setColor(fillColor);
+        if (borderColor != 0) {
+            shape.setStroke(Math.max(1, Math.round(dpF(0.75f))), borderColor);
+        }
+        return shape;
+    }
+
+    private StateListDrawable pillSurface(int idleFill, int idleBorder, int radiusDp) {
+        StateListDrawable states = new StateListDrawable();
+        states.addState(new int[]{android.R.attr.state_focused}, roundRect(FOCUS_WHITE, 0, radiusDp));
+        states.addState(new int[]{android.R.attr.state_pressed}, roundRect(PRESSED_WHITE, 0, radiusDp));
+        states.addState(new int[]{}, roundRect(idleFill, idleBorder, radiusDp));
+        return states;
+    }
+
+    private void launch(Intent target) {
+        try {
+            startActivity(target.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+        } catch (ActivityNotFoundException | SecurityException e) {
+            Toast.makeText(this, R.string.not_available, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void openLauncher(String focus) {
+        launch(new Intent(this, MainActivity.class)
+                .setAction(MainActivity.ACTION_LAUNCHER_SETTINGS)
+                .putExtra("quick_settings_focus", focus));
+    }
+
+    private void showMemory() {
+        if (memoryAnimation != null || isFinishing()) return;
+        startMemoryCleanup(getPreferences(MODE_PRIVATE).getInt("memory_adb_port", 0));
+    }
+
+    private void startMemoryCleanup(int port) {
+        if (memoryAnimation != null) return;
+        View previousFocus = getCurrentFocus();
+        FrameLayout panel = findViewById(R.id.panel);
+        ViewGroup panelScroll = findViewById(R.id.panelScroll);
+        android.animation.TimeInterpolator ease = CompatApi.easeOut();
+        panelScroll.setDescendantFocusability(ViewGroup.FOCUS_BLOCK_DESCENDANTS);
+        if (animateFocus) {
+            panelScroll.animate().cancel();
+            panelScroll.animate()
+                    .alpha(0f)
+                    .scaleX(0.97f)
+                    .scaleY(0.97f)
+                    .setDuration(220)
+                    .setInterpolator(ease)
+                    .start();
+        } else {
+            panelScroll.setAlpha(0f);
+        }
+        memoryAnimation = new MemoryCleanupView(this, animateFocus, port, () -> {
+            if (memoryAnimation == null) return;
+            if (!memoryAnimation.succeeded()) getPreferences(MODE_PRIVATE).edit().remove("memory_adb_port").apply();
+            panel.removeView(memoryAnimation);
+            memoryAnimation = null;
+            panelScroll.setDescendantFocusability(ViewGroup.FOCUS_AFTER_DESCENDANTS);
+            if (animateFocus) {
+                panelScroll.animate().cancel();
+                panelScroll.animate()
+                        .alpha(1f)
+                        .scaleX(1f)
+                        .scaleY(1f)
+                        .setDuration(240)
+                        .setInterpolator(ease)
+                        .start();
+            } else {
+                panelScroll.setAlpha(1f);
+                panelScroll.setScaleX(1f);
+                panelScroll.setScaleY(1f);
+            }
+            if (previousFocus != null) previousFocus.requestFocus();
+        });
+        panel.addView(memoryAnimation, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        if (animateFocus) {
+            memoryAnimation.setAlpha(0f);
+            memoryAnimation.animate().alpha(1f).setDuration(200).setInterpolator(ease).start();
+        }
+        memoryAnimation.requestFocus();
+    }
+
+    @Override public void onBackPressed() {
+        if (memoryAnimation != null) memoryAnimation.close();
+        else super.onBackPressed();
+    }
+
+    @Override protected void onDestroy() {
+        if (memoryAnimation != null) memoryAnimation.dispose();
+        super.onDestroy();
+    }
+
+    @Override protected void onStop() {
+        super.onStop();
+        // Keep an in-flight cleanup alive while Android displays its ADB authorization activity.
+        // Other departures retain the panel's previous no-history behavior.
+        if (memoryAnimation == null && !isChangingConfigurations()) finish();
+    }
+
+    private void showCity() {
+        showGlassDialog(
+                R.drawable.ic_qs_location,
+                R.string.quick_city,
+                getString(R.string.quick_city_detail),
+                R.string.tv_settings,
+                () -> launch(SystemSettings.intent(this, Settings.ACTION_DATE_SETTINGS)),
+                android.R.string.cancel
+        );
+    }
+
+    private void showAbout() {
+        showGlassDialog(
+                R.drawable.ic_qs_info,
+                R.string.quick_about,
+                getString(R.string.quick_about_detail, BuildConfig.VERSION_NAME),
+                android.R.string.ok,
+                null,
+                0
+        );
+    }
+
+    /** Cohesive Apple frosted glass sheet for secondary info dialogs. */
+    private void showGlassDialog(int iconRes, int titleRes, CharSequence message,
+                                 int primaryRes, Runnable primaryAction, int secondaryRes) {
+        View previousFocus = getCurrentFocus();
+        Dialog dialog = new Dialog(this);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+
+        LinearLayout container = new LinearLayout(this);
+        container.setOrientation(LinearLayout.VERTICAL);
+        container.setGravity(Gravity.CENTER_HORIZONTAL);
+        container.setClipChildren(false);
+        container.setClipToPadding(false);
+        container.setPadding(dp(24), dp(24), dp(24), dp(20));
+        container.setBackground(QuickSettingsGlass.dialogSurface(dpF(26), dpF(1)));
+
+        FrameLayout iconWrap = new FrameLayout(this);
+        iconWrap.setBackground(circleShape(0x18FFFFFF, 0x22FFFFFF));
+        ImageView icon = new ImageView(this);
+        icon.setImageResource(iconRes);
+        CompatApi.imageTint(icon, ColorStateList.valueOf(INK_LIGHT));
+        iconWrap.addView(icon, new FrameLayout.LayoutParams(dp(20), dp(20), Gravity.CENTER));
+        container.addView(iconWrap, new LinearLayout.LayoutParams(dp(42), dp(42)));
+
+        TextView title = new TextView(this);
+        title.setText(titleRes);
+        title.setTextColor(0xFFFFFFFF);
+        title.setTextSize(17.5f);
+        title.setTypeface(fontMedium);
+        title.setGravity(Gravity.CENTER);
+        LinearLayout.LayoutParams titleParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        titleParams.topMargin = dp(12);
+        container.addView(title, titleParams);
+
+        TextView body = new TextView(this);
+        body.setText(message);
+        body.setTextColor(0xBFFFFFFF);
+        body.setTextSize(13.5f);
+        body.setTypeface(fontRegular);
+        body.setLineSpacing(dpF(3), 1f);
+        body.setGravity(Gravity.CENTER);
+        LinearLayout.LayoutParams bodyParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        bodyParams.topMargin = dp(10);
+        container.addView(body, bodyParams);
+
+        LinearLayout actions = new LinearLayout(this);
+        actions.setOrientation(LinearLayout.HORIZONTAL);
+        actions.setClipChildren(false);
+        actions.setClipToPadding(false);
+        LinearLayout.LayoutParams actionsParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        actionsParams.topMargin = dp(20);
+        container.addView(actions, actionsParams);
+
+        if (secondaryRes != 0) {
+            TextView secondary = dialogButton(secondaryRes, false);
+            secondary.setOnClickListener(v -> dialog.dismiss());
+            LinearLayout.LayoutParams secParams = new LinearLayout.LayoutParams(0, dp(42), 1f);
+            secParams.setMarginEnd(dp(10));
+            actions.addView(secondary, secParams);
+        }
+
+        TextView primary = dialogButton(primaryRes, true);
+        primary.setOnClickListener(v -> {
+            dialog.dismiss();
+            if (primaryAction != null) primaryAction.run();
+        });
+        actions.addView(primary, new LinearLayout.LayoutParams(0, dp(42), 1f));
+
+        dialog.setContentView(container);
+        dialog.setOnDismissListener(d -> {
+            if (previousFocus != null) previousFocus.requestFocus();
+        });
+        dialog.show();
+
+        Window window = dialog.getWindow();
+        if (window != null) {
+            window.setBackgroundDrawableResource(android.R.color.transparent);
+            window.setDimAmount(0.42f);
+            int available = getResources().getDisplayMetrics().widthPixels - dp(48);
+            window.setLayout(Math.min(available, dp(380)), ViewGroup.LayoutParams.WRAP_CONTENT);
+        }
+        primary.requestFocus();
+    }
+
+    private TextView dialogButton(int labelRes, boolean emphasized) {
+        TextView button = new TextView(this);
+        button.setText(labelRes);
+        button.setTextSize(14f);
+        button.setTypeface(fontMedium);
+        button.setGravity(Gravity.CENTER);
+        button.setSingleLine(true);
+        button.setFocusable(true);
+        button.setClickable(true);
+        CompatApi.disableDefaultFocusHighlight(button);
+        button.setTextColor(INK_LIGHT);
+        button.setBackground(pillSurface(emphasized ? 0x22FFFFFF : 0x12FFFFFF, 0x1EFFFFFF, 21));
+        button.setOnFocusChangeListener((view, focused) -> {
+            button.setTextColor(focused ? INK_DARK : INK_LIGHT);
+            CompatApi.elevation(button, focused ? dpF(6) : 0f);
+            animateScale(view, focused ? 1.03f : 1f);
+        });
+        return button;
     }
 
     private void showDesktopModes() {
         DesktopMode current = DesktopMode.current(this);
         View previousFocus = getCurrentFocus();
-        View choices = getLayoutInflater().inflate(R.layout.dialog_desktop_mode, null);
+        View choices = getLayoutInflater().inflate(R.layout.dialog_desktop_mode, new FrameLayout(this), false);
         View simple = choices.findViewById(R.id.desktopModeSimple);
         View pond = choices.findViewById(R.id.desktopModePond);
         choices.findViewById(R.id.simpleModeCheck).setVisibility(current == DesktopMode.SIMPLE ? View.VISIBLE : View.INVISIBLE);
         choices.findViewById(R.id.pondModeCheck).setVisibility(current == DesktopMode.POND ? View.VISIBLE : View.INVISIBLE);
         ((ImageView) choices.findViewById(R.id.modeGlassBackdrop)).setImageResource(
                 current == DesktopMode.POND ? R.drawable.theme_preview_pond_blur : R.drawable.theme_preview_simple_blur);
-        android.app.Dialog dialog = new android.app.Dialog(this);
-        dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
+        Dialog dialog = new Dialog(this);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
         dialog.setContentView(choices);
         simple.setOnClickListener(v -> selectDesktopMode(dialog, current, DesktopMode.SIMPLE));
         pond.setOnClickListener(v -> selectDesktopMode(dialog, current, DesktopMode.POND));
@@ -162,68 +800,21 @@ public final class QuickSettingsActivity extends Activity {
             if (previousFocus != null) previousFocus.requestFocus();
         });
         dialog.show();
-        android.view.Window window = dialog.getWindow();
-        window.setBackgroundDrawableResource(android.R.color.transparent);
-        window.setDimAmount(0.38f);
-        float density = getResources().getDisplayMetrics().density;
-        int available = getResources().getDisplayMetrics().widthPixels - Math.round(48 * density);
-        window.setLayout(Math.min(available, Math.round(680 * density)),
-                android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
+        Window window = dialog.getWindow();
+        if (window != null) {
+            window.setBackgroundDrawableResource(android.R.color.transparent);
+            window.setDimAmount(0.38f);
+            int available = getResources().getDisplayMetrics().widthPixels - dp(48);
+            window.setLayout(Math.min(available, dp(680)), ViewGroup.LayoutParams.WRAP_CONTENT);
+        }
         (current == DesktopMode.POND ? pond : simple).requestFocus();
     }
 
-    private void selectDesktopMode(android.app.Dialog dialog, DesktopMode current, DesktopMode selected) {
+    private void selectDesktopMode(Dialog dialog, DesktopMode current, DesktopMode selected) {
         dialog.dismiss();
         if (selected == current) return;
         selected.select(this);
         startActivity(new Intent(this, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
         finish();
-    }
-
-    private void addRow(int icon, int title, int status, Intent target) {
-        addRow(icon, title, status, () -> {
-            try {
-                startActivity(target.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-            } catch (ActivityNotFoundException | SecurityException e) {
-                Toast.makeText(this, R.string.not_available, Toast.LENGTH_SHORT).show();
-            }
-            finish();
-        });
-    }
-
-    private void addRow(int icon, int title, int status, Runnable action) {
-        entries.add(new Entry(icon, title, status, action));
-    }
-
-    private final class ToolboxAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
-        @Override public int getItemViewType(int position) {
-            return entries.get(position).action == null ? 0 : 1;
-        }
-
-        @NonNull @Override public RecyclerView.ViewHolder onCreateViewHolder(@NonNull android.view.ViewGroup parent, int type) {
-            View view = getLayoutInflater().inflate(type == 0 ? R.layout.item_quick_section : R.layout.item_input,
-                    parent, false);
-            return new RecyclerView.ViewHolder(view) {};
-        }
-
-        @Override public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-            Entry entry = entries.get(position);
-            View view = holder.itemView;
-            if (entry.action == null) {
-                ((TextView) view).setText(entry.title);
-                return;
-            }
-            ((ImageView) view.findViewById(R.id.icon)).setImageResource(entry.icon);
-            ((TextView) view.findViewById(R.id.title)).setText(entry.title);
-            view.findViewById(R.id.dot).setVisibility(View.GONE);
-            TextView hint = view.findViewById(R.id.status);
-            if (entry.status != 0) {
-                hint.setText(entry.status);
-                hint.setVisibility(View.VISIBLE);
-            } else hint.setVisibility(View.GONE);
-            view.setOnClickListener(v -> entry.action.run());
-        }
-
-        @Override public int getItemCount() { return entries.size(); }
     }
 }

@@ -1,0 +1,15 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-feature android:name="android.software.leanback" android:required="false" />
+    <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
+    <queries><package android:name="com.gentv.tv" /></queries>
+    <application android:label="GenTV Content Example" android:icon="@drawable/icon" android:banner="@drawable/banner" android:theme="@android:style/Theme.Material.NoActionBar" android:allowBackup="false">
+        <activity android:name="com.gentv.example.ExampleActivity" android:exported="true">
+            <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LEANBACK_LAUNCHER" /></intent-filter>
+            <meta-data android:name="com.gentv.tv.home.PROTOCOL_MAJOR" android:value="1" />
+            <meta-data android:name="com.gentv.tv.home.CONTENT_SERVICE" android:value="com.gentv.example.ContentService" />
+        </activity>
+        <service android:name="com.gentv.example.ContentService" android:exported="true">
+            <intent-filter><action android:name="com.gentv.tv.home.BIND_CONTENT" /></intent-filter>
+        </service>
+    </application>
+</manifest>

@@ -66,7 +66,7 @@ final class HeroArt {
     }
 
     /** One box blur pass along rows (horizontal) or columns, edges clamped. */
-    private static int[] boxBlur(int[] src, int w, int h, int radius, boolean horizontal) {
+    static int[] boxBlur(int[] src, int w, int h, int radius, boolean horizontal) {
         int[] dst = new int[src.length];
         int lines = horizontal ? h : w, length = horizontal ? w : h, span = 2 * radius + 1;
         for (int line = 0; line < lines; line++) {

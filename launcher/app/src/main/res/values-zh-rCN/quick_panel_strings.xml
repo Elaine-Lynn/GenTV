@@ -1,0 +1,20 @@
+<resources>
+    <string name="quick_wallpaper">壁纸与屏保</string>
+    <string name="quick_extensions">Gen扩展</string>
+    <string name="quick_gentv_settings">GenTV设置</string>
+    <string name="quick_display">显示</string>
+    <string name="quick_memory">内存清理</string>
+    <string name="quick_default_home">设为系统桌面</string>
+    <string name="quick_child">防沉迷系统</string>
+    <string name="quick_city">城市选择</string>
+    <string name="quick_about">关于GenTV</string>
+    <string name="quick_about_detail">GenTV %1$s\n免费、开源、无广告的 Android TV 桌面。</string>
+    <string name="quick_memory_detail">当前可用内存：%1$s\nAndroid 自动管理后台内存，可进入应用管理停止不使用的应用。</string>
+    <string name="quick_city_detail">城市天气功能暂未开放，可进入电视设置调整系统时区。</string>
+    <string name="quick_start_app">开机启动APP</string>
+    <string name="memory_cleaning">正在清理内存</string>
+    <string name="memory_cleaned">已清理 %1$d MB 内存空间</string>
+    <string name="memory_cleanup_scope">%1$d 个后台进程已退出 · 按确认键返回</string>
+    <string name="memory_cleanup_failed">未能执行后台清理</string>
+    <string name="memory_cleanup_retry">请开启电视网络调试，并允许本机连接</string>
+</resources>

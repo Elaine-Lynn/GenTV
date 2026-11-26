@@ -51,6 +51,7 @@ public final class LauncherSettingsActivity extends Activity {
         WallpaperBackdrop.apply(this,
                 ((android.view.ViewGroup) findViewById(android.R.id.content)).getChildAt(0));
         choices = getSharedPreferences(Config.SETTINGS_NAME, MODE_PRIVATE);
+        findViewById(R.id.homeContentChoice).setOnClickListener(v -> startActivity(new Intent(this, HomeContentSettingsActivity.class)));
         Config config = Config.load(this);
         boolean pondMode = DesktopMode.current(this) == DesktopMode.POND;
         if (pondMode) {
@@ -210,6 +211,10 @@ public final class LauncherSettingsActivity extends Activity {
         if (pondMode) findViewById(R.id.pondCountChoice).requestFocus();
         else if (config.launcherSettingsButton) reorderChoice.requestFocus();
         else columnChoices[Math.max(0, Math.min(columns - 4, 3))].requestFocus();
+        if ("screensaverChoice".equals(getIntent().getStringExtra("quick_settings_focus"))
+                && screensaverChoice.getVisibility() == View.VISIBLE) {
+            screensaverChoice.post(() -> screensaverChoice.requestFocus());
+        }
     }
 
     private void bindPondOption(int rowId, PondOption option) {
@@ -252,42 +257,9 @@ public final class LauncherSettingsActivity extends Activity {
         for (int i = views.length - 1; i >= 0; i--) row.addView(views[i]);
     }
 
-    /** Off, then every app with a TV entry point by name. Saved at once; it is read on the next boot. */
+    /** Shared startup-app picker: only confirmation persists the selected launchable app. */
     private void showOpenOnStartPicker() {
-        PackageManager pm = getPackageManager();
-        List<String[]> apps = new ArrayList<>();
-        Intent tv = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LEANBACK_LAUNCHER);
-        for (ResolveInfo r : pm.queryIntentActivities(tv, 0)) {
-            String pkg = r.activityInfo.packageName;
-            if (pkg.equals(getPackageName())) continue;
-            boolean seen = false;
-            for (String[] a : apps) seen |= a[1].equals(pkg);
-            if (!seen) apps.add(new String[]{r.loadLabel(pm).toString(), pkg});
-        }
-        Collections.sort(apps, (a, b) -> a[0].compareToIgnoreCase(b[0]));
-        String[] labels = new String[apps.size() + 1];
-        labels[0] = getString(R.string.off);
-        String current = choices.getString(OpenOnStart.KEY, "");
-        int checked = 0;
-        for (int i = 0; i < apps.size(); i++) {
-            labels[i + 1] = apps.get(i)[0];
-            if (apps.get(i)[1].equals(current)) checked = i + 1;
-        }
-        new AlertDialog.Builder(this)
-                .setTitle(R.string.open_on_start_label)
-                .setSingleChoiceItems(labels, checked, (dialog, which) -> {
-                    dialog.dismiss();
-                    String pkg = which == 0 ? "" : apps.get(which - 1)[1];
-                    if (!OpenOnStart.save(this, pkg)) {
-                        Toast.makeText(this, R.string.open_on_start_save_failed, Toast.LENGTH_SHORT).show();
-                        return;
-                    }
-                    Toast.makeText(this, which == 0 ? getString(R.string.open_on_start_removed_generic)
-                            : getString(R.string.open_on_start_saved, apps.get(which - 1)[0]), Toast.LENGTH_SHORT).show();
-                    refresh();
-                })
-                .setNegativeButton(android.R.string.cancel, null)
-                .show();
+        OpenOnStart.showPicker(this, this::refresh);
     }
 
     /** The picked app's name, its package when it is gone, or Off. */
