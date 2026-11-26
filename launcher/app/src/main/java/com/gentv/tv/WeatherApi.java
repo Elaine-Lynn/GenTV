@@ -29,6 +29,12 @@ final class WeatherApi {
         }
     }
 
+    static City locate(android.content.Context context) throws Exception {
+        JSONObject location = TvCloud.json("location");
+        return ChinaRegions.matchCity(ChinaRegions.load(context),
+                location.getString("province"), location.getString("city"));
+    }
+
     static Current current(double latitude, double longitude) throws Exception {
         if (!Double.isFinite(latitude) || !Double.isFinite(longitude)
                 || Math.abs(latitude) > 90 || Math.abs(longitude) > 180) throw new IOException("Invalid coordinates");

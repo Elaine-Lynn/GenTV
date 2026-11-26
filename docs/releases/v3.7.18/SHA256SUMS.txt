@@ -1,0 +1,3 @@
+2f83da996a08244a8db709e892d816d251a68a7e152455fa27d79c04a26dbfdd  gentv-tv-v3.7.18-code40.apk
+12beefc59e2b6c8782510beb3197eddccb8d7fd03c4090e24bf1b934ffee4d7b  config.json
+23e2287afe307630f85e62d5cbbf05da9d54eb051fa26b15ef1a63193cca2153  gentv-tv-v3.7.18-code40-licenses.zip

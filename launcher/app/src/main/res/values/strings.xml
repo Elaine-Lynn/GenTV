@@ -186,6 +186,7 @@
     <string name="weather_settings_title">City</string>
     <string name="weather_no_city">Select a province, city, then district or county.</string>
     <string name="weather_pick_city">Set city · Weather</string>
+    <string name="weather_locating">Finding your city…</string>
     <string name="weather_selected_city">Current city: %1$s</string>
     <string name="weather_province">Province</string>
     <string name="weather_city">City</string>
@@ -213,7 +214,7 @@
     <string name="wallpaper_cobalt">Cobalt flow</string>
     <string name="wallpaper_teal">Deep teal</string>
     <string name="wallpaper_indigo">Midnight blue</string>
-    <string name="wallpaper_personal_title">Personal wallpapers</string>
+    <string name="wallpaper_personal_title">Classic wallpapers</string>
     <string name="wallpaper_motion_blue">Blue light</string>
     <string name="wallpaper_user_title">Your wallpapers</string>
     <string name="wallpaper_user_add">Add from files</string>

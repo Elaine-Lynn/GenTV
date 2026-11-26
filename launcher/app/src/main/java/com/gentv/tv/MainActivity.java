@@ -171,6 +171,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private final ExecutorService wallpaperBlurWorker = Executors.newSingleThreadExecutor();
     private int wallpaperBlurGeneration;
     private boolean wallpaperBlurred;
+    private final Runnable toolboxBackdropChanged = this::updateWallpaperScrollState;
     private GlassView glass;
     private View ambient;
     private TextView heroName;
@@ -1022,6 +1023,11 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         if (childLock.showIfLocked()) return;
+        if (intent != null && intent.getBooleanExtra(LauncherSettingsActivity.EXTRA_REORDER, false)) {
+            getIntent().putExtra(LauncherSettingsActivity.EXTRA_REORDER, true);
+            grid.post(this::startPendingSettingsReorder);
+            return;
+        }
         if (openLauncherSettingsIfAsked(intent)) return;
         if (openInputsIfAsked(intent)) return;
         if (intent == null || !intent.hasCategory(Intent.CATEGORY_HOME)) return;
@@ -1092,6 +1098,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         super.onStart();
         stopped = false;
         started = true;
+        ToolboxBackdrop.observe(toolboxBackdropChanged);
         DesktopStore.listen(() -> {
             if (DesktopStore.revision(this) != desktopRevision) recreate();
         });
@@ -1415,6 +1422,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
     @Override
     protected void onStop() {
+        ToolboxBackdrop.stopObserving(toolboxBackdropChanged);
         DesktopStore.listen(null);
         super.onStop();
         started = false;
@@ -1460,6 +1468,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
+        updateWallpaperScrollState();
         restartIdleScreensaver();
         if (homeContent != null) {
             if (!hasFocus) homeContent.stop(true);
@@ -1499,7 +1508,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         if (grid == null || blurredWallpaper == null || videoWallpaper == null) return;
         boolean dockFocused = focused >= 0 && (singleRow || focused < COLUMNS);
         boolean gridFocused = !singleRow && focused >= COLUMNS;
-        boolean blur = gridFocused || (!dockFocused
+        boolean blur = ToolboxBackdrop.visible() && !hasWindowFocus() || gridFocused || (!dockFocused
                 && grid.computeVerticalScrollOffset() > Math.round(40 * density));
         if (blur == wallpaperBlurred) return;
         wallpaperBlurred = blur;

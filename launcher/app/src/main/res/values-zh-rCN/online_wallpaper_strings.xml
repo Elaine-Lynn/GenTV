@@ -1,0 +1,8 @@
+<resources>
+    <string name="wallpaper_online_title">在线壁纸</string>
+    <string name="wallpaper_online_loading">正在加载…</string>
+    <string name="wallpaper_online_unavailable">暂不可用 · 点击重试</string>
+    <string name="wallpaper_online_empty">暂无壁纸 · 点击刷新</string>
+    <string name="wallpaper_online_name">在线壁纸 %1$d</string>
+    <string name="wallpaper_online_applying">正在准备壁纸…</string>
+</resources>

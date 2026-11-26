@@ -106,13 +106,13 @@ public final class CloudSettingsActivity extends Activity {
         checking(R.string.cloud_checking); progress.setIndeterminate(true); progress.setVisibility(View.VISIBLE);
         TvCloud.IO.execute(() -> {
             try {
-                JSONObject update = TvCloud.json("update?platform=tv");
+                JSONObject update = TvCloud.updateManifest(this);
                 TvCloud.remember(this,update);
                 long version = update.getLong("versionCode");
                 boolean required=UpdatePolicy.required(BuildConfig.VERSION_CODE,version,update.optLong("minSupportedVersionCode",0),update.optBoolean("forceUpdate",false));
                 if(version <= BuildConfig.VERSION_CODE) { TvCloud.prefs(this).edit().putLong("requiredVersion",0).apply(); runOnUiThread(()->{mandatory(false);message(R.string.cloud_latest);}); return; }
                 String url = update.getString("url"), hash = update.getString("sha256");
-                if(!url.startsWith(TvCloud.BASE) || !hash.matches("[a-fA-F0-9]{64}")) throw new IOException("Invalid update");
+                if(!TvCloud.allowedUpdateUrl(url) || !hash.matches("[a-fA-F0-9]{64}")) throw new IOException("Invalid update");
                 runOnUiThread(()->{
                     if(isFinishing() || isDestroyed()) return;
                     TvCloud.prefs(this).edit().putLong("requiredVersion",required?version:0).apply();
@@ -122,17 +122,18 @@ public final class CloudSettingsActivity extends Activity {
                     check.setText(R.string.cloud_upgrade_now);
                     check.setOnClickListener(v->download(url,hash,version));
                 });
-            } catch(Exception e) { runOnUiThread(()->{mandatory(TvCloud.required(this));message(R.string.cloud_failed);}); }
+            } catch(Exception e) { android.util.Log.w("GenTV.Update", "Update check failed", e); runOnUiThread(()->{mandatory(TvCloud.required(this));message(R.string.cloud_failed);}); }
         });
     }
     @SuppressWarnings("deprecation")
-    private void download(String url,String hash,long version) {
+    private void download(String url,String hash,long version) { download(url, hash, version, true); }
+    private void download(String url,String hash,long version,boolean tryBackup) {
         checking(R.string.cloud_downloading); progress.setIndeterminate(true); progress.setVisibility(View.VISIBLE);
         TvCloud.IO.execute(()->{
             File file = new File(getCacheDir(),"updates/gentv.apk.part");
             HttpURLConnection c = null;
             try {
-                file.getParentFile().mkdirs(); c = TvCloud.open(url);
+                file.getParentFile().mkdirs(); c = TvCloud.openUpdate(url);
                 if(c.getResponseCode()!=200) throw new IOException("Download refused");
                 long length=c.getContentLength();
                 if(length>UpdatePackage.MAX_APK_BYTES) throw new IOException("APK too large");
@@ -153,7 +154,19 @@ public final class CloudSettingsActivity extends Activity {
                 if(!file.renameTo(ready)) throw new IOException("Cannot commit update");
                 TvCloud.prefs(this).edit().putString("pendingHash",hash).putLong("pendingVersion",version).commit();
                 verified=UpdatePackage.verified(this); runOnUiThread(()->{ if(!isFinishing()&&!isDestroyed()) install(); });
-            } catch(Exception e) { file.delete(); runOnUiThread(()->{message(R.string.cloud_failed);check.setText(R.string.cloud_check_update);check.setOnClickListener(v->check());}); }
+            } catch(Exception e) {
+                android.util.Log.w("GenTV.Update", "Update download failed", e); file.delete();
+                if (tryBackup && url.startsWith(TvCloud.BASE + "releases/")) {
+                    try {
+                        JSONObject backup = TvCloud.backupUpdateManifest(this);
+                        if (backup.getLong("versionCode") != version || !hash.equalsIgnoreCase(backup.getString("sha256")))
+                            throw new IOException("Backup does not match selected release");
+                        String alternate = backup.getString("url");
+                        runOnUiThread(() -> { if (!isFinishing() && !isDestroyed()) download(alternate, hash, version, false); });
+                        return;
+                    } catch (Exception backupError) { android.util.Log.w("GenTV.Update", "Backup download unavailable", backupError); }
+                }
+                runOnUiThread(()->{message(R.string.cloud_failed);check.setText(R.string.cloud_check_update);check.setOnClickListener(v->check());}); }
             finally { if(c!=null)c.disconnect(); }
         });
     }

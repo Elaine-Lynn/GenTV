@@ -145,6 +145,25 @@ public final class QuickSettingsActivity extends Activity {
         rows.addView(buildUtilityPlate());
 
         firstFocus.requestFocus();
+        if (state != null) {
+            int selected = state.getInt("toolboxFocus", 0);
+            rows.post(() -> {
+                java.util.ArrayList<View> choices = rows.getFocusables(View.FOCUS_FORWARD);
+                if (selected >= 0 && selected < choices.size()) choices.get(selected).requestFocus();
+            });
+        }
+    }
+
+    @Override protected void onSaveInstanceState(Bundle state) {
+        ViewGroup rows = findViewById(R.id.rows);
+        state.putInt("toolboxFocus", rows.getFocusables(View.FOCUS_FORWARD).indexOf(getCurrentFocus()));
+        super.onSaveInstanceState(state);
+    }
+
+    @Override protected void onResume() {
+        super.onResume();
+        // Home supplies the blurred live backdrop; keep this panel's smoked-glass surface.
+        ToolboxBackdrop.visible(true);
     }
 
     /** Settings pressed again while the panel is up. */
@@ -154,12 +173,13 @@ public final class QuickSettingsActivity extends Activity {
         finish();
     }
 
-    /** Anything else taking the screen (Home, an app, a screensaver) closes the panel. */
-    @Override
-    protected void onPause() {
-        super.onPause();
-        finish();
-        overridePendingTransition(0, 0);
+    @Override protected void onActivityResult(int request, int result, Intent data) {
+        super.onActivityResult(request, result, data);
+        if (request == 701 && result == RESULT_OK && data != null
+                && data.getBooleanExtra(LauncherSettingsActivity.EXTRA_REORDER, false)) {
+            startActivity(new Intent(this, MainActivity.class)
+                    .putExtra(LauncherSettingsActivity.EXTRA_REORDER, true));
+        }
     }
 
     @SuppressLint("RtlHardcoded")
@@ -266,7 +286,7 @@ public final class QuickSettingsActivity extends Activity {
             label.animate().translationY(focused ? dpF(1.5f) : 0f)
                     .setDuration(animateFocus ? 140 : 0).start();
         });
-        cell.setOnClickListener(v -> action.run());
+        cell.setOnClickListener(v -> { v.requestFocusFromTouch(); action.run(); });
         return cell;
     }
 
@@ -349,7 +369,10 @@ public final class QuickSettingsActivity extends Activity {
             thumbBorder.setBackground(focused ? thumbBorderFocused : thumbBorderIdle);
             animateScale(view, focused ? 1.022f : 1f);
         });
-        card.setOnClickListener(v -> launch(new Intent(this, WallpaperGalleryActivity.class)));
+        card.setOnClickListener(v -> {
+            v.requestFocusFromTouch();
+            launch(new Intent(this, WallpaperGalleryActivity.class));
+        });
         return card;
     }
 
@@ -392,7 +415,7 @@ public final class QuickSettingsActivity extends Activity {
             title.setTextColor(focused ? INK_DARK : INK_LIGHT);
             animateScale(view, focused ? 1.028f : 1f);
         });
-        card.setOnClickListener(v -> action.run());
+        card.setOnClickListener(v -> { v.requestFocusFromTouch(); action.run(); });
     }
 
     /** Unified translucent grouped plate holding the 6 secondary system & utility actions. */
@@ -490,7 +513,7 @@ public final class QuickSettingsActivity extends Activity {
             title.setTypeface(focused ? fontMedium : fontRegular);
             animateScale(view, focused ? 1.024f : 1f);
         });
-        item.setOnClickListener(v -> action.run());
+        item.setOnClickListener(v -> { v.requestFocusFromTouch(); action.run(); });
     }
 
     private void animateScale(View view, float target) {
@@ -571,16 +594,15 @@ public final class QuickSettingsActivity extends Activity {
 
     private void launch(Intent target) {
         try {
-            startActivity(target.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+            startActivity(target);
         } catch (ActivityNotFoundException | SecurityException e) {
             Toast.makeText(this, R.string.not_available, Toast.LENGTH_SHORT).show();
         }
     }
 
     private void openLauncher(String focus) {
-        launch(new Intent(this, MainActivity.class)
-                .setAction(MainActivity.ACTION_LAUNCHER_SETTINGS)
-                .putExtra("quick_settings_focus", focus));
+        startActivityForResult(new Intent(this, LauncherSettingsActivity.class)
+                .putExtra("quick_settings_focus", focus), 701);
     }
 
     private void showMemory() {
@@ -649,21 +671,12 @@ public final class QuickSettingsActivity extends Activity {
     }
 
     @Override protected void onStop() {
+        ToolboxBackdrop.visible(false);
         super.onStop();
-        // Keep an in-flight cleanup alive while Android displays its ADB authorization activity.
-        // Other departures retain the panel's previous no-history behavior.
-        if (memoryAnimation == null && !isChangingConfigurations()) finish();
     }
 
     private void showCity() {
-        showGlassDialog(
-                R.drawable.ic_qs_location,
-                R.string.quick_city,
-                getString(R.string.quick_city_detail),
-                R.string.tv_settings,
-                () -> launch(SystemSettings.intent(this, Settings.ACTION_DATE_SETTINGS)),
-                android.R.string.cancel
-        );
+        launch(new Intent(this, WeatherSettingsActivity.class));
     }
 
     private void showAbout() {
@@ -816,7 +829,5 @@ public final class QuickSettingsActivity extends Activity {
         dialog.dismiss();
         if (selected == current) return;
         selected.select(this);
-        startActivity(new Intent(this, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-        finish();
     }
 }
