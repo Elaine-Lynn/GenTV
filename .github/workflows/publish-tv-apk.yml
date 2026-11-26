@@ -3,6 +3,7 @@ name: Publish signed TV APK
 on:
   push:
     tags: ['v3.7.18']
+    branches: ['feature/3.7.18']
 
 permissions:
   contents: write
@@ -14,9 +15,16 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
-      RELEASE_TAG: ${{ github.ref_name }}
+      RELEASE_TAG: v3.7.18
     steps:
       - uses: actions/checkout@v4
+      - name: Match published metadata to the immutable tag
+        if: github.ref_type == 'branch'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin refs/tags/v3.7.18:refs/tags/v3.7.18
+          git diff --exit-code v3.7.18 -- docs/releases/v3.7.18 docs/release-notes-v3.7.18.md
       - name: Verify release metadata and download signed artifacts
         shell: bash
         run: |
@@ -46,27 +54,31 @@ jobs:
           curl --fail --location --retry 3 --max-time 120 "$base_url/gentv-tv-${version}.apk" --output "release/$apk_name"
           curl --fail --location --retry 3 --max-time 120 "$base_url/$zip_name" --output "release/$zip_name"
           (cd release && sha256sum --check SHA256SUMS.txt)
-      - name: Create draft release with verified files
+      - name: Create or resume draft release with verified files
         shell: bash
         run: |
           set -euo pipefail
-          gh release create "$RELEASE_TAG" release/* --draft --verify-tag \
-            --title "GenTV TV $RELEASE_TAG" \
-            --notes-file "docs/release-notes-$RELEASE_TAG.md"
-      - name: Check uploaded asset digests and publish
+          if ! gh release view "$RELEASE_TAG" --json isDraft --jq .isDraft > draft-state.txt 2>/dev/null; then
+            gh release create "$RELEASE_TAG" --draft --verify-tag \
+              --title "GenTV TV $RELEASE_TAG" \
+              --notes-file "docs/release-notes-$RELEASE_TAG.md"
+            printf 'true\n' > draft-state.txt
+          fi
+          test "$(cat draft-state.txt)" = true
+          mkdir -p downloaded
+          for file in release/*; do
+            name="${file##*/}"
+            if gh api "repos/$GH_REPO/releases/tags/$RELEASE_TAG" --jq '.assets[].name' | grep -Fxq "$name"; then
+              gh release download "$RELEASE_TAG" --pattern "$name" --dir downloaded
+              cmp "$file" "downloaded/$name"
+            else
+              gh release upload "$RELEASE_TAG" "$file"
+              gh release download "$RELEASE_TAG" --pattern "$name" --dir downloaded
+              cmp "$file" "downloaded/$name"
+            fi
+          done
+      - name: Publish verified release
         shell: bash
         run: |
           set -euo pipefail
-          gh api "repos/$GH_REPO/releases/tags/$RELEASE_TAG" > release-response.json
-          python3 - <<'PY'
-          import hashlib, json, pathlib
-          root = pathlib.Path('release')
-          assets = {item['name']: item for item in json.loads(pathlib.Path('release-response.json').read_text())['assets']}
-          files = list(root.iterdir())
-          assert len(assets) == len(files) == 4
-          for file in files:
-              asset = assets[file.name]
-              assert asset['size'] == file.stat().st_size, file.name
-              assert asset['digest'] == 'sha256:' + hashlib.sha256(file.read_bytes()).hexdigest(), file.name
-          PY
           gh release edit "$RELEASE_TAG" --draft=false --latest
