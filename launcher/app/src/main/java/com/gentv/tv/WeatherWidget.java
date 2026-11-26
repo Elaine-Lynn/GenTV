@@ -15,7 +15,6 @@ final class WeatherWidget {
     private static final long FAILED_RETRY_MS = 2 * 60_000L;
     private static final int IMMEDIATE_RETRIES = 2;
     private static final long CACHE_MS = 3 * 60 * 60_000L;
-    private static final long LOCATION_RETRY_MS = 5 * 60_000L;
     private final Activity activity;
     private final TextView label;
     private final Handler main = new Handler(Looper.getMainLooper());
@@ -107,9 +106,9 @@ final class WeatherWidget {
     private void locate() {
         if (!TvCloud.enabled()) return;
         long now = System.currentTimeMillis();
-        long elapsed = now - WeatherStore.locationAttempt(activity);
-        if (elapsed >= 0 && elapsed < LOCATION_RETRY_MS) {
-            main.postDelayed(tick, LOCATION_RETRY_MS - elapsed);
+        long retryDelay = WeatherStore.locationRetryDelay(activity, now);
+        if (retryDelay > 0) {
+            main.postDelayed(tick, retryDelay);
             return;
         }
         WeatherStore.locationAttempted(activity, now);
@@ -127,7 +126,10 @@ final class WeatherWidget {
                 if (located != null && WeatherStore.city(activity).isEmpty()) WeatherStore.select(activity, located);
                 if (!active) return;
                 render();
-                if (WeatherStore.city(activity).isEmpty()) main.postDelayed(tick, LOCATION_RETRY_MS);
+                if (WeatherStore.city(activity).isEmpty()) {
+                    long delay = WeatherStore.locationRetryDelay(activity, System.currentTimeMillis());
+                    if (delay > 0) main.postDelayed(tick, delay);
+                }
                 else refresh();
             });
         });
