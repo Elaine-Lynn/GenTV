@@ -12,7 +12,7 @@ https://raw.githubusercontent.com/Elaine-Lynn/GenTV/update-manifest/config.json
 
 ## 正式发布
 
-先修改正式版本号、提交并推送版本代码，再使用同一正式签名构建 `:app:assembleRelease`。发布前工作区必须干净。发布需要 Android SDK、私有签名配置和已认证的 GitHub CLI（或 `GH_TOKEN`，需本仓库 contents 写权限）。私钥和 Token 不上传。
+先修改正式版本号、提交并推送版本代码，再使用同一正式签名构建 `:app:assembleRelease`。发布前工作区必须干净。发布需要 Android SDK、私有签名配置和已认证的 GitHub CLI（或 `GH_TOKEN`，需本仓库 contents 写权限）。私钥和 Token 不上传。`v3.7.18` 使用仅匹配该 tag 的 GitHub Actions：服务器先暂存并校验正式 APK 与许可证包，推送 tag 后由工作流下载同一文件、核对摘要并创建 Release；确认公开附件后，再通过 SSH 更新 `update-manifest` 分支和主服务器清单。
 
 ```sh
 # 仅生成文件，不上传。

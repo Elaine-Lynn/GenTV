@@ -2,7 +2,7 @@
 
 自更新的 GitHub APK 镜像、备用 `config.json` 和同步发布流程见 [TV 主备更新](tv-update-backup.md)。
 
-电视包 `com.gentv.tv`，正在准备 3.7.18 / code40 正式发布；手机版 `com.gentv.mobile` 已发布 3.7.4 / code20。两者使用同一正式证书，但应用身份与更新清单独立。
+电视包 `com.gentv.tv`，GitHub Release 与升级接口已发布 3.7.18 / code40；手机版 `com.gentv.mobile` 已发布 3.7.4 / code20。两者使用同一正式证书，但应用身份与更新清单独立。
 
 正式证书 SHA-256 指纹（已用 v3.7.0 发布的 `gentv-tv-3.7.0.apk` 和 `gentv-mobile-3.7.1.apk` 核对）：
 
@@ -14,7 +14,7 @@
 
 ## 电视版 3.7.18
 
-从 `feature/3.7.18` 准备 `v3.7.18`，电视包为 3.7.18 / code40、最低 API 17。增加天气城市 IP 识别、在线壁纸、工具箱返回状态保留及 GitHub 自更新备用源。更新内容见[3.7.18 更新日志](release-notes-v3.7.18.md)，发布清单见[更新配置](releases/v3.7.18/config.json)。
+从 `feature/3.7.18` 发布 `v3.7.18`，电视包为 3.7.18 / code40、最低 API 17。增加天气城市 IP 识别、在线壁纸、工具箱返回状态保留及 GitHub 自更新备用源。更新内容见[3.7.18 更新日志](release-notes-v3.7.18.md)，发布清单见[更新配置](releases/v3.7.18/config.json)。GitHub Release 附件、公开下载 APK、备用清单和主服务器清单已核对版本及 SHA-256；当贝 DBZ1 Pro 覆盖安装与首页启动通过，完整自更新流程仍待实机验收。
 
 ## 电视版 3.7.17
 

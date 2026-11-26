@@ -3,7 +3,6 @@ name: Publish signed TV APK
 on:
   push:
     tags: ['v3.7.18']
-    branches: ['feature/3.7.18']
 
 permissions:
   contents: write
@@ -14,17 +13,9 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ github.token }}
-      GH_REPO: ${{ github.repository }}
       RELEASE_TAG: v3.7.18
     steps:
       - uses: actions/checkout@v4
-      - name: Match published metadata to the immutable tag
-        if: github.ref_type == 'branch'
-        shell: bash
-        run: |
-          set -euo pipefail
-          git fetch origin refs/tags/v3.7.18:refs/tags/v3.7.18
-          git diff --exit-code v3.7.18 -- docs/releases/v3.7.18 docs/release-notes-v3.7.18.md
       - name: Verify release metadata and download signed artifacts
         shell: bash
         run: |
