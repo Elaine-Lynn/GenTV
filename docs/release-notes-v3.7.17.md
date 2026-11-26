@@ -12,6 +12,6 @@
 
 正式签名 APK 为 7,481,983 字节，低于旧版升级器的 8 MiB 限制；SHA-256 为 `deef0ef69cb7e23d92f33f743b59060ba3065a6526fe90ef2f679d83cb3aeb37`。此更新为可选更新，`forceUpdate=false`。
 
-已在当贝 DBZ1 Pro（Android API 28）覆盖安装并启动，ADB 返回 `Success` 和 `Status: ok`。Android 4.2 真机、友盟事件上报与完整自更新流程仍待验证。
+Android 4.2 真机、友盟事件上报与完整自更新流程仍待验证。
 
 English summary: GenTV TV 3.7.17 (code 39) simplifies the wallpaper picker, removes two retired bundled wallpapers, and adds an independent, off-by-default Umeng analytics option. The phone app is unchanged.
