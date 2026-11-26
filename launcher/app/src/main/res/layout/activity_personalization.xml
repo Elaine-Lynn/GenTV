@@ -83,24 +83,6 @@
             android:id="@+id/wallpaperChoices"
             android:layout_width="match_parent"
             android:layout_height="151dp"
-            android:nextFocusDown="@id/wallpaperOnlineChoices"
-            android:clipChildren="false"
-            android:clipToPadding="false"
-            android:overScrollMode="never" />
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:text="@string/wallpaper_online_title"
-            android:textColor="#EEFFFFFF"
-            android:textSize="18sp"
-            android:fontFamily="@string/font_medium" />
-
-        <androidx.leanback.widget.HorizontalGridView
-            android:id="@+id/wallpaperOnlineChoices"
-            android:layout_width="match_parent"
-            android:layout_height="151dp"
-            android:nextFocusUp="@id/wallpaperChoices"
             android:nextFocusDown="@id/wallpaperUserChoices"
             android:clipChildren="false"
             android:clipToPadding="false"
@@ -118,7 +100,7 @@
             android:id="@+id/wallpaperUserChoices"
             android:layout_width="match_parent"
             android:layout_height="151dp"
-            android:nextFocusUp="@id/wallpaperOnlineChoices"
+            android:nextFocusUp="@id/wallpaperChoices"
             android:clipChildren="false"
             android:clipToPadding="false"
             android:overScrollMode="never" />

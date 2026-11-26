@@ -25,21 +25,28 @@ import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
-import android.widget.HorizontalScrollView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.dynamicanimation.animation.DynamicAnimation;
 import androidx.dynamicanimation.animation.SpringAnimation;
 import androidx.dynamicanimation.animation.SpringForce;
+import androidx.leanback.widget.BaseGridView;
+import androidx.leanback.widget.HorizontalGridView;
+import androidx.leanback.widget.OnChildViewHolderSelectedListener;
+import androidx.leanback.widget.VerticalGridView;
+import androidx.recyclerview.widget.RecyclerView;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.nio.charset.Charset;
+import android.util.AtomicFile;
 import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -81,7 +88,14 @@ public final class WallpaperGalleryActivity extends Activity {
     private int cardW;
     private int cardH;
 
-    private LinearLayout shelvesHost;
+    private VerticalGridView shelvesGrid;
+    private View galleryHeader;
+    private final List<GalleryShelf> shelfModels = new ArrayList<>();
+    private final ShelfAdapter shelfAdapter = new ShelfAdapter();
+    private final android.util.LruCache<String, Bitmap> previewCache =
+            new android.util.LruCache<String, Bitmap>(8 * 1024 * 1024) {
+                @Override protected int sizeOf(String key, Bitmap bitmap) { return bitmap.getByteCount(); }
+            };
     private TextView statusPill;
     private TextView screensaverToggleLabel;
     private View screensaverToggleDot;
@@ -113,34 +127,35 @@ public final class WallpaperGalleryActivity extends Activity {
 
         activeCatalogId = resolveActiveCatalogId();
 
-        ScrollView scroll = new ScrollView(this);
-        scroll.setBackground(new AmbientBackdropDrawable());
-        scroll.setClipChildren(false);
-        scroll.setClipToPadding(false);
-        scroll.setFillViewport(true);
-        scroll.setOverScrollMode(View.OVER_SCROLL_NEVER);
-        scroll.setVerticalScrollBarEnabled(false);
-
         LinearLayout root = new LinearLayout(this);
+        root.setBackground(new AmbientBackdropDrawable());
         root.setOrientation(LinearLayout.VERTICAL);
         root.setClipChildren(false);
         root.setClipToPadding(false);
-        root.setPadding(0, dp(26), 0, dp(48));
-        scroll.addView(root, new ScrollView.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        root.setPadding(0, dp(26), 0, 0);
+        galleryHeader = buildHeader();
 
-        root.addView(buildHeader());
+        // Title, shelves and screensaver controls share the same scrolling viewport.
+        FrameLayout viewport = new FrameLayout(this);
+        viewport.setClipChildren(true);
+        root.addView(viewport, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
+        shelvesGrid = new VerticalGridView(this);
+        shelvesGrid.setNumColumns(1);
+        shelvesGrid.setPadding(0, dp(8), 0, dp(30));
+        shelvesGrid.setVerticalSpacing(dp(18));
+        shelvesGrid.setClipChildren(false);
+        shelvesGrid.setClipToPadding(false);
+        shelvesGrid.setOverScrollMode(View.OVER_SCROLL_NEVER);
+        shelvesGrid.setVerticalScrollBarEnabled(false);
+        shelvesGrid.setWindowAlignment(BaseGridView.WINDOW_ALIGN_BOTH_EDGE);
+        shelvesGrid.setWindowAlignmentOffsetPercent(50f);
+        shelvesGrid.setItemAlignmentOffsetPercent(50f);
+        shelvesGrid.setSaveChildrenPolicy(BaseGridView.SAVE_ALL_CHILD);
+        shelvesGrid.setItemAnimator(null);
+        shelvesGrid.setAdapter(shelfAdapter);
+        viewport.addView(shelvesGrid, new FrameLayout.LayoutParams(-1, -1));
 
-        shelvesHost = new LinearLayout(this);
-        shelvesHost.setOrientation(LinearLayout.VERTICAL);
-        shelvesHost.setClipChildren(false);
-        shelvesHost.setClipToPadding(false);
-        root.addView(shelvesHost, new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-
-        root.addView(buildScreensaverSection());
-
-        setContentView(scroll);
+        setContentView(root);
         load();
     }
 
@@ -205,23 +220,52 @@ public final class WallpaperGalleryActivity extends Activity {
 
     private void load() {
         worker.execute(() -> {
+            AtomicFile cache = new AtomicFile(new File(getFilesDir(), "wallpaper-gallery-catalog.json"));
+            JSONArray saved = null;
             try {
-                JSONArray groups = TvCloud.json("wallpaper?view=catalog").getJSONArray("categories");
-                runOnUiThread(() -> {
-                    if (!isDestroyed()) render(groups);
-                });
-            } catch (Exception error) {
+                byte[] bytes = TvCloud.read(cache.openRead(), WallpaperCatalogSnapshot.MAX_BYTES);
+                saved = WallpaperCatalogSnapshot.decode(TvCloud.BASE, new String(bytes, Charset.forName("UTF-8")));
+            } catch (Exception ignored) { /* A missing or invalid cache must never block a fresh request. */ }
+            final JSONArray cached = saved;
+            if (cached != null) runOnUiThread(() -> {
+                if (isDestroyed()) return;
+                render(cached);
+                showStatus(copy("已显示缓存 · 正在更新…", "Cached wallpapers · Updating…"), false);
+            });
+            try {
+                JSONObject response = TvCloud.json("wallpaper?view=catalog");
+                JSONArray groups = WallpaperCatalogSnapshot.categories(response);
+                // Cache failures must not turn a successful online response into an offline error.
+                try {
+                    byte[] bytes = WallpaperCatalogSnapshot.encode(TvCloud.BASE, response,
+                            System.currentTimeMillis()).getBytes(Charset.forName("UTF-8"));
+                    FileOutputStream stream = cache.startWrite();
+                    try { stream.write(bytes); cache.finishWrite(stream); }
+                    catch (IOException failure) { cache.failWrite(stream); throw failure; }
+                } catch (Exception failure) {
+                    android.util.Log.w("GenTV.Wallpaper", "Unable to save catalog cache", failure);
+                }
                 runOnUiThread(() -> {
                     if (isDestroyed()) return;
-                    showStatus(copy("离线模式 · 仅显示本地默认壁纸", "Offline · Default wallpaper only"), true);
-                    renderOfflineFallback();
+                    if (cached == null || !cached.toString().equals(groups.toString())) render(groups);
+                    statusPill.setVisibility(View.GONE);
+                });
+            } catch (Exception error) {
+                android.util.Log.w("GenTV.Wallpaper", "Catalog refresh failed", error);
+                runOnUiThread(() -> {
+                    if (isDestroyed()) return;
+                    if (cached != null) {
+                        showStatus(copy("网络不可用 · 显示上次内容", "Offline · Showing cached wallpapers"), true);
+                    } else {
+                        showStatus(copy("离线模式 · 仅显示本地默认壁纸", "Offline · Default wallpaper only"), true);
+                        renderOfflineFallback();
+                    }
                 });
             }
         });
     }
 
     private void renderOfflineFallback() {
-        shelvesHost.removeAllViews();
         playableByCategory.clear();
         allPlayable.clear();
         try {
@@ -241,10 +285,17 @@ public final class WallpaperGalleryActivity extends Activity {
     }
 
     private void render(JSONArray rawGroups) {
+        Map<String, GalleryShelf> previous = new HashMap<>();
+        for (GalleryShelf shelf : shelfModels) previous.put(shelf.id, shelf);
+        boolean restoreFocus = !previous.isEmpty() && shelvesGrid.hasFocus();
+        int priorPosition = shelvesGrid.getSelectedPosition();
+        boolean priorFooter = !shelfModels.isEmpty() && priorPosition == shelfModels.size() + 1;
+        String priorShelfId = priorPosition > 0 && priorPosition <= shelfModels.size()
+                ? shelfModels.get(priorPosition - 1).id : null;
         if (rawGroups.length() > 1) {
             statusPill.setVisibility(View.GONE);
         }
-        shelvesHost.removeAllViews();
+        shelfModels.clear();
         playableByCategory.clear();
         allPlayable.clear();
 
@@ -272,7 +323,6 @@ public final class WallpaperGalleryActivity extends Activity {
 
         // Render categories in strict order: 萌宠, 自然, 唯美, 图片, 随机.
         String[] order = {"pets", "nature", "dreamy", "images", "shuffle"};
-        View firstFocus = null;
         for (String catId : order) {
             JSONObject group = byId.get(catId);
             if ("shuffle".equals(catId)) {
@@ -285,14 +335,35 @@ public final class WallpaperGalleryActivity extends Activity {
                     : title(group);
             JSONArray items = group.optJSONArray("items");
             if (items == null || items.length() == 0) continue;
-            View candidate = addShelf(catId, shelfTitle, items);
-            if (firstFocus == null && candidate != null) firstFocus = candidate;
+            GalleryShelf model = new GalleryShelf(catId, shelfTitle, items);
+            GalleryShelf old = previous.get(catId);
+            if (old != null) {
+                model.selected = Math.min(old.selected, items.length() - 1);
+                JSONObject selected = old.items.optJSONObject(old.selected);
+                if (selected != null) for (int i = 0; i < items.length(); i++) {
+                    JSONObject candidate = items.optJSONObject(i);
+                    if (candidate != null && selected.optString("id").equals(candidate.optString("id"))) {
+                        model.selected = i;
+                        break;
+                    }
+                }
+            }
+            shelfModels.add(model);
         }
-
-        if (firstFocus != null) {
-            final View target = firstFocus;
-            target.post(target::requestFocus);
+        int nextPosition = !restoreFocus ? (shelfModels.isEmpty() ? 0 : 1) : 0;
+        if (restoreFocus && priorFooter) nextPosition = shelfModels.size() + 1;
+        else if (restoreFocus && priorShelfId != null) {
+            nextPosition = Math.min(Math.max(1, priorPosition), shelfModels.size());
+            for (int i = 0; i < shelfModels.size(); i++)
+                if (priorShelfId.equals(shelfModels.get(i).id)) { nextPosition = i + 1; break; }
         }
+        final int focusPosition = nextPosition;
+        shelfAdapter.notifyDataSetChanged();
+        shelvesGrid.post(() -> {
+            if (isDestroyed()) return;
+            shelvesGrid.setSelectedPosition(focusPosition);
+            shelvesGrid.requestFocus();
+        });
     }
 
     /** Ensures the 5 requested shuffle options always appear cleanly under the "随机" shelf. */
@@ -323,7 +394,84 @@ public final class WallpaperGalleryActivity extends Activity {
                 .put("scope", scope);
     }
 
-    private View addShelf(String catId, String headingText, JSONArray items) {
+    private static final class GalleryShelf {
+        final String id;
+        final String title;
+        final JSONArray items;
+        int selected;
+        GalleryShelf(String id, String title, JSONArray items) {
+            this.id = id; this.title = title; this.items = items;
+        }
+    }
+
+    private static final class RowHolder extends RecyclerView.ViewHolder {
+        RowHolder(FrameLayout view) { super(view); }
+    }
+
+    private static RecyclerView.LayoutParams gridParams(ViewGroup parent, int width) {
+        // Leanback requires its own GridLayoutManager.LayoutParams, including on RecyclerView 1.3.
+        RecyclerView.LayoutParams params = ((RecyclerView) parent).getLayoutManager().generateDefaultLayoutParams();
+        params.width = width;
+        params.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+        return params;
+    }
+
+    private final class ShelfAdapter extends RecyclerView.Adapter<RowHolder> {
+        @Override public int getItemViewType(int position) {
+            return position == 0 ? 0 : position == shelfModels.size() + 1 ? 2 : 1;
+        }
+        @Override public int getItemCount() { return shelfModels.size() + 2; }
+        @Override public RowHolder onCreateViewHolder(ViewGroup parent, int type) {
+            FrameLayout holder = new FrameLayout(WallpaperGalleryActivity.this);
+            holder.setClipChildren(false);
+            holder.setClipToPadding(false);
+            holder.setLayoutParams(gridParams(parent, ViewGroup.LayoutParams.MATCH_PARENT));
+            return new RowHolder(holder);
+        }
+        @Override public void onBindViewHolder(RowHolder holder, int position) {
+            FrameLayout frame = (FrameLayout) holder.itemView;
+            frame.removeAllViews();
+            View content;
+            if (position == 0) {
+                content = galleryHeader;
+                if (content.getParent() instanceof ViewGroup) ((ViewGroup) content.getParent()).removeView(content);
+            } else if (position == shelfModels.size() + 1) {
+                content = buildScreensaverSection();
+            } else {
+                content = buildShelf(shelfModels.get(position - 1));
+            }
+            frame.addView(content, new FrameLayout.LayoutParams(-1, -2));
+        }
+    }
+
+    private final class PosterAdapter extends RecyclerView.Adapter<RowHolder> {
+        private final GalleryShelf shelf;
+        private final TextView countPill;
+        private final HorizontalGridView grid;
+        PosterAdapter(GalleryShelf shelf, TextView countPill, HorizontalGridView grid) {
+            this.shelf = shelf; this.countPill = countPill; this.grid = grid;
+        }
+        @Override public int getItemCount() { return shelf.items.length(); }
+        @Override public RowHolder onCreateViewHolder(ViewGroup parent, int type) {
+            FrameLayout frame = new FrameLayout(WallpaperGalleryActivity.this);
+            frame.setClipChildren(false);
+            frame.setClipToPadding(false);
+            frame.setLayoutParams(gridParams(parent, cardW));
+            return new RowHolder(frame);
+        }
+        @Override public void onBindViewHolder(RowHolder holder, int position) {
+            FrameLayout frame = (FrameLayout) holder.itemView;
+            frame.removeAllViews();
+            JSONObject item = shelf.items.optJSONObject(position);
+            if (item != null) frame.addView(buildCard(shelf.id, item, position,
+                    getItemCount(), countPill, grid), new FrameLayout.LayoutParams(-1, -2));
+        }
+    }
+
+    private View buildShelf(GalleryShelf model) {
+        String catId = model.id;
+        String headingText = model.title;
+        JSONArray items = model.items;
         int total = items.length();
         boolean overflows = total > 3;
 
@@ -331,10 +479,6 @@ public final class WallpaperGalleryActivity extends Activity {
         section.setOrientation(LinearLayout.VERTICAL);
         section.setClipChildren(false);
         section.setClipToPadding(false);
-        LinearLayout.LayoutParams secLp = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        secLp.topMargin = dp(18);
-        shelvesHost.addView(section, secLp);
 
         // Shelf header: category title + subtle count pill + faint right chevron hint when >3 items.
         LinearLayout header = new LinearLayout(this);
@@ -380,22 +524,28 @@ public final class WallpaperGalleryActivity extends Activity {
         shelfFrame.setClipChildren(false);
         shelfFrame.setClipToPadding(false);
 
-        HorizontalScrollView scroller = new HorizontalScrollView(this);
-        scroller.setHorizontalScrollBarEnabled(false);
-        scroller.setOverScrollMode(View.OVER_SCROLL_NEVER);
-        scroller.setFocusable(false);
-        scroller.setClipChildren(false);
-        scroller.setClipToPadding(false);
-
-        LinearLayout row = new LinearLayout(this);
-        row.setOrientation(LinearLayout.HORIZONTAL);
+        HorizontalGridView row = new HorizontalGridView(this);
+        row.setNumRows(1);
+        row.setHorizontalSpacing(cardGap);
+        row.setWindowAlignment(BaseGridView.WINDOW_ALIGN_BOTH_EDGE);
+        row.setWindowAlignmentOffsetPercent(50f);
+        row.setItemAlignmentOffsetPercent(50f);
+        row.setSaveChildrenPolicy(BaseGridView.SAVE_ALL_CHILD);
         row.setClipChildren(false);
         row.setClipToPadding(false);
-        row.setPadding(padH, dp(10), padH, dp(8));
-        scroller.addView(row, new HorizontalScrollView.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-        shelfFrame.addView(scroller, new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        row.setPadding(padH, dp(12), padH, dp(12));
+        row.setOverScrollMode(View.OVER_SCROLL_NEVER);
+        row.setHorizontalScrollBarEnabled(false);
+        row.setItemAnimator(null);
+        row.setAdapter(new PosterAdapter(model, countPill, row));
+        row.setSelectedPosition(model.selected);
+        row.addOnChildViewHolderSelectedListener(new OnChildViewHolderSelectedListener() {
+            @Override public void onChildViewHolderSelected(RecyclerView parent,
+                    RecyclerView.ViewHolder child, int position, int subposition) {
+                if (position >= 0) model.selected = position;
+            }
+        });
+        shelfFrame.addView(row, new FrameLayout.LayoutParams(-1, cardH + dp(54)));
 
         // Soft dark obsidian edge-fade vignettes so the peeking 4th card melts cleanly into the screen edge.
         View rightFade = new View(this);
@@ -419,36 +569,21 @@ public final class WallpaperGalleryActivity extends Activity {
                 padH, ViewGroup.LayoutParams.MATCH_PARENT, Gravity.START));
 
         Runnable updateFades = () -> {
-            int maxScroll = Math.max(0, row.getWidth() - scroller.getWidth());
-            int sx = scroller.getScrollX();
-            float rightAlpha = maxScroll > dp(6)
-                    ? Math.max(0f, Math.min(1f, (maxScroll - sx) / (float) dp(36)))
-                    : 0f;
-            float leftAlpha = Math.max(0f, Math.min(1f, sx / (float) dp(36)));
-            rightFade.setAlpha(rightAlpha);
-            leftFade.setAlpha(leftAlpha);
-            if (overflows) chevron.setAlpha(0.25f + 0.75f * rightAlpha);
+            rightFade.setAlpha(row.canScrollHorizontally(1) ? 1f : 0f);
+            leftFade.setAlpha(row.canScrollHorizontally(-1) ? 1f : 0f);
+            if (overflows) chevron.setAlpha(row.canScrollHorizontally(1) ? 1f : 0.25f);
         };
-        // ViewTreeObserver works on API 17; View#setOnScrollChangeListener needs API 23.
-        scroller.getViewTreeObserver().addOnScrollChangedListener(updateFades::run);
+        row.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override public void onScrolled(RecyclerView view, int dx, int dy) { updateFades.run(); }
+        });
         row.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> updateFades.run());
 
-        View firstCard = null;
-        for (int i = 0; i < total; i++) {
-            JSONObject item = items.optJSONObject(i);
-            if (item == null) continue;
-            final int index = i;
-            View card = buildCard(catId, item, index, total, countPill, scroller, row);
-            if (firstCard == null) firstCard = card;
-        }
-
-        section.addView(shelfFrame, new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-        return firstCard;
+        section.addView(shelfFrame, new LinearLayout.LayoutParams(-1, -2));
+        return section;
     }
 
     private View buildCard(String catId, JSONObject item, int index, int total,
-                           TextView countPill, HorizontalScrollView scroller, LinearLayout row) {
+                           TextView countPill, HorizontalGridView row) {
         String id = item.optString("id");
         String kind = item.optString("kind");
         String name = title(item);
@@ -467,9 +602,6 @@ public final class WallpaperGalleryActivity extends Activity {
         card.setClickable(true);
         CompatApi.disableDefaultFocusHighlight(card);
 
-        LinearLayout.LayoutParams cardLp = new LinearLayout.LayoutParams(cardW, ViewGroup.LayoutParams.WRAP_CONTENT);
-        if (index < total - 1) cardLp.setMarginEnd(cardGap);
-        row.addView(card, cardLp);
 
         // Poster frame with rounded outline clipping and crisp focus halo overlay.
         FrameLayout posterWrap = new FrameLayout(this);
@@ -628,7 +760,6 @@ public final class WallpaperGalleryActivity extends Activity {
                 countPill.setText((index + 1) + " / " + total);
                 countPill.setTextColor(0xF0FFFFFF);
                 countPill.setBackground(roundRect(0x24FFFFFF, 0x36FFFFFF, 11));
-                scrollCardComfortablyIntoView(scroller, card, index);
             } else {
                 // Defer reverting pill text until we know focus left this entire row.
                 row.post(() -> {
@@ -653,6 +784,11 @@ public final class WallpaperGalleryActivity extends Activity {
         if (!preview.isEmpty() && !isDefault && !isPlaceholder && !isShuffle) {
             worker.execute(() -> {
                 try {
+                    Bitmap cached = previewCache.get(preview);
+                    if (cached != null) {
+                        runOnUiThread(() -> { if (!isDestroyed()) image.setImageBitmap(cached); });
+                        return;
+                    }
                     HttpURLConnection connection = TvCloud.open(assetUrl(preview));
                     try {
                         byte[] data = TvCloud.read(connection.getInputStream(), 8 * 1024 * 1024);
@@ -666,6 +802,7 @@ public final class WallpaperGalleryActivity extends Activity {
                             options.inSampleSize *= 2;
                         }
                         Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length, options);
+                        if (bitmap != null) previewCache.put(preview, bitmap);
                         runOnUiThread(() -> {
                             if (!isDestroyed() && bitmap != null) image.setImageBitmap(bitmap);
                         });
@@ -676,30 +813,6 @@ public final class WallpaperGalleryActivity extends Activity {
             });
         }
         return card;
-    }
-
-    private void scrollCardComfortablyIntoView(HorizontalScrollView scroller, View card, int index) {
-        scroller.post(() -> {
-            int targetX;
-            if (index == 0) {
-                targetX = 0;
-            } else {
-                int cardLeft = card.getLeft();
-                int cardRight = card.getRight();
-                int viewW = scroller.getWidth();
-                int current = scroller.getScrollX();
-                int safeRightMargin = Math.round(screenW * 0.13f);
-                if (cardLeft - padH < current) {
-                    targetX = Math.max(0, cardLeft - padH);
-                } else if (cardRight + safeRightMargin > current + viewW) {
-                    targetX = Math.max(0, cardRight + safeRightMargin - viewW);
-                } else {
-                    return;
-                }
-            }
-            if (animateFocus) scroller.smoothScrollTo(targetX, 0);
-            else scroller.scrollTo(targetX, 0);
-        });
     }
 
     private List<JSONObject> candidatesForScope(String scope) {

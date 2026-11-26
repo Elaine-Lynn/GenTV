@@ -66,17 +66,6 @@ public final class PersonalizationActivity extends Activity {
     private ImageView previousPreview;
     private HorizontalGridView stillChoices;
     private HorizontalGridView userChoices;
-    private HorizontalGridView onlineChoices;
-    private OnlineWallpaperGallery onlineGallery;
-    private final ExecutorService onlineWorker = Executors.newSingleThreadExecutor();
-    private List<OnlineWallpaperGallery.Entry> onlineEntries = Collections.emptyList();
-    private final Set<String> onlineLoading = new HashSet<>();
-    private final LruCache<String, Bitmap> onlineThumbnails = new LruCache<String, Bitmap>(2 * 1024 * 1024) {
-        @Override protected int sizeOf(String key, Bitmap bitmap) { return bitmap.getByteCount(); }
-    };
-    private volatile String focusedOnlineUrl;
-    private int onlineMessage = R.string.wallpaper_online_loading;
-    private boolean onlineFetching, onlineApplying;
     private BundledVideoPreview videoPreview;
     private Bitmap shownBitmap;
     private String selected;
@@ -91,8 +80,8 @@ public final class PersonalizationActivity extends Activity {
     private LanWallpaperReceiver lanReceiver;
     private AlertDialog lanDialog;
     private TextView lanStatus;
-    private final int[] focusedIndexes = new int[3];
-    private final boolean[] visitedRows = new boolean[3];
+    private final int[] focusedIndexes = new int[2];
+    private final boolean[] visitedRows = new boolean[2];
     private int rowNavigationKey;
 
     @Override protected void attachBaseContext(Context base) {
@@ -118,11 +107,6 @@ public final class PersonalizationActivity extends Activity {
         videoPreview = new BundledVideoPreview(this, findViewById(R.id.wallpaperVideoPreview));
         configure(stillChoices);
         configure(userChoices);
-        onlineChoices = findViewById(R.id.wallpaperOnlineChoices);
-        configure(onlineChoices);
-        onlineGallery = new OnlineWallpaperGallery(this);
-        onlineChoices.setAdapter(new OnlineAdapter());
-        loadOnline();
 
         int group = 0, index = 0;
         for (int i = 0; i < VISIBLE_STILL_COUNT; i++)
@@ -130,12 +114,12 @@ public final class PersonalizationActivity extends Activity {
         for (int i = 0; i < BundledWallpapers.MOTION_IDS.length; i++)
             if (BundledWallpapers.MOTION_IDS[i].equals(selected)) index = VISIBLE_STILL_COUNT + i;
         int userIndex = userIds.indexOf(selected);
-        if (userIndex >= 0) { group = 2; index = userIndex + 2; focusedUserId = selected; }
+        if (userIndex >= 0) { group = 1; index = userIndex + 2; focusedUserId = selected; }
         final int initialGroup = group, initialIndex = index;
-        requestedResource = group == 2 ? 0 : imageAt(group, index);
+        requestedResource = group == 1 ? 0 : imageAt(group, index);
         selectedMotionResource = videoAt(group, index);
         decoder.execute(() -> {
-            Bitmap first = initialGroup == 2 ? decodeUserPreview(selected,
+            Bitmap first = initialGroup == 1 ? decodeUserPreview(selected,
                     userPreviewWidth(), userPreviewHeight())
                     : decode(requestedResource, previewSample);
             Bitmap initialPreview = first;
@@ -159,11 +143,11 @@ public final class PersonalizationActivity extends Activity {
                 }
                 thumbnails = loaded;
                 if (initialPreview != null) {
-                    if (initialGroup != 2) previews.put(requestedResource, initialPreview);
+                    if (initialGroup != 1) previews.put(requestedResource, initialPreview);
                     showBitmap(initialPreview);
                 }
                 stillChoices.setAdapter(new ChoiceAdapter(0));
-                userChoices.setAdapter(new ChoiceAdapter(2));
+                userChoices.setAdapter(new ChoiceAdapter(1));
                 ready = true;
                 HorizontalGridView target = initialGroup == 0 ? stillChoices : userChoices;
                 target.setSelectedPosition(initialIndex);
@@ -197,7 +181,7 @@ public final class PersonalizationActivity extends Activity {
         if (!ready || event.getAction() != KeyEvent.ACTION_DOWN
                 || (key != KeyEvent.KEYCODE_DPAD_UP && key != KeyEvent.KEYCODE_DPAD_DOWN))
             return super.dispatchKeyEvent(event);
-        HorizontalGridView[] rows = {stillChoices, onlineChoices, userChoices};
+        HorizontalGridView[] rows = {stillChoices, userChoices};
         View focused = getCurrentFocus();
         for (int row = 0; row < rows.length; row++) {
             int group = row;
@@ -238,31 +222,7 @@ public final class PersonalizationActivity extends Activity {
     }
 
     private void requestPreview(int group, int index) {
-        if (group != 1) focusedOnlineUrl = null;
         if (group == 1) {
-            focusedOnlineUrl = null;
-            requestedResource = 0;
-            selectedMotionResource = 0;
-            focusedUserId = null;
-            videoPreview.select(0);
-            if (index >= onlineEntries.size()) return;
-            OnlineWallpaperGallery.Entry entry = onlineEntries.get(index);
-            focusedOnlineUrl = entry.url;
-            onlineWorker.execute(() -> {
-                if (closed || !entry.url.equals(focusedOnlineUrl)) return;
-                Bitmap bitmap = null;
-                try { bitmap = onlineGallery.preview(entry, userPreviewWidth(), userPreviewHeight(), false); }
-                catch (Exception | OutOfMemoryError ignored) { }
-                Bitmap result = bitmap;
-                main.post(() -> {
-                    if (result == null) return;
-                    if (!closed && entry.url.equals(focusedOnlineUrl)) showBitmap(result);
-                    else result.recycle();
-                });
-            });
-            return;
-        }
-        if (group == 2) {
             requestedResource = 0;
             selectedMotionResource = 0;
             focusedUserId = index < 2 ? null : userIds.get(index - 2);
@@ -277,12 +237,13 @@ public final class PersonalizationActivity extends Activity {
                 Bitmap result = bitmap;
                 main.post(() -> {
                     if (result == null) return;
-                    if (!closed && focusedOnlineUrl == null && id.equals(focusedUserId)) showBitmap(result);
+                    if (!closed && id.equals(focusedUserId)) showBitmap(result);
                     else result.recycle();
                 });
             });
             return;
         }
+        focusedUserId = null;
         int resource = imageAt(group, index);
         requestedResource = resource;
         selectedMotionResource = videoAt(group, index);
@@ -302,7 +263,7 @@ public final class PersonalizationActivity extends Activity {
                 if (result == null) return;
                 if (closed) { result.recycle(); return; }
                 previews.put(resource, result);
-                if (requestedResource == resource && focusedOnlineUrl == null) showBitmap(result);
+                if (requestedResource == resource) showBitmap(result);
             });
         });
     }
@@ -433,7 +394,7 @@ public final class PersonalizationActivity extends Activity {
             userChoices.getAdapter().notifyDataSetChanged();
             int position = updated.indexOf(imported) + 2;
             userChoices.setSelectedPosition(position);
-            focusedIndexes[2] = position;
+            focusedIndexes[1] = position;
             requestPreview(2, position);
             userChoices.post(() -> {
                 RecyclerView.ViewHolder holder = userChoices.findViewHolderForAdapterPosition(position);
@@ -612,9 +573,6 @@ public final class PersonalizationActivity extends Activity {
     @Override protected void onDestroy() {
         closed = true;
         decoder.shutdownNow();
-        onlineGallery.close();
-        onlineWorker.shutdownNow();
-        onlineThumbnails.evictAll();
         videoPreview.close();
         previousPreview.setImageDrawable(null);
         super.onDestroy();
@@ -645,7 +603,7 @@ public final class PersonalizationActivity extends Activity {
                         .setDuration(focused ? 170 : 135)
                         .setInterpolator(new DecelerateInterpolator()).start();
                 if (focused) {
-                    HorizontalGridView row = group == 0 ? stillChoices : group == 1 ? onlineChoices : userChoices;
+                    HorizontalGridView row = group == 0 ? stillChoices : userChoices;
                     int position = row.getChildAdapterPosition(view);
                     if (position != RecyclerView.NO_POSITION) {
                         focusedIndexes[group] = position;
@@ -659,7 +617,7 @@ public final class PersonalizationActivity extends Activity {
 
         @Override public void onBindViewHolder(@NonNull ChoiceHolder holder, int position) {
             boolean bundledMotion = group == 0 && position >= VISIBLE_STILL_COUNT;
-            boolean userVideo = group == 2 && position >= 2
+            boolean userVideo = group == 1 && position >= 2
                     && UserWallpaper.isVideo(userIds.get(position - 2));
             Bitmap thumbnail = group == 0
                     ? bundledMotion ? thumbnails[1][position - VISIBLE_STILL_COUNT]
@@ -668,14 +626,14 @@ public final class PersonalizationActivity extends Activity {
             holder.image.setImageBitmap(thumbnail);
             holder.image.setPadding(0, 0, 0, 0);
             holder.image.setScaleType(ImageView.ScaleType.CENTER_CROP);
-            if (group == 2 && position == 1) {
+            if (group == 1 && position == 1) {
                 holder.image.setImageResource(R.drawable.ic_wallpaper_lan_transfer);
                 holder.image.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
                 holder.image.setPadding(dp(16), dp(12), dp(16), dp(12));
             }
             holder.play.setVisibility(bundledMotion || userVideo ? View.VISIBLE : View.GONE);
-            holder.add.setVisibility(group == 2 && position == 0 ? View.VISIBLE : View.GONE);
-            if (group == 2 && position == 0) holder.add.setText("+");
+            holder.add.setVisibility(group == 1 && position == 0 ? View.VISIBLE : View.GONE);
+            if (group == 1 && position == 0) holder.add.setText("+");
             holder.name.setText(group == 0 ? bundledMotion
                     ? BundledWallpapers.MOTION_TITLES[position - VISIBLE_STILL_COUNT]
                     : BundledWallpapers.TITLES[position + 1]
@@ -687,106 +645,22 @@ public final class PersonalizationActivity extends Activity {
                     ? BundledWallpapers.MOTION_IDS[position - VISIBLE_STILL_COUNT]
                     : BundledWallpapers.IDS[position + 1]
                     : position < 2 ? "" : userIds.get(position - 2);
-            holder.selectedBadge.setVisibility(position < 2 && group == 2
+            holder.selectedBadge.setVisibility(position < 2 && group == 1
                     ? View.GONE : id.equals(selected) ? View.VISIBLE : View.GONE);
             holder.itemView.setOnClickListener(view -> {
-                if (group == 2 && position == 0) { pickUserWallpaper(); return; }
-                if (group == 2 && position == 1) { openLanReceiver(); return; }
+                if (group == 1 && position == 0) { pickUserWallpaper(); return; }
+                if (group == 1 && position == 1) { openLanReceiver(); return; }
                 BundledWallpapers.select(PersonalizationActivity.this, id);
                 finish();
             });
         }
 
         @Override public long getItemId(int position) {
-            return group == 2 ? position == 0 ? Long.MIN_VALUE
+            return group == 1 ? position == 0 ? Long.MIN_VALUE
                     : position == 1 ? Long.MIN_VALUE + 1 : userIds.get(position - 2).hashCode() : position;
         }
         @Override public int getItemCount() {
             return group == 0 ? BUNDLED_COUNT : userIds.size() + 2;
-        }
-    }
-
-    private void loadOnline() {
-        if (onlineFetching) return;
-        onlineFetching = true;
-        onlineMessage = TvCloud.enabled() ? R.string.wallpaper_online_loading : R.string.wallpaper_online_unavailable;
-        onlineChoices.getAdapter().notifyDataSetChanged();
-        onlineWorker.execute(() -> {
-            List<OnlineWallpaperGallery.Entry> loaded = null;
-            try { loaded = onlineGallery.load(); }
-            catch (Exception ignored) { }
-            List<OnlineWallpaperGallery.Entry> result = loaded;
-            main.post(() -> {
-                if (closed) return;
-                onlineFetching = false;
-                onlineEntries = result == null ? Collections.emptyList() : result;
-                onlineMessage = result == null ? R.string.wallpaper_online_unavailable : R.string.wallpaper_online_empty;
-                onlineChoices.getAdapter().notifyDataSetChanged();
-                if (onlineChoices.hasFocus() && !onlineEntries.isEmpty()) requestPreview(1, 0);
-            });
-        });
-    }
-
-    private void queueOnlineThumbnail(OnlineWallpaperGallery.Entry entry, int position) {
-        if (onlineThumbnails.get(entry.url) != null || !onlineLoading.add(entry.url)) return;
-        onlineWorker.execute(() -> {
-            Bitmap bitmap = null;
-            if (!closed) try { bitmap = onlineGallery.preview(entry, 220, 130, true); }
-            catch (Exception | OutOfMemoryError ignored) { }
-            Bitmap result = bitmap;
-            main.post(() -> {
-                onlineLoading.remove(entry.url);
-                if (closed) { if (result != null) result.recycle(); return; }
-                if (result == null) return;
-                onlineThumbnails.put(entry.url, result);
-                if (position < onlineEntries.size() && onlineEntries.get(position).url.equals(entry.url))
-                    onlineChoices.getAdapter().notifyItemChanged(position);
-            });
-        });
-    }
-
-    private void applyOnline(OnlineWallpaperGallery.Entry entry) {
-        if (onlineApplying) return;
-        onlineApplying = true;
-        Toast.makeText(this, R.string.wallpaper_online_applying, Toast.LENGTH_SHORT).show();
-        onlineWorker.execute(() -> {
-            String saved = null;
-            if (!closed) try { saved = onlineGallery.select(entry); }
-            catch (Exception | OutOfMemoryError ignored) { }
-            String id = saved;
-            main.post(() -> {
-                onlineApplying = false;
-                if (closed) return;
-                if (id == null) { Toast.makeText(this, R.string.wallpaper_user_failed, Toast.LENGTH_SHORT).show(); return; }
-                BundledWallpapers.select(this, id);
-                finish();
-            });
-        });
-    }
-
-    private final class OnlineAdapter extends RecyclerView.Adapter<ChoiceHolder> {
-        @NonNull @Override public ChoiceHolder onCreateViewHolder(@NonNull ViewGroup parent, int type) {
-            return new ChoiceAdapter(1).onCreateViewHolder(parent, type);
-        }
-        @Override public int getItemCount() { return Math.max(1, onlineEntries.size()); }
-        @Override public void onBindViewHolder(@NonNull ChoiceHolder holder, int position) {
-            holder.play.setVisibility(View.GONE);
-            holder.selectedBadge.setVisibility(View.GONE);
-            holder.add.setVisibility(onlineEntries.isEmpty() ? View.VISIBLE : View.GONE);
-            holder.add.setText("↻");
-            if (onlineEntries.isEmpty()) {
-                holder.image.setImageDrawable(null);
-                holder.name.setText(onlineMessage);
-                holder.itemView.setOnClickListener(v -> loadOnline());
-                return;
-            }
-            OnlineWallpaperGallery.Entry entry = onlineEntries.get(position);
-            holder.image.setImageBitmap(onlineThumbnails.get(entry.url));
-            holder.name.setText(entry.title.isEmpty() ? getString(R.string.wallpaper_online_name, position + 1) : entry.title);
-            String savedId = onlineGallery.savedId(entry);
-            holder.selectedBadge.setVisibility(!savedId.isEmpty() && selected.equals(savedId) ? View.VISIBLE : View.GONE);
-            holder.itemView.setOnClickListener(v -> applyOnline(entry));
-            queueOnlineThumbnail(entry, position);
         }
     }
 
