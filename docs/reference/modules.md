@@ -110,4 +110,4 @@ Publish the APK's own SHA-256 next to it as well.
 
 ## Dynamic desktop content
 
-Module Card spec 1 remains unchanged. For asynchronous content when a real first-row app is focused, use the separate [GHCP 1 contract](home-content.md) and its independent user display permission.
+Module Card spec 1 remains unchanged. For asynchronous content when a real first-row app is focused, use the separate [Gen 插件 App 开发规范](home-content.md) (GHCP 1) and its independent user display permission.

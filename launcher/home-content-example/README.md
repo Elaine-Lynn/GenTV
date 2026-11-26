@@ -1,8 +1,8 @@
-# GHCP 1 reference app
+# Gen 插件 App 开发规范 — reference app (GHCP 1)
 
 中文接入入口：[Gen 插件 App 开发规范](../../docs/reference/home-content-development.zh-CN.md)。
 
-A standalone, offline Android TV app demonstrating the [GenTV desktop content protocol](../../docs/reference/home-content.md). Package: `com.gentv.example.homecontent`. It does not use GenTV's signing key, Module Card spec 1 or ADB desktop configuration permissions. Its only data are fictional metrics, original geometric JPEG artwork and mock media progress. It requests no permissions, reads no personal data, and starts no background service. Its bound service runs only while a host connects.
+A standalone, offline Android TV app demonstrating [Gen 插件 App 开发规范](../../docs/reference/home-content.md) (GHCP 1). Package: `com.gentv.example.homecontent`. It does not use GenTV's signing key, Module Card spec 1 or ADB desktop configuration permissions. Its only data are fictional metrics, original geometric JPEG artwork and mock media progress. It requests no permissions, reads no personal data, and starts no background service. Its bound service runs only while a host connects.
 
 ## Build
 

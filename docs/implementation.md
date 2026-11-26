@@ -14,4 +14,4 @@ Existing user data, signing keys, application IDs and update streams are retaine
 
 Planned architecture: [Open home content product and implementation plan](home-content-plan.zh-CN.md). Its checklists describe future work and must not be read as validation of the current launcher.
 
-Local source preview: [GHCP 1 developer contract](reference/home-content.md), [standalone provider example](../launcher/home-content-example/README.md), and [2026-11-24 validation](home-content-validation-2026-11-24.zh-CN.md). This is not an online release or real-TV acceptance record.
+Local source preview: [Gen 插件 App 开发规范](reference/home-content-development.zh-CN.md) (GHCP 1; [English wire reference](reference/home-content.md)), [standalone provider example](../launcher/home-content-example/README.md), and [2026-11-24 validation](home-content-validation-2026-11-24.zh-CN.md). This is not an online release or real-TV acceptance record.

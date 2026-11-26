@@ -85,4 +85,5 @@ git diff --check
 | `phone/framework/data/devices/` | 252 community device references; index in [docs/devices/README.md](docs/devices/README.md) |
 | `server/wallpaper/` | Optional self-hosted update and wallpaper service |
 | `docs/` | Installation, protocol, release and validation documents |
+| `docs/reference/home-content*.md`, `launcher/home-content-example/` | Gen 插件 App 开发规范 (GHCP 1): how independent apps show content on the home screen; host needs Android 5.0+ |
 | `tools/` | Repository checks and helper scripts |

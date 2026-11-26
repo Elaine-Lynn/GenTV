@@ -1,10 +1,14 @@
-# GenTV Home Content Protocol — GHCP 1
+# Gen 插件 App 开发规范 — GHCP 1 wire reference
 
-Developer guide: [中文 App 开发规范](home-content-development.zh-CN.md) (setup, code, field constraints and acceptance checklist).
+This is the English wire reference of **Gen 插件 App 开发规范** (the Gen plug-in app development spec; protocol identifier GHCP 1). The full developer guide is [Gen 插件 App 开发规范（中文）](home-content-development.zh-CN.md) (setup, code, field constraints and acceptance checklist).
 
 Implementation status: local source supports discovery, explicit user permission, asynchronous Messenger snapshots, three base native templates and optional image backgrounds. This is a developer preview, not a claim of a public release or real-TV certification. The source-built reference app is [launcher/home-content-example](../../launcher/home-content-example/README.md).
 
-GHCP is separate from [ADB desktop configuration](../desktop-protocol.md) and [Module Card spec 1](modules.md). Extensions are independent Android apps, with their own package/signing keys. There is no downloaded executable code, account requirement, official server requirement or catalogue approval requirement.
+This spec is separate from [ADB desktop configuration](../desktop-protocol.md) and [Module Card spec 1](modules.md). Extensions are independent Android apps, with their own package/signing keys. There is no downloaded executable code, account requirement, official server requirement or catalogue approval requirement.
+
+## Requirements
+
+The host is GenTV TV with GHCP 1 support running **Android 5.0 (API 21) or later**. The host relies on `Message.sendingUid` to confirm that a snapshot came from the permitted app, and Android only provides it from API 21. GenTV TV itself still installs on Android 4.2 and later; below Android 5.0 it hides Desktop content and Gen extensions and never binds a provider. A provider app may choose its own `minSdk`, but its content only appears on Android 5.0+ TVs. Current validation covers API 28 and API 36 emulators.
 
 ## 1. Declare a provider
 

@@ -246,6 +246,8 @@ Choose the original Home in the TV's settings and check that it opens. Export yo
 
 Development builds don't need signing keys or server access, and builds from a fresh clone never contact the official service. Build commands, repository checks, self-hosted services, release signing and the full documentation list are in [CONTRIBUTING.md](CONTRIBUTING.md). Rules for coding assistants are in [AGENTS.md](AGENTS.md).
 
+To show your own app's content on the GenTV home screen, follow **Gen 插件 App 开发规范** (the Gen plug-in app development spec, protocol GHCP 1): the [developer guide (Chinese)](docs/reference/home-content-development.zh-CN.md), the [English wire reference](docs/reference/home-content.md) and the [reference app](launcher/home-content-example/README.md). It is a developer preview, and the TV must run Android 5.0 or later. It is separate from the ADB [desktop configuration protocol](docs/desktop-protocol.md) and [Module Card spec 1](docs/reference/modules.md).
+
 <a id="origins"></a>
 
 ## Project origins

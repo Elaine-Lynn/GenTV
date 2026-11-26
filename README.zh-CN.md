@@ -266,6 +266,8 @@ GenTV 面向 Android TV / Google TV 8.0 及以上的电视、盒子和投影仪�
 
 开发构建不需要签名密钥，也不需要服务器权限；直接克隆的源码不会连接官方服务。构建命令、仓库检查、自建服务、正式签名和完整文档列表见 [CONTRIBUTING.md](CONTRIBUTING.md)（英文），环境准备见[安装指南](docs/getting-started.zh-CN.md)，给 AI 助手的规则见 [AGENTS.md](AGENTS.md)。
 
+想让自己的 App 在 GenTV 桌面上显示内容，请按 **Gen 插件 App 开发规范**（协议编号 GHCP 1）接入：[开发规范](docs/reference/home-content-development.zh-CN.md)、[英文线级参考](docs/reference/home-content.md)和[参考示例 App](launcher/home-content-example/README.md)。目前是开发预览，电视须运行 Android 5.0 及以上。它与 ADB [桌面配置协议](docs/desktop-protocol.md)、[模块卡片规范 1](docs/reference/modules.md) 相互独立。
+
 <a id="origins"></a>
 
 ## 项目来源

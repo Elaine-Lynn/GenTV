@@ -10,7 +10,7 @@
 
 ## 1. 工作方式与边界
 
-Gen 插件是一个普通、独立安装的 Android App，通过 **GHCP（GenTV Home Content Protocol）**向 GenTV 返回结构化内容。它不是加载到 Launcher 内执行的插件代码。
+Gen 插件是一个普通、独立安装的 Android App，按本规范的 **GHCP 1** 协议向 GenTV 返回结构化内容。它不是加载到 Launcher 内执行的插件代码。
 
 1. 用户安装 App；App 的启动 Activity 声明协议元数据。
 2. 用户在 GenTV「桌面内容」（部分入口称「Gen扩展」）中明确允许展示。
@@ -21,7 +21,7 @@ Gen 插件是一个普通、独立安装的 Android App，通过 **GHCP（GenTV 
 7. 用户按上进入可操作内容，点击后打开 App 自己的 Activity。
 8. 离开焦点、退出桌面或授权失效后，宿主取消会话并回收展示资源。
 
-App 可以使用 Java 或 Kotlin，无须依赖 GenTV SDK、使用 GenTV 签名、申请 ADB 权限或访问官方服务器。最低宿主系统要求为 Android 8 / API 26；App 自身的 minSdk 可按业务选择，但必须能安装到目标电视。
+App 可以使用 Java 或 Kotlin，无须依赖 GenTV SDK、使用 GenTV 签名、申请 ADB 权限或访问官方服务器。宿主（GenTV 电视版）最低须运行 **Android 5.0 / API 21**：宿主依靠 `Message.sendingUid` 确认快照来自已授权的 App，这个字段从 API 21 才有。GenTV 电视版本身支持 Android 4.2 起的电视，但在 Android 5.0 以下会隐藏「桌面内容」和「Gen扩展」入口，也不绑定任何插件 App。App 自身的 minSdk 可按业务选择，但必须能安装到目标电视，并且只在 Android 5.0 及以上的电视上显示内容。目前的验证覆盖 API 28 和 API 36 模拟器。
 
 用户展示许可与 App 自身账号/数据许可是两套独立授权。安装、目录收录、加入第一行都不自动授予展示许可；展示许可也不代表 App 可以向宿主提供私人数据。当前养鱼模式、儿童保护启用期间及内容空间不足时不展示 GHCP 内容。不要要求用户关闭儿童保护来完成基本接入。
 
