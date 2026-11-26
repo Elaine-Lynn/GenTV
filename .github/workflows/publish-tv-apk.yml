@@ -64,17 +64,36 @@ jobs:
               --notes-file "docs/release-notes-$RELEASE_TAG.md"
             printf 'true\n' > draft-state.txt
           fi
-          test "$(cat draft-state.txt)" = true
+          if test "$(cat draft-state.txt)" != true; then
+            echo '::error::The release is already public; refusing to change its assets.'
+            exit 1
+          fi
+      - name: Verify or upload each release file
+        shell: bash
+        run: |
+          set -euo pipefail
           mkdir -p downloaded
           for file in release/*; do
             name="${file##*/}"
+            echo "::notice::Checking $name"
             if gh api "repos/$GH_REPO/releases/tags/$RELEASE_TAG" --jq '.assets[].name' | grep -Fxq "$name"; then
-              gh release download "$RELEASE_TAG" --pattern "$name" --dir downloaded
-              cmp "$file" "downloaded/$name"
+              if ! gh release download "$RELEASE_TAG" --pattern "$name" --dir downloaded; then
+                echo "::error::Could not download existing release asset $name"
+                exit 1
+              fi
             else
-              gh release upload "$RELEASE_TAG" "$file"
-              gh release download "$RELEASE_TAG" --pattern "$name" --dir downloaded
-              cmp "$file" "downloaded/$name"
+              if ! gh release upload "$RELEASE_TAG" "$file"; then
+                echo "::error::Could not upload release asset $name"
+                exit 1
+              fi
+              if ! gh release download "$RELEASE_TAG" --pattern "$name" --dir downloaded; then
+                echo "::error::Could not download newly uploaded release asset $name"
+                exit 1
+              fi
+            fi
+            if ! cmp "$file" "downloaded/$name"; then
+              echo "::error::Release asset differs from the verified file: $name"
+              exit 1
             fi
           done
       - name: Publish verified release
