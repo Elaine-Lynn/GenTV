@@ -1,7 +1,7 @@
 package com.gentv.tv;
 
 import android.app.Activity;
-import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
@@ -19,7 +19,8 @@ public class HomeSettingsActivity extends Activity implements HomeSetupFlow.Plat
     private HomeSetupFlow flow;
     private boolean waiting;
     private boolean left;
-    private AlertDialog fallback;
+    private Dialog fallback;
+    private Toast chooseHint;
 
     @Override protected void attachBaseContext(android.content.Context base) {
         super.attachBaseContext(LauncherLocale.wrap(base));
@@ -78,7 +79,8 @@ public class HomeSettingsActivity extends Activity implements HomeSetupFlow.Plat
             waiting = true;
             left = false;
             startActivityForResult(intent, REQUEST_HOME);
-            Toast.makeText(this, R.string.home_setup_choose, Toast.LENGTH_LONG).show();
+            chooseHint = Toast.makeText(this, R.string.home_setup_choose, Toast.LENGTH_LONG);
+            chooseHint.show();
             return true;
         } catch (RuntimeException unavailable) {
             waiting = false;
@@ -129,6 +131,7 @@ public class HomeSettingsActivity extends Activity implements HomeSetupFlow.Plat
     }
 
     private void verifyReturn() {
+        if (chooseHint != null) chooseHint.cancel();
         waiting = false;
         left = false;
         if (flow.verified()) complete(R.string.home_set_success);
@@ -138,16 +141,12 @@ public class HomeSettingsActivity extends Activity implements HomeSetupFlow.Plat
     private void showFallback() {
         if (isFinishing() || isDestroyed() || fallback != null) return;
         boolean more = flow.nextRoute() < HomeSetupFlow.Route.values().length;
-        fallback = new AlertDialog.Builder(this)
-                .setTitle(R.string.set_default_home)
-                .setMessage(more ? R.string.home_setup_not_changed : R.string.home_setup_unavailable)
-                .setNegativeButton(android.R.string.cancel, (dialog, which) -> finish())
-                .setOnCancelListener(dialog -> finish())
-                .setPositiveButton(more ? R.string.home_setup_try_next : android.R.string.ok,
-                        (dialog, which) -> {
-                            fallback = null;
-                            if (more) advance(); else finish();
-                        }).create();
+        fallback = GlassInfoDialog.create(this, R.drawable.ic_qs_home, R.string.set_default_home,
+                getString(more ? R.string.home_setup_not_changed : R.string.home_setup_unavailable),
+                more ? R.string.home_setup_try_next : android.R.string.ok,
+                () -> { fallback = null; if (more) advance(); else finish(); },
+                more ? android.R.string.cancel : 0, this::finish);
+        fallback.setOnCancelListener(dialog -> finish());
         fallback.show();
     }
 
@@ -164,6 +163,7 @@ public class HomeSettingsActivity extends Activity implements HomeSetupFlow.Plat
     }
 
     @Override protected void onDestroy() {
+        if (chooseHint != null) chooseHint.cancel();
         if (fallback != null) fallback.dismiss();
         super.onDestroy();
     }

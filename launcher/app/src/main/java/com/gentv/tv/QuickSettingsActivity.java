@@ -693,113 +693,15 @@ public final class QuickSettingsActivity extends Activity {
         );
     }
 
-    /** Cohesive Apple frosted glass sheet for secondary info dialogs. */
+    /** Shared with the system Home setup prompts. */
     private void showGlassDialog(int iconRes, int titleRes, CharSequence message,
                                  int primaryRes, Runnable primaryAction, int secondaryRes) {
         View previousFocus = getCurrentFocus();
-        Dialog dialog = new Dialog(this);
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-
-        LinearLayout container = new LinearLayout(this);
-        container.setOrientation(LinearLayout.VERTICAL);
-        container.setGravity(Gravity.CENTER_HORIZONTAL);
-        container.setClipChildren(false);
-        container.setClipToPadding(false);
-        container.setPadding(dp(24), dp(24), dp(24), dp(20));
-        container.setBackground(QuickSettingsGlass.dialogSurface(dpF(26), dpF(1)));
-
-        FrameLayout iconWrap = new FrameLayout(this);
-        iconWrap.setBackground(circleShape(0x18FFFFFF, 0x22FFFFFF));
-        ImageView icon = new ImageView(this);
-        icon.setImageResource(iconRes);
-        CompatApi.imageTint(icon, ColorStateList.valueOf(INK_LIGHT));
-        iconWrap.addView(icon, new FrameLayout.LayoutParams(dp(20), dp(20), Gravity.CENTER));
-        container.addView(iconWrap, new LinearLayout.LayoutParams(dp(42), dp(42)));
-
-        TextView title = new TextView(this);
-        title.setText(titleRes);
-        title.setTextColor(0xFFFFFFFF);
-        title.setTextSize(17.5f);
-        title.setTypeface(fontMedium);
-        title.setGravity(Gravity.CENTER);
-        LinearLayout.LayoutParams titleParams = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        titleParams.topMargin = dp(12);
-        container.addView(title, titleParams);
-
-        TextView body = new TextView(this);
-        body.setText(message);
-        body.setTextColor(0xBFFFFFFF);
-        body.setTextSize(13.5f);
-        body.setTypeface(fontRegular);
-        body.setLineSpacing(dpF(3), 1f);
-        body.setGravity(Gravity.CENTER);
-        LinearLayout.LayoutParams bodyParams = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        bodyParams.topMargin = dp(10);
-        container.addView(body, bodyParams);
-
-        LinearLayout actions = new LinearLayout(this);
-        actions.setOrientation(LinearLayout.HORIZONTAL);
-        actions.setClipChildren(false);
-        actions.setClipToPadding(false);
-        LinearLayout.LayoutParams actionsParams = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        actionsParams.topMargin = dp(20);
-        container.addView(actions, actionsParams);
-
-        if (secondaryRes != 0) {
-            TextView secondary = dialogButton(secondaryRes, false);
-            secondary.setOnClickListener(v -> dialog.dismiss());
-            LinearLayout.LayoutParams secParams = new LinearLayout.LayoutParams(0, dp(42), 1f);
-            secParams.setMarginEnd(dp(10));
-            actions.addView(secondary, secParams);
-        }
-
-        TextView primary = dialogButton(primaryRes, true);
-        primary.setOnClickListener(v -> {
-            dialog.dismiss();
-            if (primaryAction != null) primaryAction.run();
-        });
-        actions.addView(primary, new LinearLayout.LayoutParams(0, dp(42), 1f));
-
-        dialog.setContentView(container);
+        Dialog dialog = GlassInfoDialog.create(this, iconRes, titleRes, message,
+                primaryRes, primaryAction, secondaryRes, null);
         dialog.setOnDismissListener(d -> {
             if (previousFocus != null) previousFocus.requestFocus();
         });
         dialog.show();
-
-        Window window = dialog.getWindow();
-        if (window != null) {
-            window.setBackgroundDrawableResource(android.R.color.transparent);
-            window.setDimAmount(0.42f);
-            int available = getResources().getDisplayMetrics().widthPixels - dp(48);
-            window.setLayout(Math.min(available, dp(380)), ViewGroup.LayoutParams.WRAP_CONTENT);
-        }
-        primary.requestFocus();
     }
-
-    private TextView dialogButton(int labelRes, boolean emphasized) {
-        TextView button = new TextView(this);
-        button.setText(labelRes);
-        button.setTextSize(14f);
-        button.setTypeface(fontMedium);
-        button.setGravity(Gravity.CENTER);
-        button.setSingleLine(true);
-        button.setFocusable(true);
-        button.setClickable(true);
-        CompatApi.disableDefaultFocusHighlight(button);
-        button.setTextColor(INK_LIGHT);
-        button.setBackground(pillSurface(emphasized ? 0x22FFFFFF : 0x12FFFFFF, 0x1EFFFFFF, 21));
-        button.setOnFocusChangeListener((view, focused) -> {
-            button.setTextColor(focused ? INK_DARK : INK_LIGHT);
-            CompatApi.elevation(button, focused ? dpF(6) : 0f);
-            animateScale(view, focused ? 1.03f : 1f);
-        });
-        return button;
-    }
-
-
-
-
 }
