@@ -44,6 +44,8 @@ public final class QuickSettingsActivity extends Activity {
     private static final int PRESSED_WHITE = 0xDDFFFFFF;
 
     private MemoryCleanupView memoryAnimation;
+    /** GenTV settings opened for a result (reorder hand-off); the panel must survive until it returns. */
+    private boolean awaitingSettings;
     private boolean animateFocus;
     private Typeface fontMedium;
     private Typeface fontRegular;
@@ -173,6 +175,7 @@ public final class QuickSettingsActivity extends Activity {
 
     @Override protected void onActivityResult(int request, int result, Intent data) {
         super.onActivityResult(request, result, data);
+        if (request == 701) awaitingSettings = false;
         if (request == 701 && result == RESULT_OK && data != null
                 && data.getBooleanExtra(LauncherSettingsActivity.EXTRA_REORDER, false)) {
             startActivity(new Intent(this, MainActivity.class)
@@ -603,6 +606,7 @@ public final class QuickSettingsActivity extends Activity {
     }
 
     private void openLauncher(String focus) {
+        awaitingSettings = true;
         startActivityForResult(new Intent(this, LauncherSettingsActivity.class)
                 .putExtra("quick_settings_focus", focus), 701);
     }
@@ -683,6 +687,10 @@ public final class QuickSettingsActivity extends Activity {
     @Override protected void onStop() {
         ToolboxBackdrop.visible(false);
         super.onStop();
+        // The panel is transient: leaving it for Home, an app or another page closes it, so it never lingers in a
+        // background task and resurfaces later. Stay only while a cleanup waits on Android's ADB authorization
+        // screen, or while GenTV settings is open for a result.
+        if (memoryAnimation == null && !awaitingSettings && !isChangingConfigurations()) finish();
     }
 
 
