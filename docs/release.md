@@ -1,5 +1,7 @@
 # GenTV 正式签名与发布
 
+自更新的 GitHub APK 镜像、备用 `config.json` 和同步发布流程见 [TV 主备更新](tv-update-backup.md)。
+
 电视包 `com.gentv.tv`，GitHub Release 与升级接口已发布 3.7.17 / code39；手机版 `com.gentv.mobile` 已发布 3.7.4 / code20。两者使用同一正式证书，但应用身份与更新清单独立。
 
 正式证书 SHA-256 指纹（已用 v3.7.0 发布的 `gentv-tv-3.7.0.apk` 和 `gentv-mobile-3.7.1.apk` 核对）：

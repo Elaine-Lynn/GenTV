@@ -50,7 +50,6 @@ public final class QuickSettingsActivity extends Activity {
     protected void onCreate(Bundle state) {
         super.onCreate(state);
         setContentView(R.layout.activity_quick_settings);
-        WallpaperBackdrop.applyOverlay(this, findViewById(android.R.id.content));
         if (getResources().getBoolean(R.bool.rtl_menu_bar)) {
             View panel = findViewById(R.id.panel);
             android.widget.FrameLayout.LayoutParams position =
@@ -73,8 +72,24 @@ public final class QuickSettingsActivity extends Activity {
         VerticalGridView grid = findViewById(R.id.rows);
         grid.setNumColumns(1);
         grid.setAdapter(new ToolboxAdapter());
-        grid.setSelectedPosition(1);
+        grid.setSelectedPosition(state == null ? 1 : state.getInt("toolboxFocus", 1));
         grid.requestFocus();
+    }
+
+    @Override protected void onSaveInstanceState(Bundle state) {
+        state.putInt("toolboxFocus", ((VerticalGridView) findViewById(R.id.rows)).getSelectedPosition());
+        super.onSaveInstanceState(state);
+    }
+
+    @Override protected void onResume() {
+        super.onResume();
+        ToolboxBackdrop.visible(true);
+        WallpaperBackdrop.applyOverlay(this, findViewById(android.R.id.content));
+    }
+
+    @Override protected void onStop() {
+        ToolboxBackdrop.visible(false);
+        super.onStop();
     }
 
     private void addSection(int label) {
@@ -102,9 +117,9 @@ public final class QuickSettingsActivity extends Activity {
     }
 
     private void addDesktopRows() {
-        // Through Home, so it rebuilds with the new choices when Launcher settings closes.
+        // Keep the panel in history; Home reloads changed choices when it resumes.
         addRow(R.drawable.ic_controls, DesktopMode.settingsTitle(this), 0,
-                new Intent(this, MainActivity.class).setAction(MainActivity.ACTION_LAUNCHER_SETTINGS));
+                () -> startActivityForResult(new Intent(this, LauncherSettingsActivity.class), 701));
         addRow(R.drawable.ic_home_settings, R.string.set_default_home, R.string.set_default_home_hint,
                 new Intent(this, HomeSettingsActivity.class));
         addRow(R.drawable.ic_personalize, R.string.quick_personalize, 0,
@@ -127,12 +142,13 @@ public final class QuickSettingsActivity extends Activity {
         finish();
     }
 
-    /** Anything else taking the screen (Home, an app, a screensaver) closes the panel. */
-    @Override
-    protected void onPause() {
-        super.onPause();
-        finish();
-        overridePendingTransition(0, 0);
+    @Override protected void onActivityResult(int request, int result, Intent data) {
+        super.onActivityResult(request, result, data);
+        if (request == 701 && result == RESULT_OK && data != null
+                && data.getBooleanExtra(LauncherSettingsActivity.EXTRA_REORDER, false)) {
+            startActivity(new Intent(this, MainActivity.class)
+                    .putExtra(LauncherSettingsActivity.EXTRA_REORDER, true));
+        }
     }
 
     private void addVolume(int icon, int label,
@@ -176,18 +192,16 @@ public final class QuickSettingsActivity extends Activity {
         dialog.dismiss();
         if (selected == current) return;
         selected.select(this);
-        startActivity(new Intent(this, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-        finish();
+        WallpaperBackdrop.applyOverlay(this, findViewById(android.R.id.content));
     }
 
     private void addRow(int icon, int title, int status, Intent target) {
         addRow(icon, title, status, () -> {
             try {
-                startActivity(target.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+                startActivity(target);
             } catch (ActivityNotFoundException | SecurityException e) {
                 Toast.makeText(this, R.string.not_available, Toast.LENGTH_SHORT).show();
             }
-            finish();
         });
     }
 
@@ -221,7 +235,10 @@ public final class QuickSettingsActivity extends Activity {
                 hint.setText(entry.status);
                 hint.setVisibility(View.VISIBLE);
             } else hint.setVisibility(View.GONE);
-            view.setOnClickListener(v -> entry.action.run());
+            view.setOnClickListener(v -> {
+                v.requestFocusFromTouch();
+                entry.action.run();
+            });
         }
 
         @Override public int getItemCount() { return entries.size(); }

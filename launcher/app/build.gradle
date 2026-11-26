@@ -8,6 +8,7 @@ if (signingFile.exists()) signingFile.withInputStream { releaseSecrets.load(it) 
 // GenTV-hosted updates, online wallpapers and statistics stay off unless its API base is configured:
 // -PgentvApiBaseUrl=..., GENTV_API_BASE_URL, or apiBaseUrl in the private phone/keys/signing.properties.
 def apiBaseUrl = (findProperty('gentvApiBaseUrl') ?: System.getenv('GENTV_API_BASE_URL') ?: releaseSecrets.getProperty('apiBaseUrl') ?: '').trim()
+def updateFallbackUrl = 'https://raw.githubusercontent.com/Elaine-Lynn/GenTV/update-manifest/config.json'
 // Umeng uses a separate optional AppKey and an independent on-TV consent switch.
 def umengAppKey = (findProperty('gentvUmengAppKey') ?: System.getenv('GENTV_UMENG_APP_KEY') ?: releaseSecrets.getProperty('umengAppKey') ?: '').trim()
 if (umengAppKey && !(umengAppKey ==~ /[0-9a-fA-F]{24}/)) {
@@ -32,6 +33,7 @@ android {
         testInstrumentationRunner 'com.gentv.tv.DesktopIntegration'
         buildConfigField 'boolean', 'CHILD_TIMER_TEST_MODE', 'false'
         buildConfigField 'String', 'API_BASE_URL', '"' + apiBaseUrl + '"'
+        buildConfigField 'String', 'UPDATE_FALLBACK_URL', '"' + updateFallbackUrl + '"'
         buildConfigField 'String', 'UMENG_APP_KEY', '"' + umengAppKey + '"'
     }
 
