@@ -1,12 +1,12 @@
 {
-  "versionCode": 39,
-  "versionName": "3.7.17",
+  "versionCode": 40,
+  "versionName": "3.7.18",
   "packageName": "com.gentv.tv",
-  "url": "https://github.com/Elaine-Lynn/GenTV/releases/download/v3.7.17/gentv-tv-v3.7.17-code39.apk",
-  "sha256": "deef0ef69cb7e23d92f33f743b59060ba3065a6526fe90ef2f679d83cb3aeb37",
+  "url": "https://github.com/Elaine-Lynn/GenTV/releases/download/v3.7.18/gentv-tv-v3.7.18-code40.apk",
+  "sha256": "2f83da996a08244a8db709e892d816d251a68a7e152455fa27d79c04a26dbfdd",
   "signingCertificateSha256": "8d5b5378f9056880f3036d44bc2f4a48322141fbb8d8bc91951d61a4652d997f",
   "minSdk": 17,
-  "sizeBytes": 7481983,
+  "sizeBytes": 7503532,
   "forceUpdate": false,
   "minSupportedVersionCode": 0
 }
