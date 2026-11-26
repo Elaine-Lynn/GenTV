@@ -71,6 +71,7 @@ def catalog():
                  preview=asset(CAT_PREVIEW)),
             item('arowana-loop', '金龙鱼', 'Arowana', 'video', path=asset(AROWANA_VIDEO),
                  preview=asset(AROWANA_PREVIEW)),
+            placeholder('pet-dog', '午后小狗', 'Afternoon puppy'),
             placeholder('pet-rabbit', '草地兔子', 'Meadow rabbit')]),
         group('nature', '自然', 'Nature', [
             placeholder('nature-sea', '海岸', 'Coast'),
@@ -81,8 +82,12 @@ def catalog():
             placeholder('dreamy-starlight', '星光', 'Starlight'),
             placeholder('dreamy-clouds', '云间', 'Above the clouds')]),
         group('images', '图片', 'Pictures', images),
-        group('shuffle', '随机播放', 'Shuffle', [
-            item('all-videos', '全部动态壁纸', 'All motion wallpapers', 'shuffle')]),
+        group('shuffle', '随机', 'Shuffle', [
+            item('shuffle-all', '全部随机', 'Shuffle all', 'shuffle', scope='all'),
+            item('shuffle-pets', '随机播放萌宠', 'Shuffle pets', 'shuffle', scope='pets'),
+            item('shuffle-nature', '随机播放自然', 'Shuffle nature', 'shuffle', scope='nature'),
+            item('shuffle-dreamy', '随机播放唯美', 'Shuffle dreamy', 'shuffle', scope='dreamy'),
+            item('shuffle-images', '随机播放图片', 'Shuffle pictures', 'shuffle', scope='images')]),
     ]}
 
 def app(environ, start_response):
