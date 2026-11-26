@@ -163,7 +163,6 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private WallpaperPlayer wallpaperPlayer;
     private VideoWallpaperPlayer videoWallpaper;
     private RemoteWallpaper remoteWallpaper;
-    private WeatherWidget weatherWidget;
     private ImageView blurredWallpaper;
     private final ExecutorService wallpaperBlurWorker = Executors.newSingleThreadExecutor();
     private int wallpaperBlurGeneration;
@@ -434,8 +433,6 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         sky.setIntensity(cfg.skyIntensity);
 
         setUpWallpapers(cfg);
-        TextView weatherSummary = findViewById(R.id.weatherSummary);
-        weatherWidget = new WeatherWidget(this, weatherSummary);
         glass = findViewById(R.id.glass);
         glass.setStyle(cfg.glassStyle);
         if (festive) glass.setAccent(festival.accentColor());
@@ -1124,7 +1121,6 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         // A returning window can lay out the dock at a new position while the
         // tile size stays unchanged; align the highlight after that layout.
         grid.post(this::refitGlass);
-        weatherWidget.start();
         handler.postDelayed(minuteTick, MINUTE_MS);
         if (festive && diya != null) {
             diya.start();
@@ -1338,7 +1334,6 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                 }
             });
         }
-        weatherWidget.stop();
         stopAmbientAnimation();
         hero.animate().cancel();
         ambient.animate().cancel();
@@ -1425,7 +1420,6 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             remoteWallpaper.close();
             videoWallpaper.close();
         }
-        weatherWidget.close();
         wallpaperBlurWorker.shutdownNow();
         if (Build.VERSION.SDK_INT >= 21 && modernCallbacks != null) modernCallbacks.stop();
         else unregisterReceiver(legacyNetworkReceiver);

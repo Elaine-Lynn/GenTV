@@ -18,6 +18,7 @@ class WallpaperApiTest(unittest.TestCase):
     def test_old_routes_are_not_exposed(self):
         self.assertEqual(self.get("/wallpaper")[0]["status"], "404 Not Found")
         self.assertEqual(self.get("/wallpapers/one.jpg")[0]["status"], "404 Not Found")
+        self.assertEqual(self.get("/tv/location")[0]["status"], "404 Not Found")
     def test_update_manifest_and_missing(self):
         self.assertEqual(self.get('/tv/update')[0]['status'], '503 Service Unavailable')
         app.STATE.mkdir();(app.STATE/'update.json').write_text('{"versionCode":13}')

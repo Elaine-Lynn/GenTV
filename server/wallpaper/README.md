@@ -137,7 +137,3 @@ configured API base. The unqualified endpoint still serves the legacy image
 rotation manifest. The deployment archive includes the default image, kitten
 loop and thumbnail. Deploy the catalog API before distributing clients that
 use it.
-
-## 自动识别天气城市
-
-可选的高德 IP 定位代理接口与配置见 [高德自动城市配置](../../docs/amap-city-location.md)。Key 仅放在服务端环境变量 `AMAP_WEB_SERVICE_KEY` 中。

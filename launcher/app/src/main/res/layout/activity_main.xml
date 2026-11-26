@@ -311,21 +311,6 @@
                 android:focusable="false"
                 android:visibility="gone" />
 
-            <TextView
-                android:id="@+id/weatherSummary"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_below="@id/stats"
-                android:layout_alignStart="@id/leftBlock"
-                android:layout_marginTop="8dp"
-                android:textColor="#E6FFFFFF"
-                android:textSize="17sp"
-                android:maxLines="1"
-                android:ellipsize="end"
-                android:visibility="gone"
-                android:focusable="false"
-                android:clickable="false" />
-
             <LinearLayout
                 android:id="@+id/topButtons"
                 android:layout_width="wrap_content"
