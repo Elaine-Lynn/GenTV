@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center_horizontal"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <ImageView
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:importantForAccessibility="no"
+        android:src="@drawable/ic_qs_update" />
+
+    <TextView
+        android:id="@+id/share_download_name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:ellipsize="end"
+        android:gravity="center"
+        android:maxLines="2"
+        android:textColor="#F5F7FA"
+        android:textSize="18sp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:baselineAligned="true"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/share_download_status"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/share_code_download_starting"
+            android:textColor="#BFFFFFFF"
+            android:textSize="13sp" />
+
+        <TextView
+            android:id="@+id/share_download_percentage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:textColor="#F5F7FA"
+            android:textSize="14sp" />
+    </LinearLayout>
+
+    <ProgressBar
+        android:id="@+id/share_download_progress"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="6dp"
+        android:layout_marginTop="9dp"
+        android:importantForAccessibility="no"
+        android:indeterminateOnly="false"
+        android:max="100"
+        android:maxHeight="6dp"
+        android:minHeight="6dp"
+        android:progressDrawable="@drawable/share_code_download_track" />
+
+    <Button
+        android:id="@+id/share_download_cancel"
+        android:layout_width="wrap_content"
+        android:layout_height="38dp"
+        android:layout_marginTop="20dp"
+        android:background="@drawable/share_code_dialog_button"
+        android:focusableInTouchMode="true"
+        android:minWidth="96dp"
+        android:paddingEnd="16dp"
+        android:paddingStart="16dp"
+        android:text="@android:string/cancel"
+        android:textAllCaps="false"
+        android:textSize="14sp" />
+
+</LinearLayout>
