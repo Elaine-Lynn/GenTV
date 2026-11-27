@@ -15,7 +15,7 @@
     <string name="share_code_retry">重试</string>
     <string name="share_code_download_starting">正在连接 GitHub…</string>
     <string name="share_code_download_reconnecting">正在重连…（%1$d/%2$d）</string>
-    <string name="share_code_downloaded">已下载</string>
+    <string name="share_code_ready_to_install">已下载，可安装</string>
     <string name="share_code_not_downloaded">未下载</string>
     <string name="share_code_installed">已安装</string>
     <string name="share_code_open_failed">无法打开此应用</string>

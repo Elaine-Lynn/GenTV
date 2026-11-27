@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.RectF;
@@ -25,6 +26,7 @@ import android.text.format.Formatter;
 import android.text.method.DigitsKeyListener;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.util.LruCache;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
@@ -54,6 +56,7 @@ import java.text.NumberFormat;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -75,12 +78,14 @@ public final class ShareCodeActivity extends Activity {
     private final ExecutorService catalogWorker = Executors.newSingleThreadExecutor();
     private final Map<String, String> packageNames = new HashMap<>();
     private final Map<String, ApplicationInfo> installedApps = new HashMap<>();
+    private final LruCache<String, Bitmap> downloadedIcons = new LruCache<>(32);
     private LinearLayout panel;
     private TextView title;
     private FrameLayout results;
     private ArrayAdapter<ShareCodeApkRepository.Apk> appsAdapter;
     private Dialog downloadDialog;
     private Future<?> downloadTask;
+    private Future<?> cacheCleanup;
     private File pendingApk;
     // Compare down times so a held key and its release are treated as the same press.
     private long ignoreConfirmDownTimeThrough = -1;
@@ -120,9 +125,8 @@ public final class ShareCodeActivity extends Activity {
         if (installerFile != null && installerFile.matches("[a-f0-9]{40}\\.apk")) {
             pendingApk = new File(new File(cache, ShareCodeApkRepository.CACHE_DIRECTORY), installerFile);
         }
-        if (savedInstanceState == null || pendingApk != null) {
-            File installerApk = pendingApk;
-            FILE_WORKER.execute(() -> ShareCodeApkRepository.clearCache(cache, installerApk));
+        if (savedInstanceState == null) {
+            cacheCleanup = FILE_WORKER.submit(() -> ShareCodeApkRepository.clearCache(cache));
         }
         if (savedInstanceState != null && savedInstanceState.getBoolean(STATE_SHOWING_APPS)) {
             showApps();
@@ -175,7 +179,7 @@ public final class ShareCodeActivity extends Activity {
         if (downloadDialog != null) downloadDialog.dismiss();
         if (isFinishing()) {
             File cache = getCacheDir();
-            FILE_WORKER.execute(() -> ShareCodeApkRepository.clearCache(cache, null));
+            FILE_WORKER.execute(() -> ShareCodeApkRepository.clearCache(cache));
         }
         super.onDestroy();
     }
@@ -232,12 +236,23 @@ public final class ShareCodeActivity extends Activity {
         // Consume every confirmation while the list is loading.
         ignoreConfirmDownTimeThrough = Long.MAX_VALUE;
         showStatus(R.string.share_code_loading, true, false);
-        // The catalog needs no cached APKs and can load while a canceled download winds down.
+        // Fetch the catalog while the worker clears downloads left by a previous session.
         catalogWorker.execute(() -> {
             try {
                 List<ShareCodeApkRepository.Apk> apks = ShareCodeApkRepository.list();
+                if (cacheCleanup != null) cacheCleanup.get();
                 Map<String, String> knownPackages =
                         ShareCodeApkRepository.resolvePackageNames(this, apks);
+                for (ShareCodeApkRepository.Apk apk : apks) {
+                    if (Thread.currentThread().isInterrupted()) return;
+                    File cached = completedApk(apk);
+                    if (cached == null || downloadedIcons.get(apk.sha) != null) continue;
+                    ApplicationInfo archive = ShareCodeApkRepository.inspectDownload(this, apk, cached);
+                    if (archive == null) continue;
+                    knownPackages.put(apk.sha, archive.packageName);
+                    Bitmap icon = ShareCodeApkRepository.readArchiveIcon(this, archive);
+                    if (icon != null) downloadedIcons.put(apk.sha, icon);
+                }
                 runOnUiThread(() -> {
                     if (isFinishing() || isDestroyed()) return;
                     ignoreConfirmDownTimeThrough = SystemClock.uptimeMillis();
@@ -250,7 +265,9 @@ public final class ShareCodeActivity extends Activity {
                         refreshInstalledApps();
                     }
                 });
-            } catch (IOException | JSONException error) {
+            } catch (InterruptedException error) {
+                Thread.currentThread().interrupt();
+            } catch (IOException | JSONException | ExecutionException error) {
                 if (Thread.currentThread().isInterrupted()) return;
                 Log.w(TAG, "Could not load the shared APK list", error);
                 runOnUiThread(() -> {
@@ -369,14 +386,21 @@ public final class ShareCodeActivity extends Activity {
         void bind(ShareCodeApkRepository.Apk apk) {
             name.setText(apk.fileName);
             ApplicationInfo installed = installedApps.get(packageNames.get(apk.sha));
-            appIcon.setImageDrawable(installed == null ? null : installed.loadIcon(getPackageManager()));
-            appIcon.setVisibility(installed == null ? GONE : VISIBLE);
+            boolean downloaded = completedApk(apk) != null;
+            Bitmap icon = downloaded ? downloadedIcons.get(apk.sha) : null;
+            if (installed != null) {
+                appIcon.setImageDrawable(installed.loadIcon(getPackageManager()));
+            } else if (icon != null) {
+                appIcon.setImageBitmap(icon);
+            } else {
+                appIcon.setImageResource(placeholderIcon(apk.fileName));
+            }
             if (installed != null) {
                 statusIcon.setImageResource(R.drawable.ic_share_code_open);
                 statusIcon.setContentDescription(getString(R.string.share_code_installed));
-            } else if (pendingApk != null && pendingApk.getName().equals(apk.sha + ".apk")) {
-                statusIcon.setImageResource(R.drawable.ic_menu_check);
-                statusIcon.setContentDescription(getString(R.string.share_code_downloaded));
+            } else if (downloaded) {
+                statusIcon.setImageResource(R.drawable.ic_share_code_downloaded);
+                statusIcon.setContentDescription(getString(R.string.share_code_ready_to_install));
             } else {
                 statusIcon.setImageResource(R.drawable.ic_qs_update);
                 statusIcon.setContentDescription(getString(R.string.share_code_not_downloaded));
@@ -384,11 +408,46 @@ public final class ShareCodeActivity extends Activity {
         }
     }
 
+    private static int placeholderIcon(String name) {
+        // Catalog filenames include version suffixes. Match the app name so updates keep their artwork.
+        if (name.startsWith("蓝莓音乐") || name.startsWith("融乐Music")) {
+            return R.drawable.ic_share_placeholder_music;
+        }
+        if (name.startsWith("云漫") || name.startsWith("喵趣漫画")) {
+            return R.drawable.ic_share_placeholder_comic;
+        }
+        if (name.contains("小说") || name.startsWith("小书亭") || name.startsWith("笔趣阁")
+                || name.startsWith("省心英语")) {
+            return R.drawable.ic_share_placeholder_book;
+        }
+        if (name.startsWith("扫描全能王")) return R.drawable.ic_share_placeholder_scan;
+        if (name.startsWith("小猪电玩")) return R.drawable.ic_share_placeholder_game;
+        if (name.startsWith("特效变声器")) return R.drawable.ic_share_placeholder_voice;
+        if (name.contains("资源") || name.startsWith("搜盘器") || name.startsWith("磁宝库")) {
+            return R.drawable.ic_share_placeholder_search;
+        }
+        if (name.startsWith("香蕉视频")) return R.drawable.ic_share_placeholder_banana;
+        if (name.contains("影视") || name.contains("视频") || name.startsWith("剧荒")
+                || name.startsWith("电影天堂") || name.startsWith("红枫影评")
+                || name.startsWith("网飞猫") || name.startsWith("黑白弹幕")) {
+            return R.drawable.ic_share_placeholder_video;
+        }
+        return R.drawable.ic_share_placeholder_app;
+    }
+
     private void selectApk(ShareCodeApkRepository.Apk apk) {
         if (downloadDialog != null || pendingApk != null) return;
         if (openInstalledApp(packageNames.get(apk.sha))) return;
         refreshInstalledApps();
-        downloadApk(apk);
+        File cached = completedApk(apk);
+        if (cached != null) openInstaller(cached);
+        else downloadApk(apk);
+    }
+
+    private File completedApk(ShareCodeApkRepository.Apk apk) {
+        // The repository publishes this filename only after verifying the whole download.
+        File file = ShareCodeApkRepository.completedFile(getCacheDir(), apk.sha);
+        return file.isFile() && file.length() == apk.size ? file : null;
     }
 
     private boolean openInstalledApp(String packageName) {
@@ -486,22 +545,19 @@ public final class ShareCodeActivity extends Activity {
                         });
                     }
                 });
-                String packageName = ShareCodeApkRepository.rememberPackageName(this, apk, file);
+                ApplicationInfo archive = ShareCodeApkRepository.inspectDownload(this, apk, file);
+                String packageName = archive == null ? null : archive.packageName;
+                Bitmap icon = ShareCodeApkRepository.readArchiveIcon(this, archive);
                 runOnUiThread(() -> {
                     if (isFinishing() || isDestroyed()
                             || downloadDialog != dialog || !dialog.isShowing()) {
                         return;
                     }
                     dismissFinishedDownload(dialog);
-                    pendingApk = file;
                     if (packageName != null) packageNames.put(apk.sha, packageName);
-                    if (openInstalledApp(packageName)) {
-                        clearInstallerApk();
-                        refreshInstalledApps();
-                        return;
-                    }
+                    if (icon != null) downloadedIcons.put(apk.sha, icon);
                     refreshInstalledApps();
-                    openInstaller();
+                    if (!openInstalledApp(packageName)) openInstaller(file);
                 });
             } catch (IOException | RuntimeException error) {
                 ShareCodeApkRepository.deleteCachedApk(file);
@@ -530,25 +586,19 @@ public final class ShareCodeActivity extends Activity {
         downloadTask = null;
     }
 
-    private void clearInstallerApk() {
-        if (pendingApk == null) return;
-        File file = pendingApk;
-        pendingApk = null;
-        FILE_WORKER.execute(() -> ShareCodeApkRepository.deleteCachedApk(file));
-    }
-
     @SuppressWarnings("deprecation")
-    private void openInstaller() {
+    private void openInstaller(File apk) {
         try {
-            Uri uri = FileProvider.getUriForFile(this, getPackageName() + ".updates", pendingApk);
+            Uri uri = FileProvider.getUriForFile(this, getPackageName() + ".updates", apk);
             Intent install = new Intent(Intent.ACTION_INSTALL_PACKAGE)
                     .setDataAndType(uri, "application/vnd.android.package-archive")
                     .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                     .putExtra(Intent.EXTRA_RETURN_RESULT, true);
+            pendingApk = apk;
             startActivityForResult(install, REQUEST_INSTALL);
         } catch (RuntimeException error) {
             Log.w(TAG, "Could not open the APK installer", error);
-            clearInstallerApk();
+            pendingApk = null;
             refreshInstalledApps();
             Toast.makeText(this, R.string.share_code_install_failed, Toast.LENGTH_LONG).show();
         }
@@ -559,8 +609,8 @@ public final class ShareCodeActivity extends Activity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode != REQUEST_INSTALL) return;
-        // Success, failure and cancellation all release the APK once the installer returns.
-        clearInstallerApk();
+        // Keep the verified APK for the next click until the shared app list closes.
+        pendingApk = null;
         refreshInstalledApps();
         if (resultCode == RESULT_FIRST_USER) {
             Toast.makeText(this, R.string.share_code_install_failed, Toast.LENGTH_LONG).show();
