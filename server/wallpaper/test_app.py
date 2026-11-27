@@ -18,7 +18,6 @@ class WallpaperApiTest(unittest.TestCase):
     def test_old_routes_are_not_exposed(self):
         self.assertEqual(self.get("/wallpaper")[0]["status"], "404 Not Found")
         self.assertEqual(self.get("/wallpapers/one.jpg")[0]["status"], "404 Not Found")
-        self.assertEqual(self.get("/tv/location")[0]["status"], "404 Not Found")
     def test_update_manifest_and_missing(self):
         self.assertEqual(self.get('/tv/update')[0]['status'], '503 Service Unavailable')
         app.STATE.mkdir();(app.STATE/'update.json').write_text('{"versionCode":13}')
@@ -99,6 +98,25 @@ class WallpaperApiTest(unittest.TestCase):
         self.assertEqual(stills['image-desert.jpg']['preview'],'wallpapers/desert.jpg')
         self.assertNotIn('image-coast-preview.jpg',stills)
         self.assertEqual(self.get('/tv/wallpapers/coast-preview.jpg')[1],b'small')
+    def test_extra_videos_appear_only_with_their_preview(self):
+        (app.MEDIA/'pet-tea-bear.mp4').write_bytes(b'video')
+        (app.MEDIA/'pet-tea-bear-preview.jpg').write_bytes(b'still')
+        (app.MEDIA/'nature-alpine-lake.mp4').write_bytes(b'video')   # preview not published yet
+        groups={g['id']:g['items'] for g in json.loads(self.get(query='view=catalog')[1])['categories']}
+        bear=[i for i in groups['pets'] if i['id']=='pet-tea-bear']
+        self.assertEqual(bear[0]['path'],'wallpapers/pet-tea-bear.mp4')
+        self.assertEqual(bear[0]['preview'],'wallpapers/pet-tea-bear-preview.jpg')
+        self.assertEqual(groups['nature'],[])
+        self.assertNotIn('image-pet-tea-bear-preview.jpg',[i['id'] for i in groups['images']])
+        self.assertEqual(self.get('/tv/wallpapers/pet-tea-bear.mp4')[1],b'video')
+    def test_known_stills_carry_localized_titles(self):
+        (app.MEDIA/'milky-way.jpg').write_bytes(b'full')
+        (app.MEDIA/'harbour.jpg').write_bytes(b'full')
+        stills={i['id']:i for i in json.loads(self.get(query='view=catalog')[1])['categories'][3]['items']}
+        self.assertEqual((stills['image-milky-way.jpg']['title'],stills['image-milky-way.jpg']['titleEn']),('银河','Milky Way'))
+        self.assertEqual(stills['image-harbour.jpg']['title'],'harbour')
+        rotation=json.loads(self.get()[1])['wallpapers']
+        self.assertEqual({w['title'] for w in rotation},{'银河','harbour'})
     def test_utf8_filenames(self):
         (app.MEDIA/'海岸.jpg').write_bytes(b'fixture')
         self.assertIn('%E6%B5%B7',json.loads(self.get()[1])['wallpapers'][0]['url'])

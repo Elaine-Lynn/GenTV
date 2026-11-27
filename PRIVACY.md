@@ -49,7 +49,7 @@ If you enable ad filtering in GenTV Remote, the app configures the TV to use AdG
 - The server backup tool keeps the latest 14 database snapshots. A snapshot can still contain records removed from the live database until that snapshot expires; live-database deletion does not immediately remove those backup copies.
 - As with any network connection, the service sees the IP address of each request. GenTV does not store it in statistics or feedback records.
 
-Home no longer performs built-in weather requests or IP-based city lookup. Independent weather plug-ins retain their own networking and data handling; removing the built-in Home feature does not change those plug-ins.
+Home no longer performs built-in weather requests or IP-based city lookup. Independent weather plug-ins retain their own networking and data handling; removing the built-in Home feature does not change those plug-ins. For TVs still on version 3.7.18, which identified the weather city from the connection's public IPv4 address, the GenTV service keeps answering that lookup: it forwards the address to AMap's IP location API and returns a city, keeping only a bounded six-hour city cache indexed by an ephemeral keyed hash, without persistent IP storage. The lookup will be withdrawn once those TVs have updated.
 
 If the primary update check fails, GenTV requests the backup update configuration from GitHub. The backup's signed APK is also downloaded from GitHub. GitHub receives normal request metadata, including the connection IP address and the app-version User-Agent. The same package, hash and signature checks apply.
 
