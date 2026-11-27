@@ -1,0 +1,83 @@
+<resources>
+    <string name="home_content_title">Desktop content</string>
+    <string name="home_content_help">Allow compatible apps to show content when focused in the first row. Install an extension, allow it here, then add its icon to the first row. Up enters content; Down or Back returns to its icon. Apps keep their ordinary OK launch.</string>
+    <string name="home_content_enable_all">Enable desktop content</string>
+    <string name="home_content_disable_all">Disable all desktop content</string>
+    <string name="home_content_child_disabled">Desktop content is unavailable while child protection is enabled.</string>
+    <string name="home_content_empty">No installed apps declare GHCP 1 desktop content yet.</string>
+    <string name="home_content_allowed">Allowed · select to revoke</string>
+    <string name="home_content_not_allowed">Not allowed</string>
+    <string name="home_content_allow_title">Allow content from %1$s?</string>
+    <string name="home_content_consent">This app may show its content and an optional image over your desktop wallpaper while its first-row icon is focused. It runs in its own process. The app must separately authorize access to private data. You can revoke this permission here at any time.</string>
+    <string name="home_content_allow">Allow</string>
+    <string name="home_content_open">Open →</string>
+
+    <!-- Gen Extensions store -->
+    <string name="ext_store_title">Gen Extensions</string>
+    <string name="ext_store_tagline">Bring calm, glanceable life to your TV home screen.</string>
+    <string name="ext_master_on">Home content · On</string>
+    <string name="ext_master_off">Home content · Off</string>
+    <string name="ext_tab_featured">Featured</string>
+    <string name="ext_tab_official">Official</string>
+    <string name="ext_tab_community">Community</string>
+    <string name="ext_tab_media">Media</string>
+    <string name="ext_tab_life">Lifestyle</string>
+    <string name="ext_tab_mine">Installed (%1$d)</string>
+    <string name="ext_section_more">Explore Extensions</string>
+    <string name="ext_section_installed">Installed on this TV</string>
+    <string name="ext_badge_official">GenTV Official</string>
+    <string name="ext_badge_community">Community</string>
+    <string name="ext_badge_installed">Installed</string>
+    <string name="ext_badge_enabled">Active</string>
+    <string name="ext_badge_preview">Showcase</string>
+    <string name="ext_action_details">View details</string>
+    <string name="ext_action_allow">Allow on Home</string>
+    <string name="ext_action_revoke">Revoke Home access</string>
+    <string name="ext_action_open_app">Open app</string>
+    <string name="ext_action_coming_soon">Coming to catalog</string>
+    <string name="ext_catalog_notice">Online one-click installation will open once the Gen Extensions catalog launches. Compatible GHCP 1 apps installed on this TV appear automatically under Installed.</string>
+    <string name="ext_preview_caption">Home screen preview · Floats cleanly over your wallpaper</string>
+    <string name="ext_step_install">1. Install app</string>
+    <string name="ext_step_dock">2. Pin to first row</string>
+    <string name="ext_step_allow">3. Allow content</string>
+    <string name="ext_meta_ratings">%1$s · %2$s ratings</string>
+    <string name="ext_meta_local_desc">Installed GHCP 1 extension on this TV. Allow it to display live glanceable content when its icon is focused on the first row.</string>
+    <string name="ext_empty_mine_hint">Install any GHCP 1 compatible app on your TV and it will appear here for one-tap permission management.</string>
+
+    <!-- Curated showcase entries -->
+    <string name="ext_weather_name">Gen Weather</string>
+    <string name="ext_weather_sub">Live temperature &amp; gentle forecast right on Home.</string>
+    <string name="ext_weather_desc">Glanceable weather floating effortlessly over your wallpaper whenever focused. Manual city selection with zero location tracking.</string>
+    <string name="ext_weather_author">GenTV Studio</string>
+    <string name="ext_weather_tags">GHCP 1 · Free · No login</string>
+
+    <string name="ext_continue_name">Continue Watching</string>
+    <string name="ext_continue_sub">Pick up unfinished films straight from your dock.</string>
+    <string name="ext_continue_desc">Surfaces your recent media library queue with clean progress bars and direct deep-link resume for authorized local players.</string>
+    <string name="ext_continue_author">Kino Community</string>
+    <string name="ext_continue_tags">GHCP 1 · Media · Local auth</string>
+
+    <string name="ext_daily_name">Daily Frame</string>
+    <string name="ext_daily_sub">One curated photograph each day, framed in glass.</string>
+    <string name="ext_daily_desc">Turns your living room TV into a calm gallery frame with a daily landscape photograph and quiet caption overlay.</string>
+    <string name="ext_daily_author">GenTV Studio</string>
+    <string name="ext_daily_tags">GHCP 1 · Free · Offline cache</string>
+
+    <string name="ext_calendar_name">Family Agenda</string>
+    <string name="ext_calendar_sub">Upcoming family plans at a peaceful glance.</string>
+    <string name="ext_calendar_desc">Clean translucent agenda strip showing today and weekend family events with subtle color markers.</string>
+    <string name="ext_calendar_author">Lumen Labs</string>
+    <string name="ext_calendar_tags">GHCP 1 · Info · Read-only</string>
+
+    <string name="ext_clock_name">StandBy Clock</string>
+    <string name="ext_clock_sub">Sculptural ambient time and lunar calendar view.</string>
+    <string name="ext_clock_desc">Ultra-thin editorial numerals paired with solar and lunar calendar cues for serene living-room presence.</string>
+    <string name="ext_clock_author">Atelier Mono</string>
+    <string name="ext_clock_tags">GHCP 1 · Free · 100% Offline</string>
+
+    <string name="ext_smart_name">Home Climate</string>
+    <string name="ext_smart_sub">Living room lights, air quality &amp; scenes at a glance.</string>
+    <string name="ext_smart_desc">Minimal HomeKit-inspired status pills for local smart lights, thermostat temperature, and indoor air quality.</string>
+    <string name="ext_smart_author">OpenHabitat</string>
+    <string name="ext_smart_tags">GHCP 1 · LAN · Privacy-first</string>
+</resources>

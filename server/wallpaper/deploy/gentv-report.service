@@ -1,0 +1,22 @@
+[Unit]
+Description=GenTV read-only usage report
+After=network.target
+
+[Service]
+User=www-data
+Group=www-data
+WorkingDirectory=/srv/gentv/report/current
+EnvironmentFile=/etc/gentv-report.env
+Environment=PYTHONDONTWRITEBYTECODE=1
+ExecStart=/srv/gentv/report/current/venv/bin/gunicorn --bind 127.0.0.1:18766 --workers 1 --threads 2 --timeout 20 --max-requests 500 report:app
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadOnlyPaths=/var/lib/gentv-tv
+MemoryMax=128M
+
+[Install]
+WantedBy=multi-user.target

@@ -11,3 +11,7 @@ Priorities:
 5. Test real-TV Home, standby, reboot, HDMI, remote buttons and recovery before claiming device acceptance.
 
 This plan is not a device certification or a record of an online release. See [implementation](implementation.md), [protocol](desktop-protocol.md), [release requirements](release.md) and [third-party notices](../THIRD_PARTY_NOTICES.md).
+
+## Open home content iteration
+
+The proposed first-row focus-driven app content extension is tracked in [the product and implementation plan](home-content-plan.zh-CN.md). It defines scope, authorization, navigation, protocol boundaries, milestones and acceptance checks. This is planned work, not a released feature.

@@ -44,7 +44,6 @@
     <string name="vpn">VPN</string>
     <string name="vpn_off">VPN disattivata</string>
     <string name="home_settings">Scegli la home predefinita</string>
-    <string name="home_settings_help">Seleziona la home originale per smettere di usare GenTV come Home, oppure GenTV per tornare indietro. Il launcher originale deve essere attivo e la TV deve offrire la scelta della home; se era disattivato, usa prima lo script di ripristino.</string>
     <string name="launcher_settings">Impostazioni del launcher</string>
     <string name="native_settings">Impostazioni del produttore</string>
     <string name="columns_label">App per riga</string>
@@ -59,10 +58,7 @@
     <string name="advanced_effects">Effetti avanzati</string>
     <string name="advanced_effects_state">Effetti avanzati: %1$s</string>
     <string name="open_on_start_label">Apri all\'avvio</string>
-    <string name="open_on_start_state">Apri all\'avvio: %1$s</string>
     <string name="advanced_effects_warning">Aggiunge riquadro sollevato, zoom dell\'icona e transizioni di colore fluide. Può aumentare l\'uso di memoria; la differenza dipende dalla TV.</string>
-    <string name="follow_theme">Segui il tema (azzera le scelte fatte sulla TV)</string>
-    <string name="follow_theme_hint">Usa il tema corrente o le impostazioni predefinite di layout e animazioni. Applicare o reimpostare un tema cancella anche le scelte fatte sulla TV.</string>
     <string name="tv_settings">Impostazioni di sistema della TV</string>
     <string name="quick_picture">Schermo</string>
     <string name="quick_network">Rete</string>

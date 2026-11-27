@@ -1,3 +1,4 @@
+from contextlib import closing
 from rate_limit import limited
 """Bounded mobile ingestion. No public read routes, no IP or device IDs in analytics."""
 import base64
@@ -44,7 +45,7 @@ def events(environ, state):
         if not isinstance(name,str) or not isinstance(value,str) or name not in VALUES or value not in VALUES[name]: raise ValueError('event value')
         validated.append((event_id,timestamp,now,version,name,value))
     state.mkdir(parents=True,exist_ok=True)
-    with sqlite3.connect(state/'mobile.sqlite3',timeout=5) as db:
+    with closing(sqlite3.connect(state/'mobile.sqlite3',timeout=5)) as db, db:
         db.execute('CREATE TABLE IF NOT EXISTS events(id TEXT PRIMARY KEY, occurred INTEGER, received INTEGER, version TEXT, name TEXT, value TEXT)')
         db.execute('CREATE TABLE IF NOT EXISTS totals(day TEXT, version TEXT, name TEXT, value TEXT, count INTEGER, PRIMARY KEY(day,version,name,value))')
         for row in validated:
@@ -70,7 +71,7 @@ def feedback(environ,state):
         if len(image)>1024*1024 or not (image.startswith(b'\xff\xd8\xff') or image.startswith(b'\x89PNG\r\n\x1a\n')): raise ValueError('image')
     state.mkdir(parents=True,exist_ok=True)
     now=int(time.time())
-    with sqlite3.connect(state/'feedback.sqlite3',timeout=5) as db:
+    with closing(sqlite3.connect(state/'feedback.sqlite3',timeout=5)) as db, db:
         db.execute('CREATE TABLE IF NOT EXISTS feedback(id TEXT PRIMARY KEY, received INTEGER, payload TEXT)')
         db.execute('DELETE FROM feedback WHERE received < ?', (now-30*86400,))
         if db.execute('SELECT count(*) FROM feedback').fetchone()[0]>=10000: return '503 Service Unavailable',b'{"success":false}'
@@ -87,3 +88,17 @@ def handle(environ,start_response,state):
     except (ValueError,KeyError,TypeError,UnicodeError): status,body='400 Bad Request',b'{"success":false}'
     except (OSError,sqlite3.Error): status,body='503 Service Unavailable',b'{"success":false}'
     start_response(status,[('Content-Type','application/json'),('Cache-Control','no-store'),('Content-Length',str(len(body)))]); return [body]
+
+
+def handle_analytics(environ,start_response,state):
+    if environ.get('REQUEST_METHOD')!='POST':
+        start_response('405 Method Not Allowed',[('Allow','POST'),('Content-Length','0')]);return []
+    if limited('events',environ):
+        start_response('429 Too Many Requests',[('Retry-After','60'),('Content-Length','0')]);return []
+    try:
+        import analytics
+        status,body=analytics.ingest(environ,state)
+    except PermissionError:status,body='401 Unauthorized',b''
+    except (ValueError,KeyError,TypeError,OverflowError,UnicodeError):status,body='400 Bad Request',b''
+    except (OSError,sqlite3.Error):status,body='503 Service Unavailable',b''
+    start_response(status,[('Content-Type','application/json'),('Cache-Control','no-store'),('Content-Length',str(len(body)))]);return [body]

@@ -44,7 +44,6 @@
     <string name="vpn">VPN</string>
     <string name="vpn_off">VPN вимкнено</string>
     <string name="home_settings">Головний екран за замовчуванням</string>
-    <string name="home_settings_help">Виберіть оригінальний головний екран, щоб більше не використовувати GenTV як головний екран, або GenTV, щоб повернутися. Оригінальний головний екран має бути увімкнений, а телевізор має показувати вибір головного екрана; якщо його було вимкнено, спершу скористайтеся скриптом відновлення.</string>
     <string name="launcher_settings">Налаштування лаунчера</string>
     <string name="native_settings">Налаштування виробника</string>
     <string name="columns_label">Застосунків у рядку</string>
@@ -58,10 +57,7 @@
     <string name="advanced_effects">Розширені ефекти</string>
     <string name="advanced_effects_state">Розширені ефекти: %1$s</string>
     <string name="open_on_start_label">Відкривати під час запуску</string>
-    <string name="open_on_start_state">Відкривати під час запуску: %1$s</string>
     <string name="advanced_effects_warning">Додає ефект піднятої плитки, наближення значків і плавні переходи кольору. Може збільшити використання пам’яті; фактична різниця залежить від вашого телевізора.</string>
-    <string name="follow_theme">Скинути мої зміни (повернути налаштування теми)</string>
-    <string name="follow_theme_hint">Повертає кількість застосунків у рядку, рядки під доком, анімації, розширені ефекти та шпалери до значень із поточної теми. Установка нової теми також скидає ці налаштування.</string>
     <string name="tv_settings">Системні налаштування ТБ</string>
     <string name="quick_picture">Зображення</string>
     <string name="quick_network">Мережа</string>

@@ -12,6 +12,7 @@ import java.util.List;
 public final class DesktopIntegration extends Instrumentation {
     private int checks;
     private boolean cloudUiOnly;
+    private boolean homeContentOnly;
     private boolean resetCloudPolicy;
     private boolean recoveryFixture;
     private boolean wallpaperFallbackOnly;
@@ -27,7 +28,7 @@ public final class DesktopIntegration extends Instrumentation {
         NetworkStatusDrawable glyph=new NetworkStatusDrawable(2,ethernet,online,validated,level);
         glyph.setBounds(0,0,56,56);glyph.draw(new android.graphics.Canvas(bitmap));return bitmap;
     }
-    @Override public void onCreate(Bundle args) { super.onCreate(args); hdmiPreview=args!=null && "true".equals(args.getString("hdmi_preview")); cloudFocusOnly=args!=null && "true".equals(args.getString("cloud_focus_only")); inputSourcesOnly=args!=null && "true".equals(args.getString("input_sources_only")); cloudUiOnly=args!=null && "true".equals(args.getString("cloud_ui_only")); resetCloudPolicy=args!=null && "true".equals(args.getString("reset_cloud_policy")); recoveryFixture=args!=null && "true".equals(args.getString("recovery_fixture")); wallpaperFallbackOnly=args!=null && "true".equals(args.getString("wallpaper_fallback_only")); aerialSourceOnly=args!=null && "true".equals(args.getString("aerial_source_only")); screensaverInfoOnly=args!=null && "true".equals(args.getString("screensaver_info_only")); start(); }
+    @Override public void onCreate(Bundle args) { super.onCreate(args); homeContentOnly=args!=null && "true".equals(args.getString("home_content_only")); hdmiPreview=args!=null && "true".equals(args.getString("hdmi_preview")); cloudFocusOnly=args!=null && "true".equals(args.getString("cloud_focus_only")); inputSourcesOnly=args!=null && "true".equals(args.getString("input_sources_only")); cloudUiOnly=args!=null && "true".equals(args.getString("cloud_ui_only")); resetCloudPolicy=args!=null && "true".equals(args.getString("reset_cloud_policy")); recoveryFixture=args!=null && "true".equals(args.getString("recovery_fixture")); wallpaperFallbackOnly=args!=null && "true".equals(args.getString("wallpaper_fallback_only")); aerialSourceOnly=args!=null && "true".equals(args.getString("aerial_source_only")); screensaverInfoOnly=args!=null && "true".equals(args.getString("screensaver_info_only")); start(); }
     private android.view.View findCloudText(android.view.View view,CharSequence text) {
         if(view instanceof android.widget.TextView && text.equals(((android.widget.TextView)view).getText()))return view;
         if(view instanceof android.view.ViewGroup) {android.view.ViewGroup group=(android.view.ViewGroup)view;for(int i=0;i<group.getChildCount();i++){android.view.View found=findCloudText(group.getChildAt(i),text);if(found!=null)return found;}}
@@ -384,6 +385,7 @@ public final class DesktopIntegration extends Instrumentation {
     }
 
     @Override public void onStart() {
+        if(homeContentOnly){HomeContentIntegration.run(this);return;}
         if(cloudFocusOnly) {checkCloudFocus();return;}
         if(inputSourcesOnly) {checkInputSources();return;}
         if(screensaverInfoOnly) {checkScreensaverInfo();return;}

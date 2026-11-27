@@ -19,11 +19,11 @@ import com.gentv.mobile.ui.*
 import com.gentv.mobile.ui.AppText as Text
 
 @Composable
-fun SettingsScreen(update: UpdateStatus, onBack: () -> Unit, onCheck: () -> Unit, onOpenUrl: (String) -> Unit, onFeedback: () -> Unit = {}, analyticsEnabled: Boolean = false, onAnalyticsChanged: (Boolean) -> Unit = {}, analyticsAvailable: Boolean = com.gentv.mobile.data.Analytics.configured, onDownloadUpdate: (com.gentv.mobile.data.UpdateInfo) -> Unit = {}) {
+fun SettingsScreen(update: UpdateStatus, onBack: () -> Unit, onCheck: () -> Unit, onOpenUrl: (String) -> Unit, onFeedback: () -> Unit = {}, analyticsEnabled: Boolean = false, testTraffic: Boolean = false, onTestTrafficChanged: (Boolean) -> Unit = {}, onAnalyticsChanged: (Boolean) -> Unit = {}, analyticsAvailable: Boolean = com.gentv.mobile.data.Analytics.configured, onDownloadUpdate: (com.gentv.mobile.data.UpdateInfo) -> Unit = {}) {
     BackHandler(onBack = onBack)
     var privacy by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
     if (privacy) AlertDialog(onDismissRequest = { privacy = false }, title = { Text("Privacy and data") },
-        text = { Column(Modifier.heightIn(max = 360.dp).verticalScroll(androidx.compose.foundation.rememberScrollState())) { Text("Usage statistics are off by default. If enabled, only fixed feature events, app version, Android SDK and a random session ID are sent. Feedback is sent only when you submit it and can include your message, email, phone model, Android version, random install ID and attachments you choose. TV connection keys, backups and operation history stay on this phone unless you choose to share a report. Shared reports are redacted before export. Turning statistics off clears unsent events; already sent data cannot be recalled by this app. For information about server retention and remote-data deletion requests, contact GenTV through the official website. Keep your TV restore records before clearing app data.") } },
+        text = { Column(Modifier.heightIn(max = 360.dp).verticalScroll(androidx.compose.foundation.rememberScrollState())) { Text("Off by default; enable again for this revised collection. Sends the local factory MAC when accessible, a random installation ID, fixed pages/actions, version, sessions and foreground time. The server deduplicates by a keyed MAC hash, falling back to installation ID, and does not store or display raw MACs. No app names or input text. A MAC can link reinstalls. Disabling clears pending events and resets the installation ID, but does not remove historical links. Mark physical test devices as test traffic. When enabled, Android SDK is also sent. Upgrades preserve the statistics ID; disabling statistics, clearing data or reinstalling resets it. An explicit choice to disable statistics is preserved across upgrades. Feedback is sent only when you submit it and can include your message, email, phone model, Android version, random install ID and attachments you choose. TV connection keys, backups and operation history stay on this phone unless you choose to share a report. Shared reports are redacted before export. Turning statistics off clears unsent events; already sent data cannot be recalled by this app. For information about server retention and remote-data deletion requests, contact GenTV through the official website. Keep your TV restore records before clearing app data.") } },
         confirmButton = { TextButton(onClick = { privacy = false }) { Text("Close") } })
     val language = LocalAppLanguage.current
     val changeLanguage = LocalChangeLanguage.current
@@ -66,10 +66,17 @@ fun SettingsScreen(update: UpdateStatus, onBack: () -> Unit, onCheck: () -> Unit
         if (analyticsAvailable) CardBox {
             var enabled by androidx.compose.runtime.remember(analyticsEnabled) { androidx.compose.runtime.mutableStateOf(analyticsEnabled) }
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Text("Anonymous usage statistics", modifier = Modifier.weight(1f), color = GenTVPalette.Ink)
+                Text("Usage statistics", modifier = Modifier.weight(1f), color = GenTVPalette.Ink)
                 Switch(checked = enabled, onCheckedChange = { enabled = it; onAnalyticsChanged(it) })
             }
-            Text("Optional. Sends feature usage and success or failure counts. No device identifiers, TV addresses, app lists, files or logs. Turning off clears unsent events.", color = GenTVPalette.Muted, style = MaterialTheme.typography.bodyMedium)
+            Text("Off by default; enable again for this revised collection. Sends the local factory MAC when accessible, a random installation ID, fixed pages/actions, version, sessions and foreground time. The server deduplicates by a keyed MAC hash, falling back to installation ID, and does not store or display raw MACs. No app names or input text. A MAC can link reinstalls. Disabling clears pending events and resets the installation ID, but does not remove historical links. Mark physical test devices as test traffic.", color = GenTVPalette.Muted, style = MaterialTheme.typography.bodyMedium)
+        }
+        if (analyticsAvailable) CardBox {
+            var testing by androidx.compose.runtime.remember(testTraffic) { androidx.compose.runtime.mutableStateOf(testTraffic) }
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Text("Mark future reports as test traffic", modifier = Modifier.weight(1f), color = GenTVPalette.Ink)
+                Switch(checked = testing, onCheckedChange = { testing = it; onTestTrafficChanged(it) })
+            }
         }
         CardBox {
             TextLink("Privacy and data", { privacy = true })

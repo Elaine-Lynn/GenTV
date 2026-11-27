@@ -27,7 +27,6 @@
     <string name="vpn">VPN</string>
     <string name="vpn_off">VPN oʻchiq</string>
     <string name="home_settings">Asosiy bosh ekranni tanlash</string>
-    <string name="home_settings_help">GenTV oʻrniga eski bosh ekranga qaytish uchun uni tanlang, GenTV ga qaytish uchun esa GenTV ni. Eski launcher yoqilgan boʻlishi va televizorda bosh ekran tanlash oynasi boʻlishi kerak; agar u oʻchirilgan boʻlsa, avval tiklash skriptini ishga tushiring.</string>
     <string name="launcher_settings">Launcher sozlamalari</string>
     <string name="native_settings">Ishlab chiqaruvchi sozlamalari</string>
     <string name="columns_label">Qatordagi ilovalar</string>
@@ -42,10 +41,7 @@
     <string name="advanced_effects">Qoʻshimcha effektlar</string>
     <string name="advanced_effects_state">Qoʻshimcha effektlar: %1$s</string>
     <string name="open_on_start_label">Ishga tushganda ochish</string>
-    <string name="open_on_start_state">Ishga tushganda ochish: %1$s</string>
     <string name="advanced_effects_warning">Plitkani koʻtarish, belgini kattalashtirish va ranglarning silliq oʻtishini qoʻshadi. Xotira sarfi oshishi mumkin; farq televizoringizga bogʻliq.</string>
-    <string name="follow_theme">Mavzuga qaytish (TVdagi tanlovlarni bekor qilish)</string>
-    <string name="follow_theme_hint">Joriy mavzu yoki standart joylashuv va harakat sozlamalaridan foydalanadi. Mavzuni yuborish yoki qayta tiklash ham TVdagi tanlovlaringizni tozalaydi.</string>
     <string name="tv_settings">TV tizim sozlamalari</string>
     <string name="quick_picture">Ekran</string>
     <string name="quick_network">Tarmoq</string>

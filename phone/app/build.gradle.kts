@@ -27,11 +27,12 @@ android {
         applicationId = "com.gentv.mobile"
         minSdk = 26
         targetSdk = 36
-        versionCode = 17
-        versionName = "3.7.1"
+        versionCode = 20
+        versionName = "3.7.4"
         fun quoted(value: String) = "\"" + value.replace("\\", "\\\\").replace("\"", "\\\"") + "\""
         fun api(path: String) = if (apiBaseUrl.isEmpty()) "" else apiBaseUrl + path
         buildConfigField("String", "API_BASE_URL", quoted(apiBaseUrl))
+        buildConfigField("String", "METRICS_API", quoted(api("analytics")))
         buildConfigField("String", "ANALYTICS_API", quoted(api("events")))
         buildConfigField("String", "UPDATE_API", quoted(api("update?platform=mobile")))
         buildConfigField("String", "DOWNLOAD_URL", quoted("https://www.gentv.me"))

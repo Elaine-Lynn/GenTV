@@ -1,0 +1,83 @@
+<resources>
+    <string name="home_content_title">桌面内容</string>
+    <string name="home_content_help">允许兼容应用在第一行图标获得焦点时显示内容。安装扩展后，在此允许展示，再将图标加入第一行。按上进入内容，按下或返回回到图标；图标 OK 仍正常打开应用。</string>
+    <string name="home_content_enable_all">启用桌面内容</string>
+    <string name="home_content_disable_all">关闭所有桌面内容</string>
+    <string name="home_content_child_disabled">儿童保护启用期间不显示第三方桌面内容。</string>
+    <string name="home_content_empty">尚未安装声明 GHCP 1 桌面内容的应用。</string>
+    <string name="home_content_allowed">已允许 · 选择可撤销</string>
+    <string name="home_content_not_allowed">未允许</string>
+    <string name="home_content_allow_title">允许“%1$s”显示内容？</string>
+    <string name="home_content_consent">此应用可在第一行图标获得焦点时，在桌面壁纸上显示内容及可选背景图片。应用在自己的进程运行。私人数据读取仍需应用另行授权。你可以随时在此撤销展示许可。</string>
+    <string name="home_content_allow">允许</string>
+    <string name="home_content_open">打开 →</string>
+
+    <!-- Gen 扩展商店 -->
+    <string name="ext_store_title">Gen 扩展</string>
+    <string name="ext_store_tagline">给电视桌面，添一点新意。</string>
+    <string name="ext_master_on">桌面内容 · 已开启</string>
+    <string name="ext_master_off">桌面内容 · 已关闭</string>
+    <string name="ext_tab_featured">精选</string>
+    <string name="ext_tab_official">官方出品</string>
+    <string name="ext_tab_community">社区精选</string>
+    <string name="ext_tab_media">影音</string>
+    <string name="ext_tab_life">生活</string>
+    <string name="ext_tab_mine">我的扩展 (%1$d)</string>
+    <string name="ext_section_more">探索更多扩展</string>
+    <string name="ext_section_installed">本机已安装</string>
+    <string name="ext_badge_official">GenTV 官方</string>
+    <string name="ext_badge_community">社区作品</string>
+    <string name="ext_badge_installed">已安装</string>
+    <string name="ext_badge_enabled">已启用</string>
+    <string name="ext_badge_preview">展示预览</string>
+    <string name="ext_action_details">查看详情</string>
+    <string name="ext_action_allow">允许在桌面显示</string>
+    <string name="ext_action_revoke">撤销桌面权限</string>
+    <string name="ext_action_open_app">打开应用</string>
+    <string name="ext_action_coming_soon">目录即将开放下载</string>
+    <string name="ext_catalog_notice">在线扩展目录正式上线后将开放一键安装；本机已安装的兼容 GHCP 1 扩展会自动显示在「我的扩展」中并可直接授权启用。</string>
+    <string name="ext_preview_caption">首屏桌面样式预览 · 轻盈浮于壁纸之上</string>
+    <string name="ext_step_install">1. 安装应用</string>
+    <string name="ext_step_dock">2. 加入第一行</string>
+    <string name="ext_step_allow">3. 允许展示</string>
+    <string name="ext_meta_ratings">%1$s · %2$s 条评分</string>
+    <string name="ext_meta_local_desc">已安装在本机的 GHCP 1 兼容扩展。授予权限并将图标加入首页第一行后，聚焦即可在首屏展示实时内容。</string>
+    <string name="ext_empty_mine_hint">在电视上安装支持 GHCP 1 协议的扩展应用后，将自动出现在这里供你一键授权与管理。</string>
+
+    <!-- 精选扩展展示条目 -->
+    <string name="ext_weather_name">Gen 天气</string>
+    <string name="ext_weather_sub">不打开应用，聚焦即可看见今日温度与穿衣提示。</string>
+    <string name="ext_weather_desc">将今日气温、天气状态与出行提醒轻盈浮于桌面壁纸之上。支持手动选城，无需定位权限，零广告零打扰。</string>
+    <string name="ext_weather_author">GenTV 出品</string>
+    <string name="ext_weather_tags">GHCP 1 · 免费 · 免登录</string>
+
+    <string name="ext_continue_name">接着看</string>
+    <string name="ext_continue_sub">把未看完的影片与剧集，优雅放回首屏。</string>
+    <string name="ext_continue_desc">从你授权的本地影音库同步续播进度，在首屏以画廊卡片呈现，按下遥控器确认键即可直达上次播放位置。</string>
+    <string name="ext_continue_author">Kino 社区</string>
+    <string name="ext_continue_tags">GHCP 1 · 影音 · 本地授权</string>
+
+    <string name="ext_daily_name">每日一图</string>
+    <string name="ext_daily_sub">每天一张值得驻足的风景摄影，给客厅换个心情。</string>
+    <string name="ext_daily_desc">每日甄选高清自然与建筑摄影，以极简玻璃画框柔和呈现于电视首屏，支持本地离线缓存。</string>
+    <string name="ext_daily_author">GenTV 出品</string>
+    <string name="ext_daily_tags">GHCP 1 · 免费 · 离线缓存</string>
+
+    <string name="ext_calendar_name">家庭日历</string>
+    <string name="ext_calendar_sub">一眼看清今天与本周末的家庭日程安排。</string>
+    <string name="ext_calendar_desc">极简半透日程条，在客厅电视首屏安静展示家人聚餐、纪念日与周末出行计划。</string>
+    <string name="ext_calendar_author">Lumen 社区</string>
+    <string name="ext_calendar_tags">GHCP 1 · 信息 · 只读权限</string>
+
+    <string name="ext_clock_name">极简时钟</string>
+    <string name="ext_clock_sub">雕塑感超细字体时钟与节气农历伴屏。</string>
+    <string name="ext_clock_desc">致敬经典工业设计的超轻数字时钟，融合农历日期与柔和日落光晕，让待机桌面宛若艺术品。</string>
+    <string name="ext_clock_author">Atelier Mono</string>
+    <string name="ext_clock_tags">GHCP 1 · 免费 · 纯离线</string>
+
+    <string name="ext_smart_name">家居环境</string>
+    <string name="ext_smart_sub">客厅灯光、温湿度与空气质量一屏掌握。</string>
+    <string name="ext_smart_desc">局域网直连客厅智能设备，以极简苹果风状态胶囊实时呈现灯光亮度、室内温度与空气优良度。</string>
+    <string name="ext_smart_author">OpenHabitat</string>
+    <string name="ext_smart_tags">GHCP 1 · 局域网 · 隐私优先</string>
+</resources>

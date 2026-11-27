@@ -52,7 +52,7 @@ Official releases are signed with a private key that is never in Git, and releas
 
 - [Releases and changelog](https://github.com/Elaine-Lynn/GenTV/releases) · [Environment and installation guide](docs/getting-started.md) ([简体中文](docs/getting-started.zh-CN.md)) · [Privacy](PRIVACY.md) ([简体中文](PRIVACY.zh-CN.md))
 - [Implementation and validation](docs/implementation.md) · [Pre-release validation](docs/pre-release-validation.md)
-- [Desktop protocol](docs/desktop-protocol.md) · [Module-card contract](docs/reference/modules.md)
+- [Desktop protocol](docs/desktop-protocol.md) · [Module-card contract](docs/reference/modules.md) · [Gen 插件 App 开发规范](docs/reference/home-content-development.zh-CN.md) (GHCP 1; [English wire reference](docs/reference/home-content.md))
 - [Performance workflow](docs/reference/perf-ab.md) · [Emulator measurements](docs/emulator-performance.md) · [Development plan](docs/desktop-optimization-plan.md)
 - [Device references](docs/devices/README.md)
 

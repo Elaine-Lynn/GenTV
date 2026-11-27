@@ -30,10 +30,15 @@
     <!-- Android 11+ package visibility: lets the launcher list the TV apps it shows as tiles, and the
          apps that declare a module card (docs/reference/modules.md). -->
     <queries>
+        <intent><action android:name="com.gentv.tv.home.BIND_CONTENT" /></intent>
         <!-- The standard settings handlers, so package visibility doesn't hide them and send the pills to a vendor fallback by mistake. -->
         <intent>
             <action android:name="android.settings.SETTINGS" />
         </intent>
+        <intent>
+            <action android:name="android.settings.HOME_SETTINGS" />
+        </intent>
+        <package android:name="com.huawei.android.internal.app" />
         <intent>
             <action android:name="android.settings.WIFI_SETTINGS" />
         </intent>
@@ -93,6 +98,8 @@
             android:taskAffinity="${applicationId}.childChallenge"
             android:theme="@android:style/Theme.Translucent.NoTitleBar.Fullscreen" />
         <activity android:name=".ChildSettingsActivity" android:exported="false" />
+        <activity android:name=".HomeContentSettingsActivity" android:exported="false" />
+        <activity android:name=".WallpaperGalleryActivity" android:exported="false" />
         <activity android:name=".MetricsSettingsActivity" android:exported="false" />
         <activity android:name=".CloudSettingsActivity" android:exported="false" android:theme="@android:style/Theme.Translucent.NoTitleBar.Fullscreen" />
         <provider android:name="androidx.core.content.FileProvider" android:authorities="${applicationId}.updates" android:exported="false" android:grantUriPermissions="true">
@@ -100,6 +107,7 @@
         </provider>
         <receiver android:name=".DesktopReceiver" android:exported="true" android:permission="android.permission.WRITE_SECURE_SETTINGS" />
 
+        <!-- Keep the Home dock in place when a translucent panel opens the keyboard. -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -108,17 +116,23 @@
             android:excludeFromRecents="true"
             android:clearTaskOnLaunch="true"
             android:configChanges="orientation|screenSize|keyboard|keyboardHidden|uiMode"
-            android:screenOrientation="landscape">
+            android:screenOrientation="landscape"
+            android:windowSoftInputMode="adjustNothing">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.HOME" />
                 <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-            <!-- Support both standard Android TV and box launchers that query LAUNCHER. -->
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
+                <!-- Some TV firmware sends HOME together with COMMON_HOME or LAUNCHER.
+                     Keep the categories in one filter to avoid duplicate launcher entries. -->
+                <category android:name="android.intent.category.COMMON_HOME" />
                 <category android:name="android.intent.category.LAUNCHER" />
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+            </intent-filter>
+            <!-- Coocaa's private home selection category. -->
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.HOME.CC" />
+                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
 
@@ -127,8 +141,6 @@
             android:exported="false"
             android:excludeFromRecents="true"
             android:screenOrientation="landscape" />
-        <activity android:name=".WeatherSettingsActivity" android:exported="false"
-            android:excludeFromRecents="true" android:screenOrientation="landscape" />
         <activity android:name=".PersonalizationActivity" android:exported="false"
             android:excludeFromRecents="true" android:screenOrientation="landscape" />
         <activity android:name=".LocalWallpaperPickerActivity" android:exported="false"
@@ -160,6 +172,12 @@
             android:launchMode="singleTop"
             android:excludeFromRecents="true"
             android:theme="@android:style/Theme.Translucent.NoTitleBar.Fullscreen" />
+        <activity
+            android:name=".ShareCodeActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar"
+            android:windowSoftInputMode="stateAlwaysVisible|adjustResize" />
         <activity
             android:name=".XghSettingsRedirectActivity"
             android:exported="false"

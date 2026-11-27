@@ -50,7 +50,6 @@
     <string name="set_default_home_hint">Confirm in system settings</string>
     <string name="home_already_default">GenTV is already the default Home</string>
     <string name="home_set_success">GenTV is now the default Home</string>
-    <string name="home_settings_help">Select your original home to stop using GenTV as Home, or GenTV to switch back. The original launcher must be enabled and your TV must provide a home picker; use the restore script first if it was disabled.</string>
     <string name="launcher_settings">Launcher settings</string>
     <string name="native_settings">Native settings</string>
     <string name="columns_label">Apps per row</string>
@@ -64,16 +63,20 @@
     <string name="animations_state">Animations: %1$s</string>
     <string name="advanced_effects">Advanced effects</string>
     <string name="advanced_effects_state">Advanced effects: %1$s</string>
-    <string name="open_on_start_label">Open on start</string>
-    <string name="open_on_start_state">Open on start: %1$s</string>
+    <string name="open_on_start_label">Set as startup app</string>
     <string name="open_on_start_remove">Don’t open on start</string>
     <string name="open_on_start_saved">%1$s will open on the next start</string>
     <string name="open_on_start_removed">%1$s will no longer open on start</string>
     <string name="open_on_start_removed_generic">Open on start turned off</string>
     <string name="open_on_start_save_failed">Couldn’t save the startup app</string>
+    <string name="open_on_start_title">Set startup app</string>
+    <string name="open_on_start_hint">A new pick takes effect from the next start</string>
+    <string name="open_on_start_off_row">Stay on Home</string>
+    <string name="open_on_start_off_sub">Open nothing on start</string>
+    <string name="open_on_start_apps">INSTALLED APPS · %1$d</string>
+    <string name="open_on_start_current">Opens on start</string>
+    <string name="open_on_start_remote_hint">OK to choose · Back to cancel</string>
     <string name="advanced_effects_warning">Adds a lifted tile, icon zoom and smooth colour transitions. May increase memory use; the actual difference depends on your TV.</string>
-    <string name="follow_theme">Follow theme (reset on-TV choices)</string>
-    <string name="follow_theme_hint">Uses the current theme or built-in layout and motion settings. Pushing or resetting a theme also clears your on-TV choices.</string>
     <string name="tv_settings">TV system settings</string>
     <string name="quick_picture">Display</string>
     <string name="quick_toolbox">Toolbox</string>
@@ -170,43 +173,6 @@
          last opened, e.g. "5 minutes ago" or "yesterday, 9:40 pm". -->
     <string name="last_opened">Last opened %1$s</string>
     <string name="more_apps">More apps</string>
-    <string name="screensaver_delay_label">Screensaver delay</string>
-    <string name="screensaver_delay_state">Screensaver delay: %1$s</string>
-    <string name="screensaver_hint">Press Back on Home to open aerial screensaver. Any key returns to Home.</string>
-    <string-array name="screensaver_times">
-        <item>2 minutes</item>
-        <item>10 minutes</item>
-        <item>60 minutes</item>
-        <item>Never</item>
-    </string-array>
-    <string name="screensaver_clear_cache">Clear screensaver cache</string>
-    <string name="screensaver_cache_cleared">Screensaver cache cleared. Videos will download again next time you open the screensaver.</string>
-    <string name="screensaver_cache_clear_failed">Could not clear screensaver cache.</string>
-    <string name="screensaver_cache_hint">Up to 5 videos. Cached videos play in random order. After clearing, videos download again the next time the screensaver opens.</string>
-    <string name="weather_settings_title">City</string>
-    <string name="weather_no_city">Select a province, city, then district or county.</string>
-    <string name="weather_pick_city">Set city · Weather</string>
-    <string name="weather_locating">Finding your city…</string>
-    <string name="weather_selected_city">Current city: %1$s</string>
-    <string name="weather_province">Province</string>
-    <string name="weather_city">City</string>
-    <string name="weather_district">District / county</string>
-    <string name="weather_whole_city">Whole city</string>
-    <string name="weather_regions_unavailable">Could not load the region list.</string>
-    <string name="weather_remove_city">Clear selected city</string>
-    <string name="weather_source">Mainland region list: ChinaGeoJson. Weather: Open-Meteo (CC BY 4.0). Updates while Home is visible.</string>
-    <string name="weather_home">%1$s · %2$d°C · %3$s</string>
-    <string name="weather_home_detail">%1$s  %2$d°C  %3$s · %4$s · High %5$d°C  Low %6$d°C</string>
-    <string name="weather_wheel_hint">Left / Right: province, city, district    Up / Down: choose    OK: save</string>
-    <string name="weather_status">%1$s · %2$s</string>
-    <string name="weather_loading">Updating weather…</string>
-    <string name="weather_unavailable">Weather unavailable</string>
-    <string name="weather_clear">Clear</string>
-    <string name="weather_cloudy">Cloudy</string>
-    <string name="weather_fog">Fog</string>
-    <string name="weather_rain">Rain</string>
-    <string name="weather_snow">Snow</string>
-    <string name="weather_storm">Thunderstorm</string>
     <string name="quick_personalize">Personalize</string>
     <string name="wallpaper_personalization_hint">Choose a wallpaper for Home. Press Back to return.</string>
     <string name="wallpaper_follow_current">Follow current wallpaper</string>

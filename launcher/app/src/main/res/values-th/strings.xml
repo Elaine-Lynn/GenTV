@@ -33,10 +33,7 @@
     <string name="advanced_effects">เอฟเฟกต์ขั้นสูง</string>
     <string name="advanced_effects_state">เอฟเฟกต์ขั้นสูง: %1$s</string>
     <string name="open_on_start_label">เปิดเมื่อเริ่มเครื่อง</string>
-    <string name="open_on_start_state">เปิดเมื่อเริ่มเครื่อง: %1$s</string>
     <string name="advanced_effects_warning">ยกไทล์ ขยายไอคอน และเปลี่ยนสีพื้นหลังอย่างนุ่มนวล อาจใช้หน่วยความจำเพิ่มขึ้น ขึ้นอยู่กับทีวี</string>
-    <string name="follow_theme">ใช้ตามธีม (รีเซ็ตการตั้งค่า)</string>
-    <string name="follow_theme_hint">ใช้รูปแบบและภาพเคลื่อนไหวจากธีมปัจจุบันหรือค่าในแอป การใช้หรือรีเซ็ตธีมจะล้างตัวเลือกบนทีวีด้วย</string>
     <string name="tv_settings">การตั้งค่าระบบทีวี</string>
     <string name="on">เปิด</string>
     <string name="off">ปิด</string>

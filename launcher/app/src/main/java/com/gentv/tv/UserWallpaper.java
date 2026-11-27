@@ -110,6 +110,13 @@ final class UserWallpaper {
         }
     }
 
+    /** A downloaded wallpaper (the wallpaper gallery): an MP4 video or a still image. */
+    static String importDownload(Context context, InputStream input, boolean video) throws IOException {
+        try (InputStream source = input) {
+            return importStream(context, source, video ? "video/mp4" : "image/*");
+        }
+    }
+
     private static String importStream(Context context, InputStream input, String mime) throws IOException {
         boolean image = mime != null && mime.startsWith("image/");
         boolean video = mime != null && mime.startsWith("video/");

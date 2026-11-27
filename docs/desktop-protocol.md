@@ -93,9 +93,9 @@ completed film starts local playback while subsequent films download. A film tha
 does not fit is refused before reading its body; playable films are never evicted
 to fetch more. On later entries, existing films play locally while unfinished
 downloads resume and unused slots are filled. The previous entry's film is avoided
-when another complete film is available. Clear screensaver cache in Settings
-removes complete files, partials and validators on a worker thread. The next saver
-entry starts a fresh fill pass, rather than downloading from the settings page.
+when another complete film is available. GenTV settings have no screensaver
+options; the cache stays bounded at five films and is only emptied with the app's
+storage, after which the next saver entry starts a fresh fill pass.
 
 Exit cancels the transfer and retains the partial file. Resume uses Range and a
 strong ETag in If-Range, checks Content-Range, and appends only matching bytes.

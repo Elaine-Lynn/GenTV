@@ -49,6 +49,8 @@ class Host(
     val requestReview: () -> Unit = {},
     val analyticsEnabled: () -> Boolean = { false },
     val setAnalyticsEnabled: (Boolean) -> Unit = {},
+    val analyticsTestTraffic: () -> Boolean = { false },
+    val setAnalyticsTestTraffic: (Boolean) -> Unit = {},
     val recordScreen: (String) -> Unit = {},
     val selfUpdate: com.gentv.mobile.data.SelfUpdate? = null,
     val installUpdate: () -> Unit = {},
@@ -73,9 +75,10 @@ fun GenTVApp(s: UiState, vm: WizardViewModel, onShareLogs: () -> Unit, host: Hos
     host.selfUpdate?.let { SelfUpdateDialog(it, host.installUpdate) }
     CompositionLocalProvider(LocalAppActions provides actions) {
         if (showSettings) com.gentv.mobile.ui.screens.SettingsScreen(
-            s.settingsUpdate, { showSettings = false }, vm::checkForUpdates, host.openUrl,
+            s.settingsUpdate, { showSettings = false; host.recordScreen(if (s.desktop != null) "desktop" else s.wizard.step.name.lowercase(java.util.Locale.ROOT)) }, vm::checkForUpdates, host.openUrl,
             onFeedback = { feedback = FeedbackRequest(com.gentv.mobile.data.FeedbackKind.FEATURE, "settings") },
             analyticsEnabled = host.analyticsEnabled(), onAnalyticsChanged = host.setAnalyticsEnabled,
+            testTraffic = host.analyticsTestTraffic(), onTestTrafficChanged = host.setAnalyticsTestTraffic,
             onDownloadUpdate = { host.selfUpdate?.download(it) },
         ) else AnimatedContent(s.wizard.step, transitionSpec = { fadeIn() togetherWith fadeOut() }, label = "step") { step ->
             if (s.desktop != null) CompositionLocalProvider(LocalTvIcons provides s.icons) { com.gentv.mobile.ui.screens.DesktopScreen(

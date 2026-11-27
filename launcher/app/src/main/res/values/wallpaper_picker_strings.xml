@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+  <string name="wallpaper_still_title">Still wallpapers</string>
+  <string name="wallpaper_motion_title">Motion wallpapers</string>
+  <string name="wallpaper_motion_teal">Teal tide</string>
+  <string name="wallpaper_motion_indigo">Indigo arc</string>
+  <string name="wallpaper_motion_cat">Curious kitten</string>
+  <string name="wallpaper_motion_aquarium">Aquarium</string>
+</resources>

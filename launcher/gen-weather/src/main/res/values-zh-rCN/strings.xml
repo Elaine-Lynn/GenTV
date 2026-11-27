@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Gen 天气</string>
+    <string name="feels_like">体感 %1$s</string>
+    <string name="high_low">最高 %1$s   最低 %2$s</string>
+    <string name="air_quality">空气质量</string>
+    <string name="aqi_detail">AQI %1$d</string>
+    <string name="wind">风速</string>
+    <string name="wind_unit">km/h · %1$s</string>
+    <string name="wind_desktop">%1$s · 日落 %2$s</string>
+    <string name="sunset">日落</string>
+    <string name="uv_short">紫外线 %1$d · %2$s</string>
+    <string name="now">现在</string>
+    <string name="today">今天</string>
+    <string name="seven_day_forecast">未来 7 日预报</string>
+    <string name="synced_to_home">已同步至 GenTV 桌面</string>
+    <string name="humidity_label">湿度 %1$d%%</string>
+    <string name="sunrise_label">日出 %1$s</string>
+    <string name="data_source">Open-Meteo 全球气象</string>
+    <string name="loading">正在更新天气…</string>
+    <string name="offline_cached">当前显示缓存数据</string>
+    <string name="offline_error">暂时无法连接气象服务</string>
+    <string name="manage_cities">全球城市管理</string>
+    <string name="search_hint">搜索全球任意城市（如 杭州、Tokyo、London）</string>
+    <string name="search_button">搜索</string>
+    <string name="auto_locate">IP 自动定位</string>
+    <string name="locating">正在定位…</string>
+    <string name="located_toast">已定位：%1$s</string>
+    <string name="locate_failed">暂未能通过 IP 获取当前城市</string>
+    <string name="popular_cities">全球热门城市</string>
+    <string name="saved_cities">已收藏城市</string>
+    <string name="search_results">搜索结果</string>
+    <string name="no_results">未找到匹配城市</string>
+    <string name="remove_city">移除</string>
+    <string name="refresh">刷新</string>
+    <string name="refreshing">正在更新…</string>
+    <string name="updated_at">已更新 · %1$s</string>
+    <string name="hourly_probe">%1$s · %2$s · %3$s</string>
+    <string name="added_mark">已收藏</string>
+    <string name="close">关闭</string>
+</resources>

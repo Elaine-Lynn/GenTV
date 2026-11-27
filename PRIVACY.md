@@ -49,7 +49,7 @@ If you enable ad filtering in GenTV Remote, the app configures the TV to use AdG
 - The server backup tool keeps the latest 14 database snapshots. A snapshot can still contain records removed from the live database until that snapshot expires; live-database deletion does not immediately remove those backup copies.
 - As with any network connection, the service sees the IP address of each request. GenTV does not store it in statistics or feedback records.
 
-When no weather city has been saved, Home can ask the configured GenTV service to identify the city from the connection's public IPv4 address. The service forwards that address to AMap's IP location API and returns a city, not a precise device location. The server keeps a bounded six-hour city cache indexed by an ephemeral keyed hash, without persistent IP storage. The city is saved on the TV; a manual selection takes priority. No GPS or Wi-Fi scanning is used for this lookup. Forecasts continue to use Open-Meteo with the selected city coordinates. If the feature is not configured or fails, you can select a city manually.
+Home no longer performs built-in weather requests or IP-based city lookup. Independent weather plug-ins retain their own networking and data handling; removing the built-in Home feature does not change those plug-ins.
 
 If the primary update check fails, GenTV requests the backup update configuration from GitHub. The backup's signed APK is also downloaded from GitHub. GitHub receives normal request metadata, including the connection IP address and the app-version User-Agent. The same package, hash and signature checks apply.
 
@@ -64,3 +64,7 @@ The aerial screensaver downloads videos directly from sylvan.apple.com (Apple), 
 Automatic online wallpaper rotation caches images privately up to 64 MiB. Rotation reads local images; new image response bodies have a 16 MiB budget per 24-hour window, including failed transfers. Manifest checks use ETag at six-hour intervals after success. Download history, failure cooldowns and traffic budgets are stored only on the TV and survive app restarts.
 
 Opening the online wallpaper chooser requests the configured service's image list. Browsing downloads previews or original images into a separate private temporary cache up to 64 MiB. Applying an image saves a private local copy as a custom wallpaper for offline use. These user-initiated downloads are separate from the automatic rotation budget.
+
+## Desktop content (source preview)
+
+After you explicitly allow a compatible installed app, GenTV binds its local content service while its first-row icon is selected. The request contains the declared launch component, language and available layout size; Android also identifies the calling app. Content and images remain in memory, expire, and are not included in GenTV statistics or desktop exports. GenTV does not download arbitrary network URLs from this protocol. The extension may have its own network use, account and privacy policy; access to its private data requires its separate authorization. Display permission is stored locally, bound to the app identity and service, and can be revoked in Desktop content settings. The offline reference app contains only fictional data.

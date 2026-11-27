@@ -27,7 +27,6 @@
     <string name="vpn">VPN</string>
     <string name="vpn_off">VPN 未開啟</string>
     <string name="home_settings">選擇預設主畫面</string>
-    <string name="home_settings_help">選擇原本的主畫面即可停止使用 GenTV 當主畫面，要切回來時選 GenTV。原本的桌面必須仍是啟用狀態，如果被安裝腳本停用了，請先用還原腳本啟用；電視也必須有系統的主畫面選擇頁。</string>
     <string name="launcher_settings">桌面設定</string>
     <string name="native_settings">原生設定</string>
     <string name="columns_label">每列 app 數量</string>
@@ -35,11 +34,16 @@
     <string name="animations_state">動畫效果：%1$s</string>
     <string name="advanced_effects">進階效果</string>
     <string name="advanced_effects_state">進階效果：%1$s</string>
-    <string name="open_on_start_label">開機時開啟</string>
-    <string name="open_on_start_state">開機時開啟：%1$s</string>
+    <string name="open_on_start_label">設成開機啟動app</string>
+    <string name="open_on_start_title">設定開機啟動app</string>
+    <string name="quick_start_app">設定開機啟動app</string>
+    <string name="open_on_start_hint">新的選擇從下次開機起生效</string>
+    <string name="open_on_start_off_row">停留在桌面</string>
+    <string name="open_on_start_off_sub">開機時不開啟任何應用程式</string>
+    <string name="open_on_start_apps">已安裝的應用程式 · %1$d</string>
+    <string name="open_on_start_current">目前開機啟動</string>
+    <string name="open_on_start_remote_hint">確認鍵選擇 · 返回鍵取消</string>
     <string name="advanced_effects_warning">加上圖塊浮起、圖示放大與背景顏色漸變。可能會多用一些記憶體，實際差異視電視而定。</string>
-    <string name="follow_theme">跟隨主題（重設電視上的選擇）</string>
-    <string name="follow_theme_hint">改用目前主題或內建的版面與動畫設定。推送或重設主題時，也會清除你在電視上做的這些選擇。</string>
     <string name="tv_settings">電視系統設定</string>
     <string name="on">開</string>
     <string name="off">關</string>
@@ -94,17 +98,4 @@
     </plurals>
     <string name="greeting_with_name">%1$s，%2$s</string>
     <string name="more_apps">更多應用</string>
-    <string name="screensaver_delay_label">進入螢幕保護程式時間</string>
-    <string name="screensaver_delay_state">進入螢幕保護程式時間：%1$s</string>
-    <string name="screensaver_hint">桌面首頁按返回鍵進入航拍螢幕保護程式；按任意鍵返回桌面。</string>
-    <string-array name="screensaver_times">
-        <item>2分鐘</item>
-        <item>10分鐘</item>
-        <item>60分鐘</item>
-        <item>永不</item>
-    </string-array>
-    <string name="screensaver_clear_cache">清除螢幕保護程式快取</string>
-    <string name="screensaver_cache_cleared">快取已清除，下次進入螢幕保護程式時重新下載。</string>
-    <string name="screensaver_cache_clear_failed">快取清除失敗。</string>
-    <string name="screensaver_cache_hint">最多快取 5 段影片，已快取影片隨機輪播。清除後，下次進入螢幕保護程式時重新下載。</string>
 </resources>

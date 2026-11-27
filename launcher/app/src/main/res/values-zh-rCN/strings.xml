@@ -9,7 +9,6 @@
     <string name="set_default_home_hint">需要在系统界面确认</string>
     <string name="home_already_default">GenTV 已是默认桌面</string>
     <string name="home_set_success">GenTV 已设为默认桌面</string>
-    <string name="home_settings_help">选择原始桌面即可关闭简洁桌面的默认桌面状态；需要切回时选择简洁桌面。原始桌面必须仍处于启用状态；若安装脚本已停用它，请先用恢复脚本启用。电视还须提供系统桌面选择页。</string>
     <string name="launcher_settings">简洁桌面设置</string>
     <string name="native_settings">原生设置</string>
     <string name="columns_label">每行应用数量</string>
@@ -22,16 +21,20 @@
     <string name="animations_state">动态效果：%1$s</string>
     <string name="advanced_effects">高级动态效果</string>
     <string name="advanced_effects_state">高级动态效果：%1$s</string>
-    <string name="open_on_start_label">开机时打开</string>
-    <string name="open_on_start_state">开机时打开：%1$s</string>
+    <string name="open_on_start_label">设成开机启动app</string>
     <string name="open_on_start_remove">开机时不再打开</string>
     <string name="open_on_start_saved">已设置开机时打开：%1$s</string>
     <string name="open_on_start_removed">已取消开机时打开：%1$s</string>
     <string name="open_on_start_removed_generic">已关闭开机时打开</string>
     <string name="open_on_start_save_failed">开机启动应用保存失败</string>
+    <string name="open_on_start_title">设置开机启动app</string>
+    <string name="open_on_start_hint">新的选择从下次开机起生效</string>
+    <string name="open_on_start_off_row">停留在桌面</string>
+    <string name="open_on_start_off_sub">开机时不打开任何应用</string>
+    <string name="open_on_start_apps">已安装的应用 · %1$d</string>
+    <string name="open_on_start_current">当前开机启动</string>
+    <string name="open_on_start_remote_hint">确认键选择 · 返回键取消</string>
     <string name="advanced_effects_warning">增加卡片上浮、图标缩放和背景颜色平滑过渡；可能增加内存占用，实际变化取决于电视。</string>
-    <string name="follow_theme">跟随主题（重置电视端设置）</string>
-    <string name="follow_theme_hint">恢复当前主题或内置的布局与动效设置。推送或重置主题也会清除电视端的这些设置。</string>
     <string name="tv_settings">电视系统设置</string>
     <string name="quick_picture">显示</string>
     <string name="quick_toolbox">小工具箱</string>
@@ -164,19 +167,6 @@
     <string name="tile_move">移动</string>
     <string name="tile_replace_in_dock">替换为其他应用</string>
     <string name="more_apps">更多应用</string>
-    <string name="screensaver_delay_label">进入屏保时间</string>
-    <string name="screensaver_delay_state">进入屏保时间：%1$s</string>
-    <string name="screensaver_hint">桌面首页按返回键进入航拍屏保；屏保中按任意键返回桌面。</string>
-    <string-array name="screensaver_times">
-        <item>2分钟</item>
-        <item>10分钟</item>
-        <item>60分钟</item>
-        <item>永不</item>
-    </string-array>
-    <string name="screensaver_clear_cache">清除屏保缓存</string>
-    <string name="screensaver_cache_cleared">屏保缓存已清除，下次进入屏保时重新下载。</string>
-    <string name="screensaver_cache_clear_failed">屏保缓存清除失败。</string>
-    <string name="screensaver_cache_hint">最多缓存 5 段视频，已缓存视频随机轮播。清除后，下次进入屏保时重新下载。</string>
     <string name="quick_personalize">个性化</string>
     <string name="wallpaper_personalization_hint">选择首页壁纸，按返回键回到桌面</string>
     <string name="wallpaper_follow_current">跟随当前壁纸</string>
@@ -213,28 +203,4 @@
     <string name="wallpaper_picker_disconnected">存储设备已拔出，请选择其他位置</string>
     <string name="wallpaper_picker_file_unavailable">此文件已不可用</string>
     <string name="wallpaper_selected">已选</string>
-    <string name="weather_settings_title">城市</string>
-    <string name="weather_no_city">请依次选择省、市、区县。</string>
-    <string name="weather_pick_city">设置城市 · 查看天气</string>
-    <string name="weather_locating">正在识别城市…</string>
-    <string name="weather_selected_city">当前城市：%1$s</string>
-    <string name="weather_province">省 / 直辖市 / 自治区</string>
-    <string name="weather_city">市 / 地区</string>
-    <string name="weather_district">区 / 县</string>
-    <string name="weather_whole_city">全市</string>
-    <string name="weather_regions_unavailable">无法加载地区列表。</string>
-    <string name="weather_remove_city">清除已选城市</string>
-    <string name="weather_source">中国大陆地区列表：ChinaGeoJson；天气数据：Open-Meteo（CC BY 4.0）。仅在桌面显示时更新。</string>
-    <string name="weather_home">%1$s · %2$d°C · %3$s</string>
-    <string name="weather_home_detail">%1$s  %2$d°C  %3$s · %4$s · 最高 %5$d°C  最低 %6$d°C</string>
-    <string name="weather_wheel_hint">左右切换省、市、区县　　上下选择　　确定保存</string>
-    <string name="weather_status">%1$s · %2$s</string>
-    <string name="weather_loading">正在更新天气…</string>
-    <string name="weather_unavailable">天气暂不可用</string>
-    <string name="weather_clear">晴</string>
-    <string name="weather_cloudy">多云</string>
-    <string name="weather_fog">雾</string>
-    <string name="weather_rain">雨</string>
-    <string name="weather_snow">雪</string>
-    <string name="weather_storm">雷暴</string>
 </resources>

@@ -20,8 +20,10 @@ if not a.prepare_only and subprocess.check_output(['git','status','--porcelain']
     p.error('Commit release source changes before publishing; private keys and build output must remain ignored')
 
 sdk=Path(os.environ['ANDROID_HOME']);apk=root/'launcher/app/build/outputs/apk/release/app-release.apk'
+# Match the repository's 5 MB (decimal) Release APK budget.
 size = apk.stat().st_size
-print(f'TV release APK size: {size:,} bytes')
+print(f'TV release APK size: {size:,} / 5,000,000 bytes')
+assert size <= 5_000_000, f'APK exceeds the 5 MB size budget: {size:,} bytes'
 certs=subprocess.check_output([str(sdk/('build-tools/34.0.0/apksigner.bat' if os.name=='nt' else 'build-tools/34.0.0/apksigner')),'verify','--print-certs',str(apk)],text=True)
 assert 'Android Debug' not in certs,'Refusing debug-signed release'
 cert=re.search(r'Signer #1 certificate SHA-256 digest: ([0-9a-f]{64})',certs)[1]

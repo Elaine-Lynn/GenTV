@@ -10,14 +10,15 @@ class WallpaperApiTest(unittest.TestCase):
         self.tmp=tempfile.TemporaryDirectory();self.old=app.MEDIA;self.oldstate=app.STATE;app.MEDIA=Path(self.tmp.name);app.STATE=app.MEDIA/"state"
     def tearDown(self):
         app.MEDIA=self.old;app.STATE=self.oldstate;self.tmp.cleanup()
-    def get(self,path='/tv/wallpaper',method='GET',etag=''):
+    def get(self,path='/tv/wallpaper',method='GET',etag='',query='platform=tv'):
         result={}
         def start(status,headers):result.update(status=status,headers=dict(headers))
-        body=b''.join(app.app({'PATH_INFO':path,'QUERY_STRING':'platform=tv','REQUEST_METHOD':method,'HTTP_IF_NONE_MATCH':etag},start))
+        body=b''.join(app.app({'PATH_INFO':path,'QUERY_STRING':query,'REQUEST_METHOD':method,'HTTP_IF_NONE_MATCH':etag},start))
         return result,body
     def test_old_routes_are_not_exposed(self):
         self.assertEqual(self.get("/wallpaper")[0]["status"], "404 Not Found")
         self.assertEqual(self.get("/wallpapers/one.jpg")[0]["status"], "404 Not Found")
+        self.assertEqual(self.get("/tv/location")[0]["status"], "404 Not Found")
     def test_update_manifest_and_missing(self):
         self.assertEqual(self.get('/tv/update')[0]['status'], '503 Service Unavailable')
         app.STATE.mkdir();(app.STATE/'update.json').write_text('{"versionCode":13}')
@@ -37,6 +38,27 @@ class WallpaperApiTest(unittest.TestCase):
         self.assertEqual(self.get('/tv/stats')[0]['status'],'405 Method Not Allowed')
     def test_empty(self):
         r,b=self.get();self.assertEqual(r['status'],'200 OK');self.assertEqual(json.loads(b)['wallpapers'],[])
+    def test_catalog_preserves_legacy_rotation_and_serves_seed_video(self):
+        for name in (app.CAT_VIDEO, app.CAT_PREVIEW, app.AROWANA_VIDEO, app.AROWANA_PREVIEW, app.DEFAULT_IMAGE, 'existing.jpg'):
+            (app.MEDIA / name).write_bytes(b'fixture')
+        response, body = self.get(query='view=catalog')
+        self.assertEqual(response['status'], '200 OK')
+        groups = json.loads(body)['categories']
+        self.assertEqual([group['id'] for group in groups],
+                         ['pets', 'nature', 'dreamy', 'images', 'shuffle'])
+        self.assertEqual(groups[0]['items'][0]['path'], 'wallpapers/' + app.CAT_VIDEO)
+        self.assertEqual(groups[0]['items'][1]['id'], 'arowana-loop')
+        self.assertEqual(groups[0]['items'][1]['path'], 'wallpapers/' + app.AROWANA_VIDEO)
+        self.assertEqual(groups[0]['items'][1]['preview'], 'wallpapers/' + app.AROWANA_PREVIEW)
+        self.assertEqual(len(groups[0]['items']), 2)
+        self.assertNotIn('placeholder', [i['kind'] for g in groups for i in g['items']])
+        self.assertEqual(groups[3]['items'][0]['id'], 'default')
+        self.assertEqual([i['id'] for i in groups[4]['items']],
+                         ['shuffle-all', 'shuffle-pets', 'shuffle-nature', 'shuffle-dreamy', 'shuffle-images'])
+        self.assertEqual(len(json.loads(self.get()[1])['wallpapers']), 1)
+        self.assertEqual(self.get('/tv/wallpapers/' + app.CAT_VIDEO)[1], b'fixture')
+        self.assertEqual(self.get('/tv/wallpapers/' + app.AROWANA_VIDEO)[1], b'fixture')
+
     def test_list_and_media(self):
         (app.MEDIA/'one.jpg').write_bytes(b'fixture')
         r,b=self.get();items=json.loads(b)['wallpapers'];self.assertEqual(len(items),1)
@@ -65,6 +87,18 @@ class WallpaperApiTest(unittest.TestCase):
         second = json.loads(self.get()[1])['wallpapers'][0]['id']
         self.assertNotEqual(first, second)
 
+    def test_pre_rendered_previews_are_served_but_never_listed(self):
+        (app.MEDIA/'coast.jpg').write_bytes(b'full')
+        (app.MEDIA/'coast-preview.jpg').write_bytes(b'small')
+        (app.MEDIA/'desert.jpg').write_bytes(b'full')
+        rotation=json.loads(self.get()[1])['wallpapers']
+        self.assertEqual([i['url'].split('?')[0].rsplit('/',1)[1] for i in rotation],['coast.jpg','desert.jpg'])
+        stills={i['id']:i for i in json.loads(self.get(query='view=catalog')[1])['categories'][3]['items']}
+        self.assertEqual(stills['image-coast.jpg']['preview'],'wallpapers/coast-preview.jpg')
+        self.assertEqual(stills['image-coast.jpg']['path'],'wallpapers/coast.jpg')
+        self.assertEqual(stills['image-desert.jpg']['preview'],'wallpapers/desert.jpg')
+        self.assertNotIn('image-coast-preview.jpg',stills)
+        self.assertEqual(self.get('/tv/wallpapers/coast-preview.jpg')[1],b'small')
     def test_utf8_filenames(self):
         (app.MEDIA/'海岸.jpg').write_bytes(b'fixture')
         self.assertIn('%E6%B5%B7',json.loads(self.get()[1])['wallpapers'][0]['url'])

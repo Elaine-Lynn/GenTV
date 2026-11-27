@@ -1,0 +1,6 @@
+<resources>
+    <string name="home_setup_choose">请在系统界面选择 GenTV，如有“始终”选项，请选择“始终”。</string>
+    <string name="home_setup_not_changed">GenTV 尚未成为系统默认桌面。可以尝试另一种系统选择方式，也可以取消。</string>
+    <string name="home_setup_try_next">尝试其他方式</string>
+    <string name="home_setup_unavailable">这台电视没有更多可用的桌面设置入口。如果系统设置提供默认桌面选项，请在那里选择 GenTV。</string>
+</resources>

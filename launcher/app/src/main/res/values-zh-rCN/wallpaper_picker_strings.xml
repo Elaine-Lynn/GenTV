@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+  <string name="wallpaper_still_title">静态壁纸</string>
+  <string name="wallpaper_motion_title">动态壁纸</string>
+  <string name="wallpaper_motion_teal">青色潮汐</string>
+  <string name="wallpaper_motion_indigo">靛紫光弧</string>
+  <string name="wallpaper_motion_cat">好奇黑猫</string>
+  <string name="wallpaper_motion_aquarium">观赏鱼缸</string>
+</resources>

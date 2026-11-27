@@ -28,7 +28,6 @@
     <string name="vpn">VPN</string>
     <string name="vpn_off">VPN বন্ধ</string>
     <string name="home_settings">ডিফল্ট হোম বেছে নিন</string>
-    <string name="home_settings_help">GenTV-কে আর হোম হিসেবে ব্যবহার না করতে আপনার আগের হোম বেছে নিন, আবার ফিরতে GenTV বেছে নিন। আগের লঞ্চারটি চালু থাকতে হবে এবং আপনার টিভিতে হোম বেছে নেওয়ার ব্যবস্থা থাকতে হবে; সেটি বন্ধ করা থাকলে আগে রিস্টোর স্ক্রিপ্ট চালান।</string>
     <string name="launcher_settings">লঞ্চার সেটিংস</string>
     <string name="native_settings">নেটিভ সেটিংস</string>
     <string name="columns_label">প্রতি সারিতে অ্যাপ</string>
@@ -37,10 +36,7 @@
     <string name="advanced_effects">এডভান্স ইফেক্টস</string>
     <string name="advanced_effects_state">এডভান্স ইফেক্টস: %1$s</string>
     <string name="open_on_start_label">চালু হলে খুলুন</string>
-    <string name="open_on_start_state">চালু হলে খুলুন: %1$s</string>
     <string name="advanced_effects_warning">এতে টাইল একটু উপরে উঠে আসে, আইকন জুম হয় এবং কালার স্মুথভাবে বদলায়। মেমরি বেশি লাগতে পারে; কতটা পার্থক্য হবে তা আপনার টিভির উপর নির্ভর করে।</string>
-    <string name="follow_theme">থিম অনুসরণ করুন (টিভিতে করা পছন্দ মুছে দিন)</string>
-    <string name="follow_theme_hint">বর্তমান থিম বা বিল্ট-ইন লেআউট ও মোশন সেটিংস ব্যবহার করে। থিম পাঠালে বা রিসেট করলেও টিভিতে করা আপনার পছন্দ মুছে যায়।</string>
     <string name="tv_settings">টিভির সিস্টেম সেটিংস</string>
     <string name="quick_picture">ডিসপ্লে</string>
     <string name="quick_network">নেটওয়ার্ক</string>

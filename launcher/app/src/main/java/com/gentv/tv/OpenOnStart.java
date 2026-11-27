@@ -1,14 +1,23 @@
 package com.gentv.tv;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.content.SharedPreferences;
 import android.provider.Settings;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.text.Collator;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 /** The one app Home opens on its first appearance after each boot. */
 final class OpenOnStart {
@@ -19,6 +28,32 @@ final class OpenOnStart {
     static final String BOOT_KEY = "live_tv_boot";
 
     private OpenOnStart() {
+    }
+
+    /** Shows the startup-app sheet. TV and phone launchable apps are listed; OK on one saves it, and the pick takes
+     *  effect from the next boot. */
+    static void showPicker(Activity activity) {
+        OpenOnStartDialog.show(activity);
+    }
+
+    /** Every enabled TV or phone launchable app but GenTV, package to label, sorted by label. */
+    static Map<String, String> launchableApps(Context ctx) {
+        PackageManager pm = ctx.getPackageManager();
+        Map<String, String> packages = new TreeMap<>();
+        for (String category : new String[]{Intent.CATEGORY_LEANBACK_LAUNCHER, Intent.CATEGORY_LAUNCHER}) {
+            for (ResolveInfo entry : pm.queryIntentActivities(new Intent(Intent.ACTION_MAIN).addCategory(category), 0)) {
+                String pkg = entry.activityInfo.packageName;
+                if (pkg.equals(ctx.getPackageName()) || packages.containsKey(pkg)) continue;
+                if (!entry.activityInfo.enabled || !entry.activityInfo.applicationInfo.enabled) continue;
+                packages.put(pkg, entry.loadLabel(pm).toString());
+            }
+        }
+        List<String> apps = new ArrayList<>(packages.keySet());
+        Collator collator = Collator.getInstance();
+        Collections.sort(apps, (a, b) -> collator.compare(packages.get(a), packages.get(b)));
+        Map<String, String> sorted = new LinkedHashMap<>();
+        for (String pkg : apps) sorted.put(pkg, packages.get(pkg));
+        return sorted;
     }
 
     /** Whether the first Home of this boot opens {@code pkg}: a known boot not handled yet, and an app that is not

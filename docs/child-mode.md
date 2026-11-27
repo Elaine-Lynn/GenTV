@@ -1,6 +1,6 @@
 # 防沉迷系统 / Child viewing controls
 
-电视版 3.7.12 / code34 提供防沉迷系统。中文入口位于 **控制中心（GenTV 设置一级列表）→ 桌面主题切换下方 → 防沉迷系统**；英文入口为 **Control center → Child mode**。
+电视版 3.7.12 / code34 提供防沉迷系统。中文入口位于 **控制中心 → 防沉迷系统**；英文入口为 **Control center → Child mode**。
 
 ## 开启和使用
 

@@ -1,39 +1,49 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Quick settings opened by the remote's Settings button: the Inputs dropdown's glass panel, placed
-     under the Settings pill so it lines up on Home and sits top right over any app. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/scrim"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="#1805070C"
+    tools:ignore="Overdraw">
 
-    <LinearLayout
+    <FrameLayout
         android:id="@+id/panel"
-        android:layout_width="360dp"
+        android:layout_width="428dp"
         android:layout_height="wrap_content"
         android:layout_gravity="top|end"
-        android:layout_marginTop="105dp"
-        android:layout_marginEnd="56dp"
-        android:orientation="vertical"
-        android:background="@drawable/settings_frosted_panel"
-        android:padding="6dp"
-        android:elevation="12dp">
+        android:layout_marginTop="26dp"
+        android:layout_marginBottom="26dp"
+        android:layout_marginEnd="28dp"
+        android:background="@drawable/quick_settings_panel"
+        android:clickable="true"
+        android:clipChildren="false"
+        android:clipToPadding="false"
+        android:elevation="18dp"
+        android:focusable="false">
 
-        <TextView
-            android:id="@+id/quickTitle"
+        <ScrollView
+            android:id="@+id/panelScroll"
             android:layout_width="match_parent"
-            android:layout_height="42dp"
-            android:layout_marginBottom="32dp"
-            android:gravity="center_vertical"
-            android:paddingStart="14dp"
-            android:paddingEnd="14dp"
-            android:textColor="#FFFFFFFF"
-            android:textSize="17sp"
-            android:text="@string/quick_toolbox"
-            android:fontFamily="@string/font_medium" />
+            android:layout_height="wrap_content"
+            android:clipChildren="false"
+            android:clipToPadding="false"
+            android:focusable="false"
+            android:overScrollMode="never"
+            android:paddingStart="12dp"
+            android:paddingTop="14dp"
+            android:paddingEnd="12dp"
+            android:paddingBottom="12dp"
+            android:scrollbars="none">
 
-        <com.gentv.tv.ToolboxGridView
-            android:id="@+id/rows"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
-    </LinearLayout>
+            <LinearLayout
+                android:id="@+id/rows"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:clipChildren="false"
+                android:clipToPadding="false"
+                android:orientation="vertical"
+                android:padding="4dp" />
+        </ScrollView>
+    </FrameLayout>
 </FrameLayout>

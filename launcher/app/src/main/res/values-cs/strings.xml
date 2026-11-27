@@ -24,7 +24,6 @@
     <string name="vpn">VPN</string>
     <string name="vpn_off">VPN vypnutá</string>
     <string name="home_settings">Výchozí domovská obrazovka</string>
-    <string name="home_settings_help">Vyberte původní domovskou obrazovku, pokud už nechcete GenTV používat jako domovskou, nebo GenTV, pokud se k ní chcete vrátit. Původní launcher musí být zapnutý a televize musí nabízet výběr domovské obrazovky. Pokud byl vypnutý, spusťte nejdřív skript pro obnovení.</string>
     <string name="launcher_settings">Nastavení domovské obrazovky</string>
     <string name="native_settings">Nastavení výrobce</string>
     <string name="columns_label">Aplikací v řádku</string>
@@ -39,10 +38,7 @@
     <string name="advanced_effects">Pokročilé efekty</string>
     <string name="advanced_effects_state">Pokročilé efekty: %1$s</string>
     <string name="open_on_start_label">Otevřít po spuštění</string>
-    <string name="open_on_start_state">Otevřít po spuštění: %1$s</string>
     <string name="advanced_effects_warning">Přidá zvednutou dlaždici, zvětšení ikon a plynulé přechody barev. Může zvýšit spotřebu paměti, skutečný rozdíl záleží na televizi.</string>
-    <string name="follow_theme">Podle motivu (zrušit volby na TV)</string>
-    <string name="follow_theme_hint">Použije aktuální motiv nebo vestavěné nastavení rozložení a animací. Nahrání nového motivu nebo jeho resetování také zruší volby provedené na televizi.</string>
     <string name="tv_settings">Systémová nastavení TV</string>
     <string name="on">Zapnuto</string>
     <string name="off">Vypnuto</string>

@@ -5,20 +5,12 @@ import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.LinearLayout;
-import android.widget.RadioButton;
-import android.widget.RadioGroup;
 import android.widget.Toast;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 /** Remote-friendly settings owned by the launcher; system settings stay one row away. */
 public final class LauncherSettingsActivity extends Activity {
@@ -33,11 +25,8 @@ public final class LauncherSettingsActivity extends Activity {
     private final TextView[] rowChoices = new TextView[4];
     private static final int[] DOCK_OPACITIES = {100, 70, 50, 30};
     private final TextView[] dockChoices = new TextView[DOCK_OPACITIES.length];
-    private TextView screensaverChoice;
     private TextView animationsChoice;
     private TextView advancedChoice;
-    private TextView followThemeChoice;
-    private TextView openOnStartChoice;
     private int columns;
     private int rowsBelowDock;
     private int dockOpacity;
@@ -52,24 +41,6 @@ public final class LauncherSettingsActivity extends Activity {
                 ((android.view.ViewGroup) findViewById(android.R.id.content)).getChildAt(0));
         choices = getSharedPreferences(Config.SETTINGS_NAME, MODE_PRIVATE);
         Config config = Config.load(this);
-        boolean pondMode = DesktopMode.current(this) == DesktopMode.POND;
-        if (pondMode) {
-            ((TextView) findViewById(R.id.settingsTitle)).setText(R.string.pond_settings);
-            ((TextView) findViewById(R.id.settingsHint)).setText(R.string.pond_settings_hint);
-            findViewById(R.id.pondSettings).setVisibility(View.VISIBLE);
-            findViewById(R.id.screensaverChoice).setVisibility(View.GONE);
-            findViewById(R.id.screensaver_hint).setVisibility(View.GONE);
-            findViewById(R.id.clearScreensaverCacheChoice).setVisibility(View.GONE);
-            findViewById(R.id.screensaver_cache_hint).setVisibility(View.GONE);
-            findViewById(R.id.advancedChoice).setVisibility(View.GONE);
-            findViewById(R.id.advancedHint).setVisibility(View.GONE);
-            findViewById(R.id.followThemeChoice).setVisibility(View.GONE);
-            findViewById(R.id.followThemeHint).setVisibility(View.GONE);
-            bindPondOption(R.id.pondCountChoice, PondOption.COUNT);
-            bindPondOption(R.id.pondSpeedChoice, PondOption.SPEED);
-            bindPondOption(R.id.pondFpsChoice, PondOption.FPS);
-            bindPondOption(R.id.pondResolutionChoice, PondOption.RESOLUTION);
-        }
         View reorderChoice = findViewById(R.id.reorderChoice);
         reorderChoice.setVisibility(config.launcherSettingsButton ? View.VISIBLE : View.GONE);
         reorderChoice.setOnClickListener(v -> {
@@ -127,36 +98,6 @@ public final class LauncherSettingsActivity extends Activity {
             reverseRow(rowChoices);
             reverseRow(dockChoices);
         }
-        screensaverChoice = findViewById(R.id.screensaverChoice);
-        screensaverChoice.setOnClickListener(v -> {
-            int[] minutes = {2, 10, 60, 0};
-            String[] labels = getResources().getStringArray(R.array.screensaver_times);
-            int current = ScreensaverIdle.minutes(choices.getInt(ScreensaverIdle.MINUTES_KEY, ScreensaverIdle.DEFAULT_MINUTES));
-            int checked = 0;
-            for (int i = 0; i < minutes.length; i++) if (minutes[i] == current) checked = i;
-            new AlertDialog.Builder(this).setTitle(R.string.screensaver_delay_label)
-                    .setSingleChoiceItems(labels, checked, (dialog, which) -> {
-                        choices.edit().putInt(ScreensaverIdle.MINUTES_KEY, minutes[which]).apply();
-                        changed(); refresh(); dialog.dismiss();
-                    }).setNegativeButton(android.R.string.cancel, null).show();
-        });
-        findViewById(R.id.clearScreensaverCacheChoice).setOnClickListener(v -> {
-            v.setEnabled(false);
-            new Thread(() -> {
-                boolean cleared;
-                try {
-                    new AerialCache(new java.io.File(getFilesDir(), "aerial-cache")).clear();
-                    cleared = true;
-                } catch (java.io.IOException error) { cleared = false; }
-                final boolean success = cleared;
-                runOnUiThread(() -> {
-                    v.setEnabled(true);
-                    if (!isFinishing() && !isDestroyed()) Toast.makeText(this,
-                            success ? R.string.screensaver_cache_cleared : R.string.screensaver_cache_clear_failed,
-                            Toast.LENGTH_LONG).show();
-                });
-            }, "clear-aerial-cache").start();
-        });
         animationsChoice = findViewById(R.id.animationsChoice);
         animationsChoice.setOnClickListener(v -> {
             animations = !animations;
@@ -179,127 +120,19 @@ public final class LauncherSettingsActivity extends Activity {
                         .show();
             }
         });
-        openOnStartChoice = findViewById(R.id.openOnStartChoice);
-        if (config.openOnStartChoice) {
-            openOnStartChoice.setVisibility(View.VISIBLE);
-            openOnStartChoice.setOnClickListener(v -> showOpenOnStartPicker());
-        }
-        followThemeChoice = findViewById(R.id.followThemeChoice);
-        followThemeChoice.setOnClickListener(v -> {
-            if (!hasOnTvChoices()) return;
-            choices.edit().remove("columns").remove(Config.ROWS_BELOW_DOCK_KEY).remove("animations")
-                    .remove("advanced_effects").remove(Config.WALLPAPER_CHOICE_KEY)
-                    .remove(Config.DOCK_OPACITY_KEY).remove(ScreensaverIdle.MINUTES_KEY).remove(OpenOnStart.KEY).commit();
-            Config current = Config.load(this);
-            columns = current.columns;
-            rowsBelowDock = current.rowsBelowDock;
-            dockOpacity = current.dockOpacity;
-            animations = current.animations;
-            advancedEffects = current.animations && current.advancedEffects;
-            changed();
-            refresh();
-        });
         findViewById(R.id.metricsChoice).setOnClickListener(v ->
                 startActivity(new Intent(this, MetricsSettingsActivity.class)));
-        findViewById(R.id.defaultHomeChoice).setOnClickListener(v -> {
-            startActivity(new Intent(this, HomeSettingsActivity.class));
-        });
         findViewById(R.id.tvSettingsChoice).setOnClickListener(v ->
                 open(SystemSettings.intent(this, Settings.ACTION_SETTINGS)));
         refresh();
-        if (pondMode) findViewById(R.id.pondCountChoice).requestFocus();
-        else if (config.launcherSettingsButton) reorderChoice.requestFocus();
+        if (config.launcherSettingsButton) reorderChoice.requestFocus();
         else columnChoices[Math.max(0, Math.min(columns - 4, 3))].requestFocus();
-    }
-
-    private void bindPondOption(int rowId, PondOption option) {
-        TextView row = findViewById(rowId);
-        row.setText(option.label(this, option.read(choices)));
-        row.setOnClickListener(v -> {
-            int current = option.read(choices);
-            RadioGroup group = new RadioGroup(this);
-            int padding = Math.round(20 * getResources().getDisplayMetrics().density);
-            group.setPadding(padding, padding, padding, padding);
-            AlertDialog dialog = new AlertDialog.Builder(this)
-                    .setTitle(option.title)
-                    .setView(group)
-                    .create();
-            RadioButton selected = null;
-            for (int value : option.values) {
-                RadioButton choice = (RadioButton) getLayoutInflater().inflate(R.layout.item_pond_option, group, false);
-                choice.setId(View.generateViewId());
-                choice.setText(option.label(this, value));
-                choice.setOnClickListener(button -> {
-                    dialog.dismiss();
-                    if (value == current) return;
-                    option.write(choices, value);
-                    changed();
-                    row.setText(option.label(this, value));
-                });
-                group.addView(choice);
-                if (value == current) selected = choice;
-            }
-            dialog.setOnDismissListener(d -> row.requestFocus());
-            if (selected != null) group.check(selected.getId());
-            dialog.show();
-            if (selected != null) selected.requestFocus();
-        });
     }
 
     private void reverseRow(TextView[] views) {
         LinearLayout row = (LinearLayout) views[0].getParent();
         row.removeAllViews();
         for (int i = views.length - 1; i >= 0; i--) row.addView(views[i]);
-    }
-
-    /** Off, then every app with a TV entry point by name. Saved at once; it is read on the next boot. */
-    private void showOpenOnStartPicker() {
-        PackageManager pm = getPackageManager();
-        List<String[]> apps = new ArrayList<>();
-        Intent tv = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LEANBACK_LAUNCHER);
-        for (ResolveInfo r : pm.queryIntentActivities(tv, 0)) {
-            String pkg = r.activityInfo.packageName;
-            if (pkg.equals(getPackageName())) continue;
-            boolean seen = false;
-            for (String[] a : apps) seen |= a[1].equals(pkg);
-            if (!seen) apps.add(new String[]{r.loadLabel(pm).toString(), pkg});
-        }
-        Collections.sort(apps, (a, b) -> a[0].compareToIgnoreCase(b[0]));
-        String[] labels = new String[apps.size() + 1];
-        labels[0] = getString(R.string.off);
-        String current = choices.getString(OpenOnStart.KEY, "");
-        int checked = 0;
-        for (int i = 0; i < apps.size(); i++) {
-            labels[i + 1] = apps.get(i)[0];
-            if (apps.get(i)[1].equals(current)) checked = i + 1;
-        }
-        new AlertDialog.Builder(this)
-                .setTitle(R.string.open_on_start_label)
-                .setSingleChoiceItems(labels, checked, (dialog, which) -> {
-                    dialog.dismiss();
-                    String pkg = which == 0 ? "" : apps.get(which - 1)[1];
-                    if (!OpenOnStart.save(this, pkg)) {
-                        Toast.makeText(this, R.string.open_on_start_save_failed, Toast.LENGTH_SHORT).show();
-                        return;
-                    }
-                    Toast.makeText(this, which == 0 ? getString(R.string.open_on_start_removed_generic)
-                            : getString(R.string.open_on_start_saved, apps.get(which - 1)[0]), Toast.LENGTH_SHORT).show();
-                    refresh();
-                })
-                .setNegativeButton(android.R.string.cancel, null)
-                .show();
-    }
-
-    /** The picked app's name, its package when it is gone, or Off. */
-    private String openOnStartLabel() {
-        String pkg = choices.getString(OpenOnStart.KEY, "");
-        if (pkg.isEmpty()) return getString(R.string.off);
-        try {
-            PackageManager pm = getPackageManager();
-            return pm.getApplicationLabel(pm.getApplicationInfo(pkg, 0)).toString();
-        } catch (PackageManager.NameNotFoundException e) {
-            return pkg;
-        }
     }
 
     /**
@@ -336,19 +169,6 @@ public final class LauncherSettingsActivity extends Activity {
                 getString(advancedEffects ? R.string.on : R.string.off)));
         advancedChoice.setEnabled(animations);
         advancedChoice.setAlpha(animations ? 1f : 0.5f);
-        int minutes = ScreensaverIdle.minutes(choices.getInt(ScreensaverIdle.MINUTES_KEY, ScreensaverIdle.DEFAULT_MINUTES));
-        int index = minutes == 10 ? 1 : minutes == 60 ? 2 : minutes == 0 ? 3 : 0;
-        screensaverChoice.setText(getString(R.string.screensaver_delay_state,
-                getResources().getStringArray(R.array.screensaver_times)[index]));
-        openOnStartChoice.setText(getString(R.string.open_on_start_state, openOnStartLabel()));
-        followThemeChoice.setSelected(!hasOnTvChoices());
-    }
-
-    private boolean hasOnTvChoices() {
-        return choices.contains("columns") || choices.contains(Config.ROWS_BELOW_DOCK_KEY)
-                || choices.contains("animations") || choices.contains("advanced_effects")
-                || choices.contains(Config.WALLPAPER_CHOICE_KEY) || choices.contains(Config.DOCK_OPACITY_KEY)
-                || choices.contains(OpenOnStart.KEY) || choices.contains(ScreensaverIdle.MINUTES_KEY);
     }
 
     private void open(Intent intent) {

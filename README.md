@@ -43,14 +43,6 @@ Official channels are only [gentv.me](https://www.gentv.me/) and this repository
 | **A Samsung (Tizen), LG (webOS) or Hisense VIDAA TV** | GenTV can't run there: [why](#does-it-work-on-samsung-lg-or-vidaa-tvs) |
 | **You want to see it first** | [Screenshots](#screenshots) |
 
-## New in TV 3.7.8 · Interactive fish pond
-
-Turn your TV home screen into a live pond with swimming koi, a turtle and a fishing cat. Use the remote to feed the fish, go fishing and see your catches in Achievements.
-
-Open **Control center → Desktop theme** to preview and switch between the Apple-style simple desktop and the interactive fish pond. The two modes share your app layout and remember your theme choice after a restart. In **Fish pond settings**, adjust the fish count, swimming speed and frame rate, or choose 720p or 1080p rendering.
-
-<img src="docs/media/readme/overview/pond-desktop.gif" alt="GenTV interactive fish pond with swimming koi, a cat casting a fishing rod from the right bank, and app tiles along the bottom" width="800">
-
 ## Child viewing controls
 
 Open **Control center → Child mode** to set a parent PIN, managed apps, question type and difficulty. Choose 5, 10, 15 or 20 minutes; the default is 10. The timer counts screen-on foreground time in selected apps and presents an offline question when due. A correct answer releases the current restriction; playback recovery depends on the player.
@@ -60,7 +52,7 @@ Automatic timing requires the child timer accessibility service to be connected.
 ## Why GenTV
 
 - **Everything from your phone.** Install GenTV, clean up the TV, use the remote and keyboard, send files and rearrange the home screen from an Android phone on the same network. You don't need a computer or a cable.
-- **A home screen without ads.** GenTV shows no promotions, recommendation rows or ads. You see only your apps, wallpapers and input sources, on large tiles made for a remote. Choose between the Apple-style simple desktop and the interactive fish pond.
+- **A home screen without ads.** GenTV shows no promotions, recommendation rows or ads. You see only your apps, wallpapers and input sources, on large tiles made for a remote.
 - **Clear out the clutter.** Check storage, clear caches, and review, disable or remove preinstalled apps you don't use. System components are protected, and every change is recorded.
 - **Undo what you changed.** Re-enable disabled apps and restore eligible preinstalled apps from the phone.
 - **Installed to be your home screen.** A full install makes GenTV the default Home once it opens and works with your remote. The previous Home is recorded first and the stock launcher is never uninstalled, so you can switch back. For China-market TVs, see the [FAQ](#default-home).
@@ -245,6 +237,8 @@ Choose the original Home in the TV's settings and check that it opens. Export yo
 | Remote debug build | `com.gentv.mobile.debug` | Isolated test installation |
 
 Development builds don't need signing keys or server access, and builds from a fresh clone never contact the official service. Build commands, repository checks, self-hosted services, release signing and the full documentation list are in [CONTRIBUTING.md](CONTRIBUTING.md). Rules for coding assistants are in [AGENTS.md](AGENTS.md).
+
+To show your own app's content on the GenTV home screen, follow **Gen 插件 App 开发规范** (the Gen plug-in app development spec, protocol GHCP 1): the [developer guide (Chinese)](docs/reference/home-content-development.zh-CN.md), the [English wire reference](docs/reference/home-content.md) and the [reference app](launcher/home-content-example/README.md). It is a developer preview, and the TV must run Android 5.0 or later. It is separate from the ADB [desktop configuration protocol](docs/desktop-protocol.md) and [Module Card spec 1](docs/reference/modules.md).
 
 <a id="origins"></a>
 

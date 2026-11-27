@@ -31,10 +31,7 @@
     <string name="advanced_effects">Efectes avançats</string>
     <string name="advanced_effects_state">Efectes avançats: %1$s</string>
     <string name="open_on_start_label">Obre en iniciar</string>
-    <string name="open_on_start_state">Obre en iniciar: %1$s</string>
     <string name="advanced_effects_warning">Eleva les targetes, amplia les icones i suavitza els canvis de color. Pot augmentar l’ús de memòria; depèn del televisor.</string>
-    <string name="follow_theme">Segueix el tema (restableix els ajustos)</string>
-    <string name="follow_theme_hint">Utilitza la disposició i els efectes del tema actual o els valors integrats. Aplicar o restablir un tema també esborra aquests ajustos.</string>
     <string name="tv_settings">Configuració del televisor</string>
     <string name="on">Activat</string>
     <string name="off">Desactivat</string>
@@ -68,7 +65,6 @@
     <string name="greeting_with_name">%1$s, %2$s</string>
     <string name="vpn_off">VPN desactivada</string>
     <string name="home_settings">Tria la pantalla d\'inici</string>
-    <string name="home_settings_help">Tria la teva pantalla d\'inici original per deixar d\'utilitzar GenTV com a inici, o GenTV per tornar-hi. El llançador original ha d\'estar activat i el televisor ha de tenir un selector de pantalla d\'inici; si l\'havies desactivat, fes servir abans l\'script de restauració.</string>
     <string name="rows_below_dock_label">Files sota el dock</string>
     <string name="wallpaper_label">Fons de pantalla</string>
     <string name="wallpaper_state">Fons de pantalla: %1$s</string>

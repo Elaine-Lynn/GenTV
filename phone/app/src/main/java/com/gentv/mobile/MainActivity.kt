@@ -34,12 +34,8 @@ import java.io.File
 
 class MainActivity : ComponentActivity() {
     private val analyticsPreferences by lazy { getSharedPreferences("gentv_metrics", MODE_PRIVATE) }
-    private val analytics by lazy {
-        Analytics(kotlinx.coroutines.CoroutineScope(lifecycleScope.coroutineContext + kotlinx.coroutines.Dispatchers.IO),
-            BuildConfig.VERSION_NAME, Build.VERSION.SDK_INT, Analytics::post).also {
-            it.setEnabled(Analytics.configured && analyticsPreferences.getBoolean("enabled", false))
-        }
-    }
+    private val metrics: com.gentv.mobile.data.MetricsViewModel by viewModels()
+    private val analytics get() = metrics.analytics
 
     private fun observeMetrics() {
         if (BuildConfig.DEBUG) return // Emulator and development traffic never enters product metrics.
@@ -120,7 +116,6 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-        if (!BuildConfig.DEBUG && savedInstanceState == null) analytics.record(Event.APP_OPEN)
         observeMetrics()
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() { if (!vm.back()) finish() }
@@ -134,6 +129,19 @@ class MainActivity : ComponentActivity() {
                 ) { GenTVApp(state, vm, ::shareLogs, host) }
             }
         }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        if (!BuildConfig.DEBUG) {
+            analytics.onForeground()
+            analytics.record(Event.SCREEN_VIEW, if (vm.ui.value.desktop != null) "desktop" else vm.ui.value.wizard.step.name.lowercase(java.util.Locale.ROOT))
+        }
+    }
+
+    override fun onStop() {
+        if (!BuildConfig.DEBUG) analytics.onBackground()
+        super.onStop()
     }
 
     /** While the remote is open, the phone's volume buttons turn the TV's volume. */
@@ -183,11 +191,15 @@ class MainActivity : ComponentActivity() {
         requestReview = ::requestReview,
         selfUpdate = selfUpdate,
         installUpdate = { selfUpdate.install(this) },
-        analyticsEnabled = { analyticsPreferences.getBoolean("enabled", false) },
+        analyticsEnabled = { analyticsPreferences.getBoolean("enabled_v3", false) },
         setAnalyticsEnabled = { enabled ->
-            analyticsPreferences.edit().putBoolean("enabled", enabled).apply()
+            analyticsPreferences.edit().putBoolean("enabled_v3", enabled).putBoolean("enabled_v2", false).putBoolean("enabled", false).apply()
+            if (!enabled) analyticsPreferences.edit().remove("install_v2").apply()
             analytics.setEnabled(enabled && !BuildConfig.DEBUG && Analytics.configured)
+            if (enabled) analytics.record(Event.SCREEN_VIEW, "settings")
         },
+        analyticsTestTraffic = { analyticsPreferences.getBoolean("test_traffic", false) },
+        setAnalyticsTestTraffic = { analyticsPreferences.edit().putBoolean("test_traffic", it).apply() },
         recordScreen = { if (!BuildConfig.DEBUG) analytics.record(Event.SCREEN_VIEW, it) },
     ) }
 

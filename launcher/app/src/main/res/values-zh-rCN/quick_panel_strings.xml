@@ -1,0 +1,33 @@
+<resources>
+    <string name="quick_wallpaper">壁纸与屏保</string>
+    <string name="quick_extensions">Gen扩展</string>
+    <string name="quick_gentv_settings">GenTV设置</string>
+    <string name="quick_display">显示</string>
+    <string name="quick_memory">内存清理</string>
+    <string name="quick_default_home">设为系统桌面</string>
+    <string name="quick_child">防沉迷系统</string>
+    <string name="quick_share_code">分享码</string>
+    <string name="share_code_input_hint">输入 4 位分享码</string>
+    <string name="share_code_apps">分享的应用</string>
+    <string name="share_code_loading">正在加载应用列表…</string>
+    <string name="share_code_empty">未找到 APK 文件</string>
+    <string name="share_code_load_failed">无法从 GitHub 加载应用列表</string>
+    <string name="share_code_retry">重试</string>
+    <string name="share_code_download_starting">正在连接 GitHub…</string>
+    <string name="share_code_download_reconnecting">正在重连…（%1$d/%2$d）</string>
+    <string name="share_code_ready_to_install">已下载，可安装</string>
+    <string name="share_code_not_downloaded">未下载</string>
+    <string name="share_code_installed">已安装</string>
+    <string name="share_code_open_failed">无法打开此应用</string>
+    <string name="share_code_download_failed">下载失败，再次选择该应用可重试。</string>
+    <string name="share_code_install_failed">无法安装此 APK</string>
+    <string name="quick_about">关于GenTV</string>
+    <string name="quick_about_detail">GenTV %1$s\n免费、开源、无广告的 Android TV 桌面。</string>
+    <string name="quick_memory_detail">当前可用内存：%1$s\nAndroid 自动管理后台内存，可进入应用管理停止不使用的应用。</string>
+    <string name="quick_start_app">设置开机启动app</string>
+    <string name="memory_cleaning">正在清理内存</string>
+    <string name="memory_cleaned">已清理 %1$d MB 内存空间</string>
+    <string name="memory_cleanup_scope">%1$d 个后台进程已退出 · 按确认键返回</string>
+    <string name="memory_cleanup_failed">未能执行后台清理</string>
+    <string name="memory_cleanup_retry">请开启电视网络调试，并允许本机连接</string>
+</resources>

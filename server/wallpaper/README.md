@@ -76,6 +76,68 @@ sh install-on-server.sh /var/tmp/wallpaper-source.tar.gz <sha256>
 写入端点有 Nginx 入口限流与每来源内存配额；Cloudflare 可信代理网段仅从官方 API 获取并验证 CIDR，Nginx 覆盖客户端传入的来源头。来源仅以随机密钥哈希短暂存在内存，不存入统计表。共享网络仍共享配额。
 
 正式 TV 更新清单增加 `signingCertificateSha256`、`minSdk`、`sizeBytes`。旧 debug TV 客户端使用独立 legacy 清单，参见 `docs/release.md`。强制策略默认关闭，客户端只有通过完整清单验证后才接受，24 小时后需重新验证策略。
-## 自动识别天气城市
 
-可选的高德 IP 定位代理接口与配置见 [高德自动城市配置](../../docs/amap-city-location.md)。Key 仅放在服务端环境变量 `AMAP_WEB_SERVICE_KEY` 中。
+## 使用统计报表
+
+`/tv/report/` 为独立、带 HTTP Basic 登录的内部报表；`/tv/report/export.csv` 导出所选日期的每日汇总。默认起始日期为 2026-10-28，支持最多 366 天范围。日期按 UTC；当日为未结束的部分数据。无上报填 0，数据库缺失单独标注，损坏或读取失败返回 503。
+
+报表展示电视会话、前台时长、手机启动、连接成功、清理完成、版本与事件分布。只用 SQLite `mode=ro` 和 `query_only` 读取 `stats.sqlite3.daily`、`mobile.sqlite3.totals`；不读反馈、原始事件或设备资料。现有数据没有安装 ID，不能计算安装台数、去重用户、新增设备，也不能区分测试流量。此报表不改变客户端采集行为或统计授权。
+
+独立 Gunicorn 服务 `gentv-report` 仅监听 `127.0.0.1:18766`；Nginx 在 API HTTPS vhost 引入 `deploy/nginx-report.locations.conf`。页面与 CSV 均在应用侧登录校验，无配置时拒绝所有访问；响应禁缓存、禁止嵌入、禁止搜索收录，不使用外部脚本或图表 CDN。用户名及强随机密码的 SHA-256 在 `/etc/gentv-report.env`（600），不提交仓库。密码本身只保存在操作者指定的本地凭据文件（600），勿放到公开网站或分享链接内。
+
+```sh
+python3 tools/deploy_stats_report.py --host admin@YOUR_SERVER \
+  --credentials-file work/stats-report/access.json
+```
+
+支持重复 `--ssh-option`，复用已有 SSH 验证，不修改 API 服务、发布清单或数据库。部署创建 `/srv/gentv/report/releases/<UTC>`、独立 venv 和 current 链接，配置变更前备份到 `/var/backups/gentv-report/<UTC>`（700）；Nginx 校验或本机服务启动检查失败时自动还原配置和原服务状态。重复部署保留本地凭据文件以复用密码。
+
+人工回退：使用备份 `previous.json` 的 previous 恢复 current 链接，将快照中的配置放回原路径；`systemctl daemon-reload` 后按 previous 中的 active/enabled 恢复报表服务，`nginx -t` 成功后 reload。首次部署可移除 vhost 的报表 include 并停用该独立服务，其他 API 保持运行。
+
+
+## Schema 2：新增、活跃、留存与路径
+
+`POST /tv/analytics` 使用严格的 schema 2 字段：`schema_version=2`、`app`（gentv_tv/gentv_mobile）、`app_version`、`android_sdk`、`install_id`（应用私有随机 UUID）、`session_id`、`traffic`（production/test）和最多 50 条 `events`。每条事件包含 event_id、occurred_at（毫秒）、sequence、name、value、foreground_seconds。请求最大 64 KiB，事件限过去 48 小时至未来 5 分钟，固定页面/操作白名单，禁止自由文本或硬件标识。累计事件 ID 与会话顺序去重；前台增量仅允许 heartbeat/session_duration 的 0–120 秒，并按 UTC 零点拆分。无后台采集服务。
+
+新数据存入独立 `analytics.sqlite3`，旧 `stats.sqlite3` 与 `mobile.sqlite3` 保持原口径，不混合安装指标。install_id 在服务端以 app 命名空间 SHA-256 存储；电视和手机不关联身份。测试/模拟器与正式流量分别聚合，报表默认 production。明细路径与会话保留 30 天，按安装实例每日活动保留 400 天，安装首末观测信息在连续 400 天不活跃后删除。每日 retention 定时器清理；数据库自动纳入已有私有备份与健康检查。
+
+口径：新增为首次观测，非实际安装日；DAU/WAU/MAU 为结束日 / 滚动 7 / 滚动 30 天去重安装实例；区间活跃在整个所选区间去重。平均每日活跃时长为区间总秒数除以每天 DAU 之和。会话在首次进入前台或离开超过 30 分钟后开始；后台、电视屏保不计时。每分钟心跳用于持续前台时长和跨日活跃；离开时补计余量。事件失败在进程内短暂重试，队列最多 100 条、24 小时失效，进程终止可能丢失。
+
+D1/D7/D30 为新增队列在准确第 N 天再次活跃的比例，只对已结束的观察日给出结果；未来/进行中日期显示“未到观察日”。路径为同一应用、流量、安装、会话内按 sequence 排序的相邻固定页面/操作，跨上传批次连接，仅展示最近 30 天与所选范围交集内的 Top 30 转移。新协议没有数据时显示等待，不从旧数据推算。更换版本不改变安装 ID；关闭统计、清除数据或重装会产生新的实例。首次观测与跨流量切换均受采样覆盖影响。
+
+新客户端需重新明确授权，不能继承旧版 `statistics`/`enabled` 授权：电视控制中心提供独立“隐私与使用统计”，不恢复软件更新页已移除的统计区域；手机设置更新说明及测试标记开关。模拟器自动分类，手机 Debug 保持不发送。正式实体测试机需在新统计开启前标记测试。电视 3.7.3/code25 与手机 3.7.2/code18 已发布；用户升级并重新开启统计后才会收到这些新指标，旧版历史不能补算。
+
+## Schema 3：可选 MAC 辅助身份去重
+
+兼容 schema 2；schema 3 仅额外要求 mac_address 字符串。空值、不可读取、错误格式、全零、组播和本地管理 MAC 回退安装 ID。有效 MAC 用 analytics.sqlite3 内随机且持久化的服务器密钥计算 app 命名空间 HMAC；数据库不存原始 MAC。device_aliases 关联安装哈希和设备 HMAC，报表在只读快照内统一解析身份，新增队列取最早观测日，活跃去重而时长、事件、会话仍累加。相同 MAC 的不同应用与测试分组保持独立。映射随安装记录在 400 天不活跃后删除，密钥不随部署更换。备份需保留整个数据库；不要单独重置密钥。缺少映射表的旧数据库仍可只读查询。
+
+两端升级后默认关闭新版统计，用户阅读新说明并重新开启才会发送 MAC。原始 MAC 不进入日志、报表或 CSV。旧版从未上传 MAC 的重装实例无法追溯关联；接口切换也可能影响 MAC，不能宣称精确物理设备数。
+
+
+### Verified analytics traffic
+
+Anonymous production claims are retained in the unverified view. The first ingest
+after upgrading migrates older client-declared production counts to that same
+view in one transaction. Test traffic and historical event counts are retained.
+The report also applies this distinction before the first ingest on an old database.
+
+A trusted server can sign a production batch with HMAC-SHA256 over its exact
+request body and send the lowercase hex digest in `X-GenTV-Analytics-Signature`.
+Configure a private, service-owned 0600 key file using
+`GENTV_ANALYTICS_GENTV_AGENT_KEY_FILE`, `GENTV_ANALYTICS_GENTV_TV_KEY_FILE` or
+`GENTV_ANALYTICS_GENTV_MOBILE_KEY_FILE`. Use different random keys for each app
+and keep them on trusted servers. The Agent account platform is the supported
+Agent forwarder. Existing Launcher and mobile clients continue to submit to
+the unverified or test view while a trusted forwarder is unavailable.
+
+The TV wallpaper picker reads `GET /tv/wallpaper?view=catalog`. It returns
+ordered `categories` with localized titles and `items` of kind `image`,
+`video` or `shuffle`; it never lists "coming soon" placeholders. Media paths
+are relative to the configured API base. A still wallpaper's `preview` is its
+pre-rendered `<name>-preview.jpg` (640x360) when that file is in the media
+folder, otherwise the wallpaper itself; previews are served but never listed as
+wallpapers. Render them with `python3 tools/make_wallpaper_previews.py
+<media folder>` and upload them with the wallpapers. The unqualified endpoint
+still serves the legacy image rotation manifest. The deployment archive
+includes the default image and its preview, and the kitten loop and thumbnail. Deploy the catalog API before distributing clients that
+use it.
