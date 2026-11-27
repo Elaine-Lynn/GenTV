@@ -20,6 +20,6 @@ def limited(kind,environ):
             _WINDOWS[key]=collections.deque()
         window=_WINDOWS[key]
         while window and window[0]<=now-60:window.popleft()
-        if len(window)>={'events':120,'feedback':12,'stats':60}[kind]:return True
+        if len(window)>={'events':120,'feedback':12,'stats':60,'location':12}[kind]:return True
         window.append(now)
         return False

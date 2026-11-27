@@ -43,6 +43,19 @@ final class WeatherStore {
     static void attempted(Context context, long now) { prefs(context).edit().putLong(ATTEMPTED, now).apply(); }
     static long updated(Context context) { return prefs(context).getLong(UPDATED, 0); }
     static long lastAttempt(Context context) { return prefs(context).getLong(ATTEMPTED, 0); }
+    static long locationRetryDelay(Context context, long now) {
+        SharedPreferences stored = prefs(context);
+        return LocationRetryPolicy.delay(now, stored.getLong("locationWindowStart", 0),
+                stored.getInt("locationAttemptCount", 0), stored.getLong("locationAttempt", 0));
+    }
+    static void locationAttempted(Context context, long now) {
+        SharedPreferences stored = prefs(context);
+        long windowStart = stored.getLong("locationWindowStart", 0);
+        boolean newWindow = LocationRetryPolicy.newWindow(now, windowStart);
+        stored.edit().putLong("locationWindowStart", newWindow ? now : windowStart)
+                .putInt("locationAttemptCount", newWindow ? 1 : stored.getInt("locationAttemptCount", 0) + 1)
+                .putLong("locationAttempt", now).apply();
+    }
     static WeatherApi.Current cached(Context context) {
         SharedPreferences prefs = prefs(context);
         return prefs.getLong(UPDATED, 0) > 0

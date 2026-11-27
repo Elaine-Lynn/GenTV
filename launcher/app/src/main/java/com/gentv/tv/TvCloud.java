@@ -10,7 +10,7 @@ import java.io.*;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSocketFactory;
 
-/** Small foreground-only client; no services, hardware identifiers or third-party SDKs. */
+/** Small foreground-only client for the GenTV API; optional Umeng metrics are separate. */
 final class TvCloud {
     /** Empty in builds without a configured GenTV API; every cloud feature is then off. */
     static final String BASE = BuildConfig.API_BASE_URL;
@@ -37,28 +37,35 @@ final class TvCloud {
     }
     static JSONObject updateManifest(Context context) throws Exception {
         if (!enabled()) throw new IOException("Update service is not configured");
-        if (!BuildConfig.UPDATE_FALLBACK_URL.matches("https://raw\\.githubusercontent\\.com/"
-                + "Elaine-Lynn/GenTV/[A-Za-z0-9._/-]+/server/wallpaper/update-fallback\\.json"))
+        if (!BuildConfig.UPDATE_FALLBACK_URL.equals("https://raw.githubusercontent.com/Elaine-Lynn/GenTV/update-manifest/config.json"))
             throw new IOException("Invalid fallback manifest address");
-        try {
-            JSONObject primary = json("update?platform=tv");
-            validate(primary, context);
-            return primary;
-        } catch (Exception primaryFailure) {
+        return UpdateFailover.load(() -> {
             try {
-                HttpURLConnection connection = external(BuildConfig.UPDATE_FALLBACK_URL);
-                try {
-                    if (connection.getResponseCode() != 200) throw new IOException("GitHub update unavailable");
-                    JSONObject fallback = new JSONObject(new String(read(connection.getInputStream(), 65536),
-                            java.nio.charset.Charset.forName("UTF-8")));
-                    validate(fallback, context);
-                    return fallback;
-                } finally { connection.disconnect(); }
-            } catch (Exception fallbackFailure) {
-                fallbackFailure.addSuppressed(primaryFailure);
-                throw fallbackFailure;
+                JSONObject primary = json("update?platform=tv");
+                validate(primary, context);
+                return primary;
+            } catch (Exception failure) {
+                android.util.Log.w("GenTV.Update", "Primary update manifest failed", failure);
+                throw failure;
             }
-        }
+        }, () -> {
+            android.util.Log.w("GenTV.Update", "Primary manifest failed; requesting GitHub backup once");
+            return backupUpdateManifest(context);
+        });
+    }
+    static JSONObject backupUpdateManifest(Context context) throws Exception {
+        if (!BuildConfig.UPDATE_FALLBACK_URL.equals("https://raw.githubusercontent.com/Elaine-Lynn/GenTV/update-manifest/config.json"))
+            throw new IOException("Invalid backup URL");
+        HttpURLConnection connection = external(BuildConfig.UPDATE_FALLBACK_URL);
+        try {
+            if (connection.getResponseCode() != 200) throw new IOException("GitHub update HTTP " + connection.getResponseCode());
+            JSONObject fallback = new JSONObject(new String(read(connection.getInputStream(), 65536),
+                    java.nio.charset.Charset.forName("UTF-8")));
+            validate(fallback, context);
+            if (!fallback.getString("url").startsWith("https://github.com/Elaine-Lynn/GenTV/releases/download/"))
+                throw new IOException("Backup must use a GitHub asset");
+            return fallback;
+        } finally { connection.disconnect(); }
     }
     static HttpURLConnection external(String url) throws IOException {
         URL parsed = new URL(url);
@@ -95,7 +102,7 @@ final class TvCloud {
         if (enabled() && url.startsWith(BASE + "releases/")
                 && url.substring((BASE + "releases/").length()).matches("[A-Za-z0-9._-]+\\.apk")) return true;
         return url.matches("https://github\\.com/Elaine-Lynn/GenTV/releases/download/"
-                + "v[0-9]+\\.[0-9]+\\.[0-9]+/gentv-tv-[0-9]+\\.[0-9]+\\.[0-9]+\\.apk");
+                + "v[0-9]+\\.[0-9]+\\.[0-9]+/gentv-tv-(?:[0-9]+\\.[0-9]+\\.[0-9]+|v[0-9]+\\.[0-9]+\\.[0-9]+-code[0-9]+)\\.apk");
     }
     static HttpURLConnection openUpdate(String url) throws IOException {
         if (!allowedUpdateUrl(url)) throw new IOException("Unexpected update URL");
@@ -126,7 +133,9 @@ final class TvCloud {
                     || "objects.githubusercontent.com".equalsIgnoreCase(host)))
                 throw new IOException("Unexpected update redirect");
             HttpURLConnection connection = external(url);
-            int status = connection.getResponseCode();
+            int status;
+            try { status = connection.getResponseCode(); }
+            catch (IOException failure) { connection.disconnect(); throw failure; }
             if (status == 200) return connection;
             String location = connection.getHeaderField("Location");
             connection.disconnect();
@@ -153,10 +162,13 @@ final class TvCloud {
             throw new IOException("Invalid release");
         if (url.startsWith("https://github.com/")) {
             String name = update.getString("versionName");
-            if (!name.matches("[0-9]+\\.[0-9]+\\.[0-9]+") || !url.equals("https://github.com/"
-                    + "Elaine-Lynn/GenTV/releases/download/v" + name + "/gentv-tv-" + name + ".apk"))
+            String prefix = "https://github.com/Elaine-Lynn/GenTV/releases/download/v" + name + "/";
+            if (!name.matches("[0-9]+\\.[0-9]+\\.[0-9]+") || !(url.equals(prefix + "gentv-tv-" + name + ".apk")
+                    || url.equals(prefix + "gentv-tv-v" + name + "-code" + version + ".apk")))
                 throw new IOException("GitHub release name mismatch");
         }
+        if (update.optLong("sizeBytes", 0) < 0 || update.optLong("sizeBytes", 0) > UpdatePackage.MAX_APK_BYTES)
+            throw new IOException("Invalid release size");
         if (!UpdatePolicy.compatible(BuildConfig.VERSION_CODE, version, update.optInt("minSdk",26), android.os.Build.VERSION.SDK_INT))
             throw new IOException("Unsupported Android");
         String certificate=update.optString("signingCertificateSha256", "");
@@ -196,7 +208,7 @@ final class TvCloud {
                     if (activity.isFinishing() || activity.isDestroyed() || !activity.hasWindowFocus()) return;
                     activity.startActivity(new android.content.Intent(activity, CloudSettingsActivity.class).putExtra("check",true));
                 });
-            } catch (Exception ignored) { }
+            } catch (Exception error) { android.util.Log.w("GenTV.Update", "Both update checks failed", error); }
         });
     }
 }

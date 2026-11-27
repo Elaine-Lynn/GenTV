@@ -38,6 +38,11 @@
     <string name="advanced_effects_state">高级动态效果：%1$s</string>
     <string name="open_on_start_label">开机时打开</string>
     <string name="open_on_start_state">开机时打开：%1$s</string>
+    <string name="open_on_start_remove">开机时不再打开</string>
+    <string name="open_on_start_saved">已设置开机时打开：%1$s</string>
+    <string name="open_on_start_removed">已取消开机时打开：%1$s</string>
+    <string name="open_on_start_removed_generic">已关闭开机时打开</string>
+    <string name="open_on_start_save_failed">开机启动应用保存失败</string>
     <string name="advanced_effects_warning">增加卡片上浮、图标缩放和背景颜色平滑过渡；可能增加内存占用，实际变化取决于电视。</string>
     <string name="follow_theme">跟随主题（重置电视端设置）</string>
     <string name="follow_theme_hint">恢复当前主题或内置的布局与动效设置。推送或重置主题也会清除电视端的这些设置。</string>
@@ -193,10 +198,8 @@
     <string name="wallpaper_cobalt">流光蓝</string>
     <string name="wallpaper_teal">深海青</string>
     <string name="wallpaper_indigo">静谧蓝</string>
-    <string name="wallpaper_still_title">静态壁纸</string>
-    <string name="wallpaper_motion_title">动态壁纸</string>
+    <string name="wallpaper_personal_title">经典壁纸</string>
     <string name="wallpaper_motion_blue">蓝色流光</string>
-    <string name="wallpaper_motion_teal">青色潮汐</string>
     <string name="wallpaper_user_title">用户自定义</string>
     <string name="wallpaper_user_add">从本地文件添加</string>
     <string name="wallpaper_lan_send">局域网传输</string>
@@ -227,6 +230,7 @@
     <string name="weather_settings_title">城市</string>
     <string name="weather_no_city">请依次选择省、市、区县。</string>
     <string name="weather_pick_city">设置城市 · 查看天气</string>
+    <string name="weather_locating">正在识别城市…</string>
     <string name="weather_selected_city">当前城市：%1$s</string>
     <string name="weather_province">省 / 直辖市 / 自治区</string>
     <string name="weather_city">市 / 地区</string>

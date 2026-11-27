@@ -4,7 +4,7 @@ English · [简体中文](PRIVACY.zh-CN.md)
 
 This page describes the network use of official GenTV builds. Builds made from this source without a configured GenTV API base, including forks, never contact the GenTV service.
 
-GenTV has no accounts or advertising. The TV app can include the optional Umeng U-App analytics SDK; it is not formally initialized until you separately enable it in the TV privacy settings. The phone app does not use Umeng.
+GenTV has no accounts or advertising. The TV app can include the optional Umeng U-App analytics SDK. It is initialized only after you enable its separate switch in the TV privacy settings. The phone app does not use Umeng.
 
 ## GenTV TV
 
@@ -14,7 +14,7 @@ GenTV has no accounts or advertising. The TV app can include the optional Umeng 
 | Update download | Only after you choose to download | The request for the release file. The APK's SHA-256, package name and signing certificate are verified before Android asks you to confirm installation. |
 | Online wallpapers | While the home screen shows online wallpapers | Requests for the wallpaper list (refreshed about every six hours) and the images. Downloaded images are cached on the TV. |
 | Usage statistics | Off by default in schema 3; enable in Settings after reviewing the revised disclosure. | When enabled: a local factory MAC if the OS permits access, a random installation ID, session ID, fixed page/action events, event time and order, app version, Android SDK and foreground duration. The ID stays local across upgrades and is reset on opt-out, clearing app data or reinstallation. Debug/emulator or manually marked reports are test traffic. |
-| Umeng U-App analytics | Separately off by default; only available when an Umeng AppKey is configured in a release build and you enable its own switch in the TV privacy settings. | Umeng receives device identifiers (such as Android ID, OAID or a generated ID), network information, app version and fixed GenTV screen/action events for usage analysis. GenTV does not pass app names or typed text as custom events. Umeng's own SDK collection follows its [privacy policy](https://www.umeng.com/page/policy). Turning the switch off stops new GenTV events; restart GenTV to fully stop the initialized SDK. Previously sent data cannot be recalled. |
+| Umeng U-App analytics | Separately off by default; available only when an Umeng AppKey is configured in a release build and you enable its switch in the TV privacy settings. | Umeng receives device identifiers (such as Android ID, OAID or a generated ID), network information, app version, and fixed GenTV screen/action events for usage analysis. GenTV does not pass app names or typed text as custom events. Umeng's SDK collection follows its [privacy policy](https://www.umeng.com/page/policy). Turning the switch off stops new GenTV events; restart GenTV to stop the initialized SDK. Previously sent data cannot be recalled. |
 
 ## GenTV Remote (phone)
 
@@ -49,6 +49,10 @@ If you enable ad filtering in GenTV Remote, the app configures the TV to use AdG
 - The server backup tool keeps the latest 14 database snapshots. A snapshot can still contain records removed from the live database until that snapshot expires; live-database deletion does not immediately remove those backup copies.
 - As with any network connection, the service sees the IP address of each request. GenTV does not store it in statistics or feedback records.
 
+When no weather city has been saved, Home can ask the configured GenTV service to identify the city from the connection's public IPv4 address. The service forwards that address to AMap's IP location API and returns a city, not a precise device location. The server keeps a bounded six-hour city cache indexed by an ephemeral keyed hash, without persistent IP storage. The city is saved on the TV; a manual selection takes priority. No GPS or Wi-Fi scanning is used for this lookup. Forecasts continue to use Open-Meteo with the selected city coordinates. If the feature is not configured or fails, you can select a city manually.
+
+If the primary update check fails, GenTV requests the backup update configuration from GitHub. The backup's signed APK is also downloaded from GitHub. GitHub receives normal request metadata, including the connection IP address and the app-version User-Agent. The same package, hash and signature checks apply.
+
 The [server source](server/wallpaper/) shows exactly what is stored.
 
 ## Contact
@@ -57,4 +61,6 @@ For questions or deletion requests, email [support@gentv.me](mailto:support@gent
 
 The aerial screensaver downloads videos directly from sylvan.apple.com (Apple), which receives normal network request metadata including your IP address. It opens when you press Back on Home or leave Home idle for the selected interval (2 minutes by default). Video requests stop when the screensaver closes; the desktop uses image wallpapers. No video files are bundled. Complete videos and interrupted downloads are stored privately on the TV. Up to five complete videos are cached; downloads stop when disk space is insufficient. Cached videos play locally in shuffled rounds. Later entries resume interrupted downloads and fill unused cache slots. Settings includes Clear screensaver cache; after clearing, downloads restart the next time the screensaver opens.
 
-Online wallpaper images are cached privately up to 64 MiB. Rotation reads local images; new image response bodies have a 16 MiB budget per 24-hour window, including failed transfers. Manifest checks use ETag at six-hour intervals after success. Download history, failure cooldowns and traffic budgets are stored only on the TV and survive app restarts.
+Automatic online wallpaper rotation caches images privately up to 64 MiB. Rotation reads local images; new image response bodies have a 16 MiB budget per 24-hour window, including failed transfers. Manifest checks use ETag at six-hour intervals after success. Download history, failure cooldowns and traffic budgets are stored only on the TV and survive app restarts.
+
+Opening the online wallpaper chooser requests the configured service's image list. Browsing downloads previews or original images into a separate private temporary cache up to 64 MiB. Applying an image saves a private local copy as a custom wallpaper for offline use. These user-initiated downloads are separate from the automatic rotation budget.

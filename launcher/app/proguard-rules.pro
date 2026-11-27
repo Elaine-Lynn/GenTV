@@ -14,3 +14,4 @@
 # SnakeYAML references java.beans for desktop-only introspection; Android has
 # no java.beans runtime and the game does not use that code path.
 -dontwarn java.beans.**
+-keep public class com.gentv.tv.R$* { public static final int *; }

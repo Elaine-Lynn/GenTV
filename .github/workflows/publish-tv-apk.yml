@@ -1,0 +1,72 @@
+name: Publish signed TV APK
+
+on:
+  push:
+    tags: ['v3.7.18']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    if: github.repository == 'Elaine-Lynn/GenTV'
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      RELEASE_TAG: ${{ github.ref_name }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify release metadata and download signed artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="${RELEASE_TAG#v}"
+          source_dir="docs/releases/${RELEASE_TAG}"
+          python3 - "$source_dir" "$version" <<'PY'
+          import json, pathlib, sys
+          folder, version = pathlib.Path(sys.argv[1]), sys.argv[2]
+          primary = json.loads((folder / 'config.json').read_text())
+          backup = json.loads((folder / 'github-config.json').read_text())
+          assert primary['versionName'] == backup['versionName'] == version
+          assert primary['versionCode'] == backup['versionCode'] == 40
+          assert primary['packageName'] == backup['packageName'] == 'com.gentv.tv'
+          assert primary['sha256'] == backup['sha256']
+          assert primary['sizeBytes'] == backup['sizeBytes']
+          assert primary['signingCertificateSha256'] == backup['signingCertificateSha256'] == '8d5b5378f9056880f3036d44bc2f4a48322141fbb8d8bc91951d61a4652d997f'
+          assert primary['url'] == f'https://api.gentv.app/tv/releases/gentv-tv-{version}.apk'
+          assert backup['url'] == f'https://github.com/Elaine-Lynn/GenTV/releases/download/v{version}/gentv-tv-v{version}-code40.apk'
+          PY
+          apk_name="gentv-tv-v${version}-code40.apk"
+          zip_name="gentv-tv-v${version}-code40-licenses.zip"
+          base_url="https://api.gentv.app/tv/releases"
+          mkdir -p release
+          cp "$source_dir/github-config.json" release/config.json
+          cp "$source_dir/SHA256SUMS.txt" release/SHA256SUMS.txt
+          curl --fail --location --retry 3 --max-time 120 "$base_url/gentv-tv-${version}.apk" --output "release/$apk_name"
+          curl --fail --location --retry 3 --max-time 120 "$base_url/$zip_name" --output "release/$zip_name"
+          (cd release && sha256sum --check SHA256SUMS.txt)
+      - name: Create draft release with verified files
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release create "$RELEASE_TAG" release/* --draft --verify-tag \
+            --title "GenTV TV $RELEASE_TAG" \
+            --notes-file "docs/release-notes-$RELEASE_TAG.md"
+      - name: Check uploaded asset digests and publish
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api "repos/$GH_REPO/releases/tags/$RELEASE_TAG" > release-response.json
+          python3 - <<'PY'
+          import hashlib, json, pathlib
+          root = pathlib.Path('release')
+          assets = {item['name']: item for item in json.loads(pathlib.Path('release-response.json').read_text())['assets']}
+          files = list(root.iterdir())
+          assert len(assets) == len(files) == 4
+          for file in files:
+              asset = assets[file.name]
+              assert asset['size'] == file.stat().st_size, file.name
+              assert asset['digest'] == 'sha256:' + hashlib.sha256(file.read_bytes()).hexdigest(), file.name
+          PY
+          gh release edit "$RELEASE_TAG" --draft=false --latest

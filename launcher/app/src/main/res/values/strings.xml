@@ -80,6 +80,11 @@
     <string name="advanced_effects_state">Advanced effects: %1$s</string>
     <string name="open_on_start_label">Open on start</string>
     <string name="open_on_start_state">Open on start: %1$s</string>
+    <string name="open_on_start_remove">Don’t open on start</string>
+    <string name="open_on_start_saved">%1$s will open on the next start</string>
+    <string name="open_on_start_removed">%1$s will no longer open on start</string>
+    <string name="open_on_start_removed_generic">Open on start turned off</string>
+    <string name="open_on_start_save_failed">Couldn’t save the startup app</string>
     <string name="advanced_effects_warning">Adds a lifted tile, icon zoom and smooth colour transitions. May increase memory use; the actual difference depends on your TV.</string>
     <string name="follow_theme">Follow theme (reset on-TV choices)</string>
     <string name="follow_theme_hint">Uses the current theme or built-in layout and motion settings. Pushing or resetting a theme also clears your on-TV choices.</string>
@@ -195,6 +200,7 @@
     <string name="weather_settings_title">City</string>
     <string name="weather_no_city">Select a province, city, then district or county.</string>
     <string name="weather_pick_city">Set city · Weather</string>
+    <string name="weather_locating">Finding your city…</string>
     <string name="weather_selected_city">Current city: %1$s</string>
     <string name="weather_province">Province</string>
     <string name="weather_city">City</string>
@@ -222,10 +228,8 @@
     <string name="wallpaper_cobalt">Cobalt flow</string>
     <string name="wallpaper_teal">Deep teal</string>
     <string name="wallpaper_indigo">Midnight blue</string>
-    <string name="wallpaper_still_title">Still wallpapers</string>
-    <string name="wallpaper_motion_title">Motion wallpapers</string>
+    <string name="wallpaper_personal_title">Classic wallpapers</string>
     <string name="wallpaper_motion_blue">Blue light</string>
-    <string name="wallpaper_motion_teal">Teal tide</string>
     <string name="wallpaper_user_title">Your wallpapers</string>
     <string name="wallpaper_user_add">Add from files</string>
     <string name="wallpaper_lan_send">Send over local network</string>

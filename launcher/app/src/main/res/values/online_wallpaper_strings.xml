@@ -1,0 +1,8 @@
+<resources>
+    <string name="wallpaper_online_title">Online wallpapers</string>
+    <string name="wallpaper_online_loading">Loading…</string>
+    <string name="wallpaper_online_unavailable">Unavailable · press to retry</string>
+    <string name="wallpaper_online_empty">No wallpapers · press to refresh</string>
+    <string name="wallpaper_online_name">Wallpaper %1$d</string>
+    <string name="wallpaper_online_applying">Preparing wallpaper…</string>
+</resources>

@@ -277,11 +277,13 @@ public final class LauncherSettingsActivity extends Activity {
                 .setTitle(R.string.open_on_start_label)
                 .setSingleChoiceItems(labels, checked, (dialog, which) -> {
                     dialog.dismiss();
-                    if (which == 0) choices.edit().remove(OpenOnStart.KEY).apply();
-                    else {
-                        OpenOnStart.skipThisBoot(this);
-                        choices.edit().putString(OpenOnStart.KEY, apps.get(which - 1)[1]).apply();
+                    String pkg = which == 0 ? "" : apps.get(which - 1)[1];
+                    if (!OpenOnStart.save(this, pkg)) {
+                        Toast.makeText(this, R.string.open_on_start_save_failed, Toast.LENGTH_SHORT).show();
+                        return;
                     }
+                    Toast.makeText(this, which == 0 ? getString(R.string.open_on_start_removed_generic)
+                            : getString(R.string.open_on_start_saved, apps.get(which - 1)[0]), Toast.LENGTH_SHORT).show();
                     refresh();
                 })
                 .setNegativeButton(android.R.string.cancel, null)

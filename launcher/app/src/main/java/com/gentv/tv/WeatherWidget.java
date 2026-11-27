@@ -50,7 +50,7 @@ final class WeatherWidget {
         long age = System.currentTimeMillis() - WeatherStore.updated(activity);
         WeatherApi.Current current = WeatherStore.cached(activity);
         if (city.isEmpty()) {
-            label.setText(R.string.weather_pick_city);
+            label.setText(fetching ? R.string.weather_locating : R.string.weather_pick_city);
             label.setVisibility(View.VISIBLE);
             return;
         }
@@ -68,7 +68,8 @@ final class WeatherWidget {
 
     private void refresh() {
         main.removeCallbacks(tick);
-        if (!active || closed || fetching || WeatherStore.city(activity).isEmpty()) return;
+        if (!active || closed || fetching) return;
+        if (WeatherStore.city(activity).isEmpty()) { locate(); return; }
         long now = System.currentTimeMillis();
         long elapsed = now - WeatherStore.lastAttempt(activity);
         long interval = WeatherStore.updated(activity) < WeatherStore.lastAttempt(activity)
@@ -98,6 +99,38 @@ final class WeatherWidget {
                         && latitude == WeatherStore.latitude(activity) && longitude == WeatherStore.longitude(activity))
                     WeatherStore.save(activity, weather, System.currentTimeMillis());
                 if (active) { render(); refresh(); }
+            });
+        });
+    }
+
+    private void locate() {
+        if (!TvCloud.enabled()) return;
+        long now = System.currentTimeMillis();
+        long retryDelay = WeatherStore.locationRetryDelay(activity, now);
+        if (retryDelay > 0) {
+            main.postDelayed(tick, retryDelay);
+            return;
+        }
+        WeatherStore.locationAttempted(activity, now);
+        fetching = true;
+        render();
+        worker.execute(() -> {
+            WeatherApi.City result = null;
+            try { result = WeatherApi.locate(activity); }
+            catch (Exception ignored) { android.util.Log.w("GenTV.Weather", "Automatic city lookup unavailable"); }
+            WeatherApi.City located = result;
+            main.post(() -> {
+                fetching = false;
+                if (closed) return;
+                // The user may have selected a city while this request was in flight.
+                if (located != null && WeatherStore.city(activity).isEmpty()) WeatherStore.select(activity, located);
+                if (!active) return;
+                render();
+                if (WeatherStore.city(activity).isEmpty()) {
+                    long delay = WeatherStore.locationRetryDelay(activity, System.currentTimeMillis());
+                    if (delay > 0) main.postDelayed(tick, delay);
+                }
+                else refresh();
             });
         });
     }

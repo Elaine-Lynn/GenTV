@@ -171,6 +171,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private final ExecutorService wallpaperBlurWorker = Executors.newSingleThreadExecutor();
     private int wallpaperBlurGeneration;
     private boolean wallpaperBlurred;
+    private final Runnable toolboxBackdropChanged = this::updateWallpaperScrollState;
     private GlassView glass;
     private View ambient;
     private TextView heroName;
@@ -281,8 +282,6 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     /** boot_to_live_tv: open the Live TV app on the first Home of each boot. */
     private boolean bootToLiveTv;
     private ChildLock childLock;
-    /** open_on_start_choice: the app picked in Launcher settings may open on the first Home of each boot. */
-    private boolean openOnStartChoice;
     /** hidden_apps as the adapter sees them (config.xml or a theme's config.json): a hidden app gets no card either. */
     private Set<String> hiddenApps = Collections.emptySet();
     private List<Cards.Card> cards = Collections.emptyList();
@@ -410,7 +409,6 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         screensaverMinutes = ScreensaverIdle.minutes(getSharedPreferences(Config.SETTINGS_NAME, MODE_PRIVATE)
                 .getInt(ScreensaverIdle.MINUTES_KEY, ScreensaverIdle.DEFAULT_MINUTES));
         bootToLiveTv = cfg.bootToLiveTv;
-        openOnStartChoice = cfg.openOnStartChoice;
         liveTvAction = cfg.liveTvAction;
         liveTvInputId = cfg.liveTvInputId;
         appLibraryEnabled = cfg.appLibrary;
@@ -993,6 +991,11 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         if (childLock.showIfLocked()) return;
+        if (intent != null && intent.getBooleanExtra(LauncherSettingsActivity.EXTRA_REORDER, false)) {
+            getIntent().putExtra(LauncherSettingsActivity.EXTRA_REORDER, true);
+            grid.post(this::startPendingSettingsReorder);
+            return;
+        }
         if (openLauncherSettingsIfAsked(intent)) return;
         if (openInputsIfAsked(intent)) return;
         if (intent == null || !intent.hasCategory(Intent.CATEGORY_HOME)) return;
@@ -1061,6 +1064,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         super.onStart();
         stopped = false;
         started = true;
+        ToolboxBackdrop.observe(toolboxBackdropChanged);
         DesktopStore.listen(() -> {
             if (DesktopStore.revision(this) != desktopRevision) recreate();
         });
@@ -1379,6 +1383,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
     @Override
     protected void onStop() {
+        ToolboxBackdrop.stopObserving(toolboxBackdropChanged);
         DesktopStore.listen(null);
         super.onStop();
         started = false;
@@ -1417,6 +1422,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
+        updateWallpaperScrollState();
         restartIdleScreensaver();
         if (hasFocus) {
             startPendingSettingsReorder();
@@ -1450,7 +1456,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         if (grid == null || blurredWallpaper == null || videoWallpaper == null) return;
         boolean dockFocused = focused >= 0 && (singleRow || focused < COLUMNS);
         boolean gridFocused = !singleRow && focused >= COLUMNS;
-        boolean blur = gridFocused || (!dockFocused
+        boolean blur = ToolboxBackdrop.visible() && !hasWindowFocus() || gridFocused || (!dockFocused
                 && grid.computeVerticalScrollOffset() > Math.round(40 * density));
         if (blur == wallpaperBlurred) return;
         wallpaperBlurred = blur;
@@ -3417,15 +3423,16 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
      *  low-memory TV the app can push the launcher out of memory, and an apply() still in flight was lost then, so
      *  every Home press opened the app again. */
     private boolean openLiveTvAfterBoot() {
-        String app = openOnStartChoice ? getSharedPreferences(Config.SETTINGS_NAME, MODE_PRIVATE)
-                .getString(OpenOnStart.KEY, "") : "";
+        SharedPreferences choices = getSharedPreferences(Config.SETTINGS_NAME, MODE_PRIVATE);
+        String app = choices.getString(OpenOnStart.KEY, "");
+        if (choices.contains(OpenOnStart.KEY) && app.isEmpty()) return false;
         if (!bootToLiveTv && app.isEmpty()) return false;
         int boot = OpenOnStart.boot(this);
         SharedPreferences prefs = getSharedPreferences(OpenOnStart.BOOT_PREFS, MODE_PRIVATE);
-        String target = bootToLiveTv ? liveTvPkg : app;
+        String target = app.isEmpty() ? liveTvPkg : app;
         if (!OpenOnStart.due(boot, prefs.getInt(OpenOnStart.BOOT_KEY, -1), target, getPackageName())) return false;
         if (!prefs.edit().putInt(OpenOnStart.BOOT_KEY, boot).commit()) return false;
-        Intent i = bootToLiveTv ? liveTvIntent() : OpenOnStart.intent(getPackageManager(), app);
+        Intent i = app.isEmpty() ? liveTvIntent() : OpenOnStart.intent(getPackageManager(), app);
         if (i == null) return false;
         open(i);
         return true;
@@ -3946,6 +3953,19 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             if (LibraryApps.save(this, pkg, false)) reloadApps(false);
             else Toast.makeText(this, R.string.library_save_failed, Toast.LENGTH_LONG).show();
         });
+        String currentStart = getSharedPreferences(Config.SETTINGS_NAME, MODE_PRIVATE)
+                .getString(OpenOnStart.KEY, "");
+        boolean opensOnStart = pkg.equals(currentStart);
+        String appLabel = adapter.labelAt(position);
+        addSettingsMenuRow(rows, popup, opensOnStart ? R.string.open_on_start_remove : R.string.open_on_start_label,
+                opensOnStart ? R.drawable.ic_menu_check : 0, () -> {
+            if (!OpenOnStart.save(this, opensOnStart ? "" : pkg)) {
+                Toast.makeText(this, R.string.open_on_start_save_failed, Toast.LENGTH_SHORT).show();
+                return;
+            }
+            Toast.makeText(this, getString(opensOnStart ? R.string.open_on_start_removed
+                    : R.string.open_on_start_saved, appLabel), Toast.LENGTH_SHORT).show();
+        });
         addSettingsMenuRow(rows, popup, R.string.desktop_rename, () -> {
             android.widget.EditText input = new android.widget.EditText(this);
             input.setSingleLine(true);
@@ -4045,8 +4065,14 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     }
 
     private void addSettingsMenuRow(LinearLayout rows, PopupWindow popup, int title, Runnable action) {
+        addSettingsMenuRow(rows, popup, title, 0, action);
+    }
+
+    private void addSettingsMenuRow(LinearLayout rows, PopupWindow popup, int title, int iconRes, Runnable action) {
         View row = getLayoutInflater().inflate(R.layout.item_input, rows, false);
-        row.findViewById(R.id.icon).setVisibility(View.GONE);
+        ImageView icon = row.findViewById(R.id.icon);
+        if (iconRes == 0) icon.setVisibility(View.GONE);
+        else icon.setImageResource(iconRes);
         row.findViewById(R.id.dot).setVisibility(View.GONE);
         row.findViewById(R.id.status).setVisibility(View.GONE);
         ((TextView) row.findViewById(R.id.title)).setText(title);

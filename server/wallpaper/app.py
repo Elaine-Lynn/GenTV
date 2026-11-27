@@ -1,5 +1,6 @@
 """GenTV TV API: read-only wallpaper/releases and anonymous aggregate session counters."""
 import mobile
+import location
 from rate_limit import limited
 from functools import lru_cache
 import hashlib
@@ -42,6 +43,12 @@ def app(environ, start_response):
         pass
     if path in ('/tv/events','/tv/feedback'):
         return mobile.handle(environ,start_response,STATE)
+    if path == '/tv/location':
+        if method != 'GET':
+            start_response('405 Method Not Allowed', [('Allow', 'GET'), ('Content-Length', '0')]); return []
+        if limited('location', environ):
+            start_response('429 Too Many Requests', [('Retry-After', '60'), ('Content-Length', '0')]); return []
+        return location.handle(environ, start_response)
     if path == '/tv/stats':
         if method != 'POST':
             start_response('405 Method Not Allowed', [('Allow', 'POST'), ('Content-Length', '0')]); return []

@@ -5,5 +5,6 @@
     <string name="metrics_test">Mark future reports as test traffic (emulators are automatic)</string>
     <string name="metrics_share_statistics">Share usage statistics</string>
     <string name="metrics_umeng_consent">Share analytics with Umeng</string>
-    <string name="metrics_umeng_hint">Optional and off by default. If enabled, Umeng U-App receives device identifiers, network information, app version, and fixed GenTV screen and action events for usage analysis. No app names or typed text are sent by GenTV. Turning this off stops new GenTV events; previously collected data cannot be recalled. Restart GenTV to fully stop the SDK after turning it off. See the privacy notice for Umeng’s policy.</string>
+    <string name="metrics_umeng_hint">Optional and off by default. Umeng U-App receives device identifiers, network information, app version, and fixed GenTV screen and action events after you enable this switch. GenTV does not pass app names or typed text. Turning it off stops new GenTV events; restart GenTV to stop the initialized SDK. See the privacy notice and Umeng privacy policy.</string>
+    <string name="metrics_umeng_unavailable">Umeng analytics is not configured in this build.</string>
 </resources>
