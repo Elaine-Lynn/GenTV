@@ -237,19 +237,6 @@ final class MemoryCleanupView extends View {
 
             canvas.restore();
 
-            // While cleaning runs, a quiet caption beside the rocket on the screen's inner side.
-            float captionAlpha = (motion ? .85f * smoothStep(.25f, .55f, seconds) : .85f)
-                    * (1f - smoothStep(0f, .25f, departure));
-            if (captionAlpha > .01f) {
-                ink.setStyle(Paint.Style.FILL);
-                ink.setColor(android.graphics.Color.argb(Math.round(captionAlpha * 255f), 220, 236, 248));
-                ink.setTextSize(30f * density);
-                ink.setTypeface(fontRegular);
-                ink.setTextAlign(leftEdge ? Paint.Align.LEFT : Paint.Align.RIGHT);
-                float captionX = leftEdge ? cx + 70f * unit : cx - 70f * unit;
-                canvas.drawText(getResources().getString(R.string.memory_cleaning), captionX,
-                        h - 48f * density, ink);
-            }
             canvas.restore();
         }
         if (finished) drawResult(canvas, w, h);
@@ -371,8 +358,8 @@ final class MemoryCleanupView extends View {
     private void drawResult(Canvas canvas, float w, float h) {
         int alpha = Math.round(resultVisibility * 255f);
         if (alpha <= 1) return;
-        // Twice the size of a regular notice so it reads from the sofa.
-        float d = density * 2f;
+        // 1.4x a regular notice: readable from the sofa without crowding the corner.
+        float d = density * 1.4f;
         String headline = resultText();
         String detail = success
                 ? getResources().getString(R.string.memory_cleanup_scope, exitedProcesses)
