@@ -34,22 +34,27 @@ import java.util.Collections;
 import java.util.Locale;
 
 /**
- * The wallpaper gallery's LAN upload sheet in its dark smoked glass: a QR code, the browser address and the TV's
- * code, with a status line. Owns the receiver, which stops when the sheet closes. Uploads arrive on the main thread.
+ * The wallpaper gallery's LAN upload sheet: a QR code, one line of title, the browser address and a status
+ * dot, on the gallery's dark smoked glass. The address carries the receiver's key, so there is no code to read
+ * out. Owns the receiver, which stops when the sheet closes. Uploads arrive on the main thread.
  */
 final class LanTransferDialog {
     interface Listener { void uploaded(File file, String mime); }
 
     private static final int INK_LIGHT = 0xFFF5F7FA;
-    private static final int INK_MUTED = 0x99DCE6F2;
-    private static final int INK_SOFT = 0xC8DCE6F2;
+    private static final int INK_MUTED = 0x8CDCE6F2;
+    private static final int INK_SOFT = 0xD9FFFFFF;
     private static final int ACCENT = 0xFF8BEFF2;
+    private static final int EMERALD = 0xFF4CD98B;
+    private static final int WARM = 0xFFFF8A80;
 
     private final Activity activity;
     private final Handler main = new Handler(Looper.getMainLooper());
     private LanWallpaperReceiver receiver;
     private Dialog dialog;
     private TextView status;
+    private View dot;
+    private android.animation.ValueAnimator pulse;
 
     private LanTransferDialog(Activity activity) { this.activity = activity; }
 
@@ -61,14 +66,13 @@ final class LanTransferDialog {
             Toast.makeText(activity, R.string.wallpaper_lan_unavailable, Toast.LENGTH_LONG).show();
             return null;
         }
-        String code = String.format(Locale.ROOT, "%04d", new SecureRandom().nextInt(10_000));
         try {
-            sheet.receiver = new LanWallpaperReceiver(address, code, activity.getCacheDir(), (file, mime) ->
-                    sheet.main.post(() -> {
+            sheet.receiver = new LanWallpaperReceiver(address, LanWallpaperReceiver.newToken(new SecureRandom()),
+                    activity.getCacheDir(), (file, mime) -> sheet.main.post(() -> {
                         if (!sheet.isShowing()) { file.delete(); return; }
                         listener.uploaded(file, mime);
                     }));
-            sheet.build(code, medium, regular);
+            sheet.build(medium, regular);
             return sheet;
         } catch (IOException | WriterException | RuntimeException | OutOfMemoryError failure) {
             sheet.dismiss();
@@ -79,7 +83,20 @@ final class LanTransferDialog {
 
     boolean isShowing() { return dialog != null && dialog.isShowing(); }
 
-    void status(int message) { if (status != null) status.setText(message); }
+    /** Waiting pulses softly; receiving holds the accent; added turns green; a failure turns warm. */
+    void status(int message) {
+        if (status == null) return;
+        status.setText(message);
+        boolean waiting = message == R.string.wallpaper_lan_waiting;
+        int color = message == R.string.wallpaper_lan_added ? EMERALD
+                : message == R.string.wallpaper_lan_import_failed ? WARM : ACCENT;
+        dot.setBackground(circle(color));
+        status.setTextColor(waiting ? INK_MUTED : INK_SOFT);
+        if (pulse != null) {
+            if (waiting) { if (!pulse.isStarted()) pulse.start(); }
+            else { pulse.cancel(); dot.setAlpha(1f); }
+        }
+    }
 
     void dismiss() {
         if (dialog != null && dialog.isShowing()) dialog.dismiss();
@@ -87,68 +104,67 @@ final class LanTransferDialog {
     }
 
     private void stop() {
+        if (pulse != null) pulse.cancel();
+        pulse = null;
         if (receiver != null) receiver.close();
         receiver = null;
         dialog = null;
         status = null;
     }
 
-    private void build(String code, Typeface medium, Typeface regular) throws WriterException {
+    private void build(Typeface medium, Typeface regular) throws WriterException {
         float density = activity.getResources().getDisplayMetrics().density;
         LinearLayout body = new LinearLayout(activity);
-        body.setOrientation(LinearLayout.VERTICAL);
-        body.setPadding(dp(32), dp(28), dp(32), dp(26));
-        body.setBackground(QuickSettingsGlass.dialogSurface(24f * density, Math.max(1f, density)));
-
-        body.addView(text(activity.getString(R.string.wallpaper_lan_title), 24, INK_LIGHT, medium));
-        body.addView(text(activity.getString(R.string.wallpaper_lan_subtitle), 14, INK_MUTED, regular),
-                margins(8));
-
-        LinearLayout columns = new LinearLayout(activity);
-        columns.setOrientation(LinearLayout.HORIZONTAL);
-        columns.setGravity(Gravity.CENTER_VERTICAL);
-        body.addView(columns, margins(24));
+        body.setOrientation(LinearLayout.HORIZONTAL);
+        body.setGravity(Gravity.CENTER_VERTICAL);
+        body.setPadding(dp(34), dp(34), dp(40), dp(34));
+        body.setBackground(QuickSettingsGlass.dialogSurface(28f * density, Math.max(1f, density)));
 
         // White quiet zone around the code so phone cameras read it on any TV panel.
         FrameLayout qrFrame = new FrameLayout(activity);
-        qrFrame.setPadding(dp(10), dp(10), dp(10), dp(10));
+        qrFrame.setPadding(dp(12), dp(12), dp(12), dp(12));
         GradientDrawable qrSurface = new GradientDrawable();
         qrSurface.setColor(Color.WHITE);
-        qrSurface.setCornerRadius(dp(16));
+        qrSurface.setCornerRadius(dp(20));
         qrFrame.setBackground(qrSurface);
         ImageView qr = new ImageView(activity);
-        qr.setImageBitmap(qrCode(receiver.url() + "#code=" + code));
-        qr.setContentDescription(activity.getString(R.string.wallpaper_lan_scan));
-        qrFrame.addView(qr, new FrameLayout.LayoutParams(dp(184), dp(184)));
-        columns.addView(qrFrame);
+        qr.setImageBitmap(qrCode(receiver.url()));
+        qr.setContentDescription(activity.getString(R.string.wallpaper_lan_title));
+        qrFrame.addView(qr, new FrameLayout.LayoutParams(dp(176), dp(176)));
+        body.addView(qrFrame);
 
         LinearLayout details = new LinearLayout(activity);
         details.setOrientation(LinearLayout.VERTICAL);
         LinearLayout.LayoutParams detailsParams = new LinearLayout.LayoutParams(0, -2, 1f);
-        detailsParams.setMarginStart(dp(28));
-        columns.addView(details, detailsParams);
+        detailsParams.setMarginStart(dp(36));
+        body.addView(details, detailsParams);
 
-        details.addView(text(activity.getString(R.string.wallpaper_lan_scan), 18, INK_LIGHT, medium));
-        details.addView(text(activity.getString(R.string.wallpaper_lan_browser), 13, INK_MUTED, regular),
-                margins(18));
-        TextView url = text(receiver.url(), 17, ACCENT, medium);
-        url.setTextIsSelectable(true);
-        details.addView(url, margins(5));
-        details.addView(text(activity.getString(R.string.wallpaper_lan_code), 13, INK_MUTED, regular),
-                margins(18));
-        TextView codeView = text(code, 30, INK_LIGHT, Typeface.create(Typeface.MONOSPACE, Typeface.BOLD));
-        if (android.os.Build.VERSION.SDK_INT >= 21) codeView.setLetterSpacing(0.14f);
-        details.addView(codeView, margins(2));
+        TextView title = text(activity.getString(R.string.wallpaper_lan_title), 26, INK_LIGHT, medium);
+        details.addView(title);
+        details.addView(text(activity.getString(R.string.wallpaper_lan_browser), 13.5f, INK_MUTED, regular),
+                margins(14));
+        TextView url = text(receiver.url().substring("http://".length()), 16, INK_SOFT, regular);
+        if (android.os.Build.VERSION.SDK_INT >= 21) url.setLetterSpacing(0.02f);
+        details.addView(url, margins(4));
 
-        View divider = new View(activity);
-        divider.setBackgroundColor(0x1FFFFFFF);
-        LinearLayout.LayoutParams dividerParams = new LinearLayout.LayoutParams(-1, Math.max(1, dp(1) / 2));
-        dividerParams.topMargin = dp(22);
-        body.addView(divider, dividerParams);
+        LinearLayout state = new LinearLayout(activity);
+        state.setOrientation(LinearLayout.HORIZONTAL);
+        state.setGravity(Gravity.CENTER_VERTICAL);
+        dot = new View(activity);
+        dot.setBackground(circle(ACCENT));
+        state.addView(dot, new LinearLayout.LayoutParams(dp(7), dp(7)));
+        status = text(activity.getString(R.string.wallpaper_lan_waiting), 13.5f, INK_MUTED, regular);
+        LinearLayout.LayoutParams statusParams = new LinearLayout.LayoutParams(-2, -2);
+        statusParams.setMarginStart(dp(10));
+        state.addView(status, statusParams);
+        details.addView(state, margins(34));
 
-        body.addView(text(activity.getString(R.string.wallpaper_lan_limits), 12, INK_MUTED, regular), margins(14));
-        status = text(activity.getString(R.string.wallpaper_lan_waiting), 14, INK_SOFT, regular);
-        body.addView(status, margins(8));
+        pulse = android.animation.ValueAnimator.ofFloat(1f, 0.25f);
+        pulse.setDuration(1100);
+        pulse.setRepeatMode(android.animation.ValueAnimator.REVERSE);
+        pulse.setRepeatCount(android.animation.ValueAnimator.INFINITE);
+        pulse.addUpdateListener(value -> { if (dot != null) dot.setAlpha((float) value.getAnimatedValue()); });
+        pulse.start();
 
         dialog = new Dialog(activity);
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -158,10 +174,17 @@ final class LanTransferDialog {
         Window window = dialog.getWindow();
         if (window != null) {
             window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-            window.setLayout(Math.min(dp(760), activity.getResources().getDisplayMetrics().widthPixels - dp(48)),
+            window.setLayout(Math.min(dp(620), activity.getResources().getDisplayMetrics().widthPixels - dp(48)),
                     ViewGroup.LayoutParams.WRAP_CONTENT);
-            window.setDimAmount(0.62f);
+            window.setDimAmount(0.66f);
         }
+    }
+
+    private static GradientDrawable circle(int color) {
+        GradientDrawable shape = new GradientDrawable();
+        shape.setShape(GradientDrawable.OVAL);
+        shape.setColor(color);
+        return shape;
     }
 
     private TextView text(String value, float sp, int color, Typeface typeface) {
@@ -170,6 +193,7 @@ final class LanTransferDialog {
         view.setTextSize(sp);
         view.setTextColor(color);
         view.setTypeface(typeface);
+        view.setIncludeFontPadding(false);
         return view;
     }
 
@@ -184,7 +208,10 @@ final class LanTransferDialog {
     }
 
     private static Bitmap qrCode(String value) throws WriterException {
-        BitMatrix bits = new QRCodeWriter().encode(value, BarcodeFormat.QR_CODE, 320, 320);
+        // The white frame is the quiet zone; one module of margin keeps the code large and crisp inside it.
+        java.util.Map<com.google.zxing.EncodeHintType, Object> hints = new java.util.EnumMap<>(com.google.zxing.EncodeHintType.class);
+        hints.put(com.google.zxing.EncodeHintType.MARGIN, 1);
+        BitMatrix bits = new QRCodeWriter().encode(value, BarcodeFormat.QR_CODE, 352, 352, hints);
         Bitmap bitmap = Bitmap.createBitmap(bits.getWidth(), bits.getHeight(), Bitmap.Config.RGB_565);
         for (int y = 0; y < bits.getHeight(); y++)
             for (int x = 0; x < bits.getWidth(); x++)
