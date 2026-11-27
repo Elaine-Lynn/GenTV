@@ -86,6 +86,7 @@ final class HomeContentController {
     private long expiresAt, imageBytes, lastInvalidation;
     private View pane, outgoing;
     private View firstAction;
+    private final List<View> verticalActions=new ArrayList<>();
     private boolean disposed, received, acceptingImages, retried;
     private int availableHeight;
     private HomeChannelPreview channelPreview;
@@ -119,7 +120,11 @@ final class HomeContentController {
     boolean inContent(){return owns(activity.getCurrentFocus());}
     boolean visible(){return pane!=null&&pane.getAlpha()>0;}
     boolean hasContentPixels(){return pane!=null||outgoing!=null||backgrounds.getChildCount()>0;}
-    boolean canMoveDown(){return channelPreview!=null&&channelPreview.canMoveDown();}
+    boolean canMoveDown(){
+        if(channelPreview!=null)return channelPreview.canMoveDown();
+        int index=verticalActions.indexOf(activity.getCurrentFocus());
+        return index>=0&&index<verticalActions.size()-1;
+    }
     boolean enter(){if(snapshot==null||SystemClock.elapsedRealtime()>=expiresAt||!host.allowedNow()||firstAction==null)return false;return firstAction.requestFocus();}
     boolean back(){if(!inContent())return false;host.returnToTile(key);return true;}
     String sourceKey(){return key;}
@@ -245,6 +250,7 @@ final class HomeContentController {
         View previousPane=pane;
         boolean refreshing=previousPane!=null;
         boolean channels=HomeContentModel.CHANNEL_PREVIEW.equals(model.template);
+        verticalActions.clear();
         if(channelPreview!=null){channelPreview.release();channelPreview=null;}
         LinearLayout panel=new LinearLayout(activity);panel.setOrientation(LinearLayout.VERTICAL);
         panel.setClipChildren(false);panel.setClipToPadding(false);
@@ -253,6 +259,8 @@ final class HomeContentController {
                     ()->validAction(model,extension), ()->host.returnToTile(key), host::topBar);
             panel.addView(channelPreview,new LinearLayout.LayoutParams(-1,-1));
             firstAction=channelPreview.initialFocus();
+        }else if(isActionList(model)){
+            buildActionList(panel,model,token);
         }else{
             boolean isSummary="summary".equals(model.template);
             if(isSummary){
@@ -372,6 +380,79 @@ final class HomeContentController {
         return !disposed&&source!=null&&extension==source&&snapshot==displayed&&key!=null
                 &&host.allowedNow()&&SystemClock.elapsedRealtime()<expiresAt&&HomeContentRegistry.allowed(activity,source);
     }
+    /** Action-only summaries form a compact menu; mixed informational summaries keep their original layout. */
+    private boolean isActionList(HomeContentModel model){
+        if(!"summary".equals(model.template)||model.items.size()<2||availableHeight<dp(175))return false;
+        for(HomeContentModel.Item item:model.items)
+            if(item.activity.isEmpty()||item.progress>=0||!item.image.isEmpty())return false;
+        return true;
+    }
+    private void buildActionList(LinearLayout panel,HomeContentModel model,int token){
+        panel.setContentDescription(extension.label);
+        panel.setPadding(dp(16),0,dp(16),0);
+        TextView title=text(model.title,23,Color.WHITE,UiFont.get(activity,R.string.font_medium));
+        title.setMaxLines(1);panel.addView(title);
+        LinearLayout list=new LinearLayout(activity);list.setOrientation(LinearLayout.VERTICAL);
+        list.setClipChildren(false);list.setClipToPadding(false);
+        int width=Math.min(dp(440),Math.max(dp(180),root.getWidth()-dp(144)));
+        LinearLayout.LayoutParams listParams=new LinearLayout.LayoutParams(width,-2);
+        listParams.topMargin=dp(15);panel.addView(list,listParams);
+        int rowHeight=Math.min(dp(60),Math.max(dp(40),(availableHeight-dp(56)-dp(8)*(model.items.size()-1))/model.items.size()));
+        firstAction=null;
+        for(int i=0;i<model.items.size();i++){
+            HomeContentModel.Item item=model.items.get(i);
+            LinearLayout row=new LinearLayout(activity);row.setOrientation(LinearLayout.HORIZONTAL);
+            row.setGravity(Gravity.CENTER_VERTICAL);row.setPadding(dp(16),dp(5),dp(14),dp(5));
+            row.setBackground(actionListSurface(false));row.setFocusable(true);row.setFocusableInTouchMode(true);
+            row.setClickable(true);row.setTag(item.id);row.setId(View.generateViewId());
+            row.setContentDescription(item.title+" · "+activity.getString(R.string.home_content_open));
+            LinearLayout labels=new LinearLayout(activity);labels.setOrientation(LinearLayout.VERTICAL);
+            TextView name=text(item.title,17,Color.WHITE,UiFont.get(activity,R.string.font_medium));
+            name.setMaxLines(1);name.setIncludeFontPadding(false);labels.addView(name);
+            TextView sub=text(item.subtitle,11,0xFFD4DEEB,UiFont.get(activity,R.string.font_regular));
+            sub.setMaxLines(1);sub.setIncludeFontPadding(false);
+            if(!item.subtitle.isEmpty()){LinearLayout.LayoutParams sp=new LinearLayout.LayoutParams(-1,-2);sp.topMargin=dp(3);labels.addView(sub,sp);}
+            row.addView(labels,new LinearLayout.LayoutParams(0,-2,1));
+            TextView arrow=text("›",24,0xFFDEE8F8,UiFont.get(activity,R.string.font_regular));
+            arrow.setGravity(Gravity.CENTER);row.addView(arrow,new LinearLayout.LayoutParams(dp(26),-1));
+            row.setOnFocusChangeListener((view,focused)->{
+                view.setBackground(actionListSurface(focused));
+                name.setTextColor(focused?0xFF121C2D:Color.WHITE);
+                sub.setTextColor(focused?0xFF46546B:0xFFD4DEEB);
+                arrow.setTextColor(focused?0xFF24354E:0xFFDEE8F8);
+                name.setShadowLayer(focused?0:dp(3),0,dp(1),0x99000000);
+                sub.setShadowLayer(focused?0:dp(3),0,dp(1),0x99000000);
+                arrow.setShadowLayer(focused?0:dp(3),0,dp(1),0x99000000);
+                float scale=focused&&!reduced?1.015f:1f;
+                view.animate().scaleX(scale).scaleY(scale).setDuration(duration(160)).start();
+            });
+            row.setOnClickListener(v->{
+                HomeContentRegistry.Extension e=extension;
+                if(!validAction(model,e))return;
+                submit(()->{try{HomeContentRegistry.Extension now=HomeContentRegistry.find(activity,e.key());
+                    if(now==null||!now.identity().equals(e.identity()))return;
+                    Intent intent=action(item,now);main.post(()->{if(validAction(model,e))host.openContent(intent);});
+                }catch(Exception ignored){main.post(()->{if(current(token))stop(true);});}});
+            });
+            row.setOnKeyListener((v,code,event)->{
+                if(code==KeyEvent.KEYCODE_BACK||code==KeyEvent.KEYCODE_ESCAPE){if(event.getAction()==KeyEvent.ACTION_DOWN)host.returnToTile(key);return true;}
+                if(code==KeyEvent.KEYCODE_DPAD_UP&&verticalActions.indexOf(v)==0){if(event.getAction()==KeyEvent.ACTION_DOWN)host.topBar();return true;}
+                return false;
+            });
+            LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,rowHeight);if(i>0)lp.topMargin=dp(8);
+            list.addView(row,lp);verticalActions.add(row);firstAction=row;
+        }
+        for(int i=0;i<verticalActions.size();i++){
+            View item=verticalActions.get(i);
+            if(i>0)item.setNextFocusUpId(verticalActions.get(i-1).getId());
+            if(i+1<verticalActions.size())item.setNextFocusDownId(verticalActions.get(i+1).getId());
+            item.setNextFocusLeftId(item.getId());item.setNextFocusRightId(item.getId());
+        }
+    }
+    private GradientDrawable actionListSurface(boolean focused){
+        GradientDrawable d=new GradientDrawable();d.setColor(focused?0xFFF3F7FF:0xD9232F45);
+        d.setCornerRadius(dp(14));d.setStroke(dp(1),focused?0xFFFFFFFF:0x8898B0D4);return d;
+    }
     private TextView text(String value,int size,int color,Typeface font){TextView t=new TextView(activity);t.setText(value);t.setTextSize(size);t.setTextColor(color);t.setTypeface(font!=null?font:Typeface.create("sans-serif",Typeface.NORMAL));t.setEllipsize(TextUtils.TruncateAt.END);t.setShadowLayer(dp(3),0,dp(1),0x99000000);return t;}
     private GradientDrawable surface(boolean focused){GradientDrawable d=new GradientDrawable();d.setColor(focused?0x66344359:0x44111c2c);d.setCornerRadius(dp(9));if(focused)d.setStroke(dp(2),Color.WHITE);return d;}
     private GradientDrawable summarySurface(boolean focused){GradientDrawable d=new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,focused?new int[]{0x70263D5E,0x441B2D48,0x1C111E32}:new int[]{0x46101E34,0x220D182B,0x06091220});d.setCornerRadius(dp(20));if(focused)d.setStroke(dp(1.5f),0xD9FFFFFF);return d;}
@@ -435,7 +516,7 @@ final class HomeContentController {
     }
     private void clearPresentation(boolean immediate){
         if(channelPreview!=null){channelPreview.release();channelPreview=null;}
-        firstAction=null;snapshot=null;acceptingImages=false;
+        verticalActions.clear();firstAction=null;snapshot=null;acceptingImages=false;
         // Only a pane that was shown may hand the shelf back. Every focus move stops the previous session, and a
         // spurious "hidden" here cancels the dock title's fade-out before it swaps in the newly focused app's name.
         boolean shown=pane!=null;

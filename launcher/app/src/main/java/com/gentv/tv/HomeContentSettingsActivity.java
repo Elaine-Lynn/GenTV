@@ -42,6 +42,8 @@ import java.util.List;
  * each poster, and explicit reversible consent for installed extensions.
  */
 public final class HomeContentSettingsActivity extends Activity {
+    private static final String PLAY_TV_PACKAGE = "com.ai.playtv";
+    private static final String GEN_VIDEO_ID = "gen-video";
     private static final int INK_DARK = 0xFF121418;
     private static final int INK_LIGHT = 0xFFF5F7FA;
     private static final int INK_SOFT = 0xD6FFFFFF;
@@ -153,6 +155,18 @@ public final class HomeContentSettingsActivity extends Activity {
                 ExtensionPreviewView.Style.WEATHER,
                 R.drawable.ic_ext_weather, 0xFF2B7CE9, 0xFF56CCF2,
                 findInstalledByPackage("com.gentv.weather")));
+
+        catalog.add(new StoreEntry(
+                GEN_VIDEO_ID,
+                getString(R.string.ext_video_name),
+                getString(R.string.ext_video_sub),
+                getString(R.string.ext_video_desc),
+                getString(R.string.ext_video_author),
+                getString(R.string.ext_video_tags),
+                "", "", true, Tab.MEDIA,
+                ExtensionPreviewView.Style.VIDEO,
+                R.drawable.ic_ext_media, 0xFF7651D8, 0xFFE36D92,
+                findInstalledByPackage(PLAY_TV_PACKAGE)));
 
         catalog.add(new StoreEntry(
                 "continue-watching",
@@ -411,20 +425,21 @@ public final class HomeContentSettingsActivity extends Activity {
         for (HomeContentRegistry.Extension ext : installedExtensions) {
             String pkg = ext.activity.getPackageName();
             boolean isWeather = "com.gentv.weather".equals(pkg);
-            if (excludeCatalogLinked && isWeather) continue;
+            boolean isVideo = PLAY_TV_PACKAGE.equals(pkg);
+            if (excludeCatalogLinked && (isWeather || isVideo)) continue;
             boolean allowed = HomeContentRegistry.allowed(this, ext);
             list.add(new StoreEntry(
                     ext.key(),
-                    ext.label,
+                    isVideo ? getString(R.string.ext_video_name) : ext.label,
                     pkg,
-                    isWeather ? getString(R.string.ext_weather_desc) : getString(R.string.ext_meta_local_desc),
-                    isWeather ? getString(R.string.ext_weather_author) : pkg,
+                    isVideo ? getString(R.string.ext_video_desc) : isWeather ? getString(R.string.ext_weather_desc) : getString(R.string.ext_meta_local_desc),
+                    isVideo ? getString(R.string.ext_video_author) : isWeather ? getString(R.string.ext_weather_author) : pkg,
                     allowed ? getString(R.string.home_content_allowed) : getString(R.string.home_content_not_allowed),
-                    "GHCP 1", "", isWeather, Tab.MINE,
-                    isWeather ? ExtensionPreviewView.Style.WEATHER : ExtensionPreviewView.Style.LOCAL,
-                    isWeather ? R.drawable.ic_ext_weather : R.drawable.ic_qs_extensions,
-                    isWeather ? 0xFF2B7CE9 : 0xFF2B6CB0,
-                    isWeather ? 0xFF56CCF2 : 0xFF63B3ED, ext));
+                    "GHCP 1", "", isWeather || isVideo, Tab.MINE,
+                    isVideo ? ExtensionPreviewView.Style.VIDEO : isWeather ? ExtensionPreviewView.Style.WEATHER : ExtensionPreviewView.Style.LOCAL,
+                    isVideo ? R.drawable.ic_ext_media : isWeather ? R.drawable.ic_ext_weather : R.drawable.ic_qs_extensions,
+                    isVideo ? 0xFF7651D8 : isWeather ? 0xFF2B7CE9 : 0xFF2B6CB0,
+                    isVideo ? 0xFFE36D92 : isWeather ? 0xFF56CCF2 : 0xFF63B3ED, ext));
         }
         return list;
     }
@@ -584,7 +599,7 @@ public final class HomeContentSettingsActivity extends Activity {
         nameLp.setMarginEnd(dp(8));
         titleRow.addView(name, nameLp);
 
-        titleRow.addView(buildRatingInline(entry.rating));
+        if (!entry.rating.isEmpty()) titleRow.addView(buildRatingInline(entry.rating));
         caption.addView(titleRow, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
@@ -615,8 +630,29 @@ public final class HomeContentSettingsActivity extends Activity {
             caption.animate().translationY(focused ? dpF(3f) : 0f)
                     .setDuration(animateFocus ? 160 : 0).start();
         });
-        cell.setOnClickListener(v -> showDetailDialog(entry));
+        cell.setOnClickListener(v -> {
+            if (GEN_VIDEO_ID.equals(entry.id)) openPlayTv();
+            else showDetailDialog(entry);
+        });
         return cell;
+    }
+
+    private void openPlayTv() {
+        if (ChildLock.locked(this)) {
+            finish();
+            return;
+        }
+        Intent launch = CompatApi.leanbackLaunch(getPackageManager(), PLAY_TV_PACKAGE);
+        if (launch == null) launch = getPackageManager().getLaunchIntentForPackage(PLAY_TV_PACKAGE);
+        if (launch == null) {
+            Toast.makeText(this, R.string.ext_video_not_installed, Toast.LENGTH_LONG).show();
+            return;
+        }
+        try {
+            startActivity(launch);
+        } catch (ActivityNotFoundException | SecurityException e) {
+            Toast.makeText(this, R.string.not_available, Toast.LENGTH_SHORT).show();
+        }
     }
 
     private View buildEmptyInstalledCard() {

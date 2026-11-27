@@ -51,6 +51,13 @@
     <string name="ext_weather_author">GenTV 出品</string>
     <string name="ext_weather_tags">GHCP 1 · 免费 · 免登录</string>
 
+    <string name="ext_video_name">Gen 视频</string>
+    <string name="ext_video_sub">添加播放源、查看记录和搜索，打开 PlayTV 开始观看。</string>
+    <string name="ext_video_desc">打开 PlayTV 添加播放源，查看历史播放源并搜索已保存的频道和影片。</string>
+    <string name="ext_video_author">GenTV 出品</string>
+    <string name="ext_video_tags">直播 · 免费观看</string>
+    <string name="ext_video_not_installed">请先安装 PlayTV，再打开 Gen 视频。</string>
+
     <string name="ext_continue_name">接着看</string>
     <string name="ext_continue_sub">把未看完的影片与剧集，优雅放回首屏。</string>
     <string name="ext_continue_desc">从你授权的本地影音库同步续播进度，在首屏以画廊卡片呈现，按下遥控器确认键即可直达上次播放位置。</string>

@@ -51,6 +51,13 @@
     <string name="ext_weather_author">GenTV Studio</string>
     <string name="ext_weather_tags">GHCP 1 · Free · No login</string>
 
+    <string name="ext_video_name">Gen Video</string>
+    <string name="ext_video_sub">Add sources, browse history and search with PlayTV.</string>
+    <string name="ext_video_desc">Open PlayTV to add sources, view source history and search saved channels and videos.</string>
+    <string name="ext_video_author">GenTV Studio</string>
+    <string name="ext_video_tags">Live TV · Free to watch</string>
+    <string name="ext_video_not_installed">Install PlayTV to open Gen Video.</string>
+
     <string name="ext_continue_name">Continue Watching</string>
     <string name="ext_continue_sub">Pick up unfinished films straight from your dock.</string>
     <string name="ext_continue_desc">Surfaces your recent media library queue with clean progress bars and direct deep-link resume for authorized local players.</string>

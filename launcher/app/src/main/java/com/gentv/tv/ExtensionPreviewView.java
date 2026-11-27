@@ -21,7 +21,7 @@ import java.util.Locale;
 @SuppressLint("ViewConstructor")
 final class ExtensionPreviewView extends View {
     enum Style {
-        WEATHER, CONTINUE, DAILY, CALENDAR, CLOCK, SMART, LOCAL
+        WEATHER, VIDEO, CONTINUE, DAILY, CALENDAR, CLOCK, SMART, LOCAL
     }
 
     private final Style style;
@@ -64,6 +64,9 @@ final class ExtensionPreviewView extends View {
             case WEATHER:
                 drawWeatherContent(canvas, w, h, u);
                 break;
+            case VIDEO:
+                drawVideoContent(canvas, w, h, u);
+                break;
             case CONTINUE:
                 drawContinueContent(canvas, w, h, u);
                 break;
@@ -104,6 +107,16 @@ final class ExtensionPreviewView extends View {
                 path.close();
                 fill.setShader(new LinearGradient(0, h * 0.34f, w, h, 0x4438A1FF, 0x2208162D, Shader.TileMode.CLAMP));
                 canvas.drawPath(path, fill);
+                break;
+
+            case VIDEO:
+                fill.setShader(new LinearGradient(0, 0, w, h,
+                        new int[]{0xFF130F2B, 0xFF39245E, 0xFF792D53},
+                        new float[]{0f, 0.58f, 1f}, Shader.TileMode.CLAMP));
+                canvas.drawRect(0, 0, w, h, fill);
+                fill.setShader(new RadialGradient(w * 0.8f, h * 0.22f, w * 0.6f,
+                        0x77EC789D, 0x00130F2B, Shader.TileMode.CLAMP));
+                canvas.drawRect(0, 0, w, h, fill);
                 break;
 
             case CONTINUE:
@@ -235,6 +248,36 @@ final class ExtensionPreviewView extends View {
         canvas.drawCircle(cx + 15f * u, cy + 5f * u, 8.5f * u, fill);
         subRect.set(cx - 15f * u, cy + 4f * u, cx + 23.5f * u, cy + 14f * u);
         canvas.drawRoundRect(subRect, 5f * u, 5f * u, fill);
+    }
+
+    private void drawVideoContent(Canvas canvas, float w, float h, float u) {
+        float cardW = Math.min(w * 0.76f, 240f * u);
+        float cardH = 102f * u;
+        float left = (w - cardW) * 0.5f;
+        float top = (h - cardH) * 0.5f;
+        rect.set(left, top, left + cardW, top + cardH);
+        drawGlassCard(canvas, rect, 16f * u, 0x4B1B1534, 0x45FFFFFF, u);
+
+        text.setTextAlign(Paint.Align.LEFT);
+        text.setTypeface(fontMedium);
+        text.setTextSize(13f * u);
+        text.setColor(0xFFFFFFFF);
+        canvas.drawText(zh ? "Gen 视频" : "Gen Video", left + 15f * u, top + 24f * u, text);
+        String[] labels = zh ? new String[]{"添加播放源", "播放记录", "搜索"}
+                : new String[]{"Add source", "History", "Search"};
+        float tileTop = top + 32f * u;
+        text.setTypeface(fontRegular);
+        text.setTextSize(zh ? 8.5f * u : 8f * u);
+        text.setTextAlign(Paint.Align.LEFT);
+        for (int i = 0; i < labels.length; i++) {
+            float y = tileTop + i * 21f * u;
+            subRect.set(left + 15f * u, y, left + cardW - 15f * u, y + 17f * u);
+            fill.setColor(0xC128354C);
+            canvas.drawRoundRect(subRect, 5f * u, 5f * u, fill);
+            text.setColor(0xF0FFFFFF);
+            canvas.drawText(labels[i], left + 23f * u, y + 11.5f * u, text);
+        }
+        text.setTextAlign(Paint.Align.LEFT);
     }
 
     private void drawContinueContent(Canvas canvas, float w, float h, float u) {
