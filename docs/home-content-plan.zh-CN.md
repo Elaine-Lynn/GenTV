@@ -28,7 +28,7 @@ App 决定提供什么内容，GenTV 决定展示方式、授权、焦点、资�
 - 任意第三方 View、Activity 嵌入、WebView/JavaScript、任意布局 DSL。
 - 自动音视频播放、后台常驻刷新、跨应用推广、广告位。
 - 家庭设备的直接写操作、支付、删除等有副作用的动作；首期动作只导航到提供方 App。
-- 养鱼模式融合、文件夹/HDMI 等合成图块扩展。
+- 文件夹/HDMI 等合成图块扩展。
 - Android TV Channels/Watch Next 兼容层、跨设备内容和实时数据流。
 
 不支持协议的 App 保持原体验。安装或升级支持协议的 App 不自动改变用户排序。
@@ -42,7 +42,6 @@ App 决定提供什么内容，GenTV 决定展示方式、授权、焦点、资�
 | 功能故障保护 | [CardFeature.java](../launcher/app/src/main/java/com/gentv/tv/CardFeature.java) | 保留 Home 回退；动态提供方应按应用隔离故障 |
 | 焦点、hero、屏保与启动 | [MainActivity.java](../launcher/app/src/main/java/com/gentv/tv/MainActivity.java) | 通过独立协调器接入，避免持续扩张 Activity |
 | 布局 | [activity_main.xml](../launcher/app/src/main/res/layout/activity_main.xml) | 为内容分配安全区域，不遮挡工具栏或移动图标 |
-| 普通/养鱼模式 | [DesktopMode.java](../launcher/app/src/main/java/com/gentv/tv/DesktopMode.java) | 首期只在普通模式启用 |
 | 桌面配置管理 | [desktop-protocol.md](desktop-protocol.md) | ADB 权限保护的管理通道，必须与第三方内容通道分离 |
 
 不得放宽 DesktopReceiver 的权限，也不得要求第三方 App 使用 ADB、辅助功能、系统签名或与 GenTV 共用签名。
@@ -169,7 +168,6 @@ Back 优先级：模态菜单/排序等现有局部状态 → 内容区返回 �
 |---|---|
 | 普通 App / Module Card spec 1 | 无行为退化，无重复图标 |
 | 儿童模式/锁定 | 默认关闭第三方动态内容；直接入口不得绕过门禁 |
-| 养鱼模式 | 不建立内容会话、不叠加面板 |
 | 文件夹/输入源/其他合成图块 | 保留当前操作，无提供方映射猜测 |
 | 排序/隐藏/远程配置改变 | 重新判断真实第一行成员；取消失效会话 |
 | 多启动组件/多入口 | 按组件关联，不能仅按包合并 |
@@ -246,7 +244,7 @@ Back 优先级：模态菜单/排序等现有局部状态 → 内容区返回 �
 | A05 | 正在聚焦的项更新/删除不抢焦点；来源被卸载/移动时有有效回退 | T09/T11 |
 | A06 | 图标 OK 正常启动；内容 OK 到正确页面；目标失效安全回退；返回栈实测 | T05/T11 |
 | A07 | 未授权不读私人数据；撤权、过期、退出账号、重装、签名变化按规则失效 | T05/T08/T09 |
-| A08 | 儿童锁、排序、文件夹、输入源、养鱼模式和旧 Module Card 无越权或退化 | T08/T11/T12 |
+| A08 | 儿童锁、排序、文件夹、输入源和旧 Module Card 无越权或退化 | T08/T11/T12 |
 | A09 | Home、设置、待机、屏保切换释放资源，恢复不闪现失效私人内容 | T09/T12 |
 | A10 | 离线、本地提供方、无官方 API、低空间/内存压力仍可回退普通桌面 | T07/T09/T12 |
 | A11 | 不同布局、RTL、大字体、TalkBack/可访问性标签和减少动效有效 | T10/T12 |

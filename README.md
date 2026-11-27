@@ -43,14 +43,6 @@ Official channels are only [gentv.me](https://www.gentv.me/) and this repository
 | **A Samsung (Tizen), LG (webOS) or Hisense VIDAA TV** | GenTV can't run there: [why](#does-it-work-on-samsung-lg-or-vidaa-tvs) |
 | **You want to see it first** | [Screenshots](#screenshots) |
 
-## New in TV 3.7.8 · Interactive fish pond
-
-Turn your TV home screen into a live pond with swimming koi, a turtle and a fishing cat. Use the remote to feed the fish, go fishing and see your catches in Achievements.
-
-Open **Control center → Desktop theme** to preview and switch between the Apple-style simple desktop and the interactive fish pond. The two modes share your app layout and remember your theme choice after a restart. In **Fish pond settings**, adjust the fish count, swimming speed and frame rate, or choose 720p or 1080p rendering.
-
-<img src="launcher/app/src/main/res/drawable-nodpi/theme_preview_pond.webp" alt="GenTV interactive fish pond with swimming koi, a fishing cat on the right bank, and app tiles along the bottom" width="640">
-
 ## Child viewing controls
 
 Open **Control center → Child mode** to set a parent PIN, managed apps, question type and difficulty. Choose 5, 10, 15 or 20 minutes; the default is 10. The timer counts screen-on foreground time in selected apps and presents an offline question when due. A correct answer releases the current restriction; playback recovery depends on the player.
@@ -60,7 +52,7 @@ Automatic timing requires the child timer accessibility service to be connected.
 ## Why GenTV
 
 - **Everything from your phone.** Install GenTV, clean up the TV, use the remote and keyboard, send files and rearrange the home screen from an Android phone on the same network. You don't need a computer or a cable.
-- **A home screen without ads.** GenTV shows no promotions, recommendation rows or ads. You see only your apps, wallpapers and input sources, on large tiles made for a remote. Choose between the Apple-style simple desktop and the interactive fish pond.
+- **A home screen without ads.** GenTV shows no promotions, recommendation rows or ads. You see only your apps, wallpapers and input sources, on large tiles made for a remote.
 - **Clear out the clutter.** Check storage, clear caches, and review, disable or remove preinstalled apps you don't use. System components are protected, and every change is recorded.
 - **Undo what you changed.** Re-enable disabled apps and restore eligible preinstalled apps from the phone.
 - **Installed to be your home screen.** A full install makes GenTV the default Home once it opens and works with your remote. The previous Home is recorded first and the stock launcher is never uninstalled, so you can switch back. For China-market TVs, see the [FAQ](#default-home).
