@@ -333,8 +333,8 @@ public final class WallpaperGalleryActivity extends Activity {
             String shelfTitle = "shuffle".equals(catId)
                     ? copy("随机", "Shuffle")
                     : title(group);
-            JSONArray items = group.optJSONArray("items");
-            if (items == null || items.length() == 0) continue;
+            JSONArray items = visibleItems(group.optJSONArray("items"));
+            if (items.length() == 0) continue;
             GalleryShelf model = new GalleryShelf(catId, shelfTitle, items);
             GalleryShelf old = previous.get(catId);
             if (old != null) {
@@ -364,6 +364,21 @@ public final class WallpaperGalleryActivity extends Activity {
             shelvesGrid.setSelectedPosition(focusPosition);
             shelvesGrid.requestFocus();
         });
+    }
+
+    /** Real wallpapers only: no "coming soon" placeholders, and no Shuffle choice whose scope has nothing yet. */
+    private JSONArray visibleItems(JSONArray items) {
+        JSONArray visible = new JSONArray();
+        if (items == null) return visible;
+        for (int i = 0; i < items.length(); i++) {
+            JSONObject item = items.optJSONObject(i);
+            if (item == null) continue;
+            String kind = item.optString("kind");
+            if ("placeholder".equals(kind)) continue;
+            if ("shuffle".equals(kind) && candidatesForScope(item.optString("scope", "all")).isEmpty()) continue;
+            visible.put(item);
+        }
+        return visible;
     }
 
     /** Ensures the 5 requested shuffle options always appear cleanly under the "随机" shelf. */
@@ -588,7 +603,6 @@ public final class WallpaperGalleryActivity extends Activity {
         String kind = item.optString("kind");
         String name = title(item);
         boolean isVideo = "video".equals(kind);
-        boolean isPlaceholder = "placeholder".equals(kind);
         boolean isShuffle = "shuffle".equals(kind);
         boolean isDefault = "default".equals(id);
         boolean isActive = !activeCatalogId.isEmpty() && activeCatalogId.equals(id);
@@ -611,7 +625,7 @@ public final class WallpaperGalleryActivity extends Activity {
         final float radius = dpF(16);
         FrameLayout cover = new FrameLayout(this);
         CompatApi.roundClip(cover, radius);
-        cover.setBackground(themedCardSurface(catId, id, isPlaceholder, isShuffle));
+        cover.setBackground(cardSurface());
         posterWrap.addView(cover, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
@@ -622,10 +636,13 @@ public final class WallpaperGalleryActivity extends Activity {
 
         if (isDefault) {
             image.setImageBitmap(BitmapFactory.decodeResource(getResources(), R.raw.wallpaper_default_preview));
+        } else if (isShuffle) {
+            // Covers are rendered ahead of time (tools/make_shuffle_covers.py) and ship with the app.
+            image.setImageResource(shuffleCover(item.optString("scope", "all")));
         }
 
         // Subtle dark gradient at bottom of real photos/videos for badge legibility.
-        if (!isPlaceholder && !isShuffle) {
+        if (!isShuffle) {
             View bottomScrim = new View(this);
             bottomScrim.setBackground(new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
                     new int[]{0x00000000, 0x55060910}));
@@ -647,6 +664,16 @@ public final class WallpaperGalleryActivity extends Activity {
                     Gravity.BOTTOM | Gravity.START);
             blp.setMargins(dp(10), 0, 0, dp(10));
             cover.addView(badge, blp);
+
+            // Bottom-right: whether this motion wallpaper is already on the TV.
+            boolean downloaded = WallpaperDownloads.local(this, id, item.optString("path")) != null;
+            View state = new WallpaperCardMarks.DownloadState(this, downloaded);
+            FrameLayout.LayoutParams slp = new FrameLayout.LayoutParams(dp(24), dp(24),
+                    Gravity.BOTTOM | Gravity.END);
+            slp.setMargins(0, 0, dp(10), dp(10));
+            cover.addView(state, slp);
+            card.setContentDescription(name + "，" + copy(downloaded ? "已下载" : "未下载",
+                    downloaded ? "downloaded" : "not downloaded"));
         }
 
         // Top-right frosted badge with emerald dot: "使用中" on active wallpaper.
@@ -677,55 +704,6 @@ public final class WallpaperGalleryActivity extends Activity {
             cover.addView(activePill, alp);
         }
 
-        // Upcoming placeholder card center pill: "即将上线".
-        if (isPlaceholder) {
-            TextView coming = new TextView(this);
-            coming.setText(copy("即将上线", "Coming soon"));
-            coming.setTextColor(0xCCDCE6F2);
-            coming.setTextSize(12f);
-            coming.setTypeface(fontMedium);
-            coming.setPadding(dp(14), dp(5), dp(14), dp(5));
-            coming.setBackground(roundRect(0x1EFFFFFF, 0x26FFFFFF, 14));
-            cover.addView(coming, new FrameLayout.LayoutParams(
-                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT,
-                    Gravity.CENTER));
-        }
-
-        // Shuffle card centered circular emblem + subtle scope count hint.
-        if (isShuffle) {
-            String scope = item.optString("scope", "all");
-            int available = candidatesForScope(scope).size();
-
-            LinearLayout centerBox = new LinearLayout(this);
-            centerBox.setOrientation(LinearLayout.VERTICAL);
-            centerBox.setGravity(Gravity.CENTER);
-
-            TextView icon = new TextView(this);
-            icon.setText("↻");
-            icon.setTextColor(available > 0 ? 0xF2FFFFFF : 0x80FFFFFF);
-            icon.setTextSize(22f);
-            icon.setTypeface(fontRegular);
-            icon.setGravity(Gravity.CENTER);
-            icon.setBackground(circleShape(available > 0 ? 0x22FFFFFF : 0x12FFFFFF));
-            centerBox.addView(icon, new LinearLayout.LayoutParams(dp(44), dp(44)));
-
-            TextView sub = new TextView(this);
-            sub.setText(available > 0
-                    ? copy(available + " 款可随机", available + " available")
-                    : copy("即将上线", "Coming soon"));
-            sub.setTextColor(available > 0 ? 0xBDDCE6F2 : 0x80DCE6F2);
-            sub.setTextSize(11.5f);
-            sub.setTypeface(fontRegular);
-            LinearLayout.LayoutParams slp = new LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            slp.topMargin = dp(8);
-            centerBox.addView(sub, slp);
-
-            cover.addView(centerBox, new FrameLayout.LayoutParams(
-                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT,
-                    Gravity.CENTER));
-        }
-
         // Crisp border overlay (idle subtle hairline -> focused luminous pure white ring).
         View ring = new View(this);
         ring.setBackground(borderDrawable(0x22FFFFFF, 0.75f, 16));
@@ -737,7 +715,7 @@ public final class WallpaperGalleryActivity extends Activity {
         // Floating borderless caption beneath poster.
         TextView caption = new TextView(this);
         caption.setText(name);
-        caption.setTextColor(isPlaceholder ? 0x80DCE6F2 : 0xB8DCE6F2);
+        caption.setTextColor(0xB8DCE6F2);
         caption.setTextSize(14f);
         caption.setTypeface(fontRegular);
         caption.setSingleLine(true);
@@ -750,9 +728,9 @@ public final class WallpaperGalleryActivity extends Activity {
 
         card.setOnFocusChangeListener((v, focused) -> {
             ring.setBackground(focused
-                    ? borderDrawable(isPlaceholder ? 0xB8FFFFFF : FOCUS_WHITE, 2.2f, 16)
+                    ? borderDrawable(FOCUS_WHITE, 2.2f, 16)
                     : borderDrawable(0x22FFFFFF, 0.75f, 16));
-            caption.setTextColor(focused ? 0xFFFFFFFF : (isPlaceholder ? 0x80DCE6F2 : 0xB8DCE6F2));
+            caption.setTextColor(focused ? 0xFFFFFFFF : 0xB8DCE6F2);
             caption.setTypeface(focused ? fontMedium : fontRegular);
             CompatApi.elevation(posterWrap, focused ? dpF(14) : 0f);
             springScale(card, focused ? 1.045f : 1f);
@@ -772,16 +750,10 @@ public final class WallpaperGalleryActivity extends Activity {
             }
         });
 
-        card.setOnClickListener(v -> {
-            if (isPlaceholder) {
-                Toast.makeText(this, copy(name + " 即将上线", name + " coming soon"), Toast.LENGTH_SHORT).show();
-                return;
-            }
-            apply(item, kind, isDefault);
-        });
+        card.setOnClickListener(v -> apply(item, kind, isDefault, cover));
 
         String preview = item.optString("preview");
-        if (!preview.isEmpty() && !isDefault && !isPlaceholder && !isShuffle) {
+        if (!preview.isEmpty() && !isDefault && !isShuffle) {
             worker.execute(() -> {
                 try {
                     Bitmap cached = previewCache.get(preview);
@@ -821,7 +793,7 @@ public final class WallpaperGalleryActivity extends Activity {
         return list == null ? new ArrayList<>() : list;
     }
 
-    private void apply(JSONObject item, String kind, boolean fallback) {
+    private void apply(JSONObject item, String kind, boolean fallback, FrameLayout cover) {
         if (applying) return;
         if (fallback && item.optString("path").isEmpty()) {
             saveActiveCatalogId("default");
@@ -832,13 +804,8 @@ public final class WallpaperGalleryActivity extends Activity {
         boolean shuffle = "shuffle".equals(kind);
         JSONObject chosen = item;
         if (shuffle) {
-            String scope = item.optString("scope", "all");
-            List<JSONObject> pool = candidatesForScope(scope);
-            if (pool.isEmpty()) {
-                Toast.makeText(this, copy("该分类素材即将上线", "Coming soon for this category"),
-                        Toast.LENGTH_SHORT).show();
-                return;
-            }
+            List<JSONObject> pool = candidatesForScope(item.optString("scope", "all"));
+            if (pool.isEmpty()) return;
             // Prefer picking a different wallpaper than the currently active one when multiple exist.
             List<JSONObject> fresh = new ArrayList<>();
             for (JSONObject candidate : pool) {
@@ -851,20 +818,61 @@ public final class WallpaperGalleryActivity extends Activity {
         final JSONObject target = chosen;
         final boolean targetIsVideo = "video".equals(target.optString("kind"));
         final String targetId = target.optString("id");
+        final String path = target.optString("path");
+
+        // Already on the TV: apply it now, no network.
+        String local = WallpaperDownloads.local(this, targetId, path);
+        if (local != null) {
+            saveActiveCatalogId(targetId);
+            BundledWallpapers.select(this, local);
+            finish();
+            return;
+        }
+
         applying = true;
-        showStatus(copy("正在下载「" + title(target) + "」…", "Downloading " + title(target) + "…"), false);
+        String label = shuffle ? copy("正在下载「" + title(target) + "」", "Downloading " + title(target))
+                : copy("正在下载", "Downloading");
+        WallpaperCardMarks.DownloadProgress progress = new WallpaperCardMarks.DownloadProgress(
+                this, label, fontMedium, fontRegular, animateFocus);
+        cover.addView(progress, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
         worker.execute(() -> {
             String selection = null;
             try {
-                String path = target.optString("path");
                 if ("default".equals(targetId) && path.isEmpty()) {
                     selection = "classic";
                 } else {
                     HttpURLConnection connection = TvCloud.open(assetUrl(path));
                     try {
-                        selection = UserWallpaper.importDownload(getApplicationContext(),
-                                connection.getInputStream(), targetIsVideo);
+                        long size = connection.getContentLength();
+                        java.io.InputStream counted = new java.io.FilterInputStream(connection.getInputStream()) {
+                            private long read;
+                            private int reported = -1;
+
+                            @Override public int read() throws IOException {
+                                int b = super.read();
+                                if (b >= 0) advance(1);
+                                return b;
+                            }
+
+                            @Override public int read(byte[] buffer, int offset, int count) throws IOException {
+                                int n = super.read(buffer, offset, count);
+                                if (n > 0) advance(n);
+                                return n;
+                            }
+
+                            private void advance(int n) {
+                                read += n;
+                                if (size <= 0) return;
+                                int permille = (int) Math.min(1000, read * 1000 / size);
+                                if (permille == reported) return;
+                                reported = permille;
+                                progress.post(() -> progress.setProgress(permille / 1000f));
+                            }
+                        };
+                        selection = UserWallpaper.importDownload(getApplicationContext(), counted, targetIsVideo);
+                        WallpaperDownloads.remember(getApplicationContext(), targetId, path, selection);
                     } finally {
                         connection.disconnect();
                     }
@@ -875,14 +883,20 @@ public final class WallpaperGalleryActivity extends Activity {
             final String applied = selection;
             runOnUiThread(() -> {
                 if (isDestroyed()) return;
-                applying = false;
                 if (applied == null) {
+                    applying = false;
+                    progress.animate().alpha(0f).setDuration(180)
+                            .withEndAction(() -> cover.removeView(progress)).start();
                     showStatus(copy("下载失败，请重试", "Download failed. Try again."), true);
-                } else {
+                    return;
+                }
+                progress.complete(() -> {
+                    if (isDestroyed()) return;
+                    applying = false;
                     saveActiveCatalogId(targetId);
                     BundledWallpapers.select(this, applied);
                     finish();
-                }
+                });
             });
         });
     }
@@ -1134,41 +1148,22 @@ public final class WallpaperGalleryActivity extends Activity {
                 error ? 0x44FFAD42 : 0x2EFFFFFF, 14));
     }
 
-    /** Atmospheric dark smoked-glass gradients for upcoming & shuffle cards. */
-    private GradientDrawable themedCardSurface(String catId, String itemId,
-                                               boolean placeholder, boolean shuffle) {
-        int start = 0xFF161E2C;
-        int end = 0xFF0E131D;
-        if (placeholder || shuffle) {
-            if ("pet-dog".equals(itemId) || "shuffle-pets".equals(itemId)) {
-                start = 0xFF2B241E; end = 0xFF171412;
-            } else if ("pet-rabbit".equals(itemId)) {
-                start = 0xFF1D2C21; end = 0xFF111914;
-            } else if ("nature-sea".equals(itemId) || "shuffle-nature".equals(itemId)) {
-                start = 0xFF122B35; end = 0xFF0C1820;
-            } else if ("nature-forest".equals(itemId)) {
-                start = 0xFF122C22; end = 0xFF0B1813;
-            } else if ("nature-mountain".equals(itemId)) {
-                start = 0xFF1D203C; end = 0xFF101324;
-            } else if ("dreamy-sakura".equals(itemId) || "shuffle-dreamy".equals(itemId)) {
-                start = 0xFF2F1D2C; end = 0xFF18111B;
-            } else if ("dreamy-starlight".equals(itemId)) {
-                start = 0xFF1B1C38; end = 0xFF0F1021;
-            } else if ("dreamy-clouds".equals(itemId)) {
-                start = 0xFF1A283A; end = 0xFF0F1722;
-            } else if ("shuffle-all".equals(itemId)) {
-                start = 0xFF182A44; end = 0xFF0E1626;
-            } else if ("shuffle-images".equals(itemId)) {
-                start = 0xFF1B2B36; end = 0xFF101820;
-            } else if ("nature".equals(catId)) {
-                start = 0xFF122A32; end = 0xFF0C171E;
-            } else if ("dreamy".equals(catId)) {
-                start = 0xFF261C34; end = 0xFF141020;
-            }
-        }
-        GradientDrawable d = new GradientDrawable(GradientDrawable.Orientation.TL_BR, new int[]{start, end});
+    /** The smoked surface a card shows until its preview arrives. */
+    private GradientDrawable cardSurface() {
+        GradientDrawable d = new GradientDrawable(GradientDrawable.Orientation.TL_BR,
+                new int[]{0xFF161E2C, 0xFF0E131D});
         d.setCornerRadius(dpF(16));
         return d;
+    }
+
+    private static int shuffleCover(String scope) {
+        switch (scope == null ? "" : scope) {
+            case "pets": return R.drawable.wallpaper_shuffle_pets;
+            case "nature": return R.drawable.wallpaper_shuffle_nature;
+            case "dreamy": return R.drawable.wallpaper_shuffle_dreamy;
+            case "images": return R.drawable.wallpaper_shuffle_images;
+            default: return R.drawable.wallpaper_shuffle_all;
+        }
     }
 
     private void springScale(View view, float target) {
