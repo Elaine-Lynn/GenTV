@@ -120,7 +120,7 @@ public final class QuickSettingsActivity extends Activity {
     }
 
     private void addServiceRows() {
-        addRow(R.drawable.ic_gamepad, R.string.game_kart, 0, () -> {
+        addRow(R.drawable.ic_gamepad, R.string.game_center, 0, () -> {
             if (android.os.Build.VERSION.SDK_INT < 23) {
                 Toast.makeText(this, R.string.game_requires_android_6, Toast.LENGTH_LONG).show();
             } else {

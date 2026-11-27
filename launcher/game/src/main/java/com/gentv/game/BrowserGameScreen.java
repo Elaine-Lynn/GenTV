@@ -44,9 +44,11 @@ import java.util.Map;
 import java.util.Set;
 
 /** Game implementation loaded from the uninstalled game archive by the host activity. */
-public final class KartGameScreen implements GameRuntimeEntry {
-    private static final String GAME_URL = "https://kart.igame86.com/play/";
-    private static final String INPUT_EXTENSION = "resource://android/assets/game_input/";
+public final class BrowserGameScreen implements GameRuntimeEntry {
+    private final GameContentRepository.Loaded game;
+    private final Runnable exit;
+    BrowserGameScreen(GameContentRepository.Loaded game, Runnable exit) { this.game = game; this.exit = exit; }
+    private static final String INPUT_EXTENSION = "resource://android/assets/game_base_input/";
     private static final String INPUT_EXTENSION_ID = "game-input@gentv.local";
     private static GeckoRuntime runtime;
     private Activity host;
@@ -59,6 +61,7 @@ public final class KartGameScreen implements GameRuntimeEntry {
     private boolean phoneConnected;
     private boolean returnedToGameHome;
     private long lastExitBackAt;
+    private boolean destroyed;
     private final InputManager.InputDeviceListener gamepadListener = new InputManager.InputDeviceListener() {
         @Override public void onInputDeviceAdded(int deviceId) { updateConnectionCard(); }
         @Override public void onInputDeviceRemoved(int deviceId) { updateConnectionCard(); }
@@ -103,6 +106,7 @@ public final class KartGameScreen implements GameRuntimeEntry {
                 if (loadMessage != null) loadMessage.setVisibility(View.GONE);
             }
             @Override public void onPageStop(GeckoSession session, boolean success) {
+                if (destroyed) return;
                 if (!success) showLoadError(root);
                 else browser.requestFocus();
             }
@@ -111,7 +115,7 @@ public final class KartGameScreen implements GameRuntimeEntry {
         session.open(runtime);
         browser.setSession(session);
         installInputBridge();
-        session.loadUri(GAME_URL);
+        session.loadUri(game.entry.entryUrl());
         handler.postDelayed(releaseStale, 500);
     }
 
@@ -134,17 +138,18 @@ public final class KartGameScreen implements GameRuntimeEntry {
         if (address != null) {
             String code = String.format(Locale.ROOT, "%04d", new SecureRandom().nextInt(10_000));
             try {
-                controller = new LanGameController(host, address, code,
+                controller = new LanGameController(game.loader, game.entry.remoteAsset(), address, code,
                         new LanGameController.Listener() {
                             @Override public boolean ready() { return inputPort != null; }
                             @Override public void connected() {
                                 host.runOnUiThread(() -> {
+                                    if (destroyed) return;
                                     phoneConnected = true;
                                     updateConnectionCard();
                                 });
                             }
                             @Override public void key(String key, boolean down) {
-                                host.runOnUiThread(() -> input(key, down));
+                                host.runOnUiThread(() -> { if (!destroyed) input(key, down); });
                             }
                         });
                 showConnection(root, controller.url(), code);
@@ -165,7 +170,7 @@ public final class KartGameScreen implements GameRuntimeEntry {
     private void installInputBridge() {
         runtime.getWebExtensionController().ensureBuiltIn(INPUT_EXTENSION, INPUT_EXTENSION_ID).accept(
                 extension -> host.runOnUiThread(() -> {
-                    if (session == null) return;
+                    if (destroyed || session == null) return;
                     session.getWebExtensionController().setMessageDelegate(extension,
                         new WebExtension.MessageDelegate() {
                             @Override public void onConnect(WebExtension.Port port) {
@@ -189,7 +194,7 @@ public final class KartGameScreen implements GameRuntimeEntry {
             loadMessage.setPadding(dp(24), dp(16), dp(24), dp(16));
             loadMessage.setBackgroundColor(0xee12273d);
             loadMessage.setFocusable(true);
-            loadMessage.setOnClickListener(v -> session.loadUri(GAME_URL));
+            loadMessage.setOnClickListener(v -> session.loadUri(game.entry.entryUrl()));
             FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(-2, -2, Gravity.CENTER);
             root.addView(loadMessage, params);
         }
@@ -246,16 +251,16 @@ public final class KartGameScreen implements GameRuntimeEntry {
     }
 
     private void handleBack() {
-        if (session == null) { host.finish(); return; }
+        if (session == null) { exit.run(); return; }
         if (!returnedToGameHome) {
             returnedToGameHome = true;
             lastExitBackAt = 0;
-            session.loadUri(GAME_URL);
+            session.loadUri(game.entry.entryUrl());
             Toast.makeText(host, "已返回游戏主页", Toast.LENGTH_SHORT).show();
             return;
         }
         long now = SystemClock.elapsedRealtime();
-        if (now - lastExitBackAt <= 2200) { host.finish(); return; }
+        if (now - lastExitBackAt <= 2200) { exit.run(); return; }
         lastExitBackAt = now;
         Toast.makeText(host, "再按一次返回退出游戏", Toast.LENGTH_SHORT).show();
     }
@@ -339,6 +344,7 @@ public final class KartGameScreen implements GameRuntimeEntry {
     }
 
     @Override public void destroy() {
+        destroyed = true;
         handler.removeCallbacks(releaseStale);
         if (controller != null) controller.close();
         for (String key : new HashSet<>(held)) input(key, false);

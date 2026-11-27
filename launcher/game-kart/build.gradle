@@ -1,0 +1,35 @@
+plugins { id 'com.android.application' }
+
+def releaseSecrets = new Properties()
+def signingFile = rootProject.file('../phone/keys/signing.properties')
+if (signingFile.exists()) signingFile.withInputStream { releaseSecrets.load(it) }
+
+android {
+    namespace 'com.gentv.game.kart'
+    compileSdk 34
+    resourcePrefix 'game_kart_'
+    defaultConfig {
+        applicationId 'com.gentv.game.kart.plugin'
+        minSdk 28
+        targetSdk 34
+        versionCode = (project.findProperty('kartVersionCode') ?: '1').toInteger()
+        versionName = (project.findProperty('kartVersionName') ?: '1.0.0')
+    }
+    signingConfigs {
+        production {
+            if (!releaseSecrets.isEmpty()) {
+                storeFile rootProject.file('../phone/keys/' + releaseSecrets.getProperty('storeFile'))
+                storePassword releaseSecrets.getProperty('storePassword')
+                keyAlias releaseSecrets.getProperty('keyAlias')
+                keyPassword releaseSecrets.getProperty('keyPassword')
+            }
+        }
+    }
+    buildTypes { release { signingConfig signingConfigs.production } }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies { compileOnly project(':game-content-api') }

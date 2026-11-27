@@ -102,6 +102,35 @@ def app(environ, start_response):
             start_response('503 Service Unavailable', [('Content-Length', '0'), ('Cache-Control', 'no-store')]); return []
         body = json.dumps(release, separators=(',', ':')).encode()
         kind = 'application/json; charset=utf-8'; cache = 'no-cache'
+    elif path == '/tv/plugins/games/catalog' or re.fullmatch(r'/tv/plugins/games/[a-z][a-z0-9_]{0,39}/update', path):
+        catalog_request = path == '/tv/plugins/games/catalog'
+        game_id = None if catalog_request else path.split('/')[4]
+        directory = STATE / 'plugins' / 'games'
+        manifest = directory / 'catalog.json' if catalog_request else directory / game_id / 'update.json'
+        if catalog_request and not manifest.exists():
+            manifest = Path(__file__).parent / 'game-catalog.json'
+        try:
+            if manifest.is_symlink() or manifest.stat().st_size > 128 * 1024:
+                raise ValueError('Invalid game metadata')
+            release = json.loads(manifest.read_text(encoding='utf-8'))
+            if not isinstance(release, dict): raise ValueError('Invalid game metadata')
+            if catalog_request:
+                if release.get('schemaVersion') != 1 or not isinstance(release.get('games'), list) or len(release['games']) > 100:
+                    raise ValueError('Invalid game catalog')
+                ids = set()
+                for game in release['games']:
+                    if not isinstance(game, dict): raise ValueError('Invalid game listing')
+                    identity = game.get('id', '')
+                    if not isinstance(identity, str) or not re.fullmatch(r'[a-z][a-z0-9_]{0,39}', identity) or identity in ids:
+                        raise ValueError('Invalid game ID')
+                    if game.get('packageName') != f'com.gentv.game.{identity}.plugin': raise ValueError('Invalid game package')
+                    ids.add(identity)
+            elif release.get('id') != game_id or release.get('packageName') != f'com.gentv.game.{game_id}.plugin':
+                raise ValueError('Wrong game identity')
+        except (OSError, ValueError, TypeError):
+            start_response('503 Service Unavailable', [('Content-Length', '0'), ('Cache-Control', 'no-store')]); return []
+        body = json.dumps(release, separators=(',', ':')).encode()
+        kind = 'application/json; charset=utf-8'; cache = 'no-cache'
     elif path == '/tv/wallpaper':
         items = []
         for p in pictures():

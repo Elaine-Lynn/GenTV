@@ -1,6 +1,5 @@
 package com.gentv.game;
 
-import android.content.Context;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -28,7 +27,8 @@ final class LanGameController implements Closeable {
 
     private final ServerSocket server;
     private final Thread worker;
-    private final Context context;
+    private final ClassLoader contentLoader;
+    private final String remoteAsset;
     private final String code;
     private final String origin;
     private final Listener listener;
@@ -36,8 +36,9 @@ final class LanGameController implements Closeable {
     private boolean connected;
     private int failures;
 
-    LanGameController(Context context, String address, String code, Listener listener) throws IOException {
-        this.context = context.getApplicationContext();
+    LanGameController(ClassLoader contentLoader, String remoteAsset, String address, String code, Listener listener) throws IOException {
+        this.contentLoader = contentLoader;
+        this.remoteAsset = remoteAsset;
         this.code = code;
         this.listener = listener;
         server = new ServerSocket(0, 4, InetAddress.getByName(address));
@@ -103,17 +104,9 @@ final class LanGameController implements Closeable {
             reply(out, 403, "Wrong origin", "text/plain"); return;
         }
         if ("GET / HTTP/1.1".equals(request) || "GET / HTTP/1.0".equals(request)) {
-            try (InputStream page = getClass().getClassLoader()
-                    .getResourceAsStream("assets/game_remote.html")) {
+            try (InputStream page = contentLoader.getResourceAsStream("assets/" + remoteAsset)) {
                 if (page == null) throw new IOException("Plugin controller page missing");
-                byte[] bytes = new byte[page.available()];
-                int read = 0;
-                while (read < bytes.length) {
-                    int n = page.read(bytes, read, bytes.length - read);
-                    if (n < 0) break;
-                    read += n;
-                }
-                reply(out, 200, new String(bytes, 0, read, UTF8), "text/html; charset=UTF-8");
+                reply(out, 200, new String(GameNetwork.read(page, 256 * 1024), UTF8), "text/html; charset=UTF-8");
             }
             return;
         }

@@ -15,6 +15,9 @@ public final class GameRuntimeHostActivity extends Activity {
 
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
+        getIntent().putExtra(GameRuntimeEntry.API_BASE_EXTRA, BuildConfig.API_BASE_URL)
+                .putExtra(GameRuntimeEntry.CONTENT_BASE_EXTRA, BuildConfig.GAME_MANIFEST_BASE_URL)
+                .putExtra(GameRuntimeEntry.BASE_VERSION_EXTRA, GameRuntimeStore.version(this));
         TextView loading = new TextView(this);
         loading.setText("游戏加载中…");
         loading.setTextColor(Color.WHITE);
@@ -25,7 +28,7 @@ public final class GameRuntimeHostActivity extends Activity {
         new Thread(() -> {
             try {
                 Class<?> screen = GameRuntimeStore.loader(this)
-                        .loadClass("com.gentv.game.KartGameScreen");
+                        .loadClass("com.gentv.game.GameCenterScreen");
                 runOnUiThread(() -> {
                     if (isFinishing() || isDestroyed()) return;
                     try {

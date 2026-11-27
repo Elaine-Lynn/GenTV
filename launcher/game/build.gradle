@@ -7,12 +7,13 @@ if (signingFile.exists()) signingFile.withInputStream { releaseSecrets.load(it) 
 android {
     namespace 'com.gentv.game'
     compileSdk 34
+    resourcePrefix 'game_'
     defaultConfig {
         applicationId 'com.gentv.game.plugin'
         minSdk 28
         targetSdk 34
-        versionCode = (project.findProperty('gameVersionCode') ?: '1').toInteger()
-        versionName = (project.findProperty('gameVersionName') ?: '1.0.0')
+        versionCode = (project.findProperty('gameVersionCode') ?: '100').toInteger()
+        versionName = (project.findProperty('gameVersionName') ?: '2.0.0')
     }
     splits {
         abi {
@@ -34,6 +35,9 @@ android {
     }
     buildTypes { release { signingConfig signingConfigs.production } }
     packagingOptions { jniLibs { useLegacyPackaging true } }
+    // Uninstalled code container. Gecko's ExoPlayer includes NotificationUtil, but this module
+    // never calls it; permission requests belong to the installed host, not this archive.
+    lint { disable 'NotificationPermission' }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
@@ -42,8 +46,19 @@ android {
 
 dependencies {
     compileOnly project(':game-api')
+    implementation project(':game-content-api')
     implementation('org.mozilla.geckoview:geckoview:128.0.20240725162350') { transitive = false }
     implementation('org.mozilla.geckoview:geckoview-exoplayer2:128.0.20240725162350') { transitive = false }
     implementation 'org.yaml:snakeyaml:2.2'
     implementation 'com.google.zxing:core:3.3.3'
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.json:json:20180813'
 }
+
+def prepareGameCatalog = tasks.register('prepareGameCatalog', Copy) {
+    from(rootProject.file('../server/wallpaper/game-catalog.json'))
+    rename { 'game_base_catalog.json' }
+    into(layout.buildDirectory.dir('generated/gameCatalog'))
+}
+android.sourceSets.main.assets.srcDir(layout.buildDirectory.dir('generated/gameCatalog'))
+tasks.named('preBuild') { dependsOn(prepareGameCatalog) }

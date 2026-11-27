@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="game_kart">Kart game</string>
+    <string name="game_center">Games</string>
     <string name="game_requires_android_6">The Kart game needs Android 6 or newer.</string>
-    <string name="game_module_ready_to_download">Download the game component for this TV. It opens inside GenTV without a separate installation.</string>
+    <string name="game_module_ready_to_download">Download the shared game foundation once, then download individual games from its catalog. No separate installation is needed.</string>
     <string name="game_module_download">Download game</string>
     <string name="game_module_back">Back</string>
     <string name="game_module_downloading">Downloading game module…</string>

@@ -1,0 +1,26 @@
+{
+  "manifest_version": 2,
+  "name": "GenTV base game input bridge",
+  "version": "2.0",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "game-input@gentv.local"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*/*"
+      ],
+      "js": [
+        "game_base_controls.js"
+      ],
+      "run_at": "document_start"
+    }
+  ],
+  "permissions": [
+    "nativeMessaging",
+    "nativeMessagingFromContent",
+    "geckoViewAddons"
+  ]
+}

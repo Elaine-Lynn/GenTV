@@ -1,4 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- This archive is never installed. ExoPlayer's unused NotificationUtil is bundled by Gecko;
+         the game foundation does not post notifications or request notification access. -->
     <application android:hasCode="true" />
 </manifest>

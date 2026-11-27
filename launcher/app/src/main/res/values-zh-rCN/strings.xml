@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="game_kart">卡丁车游戏</string>
+    <string name="game_center">游戏</string>
     <string name="game_requires_android_6">卡丁车游戏需要 Android 6 或更高版本。</string>
-    <string name="game_module_ready_to_download">首次使用需要下载对应的游戏组件，下载后在 GenTV 内直接运行。</string>
+    <string name="game_module_ready_to_download">首次下载游戏基础组件（共用浏览器），进入游戏首页后再按需下载各款游戏，无需系统安装。</string>
     <string name="game_module_download">下载游戏组件</string>
     <string name="game_module_back">返回</string>
     <string name="game_module_downloading">正在下载游戏组件…</string>

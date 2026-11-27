@@ -1,46 +1,59 @@
-# 按需加载游戏插件
+# 游戏基础插件与独立游戏插件
 
-游戏运行时代码和资源由 `launcher/game` 构建。每种 ABI 生成一个完整的独立 APK 文件：`game-armeabi_v7a.apk` 或 `game-arm64_v8a.apk`。主应用下载对应文件，校验后存入私有目录，通过 `DexClassLoader` 加载代码和原生库；**不调用 Android 安装程序**。这个 APK 只是插件文件的容器，不是需要用户安装的另一个应用。
+游戏功能使用两层插件。两个层级均为下载后动态加载，不使用 split APK、PackageInstaller 或系统安装界面。
 
-主 APK 保留下载校验、文件存储、Activity 宿主及 Gecko 子进程入口。游戏页面、手机遥控器、输入扩展、Gecko 代码、`omni.ja` 和对应 ABI 的 `.so` 均放在插件里。运行时加载要求 Android 9 / API 28 或更高版本。Android 8 会显示不支持提示。
-
-## 资源命名
-
-插件自有资源以 `game_` 开头，包括 `game_remote.html`、`game_input/` 和 `game_controls.js`。Gecko 强制使用的 `assets/omni.ja`、`libxul.so` 等文件名，以及 WebExtension 的 `manifest.json` 保留原名。这些文件只在游戏插件中，不进入主 APK。
-
-## 构建与发布
-
-后端文件清单、接口地址和发布顺序见 [插件更新部署](game-plugin-deployment.md)。
-
-使用同一份源码及正式签名构建主包与插件：
-
-```sh
-./launcher/gradlew -p launcher --no-daemon :app:assembleRelease :game:assembleRelease
-python3 tools/package_game_runtime.py \
-  --sdk "$ANDROID_HOME" \
-  --base-apk launcher/app/build/outputs/apk/release/app-release.apk \
-  --game-dir launcher/game/build/outputs/apk/release
+```text
+GenTV 主应用（launcher/app）
+  └─ 游戏基础插件（launcher/game）
+       ├─ 游戏首页、目录缓存、游戏插件下载和独立更新
+       ├─ 共用 Gecko 浏览器、原生库、输入桥、局域网遥控服务
+       └─ 独立游戏插件（当前 launcher/game-kart，后续按游戏增加）
+            ├─ 游戏入口、适配代码
+            └─ 本游戏的手机操控页面及资源
 ```
 
-插件独立使用 `versionCode`（默认为 1）和 `versionName`（默认为 1.0.0），与主包版本无关。通过 `-PgameVersionCode=2 -PgameVersionName=1.0.1` 发布下一版插件。`hostApiVersion=1` 表示主包提供的加载接口；修改接口时需升级该协议，普通游戏更新不需要升级主包。
+主应用只管理基础插件的下载、校验、更新及宿主生命周期。进入工具箱“游戏”，首次下载对应 ABI 的基础组件后显示游戏首页。选中赛车后才下载赛车插件；之后每次打开游戏检查独立更新。已有兼容游戏在断网时仍可加载（网页游戏本身仍需要联网）。
 
-脚本验证完整 APK、正式签名、每个包仅含一个 ABI，并确认主包没有游戏资源或 `libxul.so`。输出位于 Git 忽略的 `work/game-runtime-release/<插件versionCode>/<abi>/`，包含组件 APK 和 `manifest.json`。使用 `--min-host 37 --max-host 2147483647` 指定兼容的主包范围；发布者必须按实际接口兼容情况填写范围。
+当前赛车插件包含远程网页入口和控制适配，不包含或重新分发第三方游戏网站的全部内容。新增游戏可携带自己的代码和资源，通过 `GameContentEntry` 提供入口及遥控页。浏览器和局域网服务由基础插件复用。
 
-## 独立更新接口
+## 边界与版本
 
-主接口为 `GET <构建配置中的API_BASE_URL>plugins/game/update?abi=armeabi-v7a`，即服务端路径 `/tv/plugins/game/update`。支持 `armeabi-v7a`、`arm64-v8a`，不支持的 ABI 返回 400，尚无清单时返回 503。服务端从以下文件读取清单：
+| 模块 | 内容 | 版本 / 协议 |
+| --- | --- | --- |
+| `game-api` | 主包与基础插件之间的生命周期接口 | host API 2 |
+| `game` | 游戏首页、共享内核、子插件管理 | 2.0.0 / code 100 |
+| `game-content-api` | 基础插件与各游戏间的接口，仅编入基础插件 | content API 1 |
+| `game-kart` | 赛车入口和专用手机操控页，不含 Gecko 和 `.so` | 1.0.0 / code 1 |
 
-- `$GENTV_STATE_DIR/plugins/game/update-armeabi-v7a.json`
-- `$GENTV_STATE_DIR/plugins/game/update-arm64-v8a.json`
+基础插件 code 100 为迁移起点，避免与旧试验组件的版本号冲突；此后使用独立递增序列。旧 host API 1 主包需要先升级一次，之后普通游戏更新不需要主包升级，基础插件升级也不清除游戏插件。
 
-主接口不可用时读取 GitHub 备用清单：`update-manifest` 分支的 `game-runtime/latest/<abi>/manifest.json`。两个接口返回同样的 JSON。插件 APK 作为 `game-runtime-v<插件versionName>` Release 附件，或放在同 API 的 `/tv/releases/game-<abi下划线形式>.apk`。
+主包仅编译 `game-api`，不依赖 `game`、`game-content-api` 或 `game-kart`。基础插件通过 `DexClassLoader` 加载；子插件使用基础插件的类加载器作为父加载器，复用共享接口与内核。Android 9 / API 28 起支持，ABI 为 ARMv7 / ARM64。其他 Android 版本保留桌面功能并提示游戏组件不支持。
 
-每次进入游戏检查更新。插件版本大于本地版本且兼容主包时，下载对应架构文件，验证大小、SHA-256、APK版本和签名，再写入独立版本目录并原子切换指针。下载、校验或切换失败时保留旧组件；不接受降级。同一插件版本文件不可修改，修复时必须提高插件版本号。主包升级后可以继续使用已下载的兼容插件，无需跟随主包重新下载。现有按主包版本保存的试验组件不迁移，首次使用新协议需重新下载一次。
+## 校验、缓存与失败恢复
 
-发布顺序：先上传插件附件，再把脚本输出的清单复制到服务端及 GitHub 的 `latest/<abi>/manifest.json`。只更新这些清单和附件即可发布插件更新。服务端部署时需同步更新 `app.py` 和 Nginx 路由；本地代码完成不代表线上接口已经部署。
+两层组件均校验 HTTPS 下载地址、大小、SHA-256、包名、APK 版本、签名证书和兼容范围；签名必须与主包一致。基础插件保存在主包私有 `game-runtime/`，游戏插件独立保存在 `game-content/<id>/versions/<code>/`。激活指针以 AtomicFile 写入。下载和校验失败不会替换原有的兼容游戏，不允许版本降级。相同版本号的已发布附件不可替换，修复时提高版本号。
 
-本地隔离测试可对 Debug 构建运行相同脚本并加 `--allow-debug`。Debug 插件仅用于本地 QA，不可发布给正式包。
+游戏目录只缓存成功解析的数据。缺网时使用缓存目录，首次离线使用内置的真实游戏目录。目录只含名称及入口元数据，不夹带游戏插件。主接口失败立即尝试 GitHub 备用清单。
 
-## 验收状态
+## 资源与构建
 
-已在 `10.192.10.25:5555`（Android 9、ARMv7）将单个 Debug 插件存入 `com.gentv.tv.moduleqa` 的私有目录，未安装插件。游戏画面和二维码已显示，Gecko 子进程从插件 DEX 启动，手机遥控网页返回 HTTP 200。正式版的在线下载、签名校验、手机指令及 ARM64 真机仍需验收；当前尚未发布插件附件或清单。隔离 QA 包不替换设备上的正式桌面。
+自有资源使用模块前缀：基础资源 `game_base_`，赛车资源 `game_kart_`。Gecko 的 `omni.ja` / `.so`、WebExtension 的 `manifest.json` 保留第三方固定名称。子插件不得携带另一套内核。发布工具会检查资源前缀、引擎重复与签名。
+
+```sh
+./launcher/gradlew -p launcher --no-daemon :app:assembleRelease :game:assembleRelease :game-kart:assembleRelease
+python3 tools/package_game_runtime.py --sdk "$ANDROID_HOME" \
+  --base-apk launcher/app/build/outputs/apk/release/app-release.apk \
+  --game-dir launcher/game/build/outputs/apk/release
+python3 tools/package_game_content.py --sdk "$ANDROID_HOME" \
+  --base-apk launcher/app/build/outputs/apk/release/app-release.apk \
+  --apk launcher/game-kart/build/outputs/apk/release/game-kart-release.apk \
+  --id kart --entry-class com.gentv.game.kart.KartGamePlugin
+```
+
+基础组件更新使用 `-PgameVersionCode=101 -PgameVersionName=2.0.1`；赛车更新使用 `-PkartVersionCode=2 -PkartVersionName=1.0.1`。两者互不绑定。Debug QA 可加 `--allow-debug`，不得把 Debug 构建作为正式发布。后端部署和 GitHub 文件布局见 [独立更新部署](game-plugin-deployment.md)。
+
+## 验证记录
+
+Android 9 / ARMv7 真机通过本机 HTTPS 测试源完成两层实际下载与校验，未系统安装任何插件。验证了基础插件独立升级仍保留赛车、赛车 1→2 独立升级、手机操控页与认证指令、连接后隐藏二维码、返回游戏中心并恢复焦点、重建宿主后继续复用内核。错误版本 3 的摘要不会替换已生效的赛车 2。
+
+主包、ARMv7 / ARM64 基础组件及赛车均完成正式签名构建。ARM64 已做构建和包结构校验，尚未真机验证。公开服务器和 GitHub 附件尚未部署，本机 HTTPS 验收不等于正式在线下载已上线。

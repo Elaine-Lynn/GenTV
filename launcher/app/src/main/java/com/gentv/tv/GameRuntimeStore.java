@@ -18,6 +18,8 @@ import dalvik.system.DexClassLoader;
 @android.annotation.TargetApi(21)
 final class GameRuntimeStore {
     private GameRuntimeStore() { }
+    private static DexClassLoader processLoader;
+    private static String processArchive;
 
     static String abi() {
         for (String candidate : Build.SUPPORTED_ABIS) {
@@ -101,8 +103,9 @@ final class GameRuntimeStore {
         if (!pending.setReadOnly()) throw new IOException("Cannot protect game archive");
     }
 
-    static DexClassLoader loader(Context context) throws IOException {
+    static synchronized DexClassLoader loader(Context context) throws IOException {
         if (!ready(context)) throw new IOException("Game archive missing");
+        if (processLoader != null && archive(context).getAbsolutePath().equals(processArchive)) return processLoader;
         File nativeDirectory = new File(context.getCodeCacheDir(),
                 "game-runtime-libs/" + version(context) + "/" + abi());
         if (!nativeDirectory.isDirectory() && !nativeDirectory.mkdirs())
@@ -133,8 +136,20 @@ final class GameRuntimeStore {
             if (count == 0 || !new File(nativeDirectory, "libxul.so").isFile())
                 throw new IOException("Gecko native libraries missing");
         }
-        return new DexClassLoader(archive(context).getAbsolutePath(),
-                context.getCodeCacheDir().getAbsolutePath(), nativeDirectory.getAbsolutePath(),
-                context.getClassLoader());
+        return reuseLoader(archive(context), context.getCodeCacheDir(), nativeDirectory, context.getClassLoader());
+    }
+
+    /** One Gecko class loader per process: a native library cannot be opened by two loaders. */
+    static synchronized DexClassLoader reuseLoader(File archive, File optimized, File nativeDirectory,
+                                                   ClassLoader parent) throws IOException {
+        if (processLoader != null) {
+            if (!archive.getAbsolutePath().equals(processArchive))
+                throw new IOException("Restart the game process before changing its foundation");
+            return processLoader;
+        }
+        processLoader = new DexClassLoader(archive.getAbsolutePath(), optimized.getAbsolutePath(),
+                nativeDirectory.getAbsolutePath(), parent);
+        processArchive = archive.getAbsolutePath();
+        return processLoader;
     }
 }

@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "games": [
+    {
+      "id": "kart",
+      "title": "卡丁车",
+      "titleEn": "Kart Racing",
+      "description": "冲向终点，支持手机遥控器和手柄",
+      "descriptionEn": "Race to the finish with your phone or a gamepad",
+      "packageName": "com.gentv.game.kart.plugin",
+      "entryClass": "com.gentv.game.kart.KartGamePlugin"
+    }
+  ]
+}

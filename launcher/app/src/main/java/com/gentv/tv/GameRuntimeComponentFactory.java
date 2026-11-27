@@ -30,10 +30,13 @@ public final class GameRuntimeComponentFactory extends android.app.AppComponentF
         if (!archive.isFile() || !nativeDirectory.isDirectory()) {
             throw new ClassNotFoundException("Game runtime archives are not staged");
         }
-        DexClassLoader loader = new DexClassLoader(archive.getAbsolutePath(),
-                new File(appData, "code_cache").getAbsolutePath(),
-                nativeDirectory.getAbsolutePath(), baseLoader);
-        Log.i("GenTVGameRuntime", "Child service via plugin DEX: " + className);
-        return (Service) loader.loadClass(className).newInstance();
+        try {
+            DexClassLoader loader = GameRuntimeStore.reuseLoader(archive,
+                    new File(appData, "code_cache"), nativeDirectory, baseLoader);
+            Log.i("GenTVGameRuntime", "Child service via plugin DEX: " + className);
+            return (Service) loader.loadClass(className).newInstance();
+        } catch (java.io.IOException error) {
+            throw new ClassNotFoundException("Game foundation changed while process was running", error);
+        }
     }
 }

@@ -1,42 +1,60 @@
-# 游戏插件独立更新部署
+# 两层游戏插件的独立更新部署
 
-主包和插件现在分别管理版本。当前主包为 3.7.15（37），第一版独立插件为 1.0.0（1）。后续只提高插件的版本，即可让相同主包下载新版插件，无需系统安装。
+代码提供以下接口，服务端部署及附件上传另行执行。本地构建完成不代表线上已经提供下载。
 
-## 给后端的文件
+## 主接口与 GitHub 备用接口
 
-从本次构建的 `work/game-runtime-release/` 目录取：
+主接口基于主包构建配置的 API_BASE_URL，不在插件中写死 API 域名。
 
-| 文件 | 用途 |
+| 用途 | 主接口（默认路径） | update-manifest 分支中的备用文件 |
+| --- | --- | --- |
+| 基础插件 | `/tv/plugins/game/update?abi=armeabi-v7a` 或 `arm64-v8a` | `game-runtime/latest/<abi>/manifest.json` |
+| 游戏目录 | `/tv/plugins/games/catalog` | `game-runtime/catalog.json` |
+| 单款游戏 | `/tv/plugins/games/kart/update` | `game-runtime/games/kart/latest/manifest.json` |
+
+备用根路径为本仓库 GitHub raw 的 `update-manifest/game-runtime/`。请求失败立即尝试备用源；游戏目录和游戏清单格式校验失败也触发备用。单个游戏更新失败时可继续运行已有兼容版本。
+
+## 文件生成与部署
+
+先按 [构建说明](game-module.md) 运行两个打包脚本，输出默认为 `work/game-runtime-release/`。
+
+| 生成文件 | 部署位置 |
 | --- | --- |
-| `1/armeabi-v7a/game-armeabi_v7a.apk` | ARMv7 组件 |
-| `1/arm64-v8a/game-arm64_v8a.apk` | ARM64 组件 |
-| `server/update-armeabi-v7a.json` | ARMv7 主接口清单 |
-| `server/update-arm64-v8a.json` | ARM64 主接口清单 |
-| `latest/<abi>/manifest.json` | GitHub 备用接口清单 |
+| `100/<abi>/game-<abi下划线>.apk` | GitHub Release `game-runtime-v2.0.0` 附件 |
+| `games/kart/1/game_kart.apk` | GitHub Release `game-kart-v1.0.0` 附件 |
+| `server/update-<abi>.json` | `$GENTV_STATE_DIR/plugins/game/update-<abi>.json` |
+| `server/games/kart/update.json` | `$GENTV_STATE_DIR/plugins/games/kart/update.json` |
+| `latest/<abi>/manifest.json` | 上表中的基础插件备用位置 |
+| `games/kart/latest/manifest.json` | 上表中的单款游戏备用位置 |
+| 仓库 `server/wallpaper/game-catalog.json` | `$GENTV_STATE_DIR/plugins/games/catalog.json` 与备用 `game-runtime/catalog.json` |
 
-APK 只是代码和资源容器，不要让用户安装。两个 ABI 的文件大小分别约为 75.4 MB 和 78.9 MB；设备只下载匹配的一个文件。清单由 `tools/package_game_runtime.py` 生成，已经包含实际大小、SHA-256 和签名证书摘要，不要手工猜测这些值。
+上传组件前请先确认签名、摘要和大小与生成清单一致。先上传附件并验证公开可下载，再原子替换接口 JSON。不要将主包版本填为游戏版本，也不要在相同版本号下覆盖不同内容。
 
-## 接口部署
+后端同步更新 `app.py`、`game-catalog.json` 和 `deploy/nginx-wallpaper.locations.conf` 中的 `/tv/plugins/game/update`、`/tv/plugins/games/` 路由，执行 `nginx -t` 后 reload 并重启 API 服务。目录尚未配置时读取随服务部署的真实目录；单款游戏缺清单返回 503，不返回假的成功数据。请求只允许 GET / HEAD，带 ETag 和 no-cache。
 
-1. 更新现有服务的 `server/wallpaper/app.py`，保留服务配置的 `GENTV_STATE_DIR`、`PUBLIC_BASE_URL` 和其他环境变量。
-2. 将两个 `server/update-<abi>.json` 放到 `$GENTV_STATE_DIR/plugins/game/`。默认状态目录为 `/var/lib/gentv-tv`。使用临时文件写完后 rename 替换清单，避免请求读到不完整文件。
-3. 将 `server/wallpaper/deploy/nginx-wallpaper.locations.conf` 中 `/tv/plugins/game/update` 的 location 添加到现有 HTTPS 虚拟主机。执行 `nginx -t` 成功后再 reload Nginx，并重启现有 wallpaper API 服务。
-4. 按以下规则发布组件文件，然后发布指向它们的清单。
+也可由自己的 HTTPS 服务托管 APK：放到 `$GENTV_STATE_DIR/releases/`，分别使用构建 API_BASE_URL 下的 `releases/game-<abi下划线>.apk`、`releases/game_kart.apk`，清单摘要不变。不要填 HTTP 或任意第三方下载域名。
 
-主接口：`GET /tv/plugins/game/update?abi=armeabi-v7a` 或 `abi=arm64-v8a`，JSON 和主应用更新一样是只读接口。缺失清单返回 503，不支持的 ABI 返回 400。
+## 清单协议
 
-默认清单指向本仓库 `game-runtime-v1.0.0` GitHub Release 的附件。上传两个 APK，附件名必须与清单一致。如果后端直接托管文件，则放在 `$GENTV_STATE_DIR/releases/`，并把 JSON 的 `plugin.url` 改为构建时 API_BASE_URL 下的 `releases/game-armeabi_v7a.apk` 或 `releases/game-arm64_v8a.apk`；其余大小和摘要不变。
+基础清单由 `package_game_runtime.py` 生成，`hostApiVersion=2`，主包兼容范围默认为 `minHostVersionCode=40`，发布前按实际验证调整。独立游戏清单由 `package_game_content.py` 生成：
 
-GitHub 备用接口：把 `latest/<abi>/manifest.json` 放到仓库 `update-manifest` 分支的 `game-runtime/latest/<abi>/manifest.json`。主接口请求失败时客户端读取这个备用地址。不要再发布到按主包版本分目录的旧 `game-runtime/37/` 地址。
+```json
+{
+  "id": "kart", "versionCode": 1, "versionName": "1.0.0",
+  "baseApiVersion": 1, "minBaseVersionCode": 100, "maxBaseVersionCode": 2147483647,
+  "packageName": "com.gentv.game.kart.plugin",
+  "entryClass": "com.gentv.game.kart.KartGamePlugin",
+  "signingCertificateSha256": "由打包工具填写实际证书摘要",
+  "plugin": {
+    "name": "game_kart.apk",
+    "url": "https://github.com/Elaine-Lynn/GenTV/releases/download/game-kart-v1.0.0/game_kart.apk",
+    "sha256": "由打包工具填写实际文件摘要", "sizeBytes": 12345
+  }
+}
+```
 
-## 下次发布插件
+此段仅为字段说明，不能直接部署。使用构建生成的 JSON，避免签名、大小填错。新增游戏时增加独立 Gradle 模块、目录条目、组件附件及独立清单，基础组件和主包无需因目录新增而升级。
 
-使用 `-PgameVersionCode=2 -PgameVersionName=1.0.1` 构建 `:game:assembleRelease`，再次运行打包脚本生成清单。插件必须使用与主包相同的正式签名。兼容关系由 `hostApiVersion`、`minHostVersionCode`、`maxHostVersionCode` 决定；不再要求插件版本与主包一致。协议不变且确认兼容时主包无需升级。
+## 验收清单
 
-先上传新附件并验证可下载，再替换主接口和备用接口清单。同一版本的附件保持不变，修复内容时提高插件版本号。客户端每次进入游戏比较版本；更新失败则继续使用已有的兼容组件。
-
-## 验收
-
-分别检查两个 ABI 的接口返回 200、正确 JSON 和 `Cache-Control: no-cache`。从清单下载文件后核对 SHA-256。保持同一主包，先加载插件 1，再发布插件 2，确认再次进入游戏下载插件 2；断网、错误哈希及不兼容协议不能替换已保存的插件。
-
-本次已完成本地接口测试、版本兼容测试及构建检查。服务器部署、公开下载以及真机从版本 1 更新到版本 2 的完整链路，需部署后验收。旧设备上已经安装的上一版主包没有这个独立版本协议，需先升级一次主包。
+确认从无组件开始下载基础插件，再选择赛车下载独立游戏；`pm list packages` 中不应新增插件应用。验证手机遥控、游戏退出返回游戏中心、再次进入不重复下载、离线保留兼容缓存。保持主包和基础组件不变，发布下一版赛车，确认只下载赛车插件。错误摘要、签名、不兼容接口以及降级不得破坏原版本。ARMv7 与 ARM64 构建和设备验证应分别记录。

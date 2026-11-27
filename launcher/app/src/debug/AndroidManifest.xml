@@ -3,9 +3,7 @@
     tools:ignore="MissingLeanbackLauncher,ImpliedTouchscreenHardware,MissingLeanbackSupport">
     <!-- TV launcher intent and optional hardware features are declared in the main manifest. -->
     <application android:usesCleartextTraffic="true">
-        <!-- Isolated, debug-only entry for the no-install GeckoView loading experiment. -->
-        <activity android:name=".GameRuntimeProbeActivity" android:exported="true"
-            android:process=":game_runtime_probe" android:screenOrientation="landscape" />
+        <!-- Debug entry for validating the same two-level runtime used by release builds. -->
         <activity android:name=".GameRuntimeHostActivity" android:exported="true"
             tools:replace="android:exported" />
     </application>

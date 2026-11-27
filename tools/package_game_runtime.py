@@ -42,8 +42,8 @@ def validate_contents(base_apk, game_apk, abi):
         if any(name == 'assets/omni.ja' or name.startswith('assets/game_')
                or name.endswith('/libxul.so') for name in base_names):
             raise ValueError('Launcher APK still contains game resources or Gecko libraries')
-        required = {'assets/omni.ja', 'assets/game_remote.html',
-                    'assets/game_input/manifest.json', 'assets/game_input/game_controls.js'}
+        required = {'assets/omni.ja', 'assets/game_base_catalog.json',
+                    'assets/game_base_input/manifest.json', 'assets/game_base_input/game_base_controls.js'}
         if not required.issubset(game_names) or not any(re.fullmatch(r'classes\d*\.dex', n) for n in game_names):
             raise ValueError(f'Game code or assets missing: {game_apk}')
         if f'lib/{abi}/libxul.so' not in game_names:
@@ -52,7 +52,7 @@ def validate_contents(base_apk, game_apk, abi):
             raise ValueError(f'Other ABI libraries present: {game_apk}')
 
 
-def package(base_apk, game_dir, output, sdk, allow_debug, min_host=37, max_host=2147483647):
+def package(base_apk, game_dir, output, sdk, allow_debug, min_host=40, max_host=2147483647):
     if min_host <= 0 or max_host < min_host: raise ValueError("Invalid host compatibility range")
     tools = sdk / 'build-tools' / '34.0.0'
     aapt = tools / ('aapt.exe' if os.name == 'nt' else 'aapt')
@@ -83,7 +83,7 @@ def package(base_apk, game_dir, output, sdk, allow_debug, min_host=37, max_host=
         data = target.read_bytes()
         manifest = {
             'versionCode': int(plugin['versionCode']), 'versionName': plugin['versionName'],
-            'hostApiVersion': 1, 'minHostVersionCode': min_host, 'maxHostVersionCode': max_host,
+            'hostApiVersion': 2, 'minHostVersionCode': min_host, 'maxHostVersionCode': max_host,
             'hostPackageName': host['name'], 'packageName': plugin['name'],
             'signingCertificateSha256': certificate, 'abi': abi,
             'plugin': {'name': name,
@@ -110,7 +110,7 @@ if __name__ == '__main__':
     parser.add_argument('--game-dir', type=Path, required=True)
     parser.add_argument('--output', type=Path, default=Path('work/game-runtime-release'))
     parser.add_argument('--sdk', type=Path, default=Path(os.environ.get('ANDROID_HOME', '')))
-    parser.add_argument('--min-host', type=int, default=37)
+    parser.add_argument('--min-host', type=int, default=40)
     parser.add_argument('--max-host', type=int, default=2147483647)
     parser.add_argument('--allow-debug', action='store_true')
     args = parser.parse_args()

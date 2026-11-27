@@ -17,3 +17,5 @@ rootProject.name = "GenTVHome"
 include ':app'
 include ':game'
 include ':game-api'
+include ':game-content-api'
+include ':game-kart'

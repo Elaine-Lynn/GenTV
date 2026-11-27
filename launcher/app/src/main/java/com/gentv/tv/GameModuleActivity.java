@@ -81,7 +81,7 @@ public final class GameModuleActivity extends Activity {
         brand.setTypeface(null, android.graphics.Typeface.BOLD);
         card.addView(brand);
         TextView title = new TextView(this);
-        title.setText(R.string.game_kart);
+        title.setText(R.string.game_center);
         title.setTextColor(Color.WHITE);
         title.setTextSize(31);
         title.setTypeface(null, android.graphics.Typeface.BOLD);
