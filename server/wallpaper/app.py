@@ -20,11 +20,23 @@ ALLOWED = {'.jpg', '.jpeg', '.png', '.webp'}
 MAX_BYTES = 8 * 1024 * 1024
 MAX_VIDEO_BYTES = 100 * 1024 * 1024
 
-def pictures():
+PREVIEW_SUFFIX = '-preview'
+
+def images():
+    """Every servable image, gallery previews included."""
     if not MEDIA.is_dir():
         return []
     return [p for p in sorted(MEDIA.iterdir()) if not p.name.startswith('.') and p.suffix.lower() in ALLOWED
-            and p.is_file() and not p.is_symlink() and 0 < p.stat().st_size <= MAX_BYTES][:100]
+            and p.is_file() and not p.is_symlink() and 0 < p.stat().st_size <= MAX_BYTES]
+
+def pictures():
+    """Wallpapers proper: previews (``<name>-preview.jpg``) are served but never listed as wallpapers."""
+    return [p for p in images() if not p.stem.endswith(PREVIEW_SUFFIX)][:100]
+
+def preview_name(picture, available):
+    """The pre-rendered 640x360 preview made by tools/make_wallpaper_previews.py, or the picture itself."""
+    candidate = MEDIA / (picture.stem + PREVIEW_SUFFIX + '.jpg')
+    return candidate.name if candidate in available else picture.name
 
 def content_version(path):
     # Timestamp metadata can collide on Linux: always derive the public version from bytes.
@@ -52,35 +64,26 @@ def catalog():
     def asset(name):
         return f'wallpapers/{quote(name)}'
 
-    def placeholder(id, title, en):
-        return item(id, title, en, 'placeholder')
-
-    images = [item('default', '默认壁纸', 'Default wallpaper', 'image',
-                   path=asset(DEFAULT_IMAGE), preview=asset(DEFAULT_IMAGE))]
+    available = set(images())
+    stills = [item('default', '默认壁纸', 'Default wallpaper', 'image',
+                   path=asset(DEFAULT_IMAGE), preview=asset(preview_name(MEDIA / DEFAULT_IMAGE, available)))]
     for picture in pictures():
         if picture.name in RESERVED_IMAGES:
             continue
-        images.append(item('image-' + picture.name, picture.stem, picture.stem, 'image',
-                           path=asset(picture.name), preview=asset(picture.name)))
-        if len(images) >= 24:
+        stills.append(item('image-' + picture.name, picture.stem, picture.stem, 'image',
+                           path=asset(picture.name), preview=asset(preview_name(picture, available))))
+        if len(stills) >= 24:
             break
     return {'categories': [
         group('pets', '萌宠', 'Pets', [
             item('cat-loop', '小猫', 'Kitten', 'video', path=asset(CAT_VIDEO),
                  preview=asset(CAT_PREVIEW)),
             item('arowana-loop', '金龙鱼', 'Arowana', 'video', path=asset(AROWANA_VIDEO),
-                 preview=asset(AROWANA_PREVIEW)),
-            placeholder('pet-dog', '午后小狗', 'Afternoon puppy'),
-            placeholder('pet-rabbit', '草地兔子', 'Meadow rabbit')]),
-        group('nature', '自然', 'Nature', [
-            placeholder('nature-sea', '海岸', 'Coast'),
-            placeholder('nature-forest', '森林', 'Forest'),
-            placeholder('nature-mountain', '远山', 'Mountains')]),
-        group('dreamy', '唯美', 'Dreamy', [
-            placeholder('dreamy-sakura', '樱花', 'Cherry blossoms'),
-            placeholder('dreamy-starlight', '星光', 'Starlight'),
-            placeholder('dreamy-clouds', '云间', 'Above the clouds')]),
-        group('images', '图片', 'Pictures', images),
+                 preview=asset(AROWANA_PREVIEW))]),
+        # Nature and Dreamy list their motion wallpapers once the files are deployed; never "coming soon" stand-ins.
+        group('nature', '自然', 'Nature', []),
+        group('dreamy', '唯美', 'Dreamy', []),
+        group('images', '图片', 'Pictures', stills),
         group('shuffle', '随机', 'Shuffle', [
             item('shuffle-all', '全部随机', 'Shuffle all', 'shuffle', scope='all'),
             item('shuffle-pets', '随机播放萌宠', 'Shuffle pets', 'shuffle', scope='pets'),
@@ -163,7 +166,7 @@ def app(environ, start_response):
         # WSGI already decodes PATH_INFO. Accept one filename only; never follow links.
         file = MEDIA / name
         is_video = name in VIDEOS and file.is_file() and not file.is_symlink()
-        if '/' in name or '\\' in name or (file not in pictures() and not is_video):
+        if '/' in name or '\\' in name or (file not in images() and not is_video):
             start_response('404 Not Found', [('Content-Length', '0')]); return []
         limit = MAX_VIDEO_BYTES if is_video else MAX_BYTES
         try:

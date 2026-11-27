@@ -11,7 +11,7 @@ host=a.host
 root=Path(__file__).resolve().parents[1]
 output=tempfile.TemporaryDirectory(prefix='gentv-deploy-')
 archive=Path(output.name)/'source.tar.gz'
-subprocess.run(['tar','-czf',str(archive),'-C',str(root/'server/wallpaper'),'app.py','analytics.py','mobile.py','rate_limit.py','backup.py','health.py','retention.py','requirements.txt','deploy','media/gentv-default.jpg','media/catWallpaperLoop1080p.mp4','media/catWallpaperLoop1080p-preview.jpg','media/arowanaWallpaperLoop1080p.mp4','media/arowanaWallpaperLoop1080p-preview.jpg'],check=True,env=dict(os.environ,COPYFILE_DISABLE='1'))
+subprocess.run(['tar','-czf',str(archive),'-C',str(root/'server/wallpaper'),'app.py','analytics.py','mobile.py','rate_limit.py','backup.py','health.py','retention.py','requirements.txt','deploy','media/gentv-default.jpg','media/gentv-default-preview.jpg','media/catWallpaperLoop1080p.mp4','media/catWallpaperLoop1080p-preview.jpg','media/arowanaWallpaperLoop1080p.mp4','media/arowanaWallpaperLoop1080p-preview.jpg'],check=True,env=dict(os.environ,COPYFILE_DISABLE='1'))
 subprocess.run(['scp',*remote,str(archive),host+':/var/tmp/gentv-tv-api-source.tar.gz'],check=True)
 sha=hashlib.sha256(archive.read_bytes()).hexdigest()
 script='''set -eu

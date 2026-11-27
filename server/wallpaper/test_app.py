@@ -50,7 +50,8 @@ class WallpaperApiTest(unittest.TestCase):
         self.assertEqual(groups[0]['items'][1]['id'], 'arowana-loop')
         self.assertEqual(groups[0]['items'][1]['path'], 'wallpapers/' + app.AROWANA_VIDEO)
         self.assertEqual(groups[0]['items'][1]['preview'], 'wallpapers/' + app.AROWANA_PREVIEW)
-        self.assertEqual(len(groups[0]['items']), 4)
+        self.assertEqual(len(groups[0]['items']), 2)
+        self.assertNotIn('placeholder', [i['kind'] for g in groups for i in g['items']])
         self.assertEqual(groups[3]['items'][0]['id'], 'default')
         self.assertEqual([i['id'] for i in groups[4]['items']],
                          ['shuffle-all', 'shuffle-pets', 'shuffle-nature', 'shuffle-dreamy', 'shuffle-images'])
@@ -86,6 +87,18 @@ class WallpaperApiTest(unittest.TestCase):
         second = json.loads(self.get()[1])['wallpapers'][0]['id']
         self.assertNotEqual(first, second)
 
+    def test_pre_rendered_previews_are_served_but_never_listed(self):
+        (app.MEDIA/'coast.jpg').write_bytes(b'full')
+        (app.MEDIA/'coast-preview.jpg').write_bytes(b'small')
+        (app.MEDIA/'desert.jpg').write_bytes(b'full')
+        rotation=json.loads(self.get()[1])['wallpapers']
+        self.assertEqual([i['url'].split('?')[0].rsplit('/',1)[1] for i in rotation],['coast.jpg','desert.jpg'])
+        stills={i['id']:i for i in json.loads(self.get(query='view=catalog')[1])['categories'][3]['items']}
+        self.assertEqual(stills['image-coast.jpg']['preview'],'wallpapers/coast-preview.jpg')
+        self.assertEqual(stills['image-coast.jpg']['path'],'wallpapers/coast.jpg')
+        self.assertEqual(stills['image-desert.jpg']['preview'],'wallpapers/desert.jpg')
+        self.assertNotIn('image-coast-preview.jpg',stills)
+        self.assertEqual(self.get('/tv/wallpapers/coast-preview.jpg')[1],b'small')
     def test_utf8_filenames(self):
         (app.MEDIA/'海岸.jpg').write_bytes(b'fixture')
         self.assertIn('%E6%B5%B7',json.loads(self.get()[1])['wallpapers'][0]['url'])

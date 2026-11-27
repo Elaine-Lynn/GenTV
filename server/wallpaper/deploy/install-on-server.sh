@@ -15,7 +15,7 @@ sudo -n install -d -m 755 "$release" "$base/media"
 sudo -n install -d -m 700 "$backup" /var/backups/gentv-tv
 sudo -n tar -xzf "$archive" -C "$release"
 sudo -n python3 -m venv "$release/venv"
-for asset in gentv-default.jpg catWallpaperLoop1080p.mp4 catWallpaperLoop1080p-preview.jpg arowanaWallpaperLoop1080p.mp4 arowanaWallpaperLoop1080p-preview.jpg; do
+for asset in gentv-default.jpg gentv-default-preview.jpg catWallpaperLoop1080p.mp4 catWallpaperLoop1080p-preview.jpg arowanaWallpaperLoop1080p.mp4 arowanaWallpaperLoop1080p-preview.jpg; do
     if [ -f "$release/media/$asset" ]; then
         sudo -n install -m 644 "$release/media/$asset" "$base/media/$asset"
     fi

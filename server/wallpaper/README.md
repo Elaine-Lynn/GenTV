@@ -132,8 +132,12 @@ the unverified or test view while a trusted forwarder is unavailable.
 
 The TV wallpaper picker reads `GET /tv/wallpaper?view=catalog`. It returns
 ordered `categories` with localized titles and `items` of kind `image`,
-`video`, `placeholder`, or `shuffle`. Media paths are relative to the
-configured API base. The unqualified endpoint still serves the legacy image
-rotation manifest. The deployment archive includes the default image, kitten
-loop and thumbnail. Deploy the catalog API before distributing clients that
+`video` or `shuffle`; it never lists "coming soon" placeholders. Media paths
+are relative to the configured API base. A still wallpaper's `preview` is its
+pre-rendered `<name>-preview.jpg` (640x360) when that file is in the media
+folder, otherwise the wallpaper itself; previews are served but never listed as
+wallpapers. Render them with `python3 tools/make_wallpaper_previews.py
+<media folder>` and upload them with the wallpapers. The unqualified endpoint
+still serves the legacy image rotation manifest. The deployment archive
+includes the default image and its preview, and the kitten loop and thumbnail. Deploy the catalog API before distributing clients that
 use it.
