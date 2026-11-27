@@ -8,7 +8,10 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
+import android.animation.ObjectAnimator;
+import android.animation.ValueAnimator;
 import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.StateListDrawable;
 import android.net.Uri;
@@ -24,6 +27,8 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.widget.AbsListView;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.FrameLayout;
@@ -35,6 +40,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.core.content.FileProvider;
+import androidx.core.graphics.drawable.DrawableCompat;
 
 import com.google.zxing.WriterException;
 
@@ -59,8 +65,11 @@ import java.util.concurrent.Future;
 public final class ShareCodeActivity extends Activity {
     private static final int TEXT_COLOR = 0xFFF5F7FA;
     private static final int FOCUS_TEXT_COLOR = 0xFF121418;
-    private static final int FOCUS_BACKGROUND = 0xF7FFFFFF;
     private static final String STATE_APPS_URL = "appsUrl";
+    private static final String STATE_APPS_NAME = "appsName";
+    private static final int TILE_HEIGHT = 76;
+    private static final int TILE_ICON = 46;
+    private static final float TILE_LIFT = 1.025f;
     private static final String STATE_CODE = "code";
     private static final String STATE_ADDING = "adding";
     private static final String STATE_SAVED_CODE = "savedCode";
@@ -73,6 +82,9 @@ public final class ShareCodeActivity extends Activity {
     private static final ExecutorService FILE_WORKER = Executors.newSingleThreadExecutor();
 
     private final ExecutorService catalogWorker = Executors.newSingleThreadExecutor();
+    // Share-code lookups, deletes and syncs with the GenTV API, kept apart from catalog downloads.
+    private final ExecutorService codeWorker = Executors.newSingleThreadExecutor();
+    private boolean deleting;
     private final Map<String, String> packageNames = new HashMap<>();
     private final Map<String, ApplicationInfo> installedApps = new HashMap<>();
     private final Set<String> installableApks = new HashSet<>();
@@ -87,6 +99,11 @@ public final class ShareCodeActivity extends Activity {
     private FrameLayout results;
     private Button catalogBack;
     private String appsUrl;
+    private String appsName;
+    private View catalogHeader;
+    private TextView catalogSubtitle;
+    private ValueAnimator loadingPulse;
+    private boolean motion;
     private View previousPageFocus;
     private ArrayAdapter<ShareCodeApkRepository.Apk> appsAdapter;
     private Dialog deleteDialog;
@@ -104,7 +121,7 @@ public final class ShareCodeActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         FrameLayout scrim = new FrameLayout(this);
-        scrim.setBackgroundColor(0x5405070C);
+        scrim.setBackgroundColor(0x6605070C);
         scrim.setOnClickListener(view -> finish());
         // The backdrop handles outside taps without taking remote focus from the panel.
         scrim.setFocusable(false);
@@ -140,19 +157,30 @@ public final class ShareCodeActivity extends Activity {
         layoutEntryPanel();
         entry.showSavedLinks(links.list(), false);
         entry.focusCodeAction();
+        Config appearance = Config.load(this);
+        motion = appearance.animations && !appearance.reducedMotion;
+        if (savedInstanceState == null) animateEntrance(scrim);
+        codeWorker.execute(() -> {
+            if (links.syncLocalLinks()) runOnUiThread(() -> {
+                if (!isFinishing() && !isDestroyed() && addPage == null && results == null) {
+                    entry.showSavedLinks(links.list(), false);
+                }
+            });
+        });
         if (savedInstanceState != null && savedInstanceState.getBoolean(STATE_ADDING)) {
             createAddPage();
             ShareCodeLinks.Link restored = links.find(savedInstanceState.getString(STATE_SAVED_CODE));
             if (restored != null) showSavedCode(restored);
         }
         String restoredUrl = savedInstanceState == null ? null : savedInstanceState.getString(STATE_APPS_URL);
-        if (restoredUrl != null) showApps(restoredUrl);
+        if (restoredUrl != null) showApps(restoredUrl, savedInstanceState.getString(STATE_APPS_NAME));
     }
 
     @Override
     protected void onSaveInstanceState(Bundle state) {
         super.onSaveInstanceState(state);
         if (appsUrl != null) state.putString(STATE_APPS_URL, appsUrl);
+        if (appsName != null) state.putString(STATE_APPS_NAME, appsName);
         state.putString(STATE_CODE, entry.code());
         state.putBoolean(STATE_ADDING, addPage != null);
         if (savedLink != null) state.putString(STATE_SAVED_CODE, savedLink.code);
@@ -163,6 +191,7 @@ public final class ShareCodeActivity extends Activity {
     protected void onDestroy() {
         stopReceiver();
         catalogWorker.shutdownNow();
+        codeWorker.shutdownNow();
         cancelDownload();
         if (deleteDialog != null) deleteDialog.dismiss();
         if (downloadDialog != null) downloadDialog.dismiss();
@@ -187,7 +216,27 @@ public final class ShareCodeActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        // Home blurs behind the sheet, as it does behind the Control Center.
+        ToolboxBackdrop.visible(true);
         refreshInstalledApps();
+    }
+
+    @Override
+    protected void onPause() {
+        if (isFinishing()) ToolboxBackdrop.visible(false);
+        super.onPause();
+    }
+
+    private void animateEntrance(View scrim) {
+        if (!motion) return;
+        scrim.setAlpha(0f);
+        scrim.animate().alpha(1f).setDuration(200).setInterpolator(CompatApi.easeOut()).start();
+        panel.setAlpha(0f);
+        panel.setTranslationY(dp(10));
+        panel.setScaleX(0.96f);
+        panel.setScaleY(0.96f);
+        panel.animate().alpha(1f).translationY(0f).scaleX(1f).scaleY(1f).setDuration(240)
+                .setInterpolator(CompatApi.easeOut()).start();
     }
 
     @Override
@@ -246,9 +295,35 @@ public final class ShareCodeActivity extends Activity {
     }
 
     private void openCode() {
-        ShareCodeLinks.Link link = links.find(entry.code());
-        if (link != null) openSavedApps(link);
-        else showApps(ShareCodeApkRepository.DEFAULT_REPOSITORY);
+        String code = entry.code();
+        ShareCodeLinks.Link link = links.find(code);
+        if (link != null) {
+            openSavedApps(link);
+            return;
+        }
+        if (!TvCloud.enabled()) {
+            showApps(ShareCodeApkRepository.DEFAULT_REPOSITORY, null);
+            return;
+        }
+        // Codes from other TVs live on the GenTV server.
+        codeWorker.execute(() -> {
+            ShareCodeLinks.Link remote = null;
+            int failure = 0;
+            try {
+                remote = ShareCodeLinks.lookup(code);
+                if (remote == null) failure = R.string.share_code_not_found;
+            } catch (IOException error) {
+                Log.w(TAG, "Share code lookup failed: " + error.getClass().getSimpleName());
+                failure = R.string.share_code_server_failed;
+            }
+            ShareCodeLinks.Link found = remote;
+            int message = failure;
+            runOnUiThread(() -> {
+                if (isFinishing() || isDestroyed() || addPage != null || results != null) return;
+                if (found != null) openSavedApps(found);
+                else Toast.makeText(this, message, Toast.LENGTH_LONG).show();
+            });
+        });
     }
 
     private void addShareCode() {
@@ -318,7 +393,6 @@ public final class ShareCodeActivity extends Activity {
 
     private void closeAddPage() {
         removeAddPage();
-        title.setVisibility(View.VISIBLE);
         entry.setVisibility(View.VISIBLE);
         entry.showSavedLinks(links.list(), true);
     }
@@ -392,18 +466,33 @@ public final class ShareCodeActivity extends Activity {
     }
 
     private void deleteLink(Dialog dialog, ShareCodeLinks.Link link) {
-        try {
-            links.delete(link.code);
-            dialog.dismiss();
-            entry.showSavedLinks(links.list(), true);
-        } catch (IOException error) {
-            Log.w(TAG, "Could not delete shared link", error);
-            Toast.makeText(this, R.string.share_code_remove_failed, Toast.LENGTH_LONG).show();
-        }
+        if (deleting) return;
+        deleting = true;
+        codeWorker.execute(() -> {
+            boolean removed;
+            try {
+                links.delete(link.code);
+                removed = true;
+            } catch (IOException error) {
+                Log.w(TAG, "Could not delete shared link: " + error.getClass().getSimpleName());
+                removed = false;
+            }
+            boolean done = removed;
+            runOnUiThread(() -> {
+                deleting = false;
+                if (isFinishing() || isDestroyed()) return;
+                if (done) {
+                    dialog.dismiss();
+                    entry.showSavedLinks(links.list(), true);
+                } else {
+                    Toast.makeText(this, R.string.share_code_remove_failed, Toast.LENGTH_LONG).show();
+                }
+            });
+        });
     }
 
     private void openSavedApps(ShareCodeLinks.Link link) {
-        showApps(link.url);
+        showApps(link.url, link.name);
     }
 
     private void refreshInstalledApps() {
@@ -420,16 +509,20 @@ public final class ShareCodeActivity extends Activity {
     private void layoutEntryPanel() {
         DisplayMetrics metrics = getResources().getDisplayMetrics();
         FrameLayout.LayoutParams size = (FrameLayout.LayoutParams) panel.getLayoutParams();
-        size.width = Math.min(dp(800), metrics.widthPixels - dp(32));
+        size.width = Math.min(entry.size(640), metrics.widthPixels - dp(32));
         size.height = ViewGroup.LayoutParams.WRAP_CONTENT;
         panel.setLayoutParams(size);
-        panel.setPadding(entry.size(42), entry.size(26), entry.size(42), entry.size(26));
-        panel.setBackground(ShareCodeEntryView.surface(dp(16), 0xFF101116, dp(1), 0x40FFFFFF));
-        title.setText(R.string.share_code_input_title);
-        title.setTextSize(entry.textSize(23));
+        panel.setPadding(entry.size(28), entry.size(26), entry.size(28), entry.size(26));
+        // The Control Center's denser smoked glass for centred sheets; the pages carry their own headings.
+        float radius = entry.size(30);
+        panel.setBackground(QuickSettingsGlass.dialogSurface(radius, Math.max(1, dp(1))));
+        CompatApi.roundClip(panel, radius);
+        panel.setClipChildren(false);
+        CompatApi.elevation(panel, dp(18));
+        title.setVisibility(View.GONE);
     }
 
-    private void showApps(String url) {
+    private void showApps(String url, String name) {
         if (results != null) return;
         String repository = ShareCodeApkRepository.repositoryPath(url);
         if (repository == null) {
@@ -437,33 +530,85 @@ public final class ShareCodeActivity extends Activity {
             return;
         }
         appsUrl = url;
+        appsName = name;
         // Keep the originating page available until the repository yields an APK list.
         View previousPage = addPage == null ? entry : addPage;
         previousPageFocus = previousPage.findFocus();
         previousPage.setVisibility(View.GONE);
         ignoreConfirmDownTimeThrough = SystemClock.uptimeMillis();
-        panel.setPadding(dp(24), dp(24), dp(24), dp(24));
-        panel.setBackgroundResource(R.drawable.quick_settings_panel);
+        // The same glass sheet, opened wider for a two-column list.
         DisplayMetrics metrics = getResources().getDisplayMetrics();
         FrameLayout.LayoutParams size = (FrameLayout.LayoutParams) panel.getLayoutParams();
-        size.width = Math.min(dp(600), metrics.widthPixels - dp(32));
-        size.height = Math.min(dp(480), metrics.heightPixels - dp(64));
+        size.width = Math.min(entry.size(760), metrics.widthPixels - dp(32));
+        size.height = Math.min(entry.size(540), metrics.heightPixels - dp(48));
         panel.setLayoutParams(size);
-        title.setText(R.string.share_code_apps);
-        title.setTextSize(18);
-        title.setVisibility(View.VISIBLE);
+        panel.setPadding(entry.size(24), entry.size(22), entry.size(24), entry.size(18));
+        catalogHeader = catalogHeader(name, repository);
+        panel.addView(catalogHeader, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         results = new FrameLayout(this);
+        results.setClipChildren(false);
+        results.setClipToPadding(false);
         LinearLayout.LayoutParams layout = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, 0, 1);
-        layout.topMargin = dp(12);
+        layout.topMargin = entry.size(16);
         panel.addView(results, layout);
-
-        catalogBack = catalogButton(R.string.share_code_back, this::closeApps);
-        catalogBack.setId(View.generateViewId());
-        LinearLayout.LayoutParams backLayout = new LinearLayout.LayoutParams(dp(100), dp(36));
-        backLayout.topMargin = dp(12);
-        panel.addView(catalogBack, backLayout);
         loadApps(repository);
+    }
+
+    /** Back on the left; the shared link's name and its source centred, as on the add page. */
+    private View catalogHeader(String name, String repository) {
+        FrameLayout header = new FrameLayout(this);
+        header.setClipChildren(false);
+        catalogBack = catalogButton(R.string.share_code_back, this::closeApps);
+        Drawable icon = DrawableCompat.wrap(CompatApi.drawable(this, R.drawable.ic_ext_back)).mutate();
+        icon.setBounds(0, 0, entry.size(20), entry.size(20));
+        DrawableCompat.setTintList(icon, catalogBack.getTextColors());
+        catalogBack.setCompoundDrawablesRelative(icon, null, null, null);
+        catalogBack.setCompoundDrawablePadding(entry.size(2));
+        catalogBack.setPaddingRelative(entry.size(8), 0, entry.size(15), 0);
+        header.addView(catalogBack, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+                entry.size(34), Gravity.START | Gravity.CENTER_VERTICAL));
+
+        LinearLayout titles = new LinearLayout(this);
+        titles.setOrientation(LinearLayout.VERTICAL);
+        titles.setGravity(Gravity.CENTER_HORIZONTAL);
+        TextView heading = catalogLabel(19, ShareCodeEntryView.INK_LIGHT, true);
+        heading.setText(name == null || name.isEmpty() ? getString(R.string.share_code_apps) : name);
+        heading.setSingleLine(true);
+        heading.setEllipsize(TextUtils.TruncateAt.END);
+        CompatApi.letterSpacing(heading, -0.01f);
+        titles.addView(heading, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        catalogSubtitle = catalogLabel(12, ShareCodeEntryView.INK_MUTED, false);
+        catalogSubtitle.setText(sourceLabel(repository, -1));
+        catalogSubtitle.setSingleLine(true);
+        catalogSubtitle.setEllipsize(TextUtils.TruncateAt.MIDDLE);
+        LinearLayout.LayoutParams subtitleParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        subtitleParams.topMargin = entry.size(6);
+        titles.addView(catalogSubtitle, subtitleParams);
+        FrameLayout.LayoutParams titleParams = new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER);
+        titleParams.leftMargin = titleParams.rightMargin = entry.size(118);
+        header.addView(titles, titleParams);
+        return header;
+    }
+
+    private String sourceLabel(String repository, int count) {
+        String source = "github.com/" + repository;
+        return count < 0 ? source : source + "  ·  "
+                + getResources().getQuantityString(R.plurals.share_code_app_count, count, count);
+    }
+
+    private TextView catalogLabel(int sp, int color, boolean medium) {
+        TextView label = new TextView(this);
+        label.setTypeface(UiFont.get(this, medium ? R.string.font_medium : R.string.font_regular));
+        label.setIncludeFontPadding(false);
+        label.setGravity(Gravity.CENTER);
+        label.setTextColor(color);
+        label.setTextSize(entry.textSize(sp));
+        return label;
     }
 
     private void closeApps() {
@@ -477,15 +622,18 @@ public final class ShareCodeActivity extends Activity {
         installedApps.clear();
         installableApks.clear();
         downloadedIcons.evictAll();
+        stopLoadingPulse();
         panel.removeView(results);
-        panel.removeView(catalogBack);
+        panel.removeView(catalogHeader);
         results = null;
+        catalogHeader = null;
+        catalogSubtitle = null;
         catalogBack = null;
         appsUrl = null;
+        appsName = null;
         ignoreConfirmDownTimeThrough = SystemClock.uptimeMillis();
         layoutEntryPanel();
         View previousPage = addPage == null ? entry : addPage;
-        title.setVisibility(addPage == null ? View.VISIBLE : View.GONE);
         previousPage.setVisibility(View.VISIBLE);
         View focus = previousPageFocus;
         previousPageFocus = null;
@@ -507,7 +655,7 @@ public final class ShareCodeActivity extends Activity {
     private void loadApps(String repository) {
         // Consume every confirmation while the list is loading.
         ignoreConfirmDownTimeThrough = Long.MAX_VALUE;
-        showStatus(R.string.share_code_loading, true, null);
+        showLoading();
         FrameLayout loadingPage = results;
         Future<?> cleanup = cacheCleanup;
         // Fetch the catalog while the worker clears downloads left by a previous session.
@@ -555,7 +703,7 @@ public final class ShareCodeActivity extends Activity {
                     if (results == loadingPage && !isFinishing() && !isDestroyed()) {
                         catalogTask = null;
                         ignoreConfirmDownTimeThrough = SystemClock.uptimeMillis();
-                        showStatus(R.string.share_code_load_failed, false, () -> loadApps(repository));
+                        showStatus(R.string.share_code_load_failed, () -> loadApps(repository));
                     }
                 });
             }
@@ -563,35 +711,122 @@ public final class ShareCodeActivity extends Activity {
     }
 
     private Button catalogButton(int label, Runnable action) {
-        return ShareCodeEntryView.button(this, title.getTypeface(), getString(label), 14, dp(8), action);
+        return ShareCodeEntryView.button(this, title.getTypeface(), getString(label), entry.textSize(13),
+                entry.size(17), action);
     }
 
-    private void showStatus(int message, boolean loading, Runnable retry) {
+    private void clearResults() {
+        stopLoadingPulse();
         results.removeAllViews();
+    }
+
+    private void stopLoadingPulse() {
+        if (loadingPulse != null) loadingPulse.cancel();
+        loadingPulse = null;
+    }
+
+    /** Skeleton tiles in the list's own shape breathe while GitHub answers. */
+    private void showLoading() {
+        clearResults();
+        LinearLayout skeleton = new LinearLayout(this);
+        skeleton.setOrientation(LinearLayout.VERTICAL);
+        int inset = entry.size(6);
+        skeleton.setPadding(inset, inset, inset, inset);
+        for (int row = 0; row < 4; row++) {
+            LinearLayout line = new LinearLayout(this);
+            LinearLayout.LayoutParams lineParams = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, entry.size(TILE_HEIGHT));
+            if (row > 0) lineParams.topMargin = entry.size(12);
+            skeleton.addView(line, lineParams);
+            for (int column = 0; column < 2; column++) {
+                LinearLayout.LayoutParams tileParams = new LinearLayout.LayoutParams(
+                        0, ViewGroup.LayoutParams.MATCH_PARENT, 1);
+                if (column > 0) tileParams.setMarginStart(entry.size(14));
+                line.addView(skeletonTile(row * 2 + column), tileParams);
+            }
+        }
+        skeleton.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS);
+        results.addView(skeleton, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.TOP));
+        TextView note = catalogLabel(12, ShareCodeEntryView.INK_MUTED, false);
+        note.setText(R.string.share_code_loading);
+        results.addView(note, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM));
+        if (motion) {
+            ObjectAnimator pulse = ObjectAnimator.ofFloat(skeleton, View.ALPHA, 1f, 0.42f);
+            pulse.setDuration(900);
+            pulse.setRepeatMode(ValueAnimator.REVERSE);
+            pulse.setRepeatCount(ValueAnimator.INFINITE);
+            pulse.setInterpolator(CompatApi.easeOut());
+            pulse.start();
+            loadingPulse = pulse;
+        }
+        catalogBack.requestFocusFromTouch();
+    }
+
+    private View skeletonTile(int index) {
+        LinearLayout tile = new LinearLayout(this);
+        tile.setGravity(Gravity.CENTER_VERTICAL);
+        tile.setPadding(entry.size(14), 0, entry.size(14), 0);
+        tile.setBackground(ShareCodeEntryView.surface(entry.size(18), 0x0DFFFFFF, 1, 0x14FFFFFF));
+        View icon = new View(this);
+        icon.setBackground(ShareCodeEntryView.surface(entry.size(12), 0x17FFFFFF, 0, 0));
+        tile.addView(icon, new LinearLayout.LayoutParams(entry.size(TILE_ICON), entry.size(TILE_ICON)));
+        LinearLayout bars = new LinearLayout(this);
+        bars.setOrientation(LinearLayout.VERTICAL);
+        LinearLayout.LayoutParams barsParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        barsParams.setMarginStart(entry.size(14));
+        tile.addView(bars, barsParams);
+        View name = new View(this);
+        name.setBackground(ShareCodeEntryView.surface(entry.size(6), 0x17FFFFFF, 0, 0));
+        // Varied widths read as names rather than a pattern.
+        bars.addView(name, new LinearLayout.LayoutParams(entry.size(new int[]{132, 104, 150, 92}[index % 4]),
+                entry.size(12)));
+        View detail = new View(this);
+        detail.setBackground(ShareCodeEntryView.surface(entry.size(5), 0x0FFFFFFF, 0, 0));
+        LinearLayout.LayoutParams detailParams = new LinearLayout.LayoutParams(entry.size(76), entry.size(9));
+        detailParams.topMargin = entry.size(9);
+        bars.addView(detail, detailParams);
+        return tile;
+    }
+
+    private void showStatus(int message, Runnable retry) {
+        clearResults();
         LinearLayout status = new LinearLayout(this);
         status.setOrientation(LinearLayout.VERTICAL);
         status.setGravity(Gravity.CENTER);
         results.addView(status, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-        if (loading) {
-            status.addView(new ProgressBar(this), new LinearLayout.LayoutParams(dp(36), dp(36)));
-        }
-        TextView feedback = new TextView(this);
-        feedback.setGravity(Gravity.CENTER);
-        feedback.setTextColor(TEXT_COLOR);
-        feedback.setTextSize(15);
+        FrameLayout badge = new FrameLayout(this);
+        GradientDrawable circle = new GradientDrawable();
+        circle.setShape(GradientDrawable.OVAL);
+        circle.setColor(0x14FFFFFF);
+        circle.setStroke(1, 0x1FFFFFFF);
+        badge.setBackground(circle);
+        ImageView glyph = new ImageView(this);
+        glyph.setImageResource(R.drawable.ic_share_code_offline);
+        CompatApi.imageTint(glyph, ColorStateList.valueOf(ShareCodeEntryView.INK_SOFT));
+        glyph.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        badge.addView(glyph, new FrameLayout.LayoutParams(entry.size(28), entry.size(28), Gravity.CENTER));
+        status.addView(badge, new LinearLayout.LayoutParams(entry.size(64), entry.size(64)));
+        TextView feedback = catalogLabel(16, ShareCodeEntryView.INK_LIGHT, true);
         feedback.setText(message);
-        if (loading) feedback.setPadding(0, dp(12), 0, 0);
-        status.addView(feedback);
-        if (retry != null) {
-            Button button = catalogButton(R.string.share_code_retry, retry);
-            LinearLayout.LayoutParams retryLayout = new LinearLayout.LayoutParams(dp(100), dp(36));
-            retryLayout.topMargin = dp(12);
-            status.addView(button, retryLayout);
-            button.requestFocusFromTouch();
-        } else {
-            catalogBack.requestFocusFromTouch();
-        }
+        LinearLayout.LayoutParams feedbackParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        feedbackParams.topMargin = entry.size(18);
+        status.addView(feedback, feedbackParams);
+        TextView hint = catalogLabel(12, ShareCodeEntryView.INK_MUTED, false);
+        hint.setText(R.string.share_code_load_failed_hint);
+        LinearLayout.LayoutParams hintParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        hintParams.topMargin = entry.size(7);
+        status.addView(hint, hintParams);
+        Button button = catalogButton(R.string.share_code_retry, retry);
+        LinearLayout.LayoutParams retryLayout = new LinearLayout.LayoutParams(entry.size(120), entry.size(38));
+        retryLayout.topMargin = entry.size(22);
+        status.addView(button, retryLayout);
+        button.requestFocusFromTouch();
     }
 
     private void showList(List<ShareCodeApkRepository.Apk> apks) {
@@ -600,89 +835,179 @@ public final class ShareCodeActivity extends Activity {
             previousPageFocus = null;
             entry.showSavedLinks(links.list(), false);
         }
-        results.removeAllViews();
+        clearResults();
+        catalogSubtitle.setText(sourceLabel(ShareCodeApkRepository.repositoryPath(appsUrl), apks.size()));
 
         GridView grid = new GridView(this);
         grid.setId(View.generateViewId());
-        grid.setNextFocusDownId(catalogBack.getId());
-        catalogBack.setNextFocusUpId(grid.getId());
+        grid.setNextFocusUpId(catalogBack.getId());
+        catalogBack.setNextFocusDownId(grid.getId());
         grid.setNumColumns(2);
         grid.setStretchMode(GridView.STRETCH_COLUMN_WIDTH);
-        grid.setHorizontalSpacing(dp(12));
-        grid.setVerticalSpacing(dp(8));
+        grid.setHorizontalSpacing(entry.size(14));
+        grid.setVerticalSpacing(entry.size(12));
+        int inset = entry.size(8);
+        // The padding holds the selected tile's lift and shadow. The list's frame (results) clips the grid to
+        // its own bounds, so rows scrolled past the edge fade out there instead of drawing over the header.
+        grid.setPadding(inset, inset, inset, inset);
+        grid.setClipToPadding(false);
+        grid.setClipChildren(false);
+        results.setClipChildren(true);
+        grid.setVerticalScrollBarEnabled(false);
+        grid.setVerticalFadingEdgeEnabled(true);
+        grid.setFadingEdgeLength(entry.size(28));
         grid.setCacheColorHint(0);
         grid.setSelector(new ColorDrawable());
         CompatApi.disableDefaultFocusHighlight(grid);
-        // GridView keeps focus itself and reports the active tile through selection.
-        int[] selected = {android.R.attr.state_selected};
-        int[] idle = {};
-        ColorStateList nameColors = new ColorStateList(
-                new int[][]{selected, idle}, new int[]{FOCUS_TEXT_COLOR, TEXT_COLOR});
 
         appsAdapter = new ArrayAdapter<ShareCodeApkRepository.Apk>(
                 this, android.R.layout.simple_list_item_1, apks) {
             @Override
             public View getView(int position, View convertView, ViewGroup parent) {
-                ApkTile tile = convertView == null
-                        ? new ApkTile(nameColors, selected, idle) : (ApkTile) convertView;
+                ApkTile tile = convertView == null ? new ApkTile() : (ApkTile) convertView;
                 tile.bind(apks.get(position));
+                // A recycled tile may still carry another position's lift or its running animation.
+                boolean lifted = position == grid.getSelectedItemPosition() && grid.hasFocus();
+                tile.animate().cancel();
+                tile.setTag(R.id.share_code_spring_x, null);
+                tile.setScaleX(lifted ? TILE_LIFT : 1f);
+                tile.setScaleY(lifted ? TILE_LIFT : 1f);
+                CompatApi.elevation(tile, lifted ? entry.size(10) : 0f);
                 return tile;
             }
         };
         grid.setAdapter(appsAdapter);
         grid.setOnItemClickListener((parent, view, position, id) -> selectApk(apks.get(position)));
+        // GridView keeps focus itself. Every visible tile is set from the current selection, so a tile the
+        // selection left (or one recycled while lifted) always settles back into the grid.
+        grid.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                liftSelected(grid);
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                liftSelected(grid);
+            }
+        });
+        grid.setOnFocusChangeListener((view, focused) -> liftSelected(grid));
+        grid.setOnScrollListener(new AbsListView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(AbsListView view, int state) {
+                if (state == SCROLL_STATE_IDLE) liftSelected(grid);
+            }
+
+            @Override
+            public void onScroll(AbsListView view, int first, int visible, int total) { }
+        });
         results.addView(grid, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         grid.requestFocusFromTouch();
     }
 
+    private void liftSelected(GridView grid) {
+        View selected = grid.hasFocus() ? grid.getSelectedView() : null;
+        for (int index = 0; index < grid.getChildCount(); index++) {
+            View tile = grid.getChildAt(index);
+            liftTile(tile, tile == selected);
+        }
+    }
+
+    private void liftTile(View tile, boolean lifted) {
+        float scale = lifted ? TILE_LIFT : 1f;
+        // Already at (or heading to) this scale: leave a running animation alone.
+        Object target = tile.getTag(R.id.share_code_spring_x);
+        if (target instanceof Float && (Float) target == scale) return;
+        tile.setTag(R.id.share_code_spring_x, scale);
+        CompatApi.elevation(tile, lifted ? entry.size(10) : 0f);
+        tile.animate().cancel();
+        if (!motion) {
+            tile.setScaleX(scale);
+            tile.setScaleY(scale);
+            return;
+        }
+        tile.animate().scaleX(scale).scaleY(scale).setDuration(150).setInterpolator(CompatApi.easeOut()).start();
+    }
+
+    /** A Control Center tile: app icon, name and version, and the next step as a pill. */
     private final class ApkTile extends LinearLayout {
         private final ImageView appIcon;
         private final TextView name;
-        private final ImageView statusIcon;
+        private final TextView detail;
+        private final ImageView actionIcon;
+        private final TextView actionText;
 
-        ApkTile(ColorStateList colors, int[] selected, int[] idle) {
+        ApkTile() {
             super(ShareCodeActivity.this);
             setOrientation(HORIZONTAL);
             setGravity(Gravity.CENTER_VERTICAL);
-            setMinimumHeight(dp(48));
-            setPadding(dp(12), dp(8), dp(12), dp(8));
-            GradientDrawable selectedTile = new GradientDrawable();
-            selectedTile.setColor(FOCUS_BACKGROUND);
-            selectedTile.setCornerRadius(dp(12));
-            GradientDrawable idleTile = new GradientDrawable();
-            idleTile.setColor(0x12FFFFFF);
-            idleTile.setCornerRadius(dp(12));
+            setLayoutParams(new AbsListView.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, entry.size(TILE_HEIGHT)));
+            setPadding(entry.size(14), 0, entry.size(12), 0);
+            int[] selected = {android.R.attr.state_selected};
+            int[] idle = {};
+            int radius = entry.size(18);
             StateListDrawable tiles = new StateListDrawable();
-            tiles.addState(selected, selectedTile);
-            tiles.addState(idle, idleTile);
+            tiles.addState(selected, ShareCodeEntryView.surface(radius, ShareCodeEntryView.FOCUS_WHITE, 0, 0));
+            tiles.addState(idle, ShareCodeEntryView.surface(radius, 0x12FFFFFF, 1, 0x1AFFFFFF));
             setBackground(tiles);
 
             appIcon = new ImageView(ShareCodeActivity.this);
             appIcon.setScaleType(ImageView.ScaleType.FIT_CENTER);
             appIcon.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
-            LayoutParams appIconSize = new LayoutParams(dp(24), dp(24));
-            appIconSize.setMarginEnd(dp(8));
-            addView(appIcon, appIconSize);
+            addView(appIcon, new LayoutParams(entry.size(TILE_ICON), entry.size(TILE_ICON)));
 
-            name = new TextView(ShareCodeActivity.this);
-            name.setTextColor(colors);
-            name.setTextSize(16);
+            LinearLayout texts = new LinearLayout(ShareCodeActivity.this);
+            texts.setOrientation(VERTICAL);
+            LayoutParams textsParams = new LayoutParams(0, LayoutParams.WRAP_CONTENT, 1);
+            textsParams.setMarginStart(entry.size(14));
+            textsParams.setMarginEnd(entry.size(10));
+            addView(texts, textsParams);
+            name = catalogLabel(15, ShareCodeEntryView.INK_LIGHT, true);
+            name.setGravity(Gravity.START);
+            name.setTextColor(new ColorStateList(new int[][]{selected, idle},
+                    new int[]{ShareCodeEntryView.INK_DARK, ShareCodeEntryView.INK_LIGHT}));
             name.setSingleLine(true);
             name.setEllipsize(TextUtils.TruncateAt.MARQUEE);
             name.setMarqueeRepeatLimit(-1);
-            addView(name, new LayoutParams(0, LayoutParams.WRAP_CONTENT, 1));
+            texts.addView(name, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
+            detail = catalogLabel(12, ShareCodeEntryView.INK_MUTED, false);
+            detail.setGravity(Gravity.START);
+            detail.setTextColor(new ColorStateList(new int[][]{selected, idle},
+                    new int[]{0x8C121418, ShareCodeEntryView.INK_MUTED}));
+            detail.setSingleLine(true);
+            detail.setEllipsize(TextUtils.TruncateAt.END);
+            LayoutParams detailParams = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
+            detailParams.topMargin = entry.size(6);
+            texts.addView(detail, detailParams);
 
-            statusIcon = new ImageView(ShareCodeActivity.this);
-            statusIcon.setDuplicateParentStateEnabled(true);
-            CompatApi.imageTint(statusIcon, colors);
-            LayoutParams iconSize = new LayoutParams(dp(20), dp(20));
-            iconSize.setMarginStart(dp(8));
-            addView(statusIcon, iconSize);
+            ColorStateList actionColors = new ColorStateList(new int[][]{selected, idle},
+                    new int[]{0xFFFFFFFF, ShareCodeEntryView.INK_LIGHT});
+            LinearLayout action = new LinearLayout(ShareCodeActivity.this);
+            action.setGravity(Gravity.CENTER);
+            action.setPadding(entry.size(10), 0, entry.size(13), 0);
+            StateListDrawable pills = new StateListDrawable();
+            pills.addState(selected, ShareCodeEntryView.surface(entry.size(15), ShareCodeEntryView.INK_DARK, 0, 0));
+            pills.addState(idle, ShareCodeEntryView.surface(entry.size(15), 0x1AFFFFFF, 0, 0));
+            action.setBackground(pills);
+            addView(action, new LayoutParams(LayoutParams.WRAP_CONTENT, entry.size(30)));
+            actionIcon = new ImageView(ShareCodeActivity.this);
+            CompatApi.imageTint(actionIcon, actionColors);
+            actionIcon.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+            action.addView(actionIcon, new LayoutParams(entry.size(15), entry.size(15)));
+            actionText = catalogLabel(12, ShareCodeEntryView.INK_LIGHT, true);
+            actionText.setTextColor(actionColors);
+            LayoutParams actionTextParams = new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+            actionTextParams.setMarginStart(entry.size(5));
+            action.addView(actionText, actionTextParams);
         }
 
         void bind(ShareCodeApkRepository.Apk apk) {
-            name.setText(apk.fileName);
+            ShareApkNames label = ShareApkNames.parse(apk.fileName);
+            name.setText(label.title);
+            String size = Formatter.formatShortFileSize(ShareCodeActivity.this, apk.size);
+            detail.setText(label.version.isEmpty() ? size : label.version + "  ·  " + size);
             ApplicationInfo installed = installedApps.get(packageNames.get(apk.cacheKey));
             boolean downloaded = installableApk(apk) != null;
             Bitmap icon = downloaded ? downloadedIcons.get(apk.cacheKey) : null;
@@ -693,16 +1018,21 @@ public final class ShareCodeActivity extends Activity {
             } else {
                 appIcon.setImageResource(placeholderIcon(apk.fileName));
             }
+            int state;
             if (installed != null) {
-                statusIcon.setImageResource(R.drawable.ic_share_code_open);
-                statusIcon.setContentDescription(getString(R.string.share_code_installed));
+                actionIcon.setImageResource(R.drawable.ic_share_code_open);
+                actionText.setText(R.string.share_code_open);
+                state = R.string.share_code_installed;
             } else if (downloaded) {
-                statusIcon.setImageResource(R.drawable.ic_share_code_downloaded);
-                statusIcon.setContentDescription(getString(R.string.share_code_ready_to_install));
+                actionIcon.setImageResource(R.drawable.ic_share_code_downloaded);
+                actionText.setText(R.string.share_code_action_install);
+                state = R.string.share_code_ready_to_install;
             } else {
-                statusIcon.setImageResource(R.drawable.ic_qs_update);
-                statusIcon.setContentDescription(getString(R.string.share_code_not_downloaded));
+                actionIcon.setImageResource(R.drawable.ic_qs_update);
+                actionText.setText(R.string.share_code_action_get);
+                state = R.string.share_code_not_downloaded;
             }
+            setContentDescription(label.title + " " + label.version + ", " + getString(state));
         }
     }
 
@@ -787,7 +1117,10 @@ public final class ShareCodeActivity extends Activity {
 
         TextView fileName = content.findViewById(R.id.share_download_name);
         fileName.setTypeface(UiFont.get(this, R.string.font_medium));
-        fileName.setText(apk.fileName);
+        ShareApkNames label = ShareApkNames.parse(apk.fileName);
+        fileName.setText(label.title);
+        ImageView appIcon = content.findViewById(R.id.share_download_icon);
+        appIcon.setImageResource(placeholderIcon(apk.fileName));
         ProgressBar progress = content.findViewById(R.id.share_download_progress);
         TextView status = content.findViewById(R.id.share_download_status);
         TextView percentage = content.findViewById(R.id.share_download_percentage);

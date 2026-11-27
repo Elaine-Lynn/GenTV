@@ -45,6 +45,7 @@ public final class QuickSettingsActivity extends Activity {
     /** GenTV settings opened for a result (reorder hand-off); the panel must survive until it returns. */
     private boolean awaitingSettings;
     private boolean animateFocus;
+    private boolean keepBackdrop;
     private Typeface fontMedium;
     private Typeface fontRegular;
 
@@ -436,22 +437,25 @@ public final class QuickSettingsActivity extends Activity {
         plateParams.topMargin = dp(10);
         plate.setLayoutParams(plateParams);
 
+        // Reading order: share code, startup app, default Home, screen time, update, about.
         LinearLayout r1 = plateRow(plate);
+        utilityItem(r1, R.drawable.ic_qs_share_code, R.string.quick_share_code,
+                () -> {
+                    // The share-code sheet takes over Home's blurred backdrop.
+                    keepBackdrop = true;
+                    startActivity(new Intent(this, ShareCodeActivity.class));
+                    finish();
+                });
         utilityItem(r1, R.drawable.ic_qs_startup, R.string.quick_start_app,
                 () -> OpenOnStart.showPicker(this));
-        utilityItem(r1, R.drawable.ic_qs_home, R.string.quick_default_home,
-                () -> launch(new Intent(this, HomeSettingsActivity.class)));
 
         addHairlineDivider(plate);
 
         LinearLayout r2 = plateRow(plate);
+        utilityItem(r2, R.drawable.ic_qs_home, R.string.quick_default_home,
+                () -> launch(new Intent(this, HomeSettingsActivity.class)));
         utilityItem(r2, R.drawable.ic_qs_shield, R.string.quick_child,
                 () -> launch(new Intent(this, ChildSettingsActivity.class)));
-        utilityItem(r2, R.drawable.ic_qs_share_code, R.string.quick_share_code,
-                () -> {
-                    startActivity(new Intent(this, ShareCodeActivity.class));
-                    finish();
-                });
 
         addHairlineDivider(plate);
 
@@ -666,7 +670,7 @@ public final class QuickSettingsActivity extends Activity {
     }
 
     @Override protected void onStop() {
-        ToolboxBackdrop.visible(false);
+        if (!keepBackdrop) ToolboxBackdrop.visible(false);
         super.onStop();
         // The panel is transient: leaving it for Home, an app or another page closes it, so it never lingers in a
         // background task and resurfaces later. Stay only while a cleanup waits on Android's ADB authorization
@@ -677,25 +681,11 @@ public final class QuickSettingsActivity extends Activity {
 
 
     private void showAbout() {
-        showGlassDialog(
-                R.drawable.ic_qs_info,
-                R.string.quick_about,
-                getString(R.string.quick_about_detail, BuildConfig.VERSION_NAME),
-                android.R.string.ok,
-                null,
-                0
-        );
-    }
-
-    /** Shared with the system Home setup prompts. */
-    private void showGlassDialog(int iconRes, int titleRes, CharSequence message,
-                                 int primaryRes, Runnable primaryAction, int secondaryRes) {
         View previousFocus = getCurrentFocus();
-        Dialog dialog = GlassInfoDialog.create(this, iconRes, titleRes, message,
-                primaryRes, primaryAction, secondaryRes, null);
-        dialog.setOnDismissListener(d -> {
+        android.app.Dialog sheet = AboutSheet.show(this,
+                () -> launch(new Intent(this, CloudSettingsActivity.class)));
+        sheet.setOnDismissListener(d -> {
             if (previousFocus != null) previousFocus.requestFocus();
         });
-        dialog.show();
     }
 }

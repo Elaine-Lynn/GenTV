@@ -1088,6 +1088,13 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         }
         headerResumed = true;
         screensaverOpening = false;
+        // A fresh install fetches the first kitten video once and switches to it when it lands.
+        if (!childLocked) DefaultWallpaper.ensure(this, () -> {
+            if (isFinishing() || isDestroyed() || !hasWindowFocus() || inWallpaperMode || reordering
+                    || appLibrary != null || (openPopup != null && openPopup.isShowing())) return;
+            settingsRevision = settingsRevision();
+            recreate();
+        });
         root.removeCallbacks(shuffleTick);
         if (WallpaperShuffle.active(this)) {
             root.postDelayed(shuffleTick, SHUFFLE_TICK_MS);

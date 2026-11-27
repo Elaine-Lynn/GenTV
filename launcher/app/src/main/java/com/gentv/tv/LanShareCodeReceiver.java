@@ -16,6 +16,7 @@ import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -29,6 +30,8 @@ final class LanShareCodeReceiver implements Closeable {
     private static final int MAX_BODY = 16 * 1024;
     private static final int READ_TIMEOUT_MS = 5_000;
     private static final int REQUEST_TIMEOUT_MS = 10_000;
+    static final int FIRST_PORT = 2000;
+    static final int LAST_PORT = 9999;
     private final ServerSocket server;
     private final String host;
     private final String token = UUID.randomUUID().toString();
@@ -43,8 +46,24 @@ final class LanShareCodeReceiver implements Closeable {
         this.links = links;
         this.listener = listener;
         page = form.replace("__SESSION_TOKEN__", token).getBytes(UTF8);
-        server = new ServerSocket(0, 4, InetAddress.getByName(address));
+        server = bindFourDigitPort(InetAddress.getByName(address), new Random());
         host = address + ":" + server.getLocalPort();
+    }
+
+    /**
+     * A free port from 2000 to 9999, so the address on screen stays short enough to type on a phone. The
+     * session token in the page, not the port, keeps other devices out. Falls back to any free port.
+     */
+    static ServerSocket bindFourDigitPort(InetAddress address, Random random) throws IOException {
+        for (int attempt = 0; attempt < 32; attempt++) {
+            int port = FIRST_PORT + random.nextInt(LAST_PORT - FIRST_PORT + 1);
+            try {
+                return new ServerSocket(port, 4, address);
+            } catch (IOException taken) {
+                // In use, for example by adbd on 5555: try another.
+            }
+        }
+        return new ServerSocket(0, 4, address);
     }
 
     String url() {
@@ -122,6 +141,9 @@ final class LanShareCodeReceiver implements Closeable {
                 if (closed) return null;
                 savedLink = saved = links.add(name, url);
             }
+        } catch (ShareCodeLinks.ServerException error) {
+            reply(output, 503, "server");
+            return null;
         } catch (IOException error) {
             reply(output, 500, "storage");
             return null;

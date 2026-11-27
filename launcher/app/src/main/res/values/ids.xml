@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- View tags holding the share-code keypad's focus springs. -->
+    <item name="share_code_spring_x" type="id" />
+    <item name="share_code_spring_y" type="id" />
+</resources>
