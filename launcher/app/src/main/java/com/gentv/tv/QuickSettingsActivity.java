@@ -375,6 +375,7 @@ public final class QuickSettingsActivity extends Activity {
         card.setOnClickListener(v -> {
             v.requestFocusFromTouch();
             launch(new Intent(this, WallpaperGalleryActivity.class));
+            if (animateFocus) overridePendingTransition(R.anim.gallery_enter, R.anim.gallery_panel_exit);
         });
         return card;
     }

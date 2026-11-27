@@ -100,20 +100,21 @@ public final class WallpaperGalleryActivity extends Activity {
     private View galleryHeader;
     private final List<GalleryShelf> shelfModels = new ArrayList<>();
     private final ShelfAdapter shelfAdapter = new ShelfAdapter();
-    private final android.util.LruCache<String, Bitmap> previewCache =
-            new android.util.LruCache<String, Bitmap>(8 * 1024 * 1024) {
-                @Override protected int sizeOf(String key, Bitmap bitmap) { return bitmap.getByteCount(); }
-            };
     private TextView statusPill;
-    private TextView screensaverToggleLabel;
-    private View screensaverToggleDot;
-    private View screensaverTogglePill;
+    /** The screensaver choice: aerial videos, the current wallpaper, or off. */
+    private final List<TextView> styleChips = new ArrayList<>();
     private LinearLayout timeRow;
     private boolean applying;
     private String activeCatalogId = "";
     /** The catalogue last rendered, so the custom wallpaper row can be rebuilt after a LAN upload. */
     private JSONArray lastGroups = new JSONArray();
     private LanTransferDialog lanSheet;
+    private View screensaverSection;
+    /** Whether each online wallpaper is on the TV, worked out once per render instead of on every card bind. */
+    private final Map<String, Boolean> downloadedState = new HashMap<>();
+    /** Rows first shown before this time rise in gently; later rebinds (scrolling, refreshes) appear as they are. */
+    private long entranceUntil;
+    private final java.util.Set<String> enteredRows = new java.util.HashSet<>();
 
     @Override
     protected void attachBaseContext(Context base) {
@@ -163,10 +164,12 @@ public final class WallpaperGalleryActivity extends Activity {
         shelvesGrid.setItemAlignmentOffsetPercent(50f);
         shelvesGrid.setSaveChildrenPolicy(BaseGridView.SAVE_ALL_CHILD);
         shelvesGrid.setItemAnimator(null);
+        shelvesGrid.setItemViewCacheSize(12);
         shelvesGrid.setAdapter(shelfAdapter);
         viewport.addView(shelvesGrid, new FrameLayout.LayoutParams(-1, -1));
 
         setContentView(root);
+        if (animateFocus) entranceUntil = android.os.SystemClock.uptimeMillis() + 1200;
         load();
     }
 
@@ -282,6 +285,10 @@ public final class WallpaperGalleryActivity extends Activity {
             statusPill.setVisibility(View.GONE);
         }
         lastGroups = rawGroups;
+        downloadedState.clear();
+        screensaverSection = null;
+        if (animateFocus && shelfModels.isEmpty())
+            entranceUntil = Math.max(entranceUntil, android.os.SystemClock.uptimeMillis() + 900);
         shelfModels.clear();
         playableByCategory.clear();
         allPlayable.clear();
@@ -307,6 +314,10 @@ public final class WallpaperGalleryActivity extends Activity {
             }
             playableByCategory.put(id, list);
         }
+
+        // Shuffle keeps playing its scope as the catalogue changes.
+        String shuffling = WallpaperShuffle.scope(this);
+        if (!shuffling.isEmpty()) WallpaperShuffle.updatePool(this, shuffling, candidatesForScope(shuffling));
 
         // Render categories in strict order: 萌宠, 自然, 唯美, 图片, 随机, 自定义壁纸.
         String[] order = {"pets", "nature", "dreamy", "images", "shuffle", "custom"};
@@ -426,6 +437,8 @@ public final class WallpaperGalleryActivity extends Activity {
         final String title;
         final JSONArray items;
         int selected;
+        /** The built row, kept while this model lives so scrolling back to it does not build it again. */
+        View view;
         GalleryShelf(String id, String title, JSONArray items) {
             this.id = id; this.title = title; this.items = items;
         }
@@ -463,18 +476,45 @@ public final class WallpaperGalleryActivity extends Activity {
                 content = galleryHeader;
                 if (content.getParent() instanceof ViewGroup) ((ViewGroup) content.getParent()).removeView(content);
             } else if (position == shelfModels.size() + 1) {
-                content = buildScreensaverSection();
+                if (screensaverSection == null) screensaverSection = buildScreensaverSection();
+                content = screensaverSection;
             } else {
-                content = buildShelf(shelfModels.get(position - 1));
+                GalleryShelf shelf = shelfModels.get(position - 1);
+                if (shelf.view == null) shelf.view = buildShelf(shelf);
+                content = shelf.view;
             }
+            if (content.getParent() instanceof ViewGroup) ((ViewGroup) content.getParent()).removeView(content);
             frame.addView(content, new FrameLayout.LayoutParams(-1, -2));
+            enter(frame, position, position == 0 ? "header" : position == shelfModels.size() + 1 ? "footer"
+                    : "shelf:" + shelfModels.get(position - 1).id);
         }
+    }
+
+    /**
+     * Apple-style arrival for a page row: it fades in while rising 16dp, decelerating to rest, each row 70 ms
+     * after the one above. Only a row's first appearance during the entrance moves; a reused view is reset.
+     */
+    private void enter(View row, int position, String key) {
+        row.animate().cancel();
+        row.setAlpha(1f);
+        row.setTranslationY(0f);
+        if (!animateFocus || android.os.SystemClock.uptimeMillis() > entranceUntil
+                || !enteredRows.add(key)) return;
+        row.setAlpha(0f);
+        row.setTranslationY(dpF(16));
+        row.animate().alpha(1f).translationY(0f)
+                .setStartDelay(110 + 70L * Math.min(position, 6))
+                .setDuration(560)
+                .setInterpolator(new android.view.animation.DecelerateInterpolator(2.4f))
+                .start();
     }
 
     private final class PosterAdapter extends RecyclerView.Adapter<RowHolder> {
         private final GalleryShelf shelf;
         private final TextView countPill;
         private final HorizontalGridView grid;
+        /** Built cards by position: moving along a row rebinds views, and a card is a dozen views to build. */
+        private final android.util.SparseArray<View> built = new android.util.SparseArray<>();
         PosterAdapter(GalleryShelf shelf, TextView countPill, HorizontalGridView grid) {
             this.shelf = shelf; this.countPill = countPill; this.grid = grid;
         }
@@ -495,13 +535,15 @@ public final class WallpaperGalleryActivity extends Activity {
             frame.removeAllViews();
             JSONObject item = shelf.items.optJSONObject(position);
             if (item == null) return;
-            if (getItemViewType(position) == 1) {
-                frame.addView(buildActionColumn(), new FrameLayout.LayoutParams(-1, -2));
-                return;
+            View content = built.get(position);
+            if (content == null) {
+                int offset = leadingActions(shelf.items);
+                content = getItemViewType(position) == 1 ? buildActionColumn()
+                        : buildCard(shelf.id, item, position - offset, getItemCount() - offset, countPill, grid);
+                built.put(position, content);
             }
-            int offset = leadingActions(shelf.items);
-            frame.addView(buildCard(shelf.id, item, position - offset,
-                    getItemCount() - offset, countPill, grid), new FrameLayout.LayoutParams(-1, -2));
+            if (content.getParent() instanceof ViewGroup) ((ViewGroup) content.getParent()).removeView(content);
+            frame.addView(content, new FrameLayout.LayoutParams(-1, -2));
         }
     }
 
@@ -538,9 +580,14 @@ public final class WallpaperGalleryActivity extends Activity {
         countPill.setTextSize(12f);
         countPill.setTypeface(fontMedium);
         countPill.setPadding(dp(9), dp(2), dp(9), dp(2));
-        countPill.setBackground(roundRect(0x16FFFFFF, 0x1EFFFFFF, 11));
+        countPill.setGravity(Gravity.CENTER);
+        countPill.setSingleLine(true);
+        countPill.setBackground(countPillSurface());
+        // As wide as its longest text ("12 / 12"): changing it on focus then only redraws, never relayouts the page.
+        String widest = total + " / " + total;
+        int pillWidth = Math.round(countPill.getPaint().measureText(widest)) + dp(18) + dp(2);
         LinearLayout.LayoutParams countLp = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                pillWidth, ViewGroup.LayoutParams.WRAP_CONTENT);
         countLp.setMarginStart(dp(10));
         header.addView(countPill, countLp);
 
@@ -575,6 +622,8 @@ public final class WallpaperGalleryActivity extends Activity {
         row.setOverScrollMode(View.OVER_SCROLL_NEVER);
         row.setHorizontalScrollBarEnabled(false);
         row.setItemAnimator(null);
+        row.setHasFixedSize(true);
+        row.setItemViewCacheSize(6);
         row.setAdapter(new PosterAdapter(model, countPill, row));
         row.setSelectedPosition(model.selected);
         row.addOnChildViewHolderSelectedListener(new OnChildViewHolderSelectedListener() {
@@ -629,8 +678,13 @@ public final class WallpaperGalleryActivity extends Activity {
         boolean isVideo = "video".equals(kind) || KIND_USER_VIDEO.equals(kind);
         boolean isShuffle = "shuffle".equals(kind);
         boolean isDefault = "default".equals(id);
+        boolean isCatalog = !isUser && !isShuffle && !isDefault;
+        // While Shuffle plays, its card carries "In use" instead of whichever wallpaper it is on.
+        String shuffling = WallpaperShuffle.scope(this);
         boolean isActive = isUser ? id.equals(BundledWallpapers.selected(this))
-                : !activeCatalogId.isEmpty() && activeCatalogId.equals(id);
+                : isShuffle ? item.optString("scope", "all").equals(shuffling)
+                : shuffling.isEmpty() && !activeCatalogId.isEmpty() && activeCatalogId.equals(id);
+        boolean downloaded = isCatalog && downloaded(id, item.optString("path"));
 
         LinearLayout card = new LinearLayout(this);
         card.setOrientation(LinearLayout.VERTICAL);
@@ -668,6 +722,14 @@ public final class WallpaperGalleryActivity extends Activity {
             image.setImageResource(shuffleCover(item.optString("scope", "all")));
         }
 
+        // An online wallpaper not on the TV yet sits under a light charcoal veil; a downloaded one shows clear.
+        if (isCatalog && !downloaded) {
+            View veil = new View(this);
+            veil.setBackgroundColor(0x5214181F);
+            cover.addView(veil, new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        }
+
         // Subtle dark gradient at bottom of real photos/videos for badge legibility.
         if (!isShuffle) {
             View bottomScrim = new View(this);
@@ -692,17 +754,39 @@ public final class WallpaperGalleryActivity extends Activity {
             blp.setMargins(dp(10), 0, 0, dp(10));
             cover.addView(badge, blp);
 
-            // Bottom-right: whether this online motion wallpaper is already on the TV.
-            if (!isUser) {
-                boolean downloaded = WallpaperDownloads.local(this, id, item.optString("path")) != null;
-                View state = new WallpaperCardMarks.DownloadState(this, downloaded);
+        }
+
+        // Bottom-right: a download mark only on online wallpapers that still have to be downloaded.
+        if (isCatalog) {
+            if (!downloaded) {
+                View state = new WallpaperCardMarks.DownloadState(this, false);
                 FrameLayout.LayoutParams slp = new FrameLayout.LayoutParams(dp(24), dp(24),
                         Gravity.BOTTOM | Gravity.END);
                 slp.setMargins(0, 0, dp(10), dp(10));
                 cover.addView(state, slp);
-                card.setContentDescription(name + "，" + copy(downloaded ? "已下载" : "未下载",
-                        downloaded ? "downloaded" : "not downloaded"));
             }
+            card.setContentDescription(name + "，" + copy(downloaded ? "已下载" : "未下载",
+                    downloaded ? "downloaded" : "not downloaded"));
+        }
+
+        // Shuffle: how much of its scope is on the TV already (those play at once, and offline).
+        if (isShuffle) {
+            List<JSONObject> scopePool = candidatesForScope(item.optString("scope", "all"));
+            int[] counts = {0, scopePool.size()};
+            for (JSONObject entry : scopePool) if (downloaded(entry.optString("id"), entry.optString("path"))) counts[0]++;
+            TextView ready = new TextView(this);
+            ready.setText(copy("已下载 " + counts[0] + " / 共 " + counts[1],
+                    counts[0] + " of " + counts[1] + " on TV"));
+            ready.setTextColor(0xF5FFFFFF);
+            ready.setTextSize(11f);
+            ready.setTypeface(fontMedium);
+            ready.setPadding(dp(10), dp(4), dp(10), dp(4));
+            ready.setBackground(roundRect(0x9E0B101A, 0x2AFFFFFF, 12));
+            FrameLayout.LayoutParams rlp = new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT,
+                    Gravity.BOTTOM | Gravity.START);
+            rlp.setMargins(dp(10), 0, 0, dp(10));
+            cover.addView(ready, rlp);
         }
 
         // Top-right frosted badge with emerald dot: "使用中" on active wallpaper.
@@ -735,7 +819,9 @@ public final class WallpaperGalleryActivity extends Activity {
 
         // Crisp border overlay (idle subtle hairline -> focused luminous pure white ring).
         View ring = new View(this);
-        ring.setBackground(borderDrawable(0x22FFFFFF, 0.75f, 16));
+        GradientDrawable ringIdle = borderDrawable(0x22FFFFFF, 0.75f, 16);
+        GradientDrawable ringFocused = borderDrawable(FOCUS_WHITE, 2.2f, 16);
+        ring.setBackground(ringIdle);
         posterWrap.addView(ring, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
@@ -755,25 +841,24 @@ public final class WallpaperGalleryActivity extends Activity {
         capLp.topMargin = dp(9);
         card.addView(caption, capLp);
 
+        // Focus only swaps prepared drawables and colours: nothing here changes a size, so the page never
+        // relayouts while focus moves (a typeface swap or a wider count used to remeasure every row).
         card.setOnFocusChangeListener((v, focused) -> {
-            ring.setBackground(focused
-                    ? borderDrawable(FOCUS_WHITE, 2.2f, 16)
-                    : borderDrawable(0x22FFFFFF, 0.75f, 16));
+            ring.setBackground(focused ? ringFocused : ringIdle);
             caption.setTextColor(focused ? 0xFFFFFFFF : 0xB8DCE6F2);
-            caption.setTypeface(focused ? fontMedium : fontRegular);
             CompatApi.elevation(posterWrap, focused ? dpF(14) : 0f);
             springScale(card, focused ? 1.045f : 1f);
             if (focused) {
                 countPill.setText((index + 1) + " / " + total);
                 countPill.setTextColor(0xF0FFFFFF);
-                countPill.setBackground(roundRect(0x24FFFFFF, 0x36FFFFFF, 11));
+                countPill.setSelected(true);
             } else {
                 // Defer reverting pill text until we know focus left this entire row.
                 row.post(() -> {
                     if (!row.hasFocus()) {
                         countPill.setText(String.valueOf(total));
                         countPill.setTextColor(0xB8DCE6F2);
-                        countPill.setBackground(roundRect(0x16FFFFFF, 0x1EFFFFFF, 11));
+                        countPill.setSelected(false);
                     }
                 });
             }
@@ -793,38 +878,31 @@ public final class WallpaperGalleryActivity extends Activity {
         if (isUser) loadUserCover(id, image);
 
         String preview = item.optString("preview");
-        if (!preview.isEmpty() && !isDefault && !isShuffle) {
-            worker.execute(() -> {
-                try {
-                    Bitmap cached = previewCache.get(preview);
-                    if (cached != null) {
-                        runOnUiThread(() -> { if (!isDestroyed()) image.setImageBitmap(cached); });
-                        return;
-                    }
-                    HttpURLConnection connection = TvCloud.open(assetUrl(preview));
-                    try {
-                        byte[] data = TvCloud.read(connection.getInputStream(), 8 * 1024 * 1024);
-                        BitmapFactory.Options options = new BitmapFactory.Options();
-                        options.inJustDecodeBounds = true;
-                        BitmapFactory.decodeByteArray(data, 0, data.length, options);
-                        options.inJustDecodeBounds = false;
-                        options.inSampleSize = 1;
-                        while (options.outWidth / options.inSampleSize > 640
-                                || options.outHeight / options.inSampleSize > 640) {
-                            options.inSampleSize *= 2;
-                        }
-                        Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length, options);
-                        if (bitmap != null) previewCache.put(preview, bitmap);
-                        runOnUiThread(() -> {
-                            if (!isDestroyed() && bitmap != null) image.setImageBitmap(bitmap);
-                        });
-                    } finally {
-                        connection.disconnect();
-                    }
-                } catch (Exception ignored) { /* Keep atmospheric placeholder surface. */ }
-            });
-        }
+        if (!preview.isEmpty() && !isDefault && !isShuffle) loadPreview(preview, image);
         return card;
+    }
+
+    /**
+     * A poster from memory at once, else from disk, else downloaded; a saved one is checked with the server at
+     * most once a day and replaced only when it changed, so opening the page again loads nothing.
+     */
+    private void loadPreview(String preview, ImageView image) {
+        Bitmap ready = WallpaperPreviewCache.remembered(preview);
+        if (ready != null) image.setImageBitmap(ready);
+        Context app = getApplicationContext();
+        worker.execute(() -> {
+            Bitmap shown = ready;
+            if (shown == null) {
+                shown = WallpaperPreviewCache.cached(app, preview, 640);
+                Bitmap saved = shown;
+                if (saved != null) runOnUiThread(() -> { if (!isDestroyed()) image.setImageBitmap(saved); });
+            }
+            if (shown != null && !WallpaperPreviewCache.stale(app, preview)) return;
+            try {
+                Bitmap fresh = WallpaperPreviewCache.refresh(app, preview, assetUrl(preview), 640);
+                if (fresh != null) runOnUiThread(() -> { if (!isDestroyed()) image.setImageBitmap(fresh); });
+            } catch (IOException ignored) { /* Keep the saved poster or the atmospheric surface. */ }
+        });
     }
 
     /** The dim glyph a user wallpaper shows until its picture loads (or when its still is blank). */
@@ -845,29 +923,41 @@ public final class WallpaperGalleryActivity extends Activity {
         return first != null && KIND_ACTIONS.equals(first.optString("kind")) ? 1 : 0;
     }
 
+    private static final int ACTION_GAP_DP = 12;
+
+    /** Two tiles plus their gap fill exactly the poster height, so the slot lines up with the cards. */
+    private int actionTileHeight() {
+        return Math.max(dp(44), (cardH - dp(ACTION_GAP_DP)) / 2);
+    }
+
+    /** Padding, icon, the space to the label and the longer label, measured in the label's face and size. */
     private int actionColumnWidth() {
-        return Math.min(cardW, Math.max(dp(184), Math.round(cardW * 0.66f)));
+        android.text.TextPaint paint = new android.text.TextPaint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+        paint.setTypeface(fontMedium);
+        paint.setTextSize(14.5f * getResources().getDisplayMetrics().scaledDensity);
+        float label = Math.max(paint.measureText(getString(R.string.wallpaper_lan_send)),
+                paint.measureText(copy("从本地添加", "Add from storage")));
+        return Math.max(dp(156), dp(18) + dp(22) + dp(12) + Math.round(label) + dp(22));
     }
 
     /**
-     * Two compact frosted capsules stacked in the poster's height: LAN transfer above add-from-storage.
-     * They follow the page's pill language (hairline glass, solid white with dark ink on focus) and move
-     * between each other with Up and Down; Left and Right stay with the shelf.
+     * LAN transfer above add-from-storage as two small rounded tiles, together exactly as tall as a poster:
+     * a faint glass fill, a hairline edge, a line icon and its name. They take the posters' own focus (a white
+     * ring and a slight lift), so the slot reads as part of the shelf. Up and Down move between them.
      */
     private View buildActionColumn() {
+        int height = actionTileHeight();
         LinearLayout column = new LinearLayout(this);
         column.setOrientation(LinearLayout.VERTICAL);
-        column.setGravity(Gravity.CENTER_VERTICAL);
         column.setClipChildren(false);
         column.setClipToPadding(false);
-        column.setMinimumHeight(cardH);
-        View lan = actionPill(R.drawable.ic_wallpaper_send_lan, getString(R.string.wallpaper_lan_send),
+        View lan = actionTile(R.drawable.ic_wallpaper_send_lan, getString(R.string.wallpaper_lan_send),
                 this::openLanTransfer);
-        View add = actionPill(R.drawable.ic_wallpaper_add_local, copy("从本地添加", "Add from storage"),
+        View add = actionTile(R.drawable.ic_wallpaper_add_local, copy("从本地添加", "Add from storage"),
                 this::pickUserWallpaper);
-        column.addView(lan, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(50)));
-        LinearLayout.LayoutParams second = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(50));
-        second.topMargin = dp(14);
+        column.addView(lan, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, height));
+        LinearLayout.LayoutParams second = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, height);
+        second.topMargin = cardH - height * 2;
         column.addView(add, second);
         lan.setOnKeyListener((v, code, event) -> {
             if (code != android.view.KeyEvent.KEYCODE_DPAD_DOWN) return false;
@@ -886,53 +976,57 @@ public final class WallpaperGalleryActivity extends Activity {
         return slot;
     }
 
-    private View actionPill(int icon, String label, Runnable action) {
-        LinearLayout pill = new LinearLayout(this);
-        pill.setOrientation(LinearLayout.HORIZONTAL);
-        pill.setGravity(Gravity.CENTER_VERTICAL);
-        pill.setPadding(dp(7), 0, dp(18), 0);
-        pill.setFocusable(true);
-        pill.setClickable(true);
-        pill.setContentDescription(label);
-        CompatApi.disableDefaultFocusHighlight(pill);
-        pill.setBackground(pillSurface(0x14FFFFFF, 0x24FFFFFF, 25));
+    private View actionTile(int icon, String label, Runnable action) {
+        FrameLayout tile = new FrameLayout(this);
+        tile.setClipChildren(false);
+        tile.setClipToPadding(false);
+        tile.setFocusable(true);
+        tile.setClickable(true);
+        tile.setContentDescription(label);
+        CompatApi.disableDefaultFocusHighlight(tile);
 
-        FrameLayout badge = new FrameLayout(this);
-        GradientDrawable badgeIdle = new GradientDrawable();
-        badgeIdle.setShape(GradientDrawable.OVAL);
-        badgeIdle.setColor(0x1AFFFFFF);
-        badgeIdle.setStroke(Math.max(1, Math.round(dpF(0.75f))), 0x1FFFFFFF);
-        GradientDrawable badgeFocused = new GradientDrawable();
-        badgeFocused.setShape(GradientDrawable.OVAL);
-        badgeFocused.setColor(0x12000000);
-        badge.setBackground(badgeIdle);
+        final int radius = 14;
+        View surface = new View(this);
+        surface.setBackground(roundRect(0x12FFFFFF, 0, radius));
+        tile.addView(surface, new FrameLayout.LayoutParams(-1, -1));
+
+        LinearLayout content = new LinearLayout(this);
+        content.setOrientation(LinearLayout.HORIZONTAL);
+        content.setGravity(Gravity.CENTER_VERTICAL);
+        content.setPadding(dp(18), 0, dp(16), 0);
         ImageView glyph = new ImageView(this);
         glyph.setImageResource(icon);
-        CompatApi.imageTint(glyph, android.content.res.ColorStateList.valueOf(INK_SOFT));
-        badge.addView(glyph, new FrameLayout.LayoutParams(dp(20), dp(20), Gravity.CENTER));
-        pill.addView(badge, new LinearLayout.LayoutParams(dp(36), dp(36)));
-
+        CompatApi.imageTint(glyph, android.content.res.ColorStateList.valueOf(0xC8DCE6F2));
+        content.addView(glyph, new LinearLayout.LayoutParams(dp(22), dp(22)));
         TextView text = new TextView(this);
         text.setText(label);
-        text.setTextColor(INK_SOFT);
-        text.setTextSize(15f);
-        text.setTypeface(fontMedium);
+        text.setTextColor(0xB8DCE6F2);
+        text.setTextSize(14.5f);
+        text.setTypeface(fontRegular);
         text.setSingleLine(true);
         text.setEllipsize(TextUtils.TruncateAt.END);
         LinearLayout.LayoutParams textLp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
-        textLp.setMarginStart(dp(11));
-        pill.addView(text, textLp);
+        textLp.setMarginStart(dp(12));
+        content.addView(text, textLp);
+        tile.addView(content, new FrameLayout.LayoutParams(-1, -1));
 
-        pill.setOnFocusChangeListener((v, focused) -> {
-            int ink = focused ? INK_DARK : INK_SOFT;
-            text.setTextColor(ink);
+        View ring = new View(this);
+        ring.setBackground(borderDrawable(0x22FFFFFF, 0.75f, radius));
+        tile.addView(ring, new FrameLayout.LayoutParams(-1, -1));
+
+        tile.setOnFocusChangeListener((v, focused) -> {
+            surface.setBackground(roundRect(focused ? 0x24FFFFFF : 0x12FFFFFF, 0, radius));
+            ring.setBackground(focused ? borderDrawable(FOCUS_WHITE, 2.2f, radius)
+                    : borderDrawable(0x22FFFFFF, 0.75f, radius));
+            int ink = focused ? 0xFFFFFFFF : 0xC8DCE6F2;
             CompatApi.imageTint(glyph, android.content.res.ColorStateList.valueOf(ink));
-            badge.setBackground(focused ? badgeFocused : badgeIdle);
-            CompatApi.elevation(pill, focused ? dpF(8) : 0f);
-            springScale(pill, focused ? 1.05f : 1f);
+            text.setTextColor(focused ? 0xFFFFFFFF : 0xB8DCE6F2);
+            text.setTypeface(focused ? fontMedium : fontRegular);
+            CompatApi.elevation(tile, focused ? dpF(14) : 0f);
+            springScale(tile, focused ? 1.045f : 1f);
         });
-        pill.setOnClickListener(v -> action.run());
-        return pill;
+        tile.setOnClickListener(v -> action.run());
+        return tile;
     }
 
     /**
@@ -942,7 +1036,7 @@ public final class WallpaperGalleryActivity extends Activity {
     private void loadUserCover(String id, ImageView image) {
         File file = UserWallpaper.isVideo(id) ? UserWallpaper.videoPreview(this, id) : UserWallpaper.image(this, id);
         String key = "user:" + id + ':' + file.lastModified() + ':' + file.length();
-        Bitmap ready = previewCache.get(key);
+        Bitmap ready = WallpaperPreviewCache.remembered(key);
         if (ready != null) { image.setImageBitmap(ready); return; }
         worker.execute(() -> {
             Bitmap bitmap = null;
@@ -959,7 +1053,7 @@ public final class WallpaperGalleryActivity extends Activity {
                 options.inPreferredConfig = Bitmap.Config.RGB_565;
                 bitmap = BitmapFactory.decodeFile(file.getPath(), options);
                 if (bitmap == null || WallpaperThumbnail.flat(bitmap)) return;
-                previewCache.put(key, bitmap);
+                WallpaperPreviewCache.remember(key, bitmap);
                 Bitmap shown = bitmap;
                 runOnUiThread(() -> { if (!isDestroyed()) image.setImageBitmap(shown); });
             } catch (RuntimeException | OutOfMemoryError ignored) {
@@ -969,6 +1063,7 @@ public final class WallpaperGalleryActivity extends Activity {
     }
 
     private void useUserWallpaper(String id) {
+        WallpaperShuffle.stop(this);
         saveActiveCatalogId("");
         BundledWallpapers.select(this, id);
         finish();
@@ -1086,6 +1181,7 @@ public final class WallpaperGalleryActivity extends Activity {
                 }
                 // Home cannot play a file that is gone: fall back to the default wallpaper.
                 if (current) {
+                    WallpaperShuffle.stop(this);
                     saveActiveCatalogId("default");
                     BundledWallpapers.select(this, "classic");
                 }
@@ -1135,6 +1231,7 @@ public final class WallpaperGalleryActivity extends Activity {
                     return;
                 }
                 // A wallpaper the user picked from storage is the one they want now.
+                WallpaperShuffle.stop(this);
                 saveActiveCatalogId("");
                 BundledWallpapers.select(this, imported);
                 finish();
@@ -1182,6 +1279,7 @@ public final class WallpaperGalleryActivity extends Activity {
     private void apply(JSONObject item, String kind, boolean fallback, FrameLayout cover) {
         if (applying) return;
         if (fallback && item.optString("path").isEmpty()) {
+            WallpaperShuffle.stop(this);
             saveActiveCatalogId("default");
             BundledWallpapers.select(this, "classic");
             finish();
@@ -1190,15 +1288,30 @@ public final class WallpaperGalleryActivity extends Activity {
         boolean shuffle = "shuffle".equals(kind);
         JSONObject chosen = item;
         if (shuffle) {
-            List<JSONObject> pool = candidatesForScope(item.optString("scope", "all"));
+            // Shuffle is a mode: the scope plays on in a shuffled order (see WallpaperShuffle). Choosing the card
+            // that is already playing moves to the next wallpaper now.
+            String scope = item.optString("scope", "all");
+            List<JSONObject> pool = candidatesForScope(scope);
             if (pool.isEmpty()) return;
-            // Prefer picking a different wallpaper than the currently active one when multiple exist.
-            List<JSONObject> fresh = new ArrayList<>();
-            for (JSONObject candidate : pool) {
-                if (!candidate.optString("id").equals(activeCatalogId)) fresh.add(candidate);
+            WallpaperShuffle.Item next = null;
+            if (scope.equals(WallpaperShuffle.scope(this))) {
+                String skipped = WallpaperShuffle.skip(this);
+                if (skipped != null) {
+                    BundledWallpapers.select(this, skipped);
+                    finish();
+                    return;
+                }
+                next = WallpaperShuffle.nextToDownload(this);
+            } else {
+                WallpaperShuffle.start(this, scope, pool, activeCatalogId);
+                next = WallpaperShuffle.first(this);
             }
-            List<JSONObject> source = fresh.isEmpty() ? pool : fresh;
-            chosen = source.get(new Random().nextInt(source.size()));
+            if (next == null) return;
+            chosen = null;
+            for (JSONObject candidate : pool) if (next.id.equals(candidate.optString("id"))) chosen = candidate;
+            if (chosen == null) return;
+        } else {
+            WallpaperShuffle.stop(this);
         }
 
         final JSONObject target = chosen;
@@ -1209,6 +1322,7 @@ public final class WallpaperGalleryActivity extends Activity {
         // Already on the TV: apply it now, no network.
         String local = WallpaperDownloads.local(this, targetId, path);
         if (local != null) {
+            if (shuffle) WallpaperShuffle.showing(this, WallpaperShuffle.Item.of(target), local);
             saveActiveCatalogId(targetId);
             BundledWallpapers.select(this, local);
             finish();
@@ -1279,6 +1393,10 @@ public final class WallpaperGalleryActivity extends Activity {
                 progress.complete(() -> {
                     if (isDestroyed()) return;
                     applying = false;
+                    if (shuffle) {
+                        WallpaperShuffle.adopt(this, applied);
+                        WallpaperShuffle.showing(this, WallpaperShuffle.Item.of(target), applied);
+                    }
                     saveActiveCatalogId(targetId);
                     BundledWallpapers.select(this, applied);
                     finish();
@@ -1312,7 +1430,7 @@ public final class WallpaperGalleryActivity extends Activity {
         plate.setPadding(dp(22), dp(16), dp(22), dp(16));
         plate.setBackground(roundRect(0x12FFFFFF, 0x1EFFFFFF, 20));
 
-        // Row 1: Screensaver ON/OFF switch
+        // Row 1: what the screensaver shows, or off. Aerial videos by default.
         LinearLayout switchRow = new LinearLayout(this);
         switchRow.setOrientation(LinearLayout.HORIZONTAL);
         switchRow.setGravity(Gravity.CENTER_VERTICAL);
@@ -1322,15 +1440,14 @@ public final class WallpaperGalleryActivity extends Activity {
         LinearLayout switchMeta = new LinearLayout(this);
         switchMeta.setOrientation(LinearLayout.VERTICAL);
         TextView switchTitle = new TextView(this);
-        switchTitle.setText(copy("屏保开关", "Screensaver"));
+        switchTitle.setText(copy("屏保", "Screensaver"));
         switchTitle.setTextColor(INK_LIGHT);
         switchTitle.setTextSize(15.5f);
         switchTitle.setTypeface(fontMedium);
         switchMeta.addView(switchTitle);
 
         TextView switchDesc = new TextView(this);
-        switchDesc.setText(copy("桌面空闲达到设定时间后自动进入航拍屏保",
-                "Automatically launch aerial screensaver while Home is idle"));
+        switchDesc.setText(copy("桌面空闲达到启动时间后进入", "Starts after Home is idle"));
         switchDesc.setTextColor(INK_MUTED);
         switchDesc.setTextSize(12.5f);
         switchDesc.setTypeface(fontRegular);
@@ -1340,35 +1457,27 @@ public final class WallpaperGalleryActivity extends Activity {
         switchMeta.addView(switchDesc, dLp);
         switchRow.addView(switchMeta, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
 
-        LinearLayout togglePill = new LinearLayout(this);
-        togglePill.setOrientation(LinearLayout.HORIZONTAL);
-        togglePill.setGravity(Gravity.CENTER_VERTICAL);
-        togglePill.setPadding(dp(16), 0, dp(18), 0);
-        togglePill.setFocusable(true);
-        togglePill.setClickable(true);
-        CompatApi.disableDefaultFocusHighlight(togglePill);
-        togglePill.setBackground(pillSurface(0x18FFFFFF, 0x26FFFFFF, 18));
-
-        screensaverToggleDot = new View(this);
-        LinearLayout.LayoutParams dotLp = new LinearLayout.LayoutParams(dp(7), dp(7));
-        dotLp.setMarginEnd(dp(8));
-        togglePill.addView(screensaverToggleDot, dotLp);
-
-        screensaverToggleLabel = new TextView(this);
-        screensaverToggleLabel.setTextSize(13.5f);
-        screensaverToggleLabel.setTypeface(fontMedium);
-        screensaverToggleLabel.setSingleLine(true);
-        togglePill.addView(screensaverToggleLabel);
-
-        screensaverTogglePill = togglePill;
-        togglePill.setOnFocusChangeListener((v, focused) -> {
-            updateScreensaverUi();
-            CompatApi.elevation(togglePill, focused ? dpF(8) : 0f);
-            springScale(togglePill, focused ? 1.05f : 1f);
-        });
-        togglePill.setOnClickListener(v -> toggleScreensaver());
-        switchRow.addView(togglePill, new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, dp(36)));
+        LinearLayout styles = new LinearLayout(this);
+        styles.setOrientation(LinearLayout.HORIZONTAL);
+        styles.setGravity(Gravity.CENTER_VERTICAL);
+        styles.setClipChildren(false);
+        styles.setClipToPadding(false);
+        styleChips.clear();
+        String[][] choices = {
+                {ScreensaverIdle.STYLE_AERIAL, copy("航拍视频", "Aerial")},
+                {ScreensaverIdle.STYLE_WALLPAPER, copy("当前壁纸", "Wallpaper")},
+                {"", copy("关闭屏保", "Off")}};
+        for (int i = 0; i < choices.length; i++) {
+            String style = choices[i][0];
+            TextView chip = screensaverChip(choices[i][1], style, () -> setScreensaverStyle(style));
+            LinearLayout.LayoutParams clp = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT, dp(36));
+            if (i > 0) clp.setMarginStart(dp(10));
+            styles.addView(chip, clp);
+            styleChips.add(chip);
+        }
+        switchRow.addView(styles, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         plate.addView(switchRow, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
@@ -1404,23 +1513,8 @@ public final class WallpaperGalleryActivity extends Activity {
         timeChips.clear();
         for (int i = 0; i < SCREENSAVER_OPTIONS.length; i++) {
             final int mins = SCREENSAVER_OPTIONS[i];
-            TextView chip = new TextView(this);
-            chip.setTag(mins);
-            chip.setText(copy(mins + " 分钟", mins + " min"));
-            chip.setTextSize(13.5f);
-            chip.setTypeface(fontMedium);
-            chip.setGravity(Gravity.CENTER);
-            chip.setSingleLine(true);
-            chip.setPadding(dp(18), 0, dp(18), 0);
-            chip.setFocusable(true);
-            chip.setClickable(true);
-            CompatApi.disableDefaultFocusHighlight(chip);
-            chip.setOnFocusChangeListener((v, focused) -> {
-                updateScreensaverUi();
-                CompatApi.elevation(chip, focused ? dpF(8) : 0f);
-                springScale(chip, focused ? 1.05f : 1f);
-            });
-            chip.setOnClickListener(v -> setScreensaverMinutes(mins));
+            TextView chip = screensaverChip(copy(mins + " 分钟", mins + " min"), mins,
+                    () -> setScreensaverMinutes(mins));
 
             LinearLayout.LayoutParams clp = new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.WRAP_CONTENT, dp(36));
@@ -1449,22 +1543,49 @@ public final class WallpaperGalleryActivity extends Activity {
                 ScreensaverIdle.MINUTES_KEY, ScreensaverIdle.DEFAULT_MINUTES));
     }
 
-    private void toggleScreensaver() {
+    /** A chip of the screensaver plate: focused white, selected brighter glass, otherwise quiet. */
+    private TextView screensaverChip(String label, Object tag, Runnable action) {
+        TextView chip = new TextView(this);
+        chip.setTag(tag);
+        chip.setText(label);
+        chip.setTextSize(13.5f);
+        chip.setTypeface(fontMedium);
+        chip.setGravity(Gravity.CENTER);
+        chip.setSingleLine(true);
+        chip.setPadding(dp(18), 0, dp(18), 0);
+        chip.setFocusable(true);
+        chip.setClickable(true);
+        CompatApi.disableDefaultFocusHighlight(chip);
+        chip.setOnFocusChangeListener((v, focused) -> {
+            updateScreensaverUi();
+            CompatApi.elevation(chip, focused ? dpF(8) : 0f);
+            springScale(chip, focused ? 1.05f : 1f);
+        });
+        chip.setOnClickListener(v -> action.run());
+        return chip;
+    }
+
+    private String currentScreensaverStyle() {
+        return ScreensaverIdle.style(settingsPrefs().getString(ScreensaverIdle.STYLE_KEY, ScreensaverIdle.STYLE_AERIAL));
+    }
+
+    /** Aerial or wallpaper turns the screensaver on (with its last start time); "" turns it off. */
+    private void setScreensaverStyle(String style) {
         SharedPreferences prefs = settingsPrefs();
+        SharedPreferences.Editor edit = prefs.edit();
         int current = currentScreensaverMinutes();
-        if (current > 0) {
-            prefs.edit()
-                    .putInt(KEY_LAST_SCREENSAVER_MINUTES, current)
-                    .putInt(ScreensaverIdle.MINUTES_KEY, 0)
-                    .putLong(Config.SETTINGS_REVISION_KEY, prefs.getLong(Config.SETTINGS_REVISION_KEY, 0) + 1)
-                    .apply();
+        if (style.isEmpty()) {
+            if (current > 0) edit.putInt(KEY_LAST_SCREENSAVER_MINUTES, current);
+            edit.putInt(ScreensaverIdle.MINUTES_KEY, 0);
         } else {
-            int restore = ScreensaverIdle.minutes(prefs.getInt(
-                    KEY_LAST_SCREENSAVER_MINUTES, ScreensaverIdle.DEFAULT_MINUTES));
-            if (restore == 0) restore = ScreensaverIdle.DEFAULT_MINUTES;
-            setScreensaverMinutes(restore);
-            return;
+            edit.putString(ScreensaverIdle.STYLE_KEY, style);
+            if (current == 0) {
+                int restore = ScreensaverIdle.minutes(prefs.getInt(
+                        KEY_LAST_SCREENSAVER_MINUTES, ScreensaverIdle.DEFAULT_MINUTES));
+                edit.putInt(ScreensaverIdle.MINUTES_KEY, restore == 0 ? ScreensaverIdle.DEFAULT_MINUTES : restore);
+            }
         }
+        edit.putLong(Config.SETTINGS_REVISION_KEY, prefs.getLong(Config.SETTINGS_REVISION_KEY, 0) + 1).apply();
         updateScreensaverUi();
     }
 
@@ -1481,33 +1602,24 @@ public final class WallpaperGalleryActivity extends Activity {
     private void updateScreensaverUi() {
         int current = currentScreensaverMinutes();
         boolean enabled = current > 0;
-        boolean toggleFocused = screensaverTogglePill != null && screensaverTogglePill.isFocused();
-
-        if (screensaverToggleLabel != null) {
-            screensaverToggleLabel.setText(enabled ? copy("已开启", "On") : copy("已关闭", "Off"));
-            screensaverToggleLabel.setTextColor(toggleFocused ? INK_DARK : INK_SOFT);
-        }
-        if (screensaverToggleDot != null) {
-            screensaverToggleDot.setBackground(circleShape(
-                    enabled ? EMERALD : (toggleFocused ? 0x55121418 : 0x55FFFFFF)));
-        }
+        String style = enabled ? currentScreensaverStyle() : "";
+        for (TextView chip : styleChips) styleScreensaverChip(chip, style.equals(chip.getTag()));
         if (timeRow != null) {
             timeRow.setAlpha(enabled ? 1f : 0.55f);
         }
-        for (TextView chip : timeChips) {
-            int mins = (Integer) chip.getTag();
-            boolean selected = enabled && mins == current;
-            boolean focused = chip.isFocused();
-            if (focused) {
-                chip.setBackground(roundRect(FOCUS_WHITE, 0, 18));
-                chip.setTextColor(INK_DARK);
-            } else if (selected) {
-                chip.setBackground(roundRect(0x2EFFFFFF, 0x5CFFFFFF, 18));
-                chip.setTextColor(INK_LIGHT);
-            } else {
-                chip.setBackground(roundRect(0x12FFFFFF, 0x20FFFFFF, 18));
-                chip.setTextColor(INK_MUTED);
-            }
+        for (TextView chip : timeChips) styleScreensaverChip(chip, enabled && (Integer) chip.getTag() == current);
+    }
+
+    private void styleScreensaverChip(TextView chip, boolean selected) {
+        if (chip.isFocused()) {
+            chip.setBackground(roundRect(FOCUS_WHITE, 0, 18));
+            chip.setTextColor(INK_DARK);
+        } else if (selected) {
+            chip.setBackground(roundRect(0x2EFFFFFF, 0x5CFFFFFF, 18));
+            chip.setTextColor(INK_LIGHT);
+        } else {
+            chip.setBackground(roundRect(0x12FFFFFF, 0x20FFFFFF, 18));
+            chip.setTextColor(INK_MUTED);
         }
     }
 
@@ -1532,6 +1644,25 @@ public final class WallpaperGalleryActivity extends Activity {
         statusPill.setBackground(roundRect(
                 error ? 0x24FFAD42 : 0x1EFFFFFF,
                 error ? 0x44FFAD42 : 0x2EFFFFFF, 14));
+    }
+
+    /** The shelf count's pill: brighter while its row has focus (selected), without new drawables per move. */
+    private StateListDrawable countPillSurface() {
+        StateListDrawable states = new StateListDrawable();
+        states.addState(new int[]{android.R.attr.state_selected}, roundRect(0x24FFFFFF, 0x36FFFFFF, 11));
+        states.addState(new int[]{}, roundRect(0x16FFFFFF, 0x1EFFFFFF, 11));
+        return states;
+    }
+
+    /** Whether an online wallpaper is on the TV, from this render's cache. */
+    private boolean downloaded(String id, String path) {
+        String key = id + '\n' + path;
+        Boolean known = downloadedState.get(key);
+        if (known == null) {
+            known = WallpaperDownloads.local(this, id, path) != null;
+            downloadedState.put(key, known);
+        }
+        return known;
     }
 
     /** The smoked surface a card shows until its preview arrives. */
@@ -1578,7 +1709,7 @@ public final class WallpaperGalleryActivity extends Activity {
         anim.animateToFinalPosition(target);
     }
 
-    private static String assetUrl(String path) throws IOException {
+    static String assetUrl(String path) throws IOException {
         if (!path.matches("wallpapers/[A-Za-z0-9_%.-]+")
                 || android.net.Uri.decode(path.substring(11)).matches(".*[/\\\\].*")) {
             throw new IOException("Invalid wallpaper path");

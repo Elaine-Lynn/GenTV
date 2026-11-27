@@ -129,6 +129,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private long settingsRevision;
     private final ScreensaverIdle screensaverIdle = new ScreensaverIdle();
     private int screensaverMinutes;
+    private String screensaverStyle = ScreensaverIdle.STYLE_AERIAL;
     private boolean screensaverOpening;
     private boolean inWallpaperMode;
     private boolean wallpaperModeExiting;
@@ -140,7 +141,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private ValueAnimator wallpaperModeTransition;
     private float wallpaperModeProgress;
     private final Runnable showIdleScreensaver = () -> {
-        if (screensaverIdle.due(android.os.SystemClock.elapsedRealtime())) openScreensaver();
+        if (!screensaverIdle.due(android.os.SystemClock.elapsedRealtime())) return;
+        // "Current wallpaper": Home itself steps back to the full-screen wallpaper until a key is pressed.
+        if (ScreensaverIdle.STYLE_WALLPAPER.equals(screensaverStyle)) openWallpaperMode();
+        else openScreensaver();
     };
     private String liveTvAction;
     private String liveTvInputId;
@@ -409,6 +413,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         liveTvPkg = cfg.liveTvPackage;
         screensaverMinutes = ScreensaverIdle.minutes(getSharedPreferences(Config.SETTINGS_NAME, MODE_PRIVATE)
                 .getInt(ScreensaverIdle.MINUTES_KEY, ScreensaverIdle.DEFAULT_MINUTES));
+        screensaverStyle = ScreensaverIdle.style(getSharedPreferences(Config.SETTINGS_NAME, MODE_PRIVATE)
+                .getString(ScreensaverIdle.STYLE_KEY, ScreensaverIdle.STYLE_AERIAL));
         bootToLiveTv = cfg.bootToLiveTv;
         liveTvAction = cfg.liveTvAction;
         liveTvInputId = cfg.liveTvInputId;
@@ -433,6 +439,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         sky.setIntensity(cfg.skyIntensity);
 
         setUpWallpapers(cfg);
+        crossfadeFromShuffle();
         glass = findViewById(R.id.glass);
         glass.setStyle(cfg.glassStyle);
         if (festive) glass.setAccent(festival.accentColor());
@@ -1069,6 +1076,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             recreate();
             return;
         }
+        // Shuffle: a wallpaper whose time ran out while Home was hidden changes now, with the rebuild below.
+        String shuffled = WallpaperShuffle.rotateIfDue(this, System.currentTimeMillis());
+        if (shuffled != null) BundledWallpapers.select(this, shuffled);
         // Something changed in Launcher settings: rebuild with it, however the settings were left. Only Back
         // delivered their RESULT_OK; Home (the remote's button) clears them off this task and the result comes
         // back cancelled, so a new wallpaper or layout waited for the next process start.
@@ -1078,6 +1088,11 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         }
         headerResumed = true;
         screensaverOpening = false;
+        root.removeCallbacks(shuffleTick);
+        if (WallpaperShuffle.active(this)) {
+            root.postDelayed(shuffleTick, SHUFFLE_TICK_MS);
+            WallpaperShuffle.prefetch(this);
+        }
         IntentFilter signalFilter = new IntentFilter(WifiManager.RSSI_CHANGED_ACTION);
         if (android.os.Build.VERSION.SDK_INT >= 33) registerReceiver(signalReceiver,signalFilter,Context.RECEIVER_NOT_EXPORTED);
         else registerReceiver(signalReceiver,signalFilter);
@@ -1313,6 +1328,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         if(inputSignal!=null)inputSignal.stop();
         root.removeCallbacks(showIdleScreensaver);
         screensaverIdle.pause();
+        root.removeCallbacks(shuffleTick);
         endReorder();   // Home or another app while reordering keeps the order so far
         if (wallpaperPlayer != null) {
             wallpaperPlayer.stop();
@@ -2835,6 +2851,71 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             if (button != btnInputs && button.getVisibility() == View.VISIBLE) return button;
         }
         return findViewById(R.id.btnSettings);
+    }
+
+    private static final long SHUFFLE_TICK_MS = 60_000L;
+    /** The screen just before Shuffle changed the wallpaper on screen, faded out over the rebuilt Home. */
+    private static Bitmap shuffleCrossfade;
+    private final Runnable shuffleTick = this::shuffleTick;
+
+    /**
+     * Once a minute while Home is on screen: Shuffle's next wallpaper when the current one's time is up (a
+     * picture after 30 minutes, a video after a day), and its quiet downloads. Not under a menu, a dialog,
+     * reordering or wallpaper mode, which a rebuild would close; it changes at the next tick or return instead.
+     */
+    private void shuffleTick() {
+        if (!headerResumed || isFinishing() || !WallpaperShuffle.active(this)) return;
+        root.postDelayed(shuffleTick, SHUFFLE_TICK_MS);
+        WallpaperShuffle.prefetch(this);
+        if (!hasWindowFocus() || inWallpaperMode || reordering || appLibrary != null || screensaverOpening
+                || (openPopup != null && openPopup.isShowing())) return;
+        String next = WallpaperShuffle.rotateIfDue(this, System.currentTimeMillis());
+        if (next == null) return;
+        root.removeCallbacks(shuffleTick);
+        Runnable change = () -> {
+            if (isFinishing() || isDestroyed()) return;
+            BundledWallpapers.select(this, next);
+            settingsRevision = settingsRevision();
+            recreate();
+        };
+        if (!animations || reducedMotion || Build.VERSION.SDK_INT < 26) { change.run(); return; }
+        // Keep the screen as it is, so the rebuilt Home can dissolve from it to the new wallpaper.
+        View decor = getWindow().getDecorView();
+        int width = Math.max(1, decor.getWidth() / 2), height = Math.max(1, decor.getHeight() / 2);
+        try {
+            Bitmap frame = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+            android.view.PixelCopy.request(getWindow(), frame, result -> {
+                if (result == android.view.PixelCopy.SUCCESS) shuffleCrossfade = frame;
+                else frame.recycle();
+                change.run();
+            }, new android.os.Handler(android.os.Looper.getMainLooper()));
+        } catch (RuntimeException | OutOfMemoryError failure) {
+            change.run();
+        }
+    }
+
+    /**
+     * After Shuffle rebuilt Home: the previous screen lies under the tiles and fades out, so only the wallpaper
+     * appears to change, softly, while everything else stays where it was.
+     */
+    private void crossfadeFromShuffle() {
+        Bitmap from = shuffleCrossfade;
+        shuffleCrossfade = null;
+        if (from == null) return;
+        if (!animations || reducedMotion) { from.recycle(); return; }
+        ImageView fade = new ImageView(this);
+        fade.setScaleType(ImageView.ScaleType.FIT_XY);
+        fade.setImageBitmap(from);
+        fade.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        root.addView(fade, root.indexOfChild(root.findViewById(R.id.racePanel)),
+                new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        fade.animate().alpha(0f).setStartDelay(300).setDuration(1200)
+                .setInterpolator(new android.view.animation.DecelerateInterpolator(1.6f))
+                .withEndAction(() -> {
+                    root.removeView(fade);
+                    fade.setImageDrawable(null);
+                    from.recycle();
+                }).start();
     }
 
     /** compact_header_icons: the top-right icons are one control (see unifyHeaderFocus). */

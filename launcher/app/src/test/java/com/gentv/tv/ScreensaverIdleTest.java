@@ -47,4 +47,11 @@ public class ScreensaverIdleTest {
         for (int invalid : new int[]{-1, 1, 3, 30, 120, Integer.MAX_VALUE})
             assertEquals(2, ScreensaverIdle.minutes(invalid));
     }
+
+    @Test public void aerialVideosAreTheDefaultScreensaver() {
+        org.junit.Assert.assertEquals(ScreensaverIdle.STYLE_AERIAL, ScreensaverIdle.style(null));
+        org.junit.Assert.assertEquals(ScreensaverIdle.STYLE_AERIAL, ScreensaverIdle.style("unknown"));
+        org.junit.Assert.assertEquals(ScreensaverIdle.STYLE_AERIAL, ScreensaverIdle.style(ScreensaverIdle.STYLE_AERIAL));
+        org.junit.Assert.assertEquals(ScreensaverIdle.STYLE_WALLPAPER, ScreensaverIdle.style(ScreensaverIdle.STYLE_WALLPAPER));
+    }
 }
