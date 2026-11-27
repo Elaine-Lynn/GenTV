@@ -167,17 +167,12 @@
     <string name="tile_move">移动</string>
     <string name="tile_replace_in_dock">替换为其他应用</string>
     <string name="more_apps">更多应用</string>
-    <string name="quick_personalize">个性化</string>
-    <string name="wallpaper_personalization_hint">选择首页壁纸，按返回键回到桌面</string>
     <string name="wallpaper_follow_current">跟随当前壁纸</string>
     <string name="wallpaper_classic">经典蓝</string>
     <string name="wallpaper_cobalt">流光蓝</string>
     <string name="wallpaper_teal">深海青</string>
     <string name="wallpaper_indigo">静谧蓝</string>
-    <string name="wallpaper_personal_title">经典壁纸</string>
     <string name="wallpaper_motion_blue">蓝色流光</string>
-    <string name="wallpaper_user_title">用户自定义</string>
-    <string name="wallpaper_user_add">从本地文件添加</string>
     <string name="wallpaper_lan_send">局域网传输</string>
     <string name="wallpaper_lan_title">传一张壁纸到电视</string>
     <string name="wallpaper_lan_subtitle">手机扫码打开上传页，或在电脑浏览器输入下方地址。</string>
@@ -202,5 +197,4 @@
     <string name="wallpaper_picker_internal">内部存储</string>
     <string name="wallpaper_picker_disconnected">存储设备已拔出，请选择其他位置</string>
     <string name="wallpaper_picker_file_unavailable">此文件已不可用</string>
-    <string name="wallpaper_selected">已选</string>
 </resources>

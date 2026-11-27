@@ -173,17 +173,12 @@
          last opened, e.g. "5 minutes ago" or "yesterday, 9:40 pm". -->
     <string name="last_opened">Last opened %1$s</string>
     <string name="more_apps">More apps</string>
-    <string name="quick_personalize">Personalize</string>
-    <string name="wallpaper_personalization_hint">Choose a wallpaper for Home. Press Back to return.</string>
     <string name="wallpaper_follow_current">Follow current wallpaper</string>
     <string name="wallpaper_classic">Classic blue</string>
     <string name="wallpaper_cobalt">Cobalt flow</string>
     <string name="wallpaper_teal">Deep teal</string>
     <string name="wallpaper_indigo">Midnight blue</string>
-    <string name="wallpaper_personal_title">Classic wallpapers</string>
     <string name="wallpaper_motion_blue">Blue light</string>
-    <string name="wallpaper_user_title">Your wallpapers</string>
-    <string name="wallpaper_user_add">Add from files</string>
     <string name="wallpaper_lan_send">Send over local network</string>
     <string name="wallpaper_lan_title">Send a wallpaper to your TV</string>
     <string name="wallpaper_lan_subtitle">Scan with your phone, or enter the address in a computer browser.</string>
@@ -208,5 +203,4 @@
     <string name="wallpaper_picker_internal">Internal storage</string>
     <string name="wallpaper_picker_disconnected">Storage device removed. Choose another location.</string>
     <string name="wallpaper_picker_file_unavailable">This file is no longer available.</string>
-    <string name="wallpaper_selected">Selected</string>
 </resources>

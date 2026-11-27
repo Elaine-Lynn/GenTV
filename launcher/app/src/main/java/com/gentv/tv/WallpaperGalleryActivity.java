@@ -201,31 +201,6 @@ public final class WallpaperGalleryActivity extends Activity {
         statusLp.setMarginStart(dp(16));
         bar.addView(statusPill, statusLp);
 
-        View spacer = new View(this);
-        bar.addView(spacer, new LinearLayout.LayoutParams(0, 1, 1f));
-
-        // Right-aligned single frosted pill: Local wallpapers (no Shuffle button in header).
-        TextView localBtn = new TextView(this);
-        localBtn.setText(copy("本地壁纸", "Local wallpapers"));
-        localBtn.setTextSize(13.5f);
-        localBtn.setTypeface(fontMedium);
-        localBtn.setTextColor(INK_SOFT);
-        localBtn.setGravity(Gravity.CENTER);
-        localBtn.setSingleLine(true);
-        localBtn.setPadding(dp(18), 0, dp(18), 0);
-        localBtn.setFocusable(true);
-        localBtn.setClickable(true);
-        CompatApi.disableDefaultFocusHighlight(localBtn);
-        localBtn.setBackground(pillSurface(0x16FFFFFF, 0x26FFFFFF, 18));
-        localBtn.setOnFocusChangeListener((v, focused) -> {
-            localBtn.setTextColor(focused ? INK_DARK : INK_SOFT);
-            CompatApi.elevation(localBtn, focused ? dpF(8) : 0f);
-            springScale(localBtn, focused ? 1.05f : 1f);
-        });
-        localBtn.setOnClickListener(v -> startActivity(new Intent(this, PersonalizationActivity.class)));
-        bar.addView(localBtn, new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, dp(36)));
-
         return bar;
     }
 
