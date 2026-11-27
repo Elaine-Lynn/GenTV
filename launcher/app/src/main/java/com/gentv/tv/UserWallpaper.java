@@ -162,6 +162,16 @@ final class UserWallpaper {
         }
     }
 
+    /** Removes a user wallpaper's file and, for a video, its still. True when nothing of it remains. */
+    static boolean delete(Context context, String id) {
+        File[] files = isVideo(id) ? new File[]{video(context, id), videoPreview(context, id)}
+                : isImage(id) ? new File[]{image(context, id)} : new File[0];
+        if (files.length == 0) return false;
+        boolean removed = true;
+        for (File file : files) if (file.exists() && !file.delete()) removed = false;
+        return removed;
+    }
+
     /** Whether a video's saved still is a real picture: present, decodable and not one flat colour. */
     static boolean previewUsable(File preview) {
         if (preview == null || !preview.isFile() || preview.length() == 0) return false;
