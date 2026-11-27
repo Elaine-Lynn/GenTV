@@ -35,18 +35,12 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.util.HashSet;
 import java.io.File;
 import java.io.IOException;
-import java.net.Inet4Address;
-import java.net.NetworkInterface;
 import java.security.SecureRandom;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import com.google.zxing.BarcodeFormat;
 import com.google.zxing.WriterException;
-import com.google.zxing.common.BitMatrix;
-import com.google.zxing.qrcode.QRCodeWriter;
 
 /** Large preview and two Leanback thumbnail rows; image decoding never blocks focus scrolling. */
 public final class PersonalizationActivity extends Activity {
@@ -404,7 +398,7 @@ public final class PersonalizationActivity extends Activity {
     }
 
     private void openLanReceiver() {
-        String address = localAddress();
+        String address = TvLan.localAddress();
         if (address == null) {
             Toast.makeText(this, R.string.wallpaper_lan_unavailable, Toast.LENGTH_LONG).show();
             return;
@@ -441,7 +435,7 @@ public final class PersonalizationActivity extends Activity {
             qrBackground.setCornerRadius(dp(16));
             qrFrame.setBackground(qrBackground);
             ImageView qr = new ImageView(this);
-            qr.setImageBitmap(qrCode(lanReceiver.url() + "#code=" + code));
+            qr.setImageBitmap(TvLan.qrCode(lanReceiver.url() + "#code=" + code));
             qr.setContentDescription(getString(R.string.wallpaper_lan_scan));
             qrFrame.addView(qr, new LinearLayout.LayoutParams(dp(190), dp(190)));
             columns.addView(qrFrame);
@@ -504,34 +498,6 @@ public final class PersonalizationActivity extends Activity {
         view.setTextSize(sp);
         view.setTextColor(color);
         return view;
-    }
-
-    private Bitmap qrCode(String value) throws WriterException {
-        BitMatrix bits = new QRCodeWriter().encode(value, BarcodeFormat.QR_CODE, 320, 320);
-        Bitmap bitmap = Bitmap.createBitmap(bits.getWidth(), bits.getHeight(), Bitmap.Config.RGB_565);
-        for (int y = 0; y < bits.getHeight(); y++)
-            for (int x = 0; x < bits.getWidth(); x++)
-                bitmap.setPixel(x, y, bits.get(x, y) ? Color.BLACK : Color.WHITE);
-        return bitmap;
-    }
-
-    private static String localAddress() {
-        try {
-            String fallback = null;
-            for (NetworkInterface nic : Collections.list(NetworkInterface.getNetworkInterfaces())) {
-                String name = nic.getName().toLowerCase(java.util.Locale.ROOT);
-                if (!nic.isUp() || nic.isLoopback() || name.startsWith("tun") || name.startsWith("ppp")
-                        || name.startsWith("rmnet")) continue;
-                for (java.net.InetAddress address : Collections.list(nic.getInetAddresses()))
-                    if (address instanceof Inet4Address && address.isSiteLocalAddress()) {
-                        if (name.startsWith("wlan") || name.startsWith("eth") || name.startsWith("en"))
-                            return address.getHostAddress();
-                        if (fallback == null) fallback = address.getHostAddress();
-                    }
-            }
-            return fallback;
-        } catch (Exception ignored) { }
-        return null;
     }
 
     private void onLanUploaded(File file, String mime) {

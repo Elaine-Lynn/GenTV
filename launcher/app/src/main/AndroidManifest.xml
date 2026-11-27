@@ -177,7 +177,7 @@
             android:exported="false"
             android:excludeFromRecents="true"
             android:theme="@android:style/Theme.Translucent.NoTitleBar"
-            android:windowSoftInputMode="stateAlwaysVisible|adjustResize" />
+            android:windowSoftInputMode="stateAlwaysHidden" />
         <activity
             android:name=".XghSettingsRedirectActivity"
             android:exported="false"
