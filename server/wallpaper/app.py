@@ -3,6 +3,7 @@ from contextlib import closing
 import mobile
 import analytics
 import location
+import app_icons
 from rate_limit import limited
 import hashlib
 import json
@@ -219,6 +220,21 @@ def app(environ, start_response):
                           'url': f'{BASE}/wallpapers/{quote(p.name)}?v={version}'})
         body = json.dumps({'wallpapers': items, 'intervalSeconds': 120}, ensure_ascii=False, separators=(',', ':')).encode()
         kind = 'application/json; charset=utf-8'; cache = 'public, max-age=60'
+    elif path == '/tv/app-icons':
+        # Tile artwork mirrored by app_icons.py; clients never contact the upstream source.
+        body = json.dumps(app_icons.manifest(BASE, STATE), ensure_ascii=False, separators=(',', ':')).encode()
+        kind = 'application/json; charset=utf-8'; cache = 'public, max-age=3600'
+    elif path.startswith('/tv/app-icons/'):
+        name = path[len('/tv/app-icons/'):]
+        file = app_icons.image_file(name, STATE)
+        try:
+            body = file.read_bytes() if file else b''
+        except OSError:
+            body = b''
+        if not 0 < len(body) <= app_icons.MAX_IMAGE_BYTES:
+            start_response('404 Not Found', [('Content-Length', '0')]); return []
+        # File names are content hashes, so a URL never changes meaning.
+        kind = app_icons.content_type(name); cache = 'public, max-age=31536000, immutable'
     elif path.startswith('/tv/wallpapers/'):
         name = path[len('/tv/wallpapers/'):]
         # WSGI already decodes PATH_INFO. Accept one filename only; never follow links.

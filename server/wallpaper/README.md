@@ -149,3 +149,11 @@ wallpapers. Render them with `python3 tools/make_wallpaper_previews.py
 still serves the legacy image rotation manifest. The deployment archive
 includes the default image and its preview, and the kitten loop and thumbnail. Deploy the catalog API before distributing clients that
 use it.
+
+## 应用磁贴图（`/tv/app-icons`）
+
+- `GET /tv/app-icons`：`{"icons":[{"package":"com.dangbeimarket","url":"https://api.gentv.app/tv/app-icons/<sha256>.png","width":640,"height":360}]}`。只列出服务器上已存在的图片，无数据时返回空数组；带 ETag，`Cache-Control: public, max-age=3600`。
+- `GET /tv/app-icons/<sha256>.<png|jpg|webp>`：只读图片，文件名即内容 SHA-256，`immutable` 长缓存。生产由 Nginx 直接从 `/var/lib/gentv-tv/app-icons/files/` 提供。
+- 来源：`app_icons.py` 拉取当贝桌面的“美化图标”列表（`APP_ICON_SOURCE_URL`，默认 `http://zmapi.dangbei.net/v2/appinfo?2`），只接受 `APP_ICON_IMAGE_HOSTS`（默认 `imgzm.qun7.com`）上的图片并改用 HTTPS 下载；校验包名、PNG/JPEG/WebP 文件头与尺寸，单图上限 2 MiB。请求不携带任何设备信息，客户端也不会直接访问上游。
+- `gentv-app-icons.timer` 每日运行一次，部署时先同步一次（失败不回滚部署）。新索引在全部图片写入后才原子替换；上游不可用或列表为空时保留旧索引，单张下载失败保留该包上一次的图片，不再被引用的旧文件随后删除。
+- 手动同步：`sudo systemctl start gentv-app-icons.service`；本地：`GENTV_STATE_DIR="$PWD/work/wallpaper-state" python3 server/wallpaper/app_icons.py`。
