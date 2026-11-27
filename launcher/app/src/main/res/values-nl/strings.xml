@@ -27,7 +27,6 @@
     <string name="vpn">VPN</string>
     <string name="vpn_off">VPN uit</string>
     <string name="home_settings">Standaard startscherm kiezen</string>
-    <string name="home_settings_help">Kies je oorspronkelijke startscherm om GenTV niet meer als Home te gebruiken, of GenTV om terug te schakelen. De oorspronkelijke launcher moet ingeschakeld zijn en je tv moet een keuzescherm voor het startscherm hebben; gebruik eerst het herstelscript als hij uitgeschakeld is.</string>
     <string name="launcher_settings">Launcher-instellingen</string>
     <string name="native_settings">Fabrikantinstellingen</string>
     <string name="columns_label">Apps per rij</string>
@@ -42,10 +41,7 @@
     <string name="advanced_effects">Geavanceerde effecten</string>
     <string name="advanced_effects_state">Geavanceerde effecten: %1$s</string>
     <string name="open_on_start_label">Openen bij opstarten</string>
-    <string name="open_on_start_state">Openen bij opstarten: %1$s</string>
     <string name="advanced_effects_warning">Voegt een zwevende tegel, icoonzoom en vloeiende kleurovergangen toe. Kan meer geheugen gebruiken; het werkelijke verschil hangt af van je tv.</string>
-    <string name="follow_theme">Thema volgen (keuzes op de tv wissen)</string>
-    <string name="follow_theme_hint">Gebruikt de indeling en beweging van het huidige thema of de ingebouwde instellingen. Een thema pushen of resetten wist ook je keuzes op de tv.</string>
     <string name="tv_settings">Systeeminstellingen van de tv</string>
     <string name="quick_picture">Beeld</string>
     <string name="quick_network">Netwerk</string>

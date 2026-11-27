@@ -30,7 +30,6 @@
     <string name="vpn">VPN</string>
     <string name="vpn_off">VPN av</string>
     <string name="home_settings">Välj standardstartskärm</string>
-    <string name="home_settings_help">Välj den ursprungliga startskärmen för att sluta använda GenTV, eller GenTV för att byta tillbaka. Den ursprungliga startskärmen måste vara aktiverad och TV:n måste kunna välja startskärm. Kör återställningsskriptet först om den har inaktiverats.</string>
     <string name="launcher_settings">Startskärmsinställningar</string>
     <string name="native_settings">Tillverkarens inställningar</string>
     <string name="columns_label">Appar per rad</string>
@@ -45,10 +44,7 @@
     <string name="advanced_effects">Avancerade effekter</string>
     <string name="advanced_effects_state">Avancerade effekter: %1$s</string>
     <string name="open_on_start_label">Öppna vid start</string>
-    <string name="open_on_start_state">Öppna vid start: %1$s</string>
     <string name="advanced_effects_warning">Lägger till lyfta appbrickor, ikonzoom och mjuka färgövergångar. Kan öka minnesanvändningen; skillnaden beror på din TV.</string>
-    <string name="follow_theme">Följ temat (återställ val på TV:n)</string>
-    <string name="follow_theme_hint">Använder det aktuella temats eller de inbyggda inställningarna för layout och rörelse. Att skicka eller återställa ett tema rensar också valen du gjort på TV:n.</string>
     <string name="tv_settings">TV:ns systeminställningar</string>
     <string name="quick_picture">Bild</string>
     <string name="quick_network">Nätverk</string>

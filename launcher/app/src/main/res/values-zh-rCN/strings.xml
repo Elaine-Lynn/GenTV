@@ -9,7 +9,6 @@
     <string name="set_default_home_hint">需要在系统界面确认</string>
     <string name="home_already_default">GenTV 已是默认桌面</string>
     <string name="home_set_success">GenTV 已设为默认桌面</string>
-    <string name="home_settings_help">选择原始桌面即可关闭简洁桌面的默认桌面状态；需要切回时选择简洁桌面。原始桌面必须仍处于启用状态；若安装脚本已停用它，请先用恢复脚本启用。电视还须提供系统桌面选择页。</string>
     <string name="launcher_settings">简洁桌面设置</string>
     <string name="native_settings">原生设置</string>
     <string name="columns_label">每行应用数量</string>
@@ -30,8 +29,6 @@
     <string name="open_on_start_removed_generic">已关闭开机时打开</string>
     <string name="open_on_start_save_failed">开机启动应用保存失败</string>
     <string name="advanced_effects_warning">增加卡片上浮、图标缩放和背景颜色平滑过渡；可能增加内存占用，实际变化取决于电视。</string>
-    <string name="follow_theme">跟随主题（重置电视端设置）</string>
-    <string name="follow_theme_hint">恢复当前主题或内置的布局与动效设置。推送或重置主题也会清除电视端的这些设置。</string>
     <string name="tv_settings">电视系统设置</string>
     <string name="quick_picture">显示</string>
     <string name="quick_toolbox">小工具箱</string>
@@ -164,19 +161,6 @@
     <string name="tile_move">移动</string>
     <string name="tile_replace_in_dock">替换为其他应用</string>
     <string name="more_apps">更多应用</string>
-    <string name="screensaver_delay_label">进入屏保时间</string>
-    <string name="screensaver_delay_state">进入屏保时间：%1$s</string>
-    <string name="screensaver_hint">桌面首页按返回键进入航拍屏保；屏保中按任意键返回桌面。</string>
-    <string-array name="screensaver_times">
-        <item>2分钟</item>
-        <item>10分钟</item>
-        <item>60分钟</item>
-        <item>永不</item>
-    </string-array>
-    <string name="screensaver_clear_cache">清除屏保缓存</string>
-    <string name="screensaver_cache_cleared">屏保缓存已清除，下次进入屏保时重新下载。</string>
-    <string name="screensaver_cache_clear_failed">屏保缓存清除失败。</string>
-    <string name="screensaver_cache_hint">最多缓存 5 段视频，已缓存视频随机轮播。清除后，下次进入屏保时重新下载。</string>
     <string name="quick_personalize">个性化</string>
     <string name="wallpaper_personalization_hint">选择首页壁纸，按返回键回到桌面</string>
     <string name="wallpaper_follow_current">跟随当前壁纸</string>

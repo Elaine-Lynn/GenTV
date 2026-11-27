@@ -45,7 +45,6 @@
     <string name="animations_state">Animationer: %1$s</string>
     <string name="advanced_effects">Avancerede effekter</string>
     <string name="advanced_effects_state">Avancerede effekter: %1$s</string>
-    <string name="follow_theme">Følg tema (nulstil valg på TV)</string>
     <string name="tv_settings">TV-systemindstillinger</string>
     <string name="quick_picture">Billede</string>
     <string name="quick_network">Netværk</string>

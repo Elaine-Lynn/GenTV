@@ -26,7 +26,6 @@
     <string name="vpn">VPN</string>
     <string name="vpn_off">VPN tắt</string>
     <string name="home_settings">Chọn màn hình chính mặc định</string>
-    <string name="home_settings_help">Chọn màn hình chính gốc để thôi dùng GenTV, hoặc chọn GenTV để dùng lại. Launcher gốc phải đang bật và TV phải có mục chọn màn hình chính; nếu launcher gốc đã bị tắt, hãy chạy script khôi phục trước.</string>
     <string name="launcher_settings">Cài đặt launcher</string>
     <string name="native_settings">Cài đặt nhà sản xuất</string>
     <string name="columns_label">Số ứng dụng mỗi hàng</string>
@@ -35,10 +34,7 @@
     <string name="advanced_effects">Hiệu ứng nâng cao</string>
     <string name="advanced_effects_state">Hiệu ứng nâng cao: %1$s</string>
     <string name="open_on_start_label">Mở khi khởi động</string>
-    <string name="open_on_start_state">Mở khi khởi động: %1$s</string>
     <string name="advanced_effects_warning">Thêm hiệu ứng ô nổi lên, phóng to biểu tượng và chuyển màu mượt. Có thể tốn thêm bộ nhớ; mức chênh lệch tùy từng TV.</string>
-    <string name="follow_theme">Theo theme (xóa lựa chọn trên TV)</string>
-    <string name="follow_theme_hint">Dùng bố cục và hiệu ứng của theme hiện tại hoặc mặc định. Đẩy hoặc đặt lại theme cũng xóa các lựa chọn bạn đã chọn trên TV.</string>
     <string name="tv_settings">Cài đặt hệ thống TV</string>
     <string name="quick_picture">Hiển thị</string>
     <string name="quick_network">Mạng</string>

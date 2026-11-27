@@ -46,13 +46,6 @@
         </LinearLayout>
 
 
-<TextView android:id="@+id/screensaverChoice" style="@style/GenSettingsRow" android:layout_marginTop="12dp" />
-<TextView android:id="@+id/screensaver_hint" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/screensaver_hint" android:textColor="#FFA6B3C4" android:textSize="13sp" />
-<TextView android:id="@+id/clearScreensaverCacheChoice" style="@style/GenSettingsRow" android:text="@string/screensaver_clear_cache" android:layout_marginTop="12dp" />
-<TextView android:id="@+id/screensaver_cache_hint" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/screensaver_cache_hint" android:textColor="#FFA6B3C4" android:textSize="13sp" />
-
-
-
 <TextView xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/animationsChoice" style="@style/GenSettingsRow" android:layout_marginTop="12dp" />
 
 
@@ -62,21 +55,7 @@
 <TextView android:id="@+id/advancedHint" xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:text="@string/advanced_effects_warning" android:textColor="#FFA6B3C4" android:textSize="13sp" />
 
 
-<TextView xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/openOnStartChoice" style="@style/GenSettingsRow" android:layout_marginTop="12dp" android:visibility="gone" />
-
-
-<TextView xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/followThemeChoice" style="@style/GenSettingsRow" android:layout_marginTop="12dp" android:text="@string/follow_theme" />
-
-
-<TextView android:id="@+id/followThemeHint" xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:text="@string/follow_theme_hint" android:textColor="#FFA6B3C4" android:textSize="13sp" />
-
-
-<TextView android:id="@+id/homeContentChoice" style="@style/GenSettingsRow" android:layout_marginTop="12dp" android:text="@string/home_content_title" />
 <TextView xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/metricsChoice" style="@style/GenSettingsRow" android:layout_marginTop="12dp" android:text="@string/metrics_title" />
-<TextView xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/defaultHomeChoice" style="@style/GenSettingsRow" android:layout_marginTop="12dp" android:text="@string/home_settings" />
-
-
-<TextView xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:text="@string/home_settings_help" android:textColor="#FFA6B3C4" android:textSize="13sp" />
 
 
 <TextView xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/tvSettingsChoice" style="@style/GenSettingsRow" android:layout_marginTop="12dp" android:text="@string/tv_settings" />
