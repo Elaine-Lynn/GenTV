@@ -1891,7 +1891,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     public void onBackPressed() {
         if (inWallpaperMode) { closeWallpaperMode(); return; }
         if (homeContent != null && homeContent.back()) return;
-        // Back from later rows returns to the first row; Back on the first screen shows the wallpaper.
+        // Back from later rows returns to the first row; Back on the first screen starts the chosen screensaver
+        // (the aerial videos), or shows the wallpaper when that is the screensaver or it is off.
         GridLayoutManager layout = (GridLayoutManager) grid.getLayoutManager();
         int focused = focusedTilePosition();
         if (!reordering && appLibrary == null && layout != null && adapter.appCount() > 0
@@ -1907,7 +1908,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             });
             return;
         }
-        openWallpaperMode();
+        if (screensaverMinutes > 0 && ScreensaverIdle.STYLE_AERIAL.equals(screensaverStyle)) openScreensaver();
+        else openWallpaperMode();
     }
 
     private void openWallpaperMode() {
