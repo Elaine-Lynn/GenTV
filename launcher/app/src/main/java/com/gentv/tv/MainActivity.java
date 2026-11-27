@@ -859,6 +859,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             }
         }
         if (festive) applyFestiveSkin((TextView) btnInputs, (TextView) btnSettings);
+        if (compactHeaderIcons) unifyHeaderFocus(advancedEffects);
 
         homeContent = new HomeContentController(this, root, animations, reducedMotion, new HomeContentController.Host() {
             @Override public boolean allowedNow() {
@@ -2074,14 +2075,14 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             openPopup = null;
             if (libraryFromTopBar) {
                 libraryFromTopBar = false;
-                btnLibraryTop.requestFocus();
+                (unifiedHeader ? firstTopButton() : btnLibraryTop).requestFocus();
                 return;
             }
             boolean fromVpnPill = libraryFromVpnPill;
             libraryFromVpnPill = false;
             // The VPN pill can hide while the library is open (its VPN dropped): then focus goes as from the grid.
             if (fromVpnPill && btnVpn.getVisibility() == View.VISIBLE) {
-                btnVpn.requestFocus();
+                (unifiedHeader ? firstTopButton() : btnVpn).requestFocus();
                 return;
             }
             libraryFocusPending = true;
@@ -2828,11 +2829,56 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     /** The first top-bar button after Inputs that is shown, in bar order (top_bar_apps, the network pill, ...); Settings is always there. */
     private View firstTopButton() {
         ViewGroup bar = findViewById(R.id.topButtons);
+        if (unifiedHeader) return bar;
         for (int i = 0; i < bar.getChildCount(); i++) {
             View button = bar.getChildAt(i);
             if (button != btnInputs && button.getVisibility() == View.VISIBLE) return button;
         }
         return findViewById(R.id.btnSettings);
+    }
+
+    /** compact_header_icons: the top-right icons are one control (see unifyHeaderFocus). */
+    private boolean unifiedHeader;
+
+    /**
+     * compact_header_icons: the top-right icons take focus as one control. One capsule lights up around all of
+     * them, Select opens the Control Center and a long press keeps the settings menu; the icons themselves no
+     * longer take focus one by one (touch still reaches each of them).
+     */
+    private void unifyHeaderFocus(boolean scale) {
+        LinearLayout bar = findViewById(R.id.topButtons);
+        for (int i = 0; i < bar.getChildCount(); i++) {
+            View icon = bar.getChildAt(i);
+            icon.setFocusable(false);
+            icon.setFocusableInTouchMode(false);
+            icon.setOnFocusChangeListener(null);
+            icon.setBackgroundColor(Color.TRANSPARENT);
+        }
+        unifiedHeader = true;
+        bar.setFocusable(true);
+        bar.setClickable(true);
+        CompatApi.disableDefaultFocusHighlight(bar);
+        bar.setBackgroundResource(R.drawable.header_group_bg);
+        bar.setContentDescription(getString(R.string.desktop_control_center));
+        bar.setOnClickListener(v -> QuickSettingsGlass.open(this));
+        bar.setOnLongClickListener(v -> { showSettingsMenu(); return true; });
+        bar.setOnKeyListener((v, keyCode, event) -> {
+            if (event.getAction() != KeyEvent.ACTION_DOWN) return false;
+            if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
+                // Back to the dock tile Up came from, not wherever the focus finder lands.
+                focusTile(singleRow ? lastFocused : lastFocused % COLUMNS);
+                return true;
+            }
+            // Nothing beside or above the group: keep focus here instead of jumping to a far tile.
+            return keyCode == KeyEvent.KEYCODE_DPAD_UP || keyCode == KeyEvent.KEYCODE_DPAD_LEFT
+                    || keyCode == KeyEvent.KEYCODE_DPAD_RIGHT;
+        });
+        if (scale) bar.setOnFocusChangeListener((view, focused) -> {
+            view.setPivotX(view.getWidth() * 0.5f);
+            view.setPivotY(view.getHeight() * 0.5f);
+            view.animate().scaleX(focused ? 1.04f : 1f).scaleY(focused ? 1.04f : 1f)
+                    .setDuration(reducedMotion ? Motion.REDUCED_MS : 160).start();
+        });
     }
 
     /** top_bar_apps buttons, in bar order. */
