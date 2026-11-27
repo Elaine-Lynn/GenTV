@@ -235,6 +235,9 @@ final class HomeContentController {
         if(!a.enabled||!a.exported||!a.applicationInfo.enabled||a.applicationInfo.uid!=e.uid
                 ||a.permission!=null&&!a.permission.isEmpty()&&!CompatApi.permissionGranted(activity,a.permission))
             throw new IllegalArgumentException("unavailable action");
+        // The share-code UI belongs to the host, so keep it private and route this known PlayTV action locally.
+        if("com.ai.playtv".equals(e.activity.getPackageName())&&"share-code".equals(item.actionId))
+            return new Intent(activity,ShareCodeActivity.class);
         return new Intent(Intent.ACTION_VIEW).setComponent(target).putExtra("com.gentv.tv.home.ACTION_ID",item.actionId);
     }
     private void show(HomeContentModel model,int token) {

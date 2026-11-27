@@ -263,8 +263,8 @@ final class ExtensionPreviewView extends View {
         text.setTextSize(13f * u);
         text.setColor(0xFFFFFFFF);
         canvas.drawText(zh ? "Gen 视频" : "Gen Video", left + 15f * u, top + 24f * u, text);
-        String[] labels = zh ? new String[]{"添加播放源", "播放记录", "搜索"}
-                : new String[]{"Add source", "History", "Search"};
+        String[] labels = zh ? new String[]{"输入分享码", "播放记录", "搜索"}
+                : new String[]{"Enter share code", "History", "Search"};
         float tileTop = top + 32f * u;
         text.setTypeface(fontRegular);
         text.setTextSize(zh ? 8.5f * u : 8f * u);

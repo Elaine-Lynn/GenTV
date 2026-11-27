@@ -52,8 +52,8 @@
     <string name="ext_weather_tags">GHCP 1 · Free · No login</string>
 
     <string name="ext_video_name">Gen Video</string>
-    <string name="ext_video_sub">Add sources, browse history and search with PlayTV.</string>
-    <string name="ext_video_desc">Open PlayTV to add sources, view source history and search saved channels and videos.</string>
+    <string name="ext_video_sub">Enter share codes, browse history and search with PlayTV.</string>
+    <string name="ext_video_desc">Open a shared source, view source history and search saved channels and videos.</string>
     <string name="ext_video_author">GenTV Studio</string>
     <string name="ext_video_tags">Live TV · Free to watch</string>
     <string name="ext_video_not_installed">Install PlayTV to open Gen Video.</string>
