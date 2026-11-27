@@ -34,7 +34,7 @@ final class WallpaperThumbnail {
     static final int WIDTH = 256;
     static final int HEIGHT = 144;
     /** Bump when the rendering changes so older files are replaced. */
-    static final int FORMAT = 1;
+    static final int FORMAT = 2;
     /** Recent thumbnails kept on disk, so switching back to a wallpaper does not render it again. */
     static final int KEEP = 4;
     private static final String DIRECTORY = "wallpaper_thumb";
@@ -53,6 +53,32 @@ final class WallpaperThumbnail {
     static void prepare(Context context) {
         Context app = context.getApplicationContext();
         WORKER.execute(() -> ensure(app));
+    }
+
+    /**
+     * Stores a frame of the video wallpaper Home is playing as the current thumbnail. Many TV decoders hand
+     * MediaMetadataRetriever an empty (green or black) frame, so the still saved when the video was imported
+     * may be blank, while the frame on screen is always the real picture. Takes ownership of {@code frame}.
+     */
+    static void fromVideoFrame(Context context, Bitmap frame) {
+        if (frame == null) return;
+        Context app = context.getApplicationContext();
+        WORKER.execute(() -> {
+            try {
+                Source source = Source.current(app);
+                if (!source.video) return;
+                Bitmap thumbnail = fit(frame);
+                if (thumbnail == null) return;
+                String key = source.key();
+                File directory = new File(app.getFilesDir(), DIRECTORY);
+                save(directory, new File(directory, fileName(key)), thumbnail);
+                remember(key, thumbnail);
+            } catch (RuntimeException | OutOfMemoryError failure) {
+                Log.w(TAG, "Cannot keep the video wallpaper frame", failure);
+            } finally {
+                frame.recycle();
+            }
+        });
     }
 
     /**
@@ -96,7 +122,8 @@ final class WallpaperThumbnail {
             source = Source.fallback();
         }
         Bitmap result = ensure(context, source);
-        if (result == null && !source.isFallback()) result = ensure(context, Source.fallback());
+        // A video whose still is missing or blank waits for Home's playing frame instead of showing another picture.
+        if (result == null && !source.isFallback() && !source.video) result = ensure(context, Source.fallback());
         return result;
     }
 
@@ -165,12 +192,8 @@ final class WallpaperThumbnail {
             options.inPreferredConfig = Bitmap.Config.ARGB_8888;
             decoded = source.decode(context, options);
             if (decoded == null) return null;
-            int[] crop = coverCrop(decoded.getWidth(), decoded.getHeight(), WIDTH, HEIGHT);
-            Bitmap thumbnail = Bitmap.createBitmap(WIDTH, HEIGHT, Bitmap.Config.ARGB_8888);
-            new Canvas(thumbnail).drawBitmap(decoded,
-                    new Rect(crop[0], crop[1], crop[0] + crop[2], crop[1] + crop[3]),
-                    new Rect(0, 0, WIDTH, HEIGHT),
-                    new Paint(Paint.FILTER_BITMAP_FLAG | Paint.ANTI_ALIAS_FLAG));
+            Bitmap thumbnail = fit(decoded);
+            if (thumbnail == null) Log.w(TAG, "Wallpaper source is a blank frame: " + source.key());
             return thumbnail;
         } catch (IOException | RuntimeException | OutOfMemoryError failure) {
             Log.w(TAG, "Cannot render wallpaper thumbnail", failure);
@@ -178,6 +201,50 @@ final class WallpaperThumbnail {
         } finally {
             if (decoded != null) decoded.recycle();
         }
+    }
+
+    /** Centre-crops a software bitmap into a new thumbnail, or null when the picture is one flat colour. */
+    private static Bitmap fit(Bitmap picture) {
+        int[] crop = coverCrop(picture.getWidth(), picture.getHeight(), WIDTH, HEIGHT);
+        Bitmap thumbnail = Bitmap.createBitmap(WIDTH, HEIGHT, Bitmap.Config.ARGB_8888);
+        new Canvas(thumbnail).drawBitmap(picture,
+                new Rect(crop[0], crop[1], crop[0] + crop[2], crop[1] + crop[3]),
+                new Rect(0, 0, WIDTH, HEIGHT),
+                new Paint(Paint.FILTER_BITMAP_FLAG | Paint.ANTI_ALIAS_FLAG));
+        if (!flat(thumbnail)) return thumbnail;
+        thumbnail.recycle();
+        return null;
+    }
+
+    /** Whether a software bitmap is one flat colour (a blank decoder frame), judged on a grid of samples. */
+    static boolean flat(Bitmap bitmap) {
+        int[] samples = new int[SAMPLE_GRID * SAMPLE_GRID];
+        for (int y = 0; y < SAMPLE_GRID; y++) for (int x = 0; x < SAMPLE_GRID; x++)
+            samples[y * SAMPLE_GRID + x] = bitmap.getPixel((2 * x + 1) * bitmap.getWidth() / (2 * SAMPLE_GRID),
+                    (2 * y + 1) * bitmap.getHeight() / (2 * SAMPLE_GRID));
+        return uniform(samples);
+    }
+
+    static final int SAMPLE_GRID = 12;
+    /** Largest spread of any colour channel across the samples that still counts as one flat colour. */
+    static final int FLAT_SPREAD = 12;
+
+    /**
+     * Whether sampled ARGB pixels are a single flat colour: the empty green or black frame a TV decoder
+     * returns instead of the picture. Real wallpapers, even dark or plain ones, vary more than this.
+     */
+    static boolean uniform(int[] pixels) {
+        if (pixels.length == 0) return true;
+        int[] min = {255, 255, 255}, max = {0, 0, 0};
+        for (int pixel : pixels) {
+            int[] channel = {(pixel >> 16) & 255, (pixel >> 8) & 255, pixel & 255};
+            for (int c = 0; c < 3; c++) {
+                min[c] = Math.min(min[c], channel[c]);
+                max[c] = Math.max(max[c], channel[c]);
+            }
+        }
+        for (int c = 0; c < 3; c++) if (max[c] - min[c] > FLAT_SPREAD) return false;
+        return true;
     }
 
     /** The largest power-of-two sample that still leaves the picture at least {@code width x height}. */
@@ -229,19 +296,32 @@ final class WallpaperThumbnail {
     static final class Source {
         private final File file;
         private final int resource;
+        /** A user video: identified by the video itself, rendered from its imported still (which may be absent). */
+        final boolean video;
+        private final File identity;
 
         private Source(File file, int resource) {
+            this(file, resource, false, file);
+        }
+
+        private Source(File file, int resource, boolean video, File identity) {
             this.file = file;
             this.resource = resource;
+            this.video = video;
+            this.identity = identity;
         }
 
         static Source fallback() { return new Source(null, R.raw.wallpaper_default_preview); }
 
-        boolean isFallback() { return file == null && resource == R.raw.wallpaper_default_preview; }
+        boolean isFallback() { return !video && file == null && resource == R.raw.wallpaper_default_preview; }
 
-        String key() { return file != null ? fileKey(file) : resourceKey(resource, BuildConfig.VERSION_CODE); }
+        String key() {
+            if (video) return "video:" + fileKey(identity);
+            return file != null ? fileKey(file) : resourceKey(resource, BuildConfig.VERSION_CODE);
+        }
 
         Bitmap decode(Context context, BitmapFactory.Options options) throws IOException {
+            if (video && (file == null || !file.isFile() || file.length() == 0)) return null;
             if (file != null) return BitmapFactory.decodeFile(file.getPath(), options);
             try (InputStream input = context.getResources().openRawResource(resource)) {
                 return BitmapFactory.decodeStream(input, null, options);
@@ -252,7 +332,9 @@ final class WallpaperThumbnail {
         static Source current(Context context) {
             String selected = BundledWallpapers.selected(context);
             if (UserWallpaper.isImage(selected)) return existing(UserWallpaper.image(context, selected));
-            if (UserWallpaper.isVideo(selected)) return existing(UserWallpaper.videoPreview(context, selected));
+            if (UserWallpaper.isVideo(selected))
+                return new Source(UserWallpaper.videoPreview(context, selected), 0, true,
+                        UserWallpaper.video(context, selected));
             for (int i = 0; i < BundledWallpapers.MOTION_IDS.length; i++)
                 if (BundledWallpapers.MOTION_IDS[i].equals(selected))
                     return new Source(null, BundledWallpapers.MOTION_IMAGES[i]);

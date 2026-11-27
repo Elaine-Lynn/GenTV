@@ -162,12 +162,59 @@ final class UserWallpaper {
         }
     }
 
+    /** Whether a video's saved still is a real picture: present, decodable and not one flat colour. */
+    static boolean previewUsable(File preview) {
+        if (preview == null || !preview.isFile() || preview.length() == 0) return false;
+        try {
+            BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inSampleSize = 4;
+            options.inPreferredConfig = Bitmap.Config.RGB_565;
+            Bitmap still = BitmapFactory.decodeFile(preview.getAbsolutePath(), options);
+            if (still == null) return false;
+            try { return !WallpaperThumbnail.flat(still); }
+            finally { still.recycle(); }
+        } catch (RuntimeException | OutOfMemoryError failure) {
+            return false;
+        }
+    }
+
+    /** Replaces a video's still with a frame of it playing on screen; false when the frame is blank too. */
+    static boolean replacePreview(File preview, Bitmap frame) {
+        if (preview == null || frame == null || WallpaperThumbnail.flat(frame)) return false;
+        File folder = preview.getParentFile();
+        File temporary = null;
+        try {
+            temporary = File.createTempFile("preview-", ".tmp", folder);
+            try (FileOutputStream output = new FileOutputStream(temporary)) {
+                if (!frame.compress(Bitmap.CompressFormat.JPEG, 86, output)) return false;
+            }
+            if (!temporary.renameTo(preview)) return false;
+            temporary = null;
+            return true;
+        } catch (IOException | RuntimeException failure) {
+            return false;
+        } finally {
+            if (temporary != null) temporary.delete();
+        }
+    }
+
     private static void saveVideoPreview(File source, File preview) throws IOException {
         MediaMetadataRetriever retriever = new MediaMetadataRetriever();
         Bitmap frame = null;
         try {
             retriever.setDataSource(source.getAbsolutePath());
-            frame = retriever.getFrameAtTime(1_000_000, MediaMetadataRetriever.OPTION_CLOSEST_SYNC);
+            // Some TV decoders hand back an empty (flat green or black) frame; try a few others before keeping
+            // one. A blank still that remains is replaced from the playing video (VideoWallpaperPlayer).
+            long[] times = {1_000_000, 3_000_000, 500_000};
+            int[] options = {MediaMetadataRetriever.OPTION_CLOSEST_SYNC, MediaMetadataRetriever.OPTION_CLOSEST_SYNC,
+                    MediaMetadataRetriever.OPTION_CLOSEST};
+            for (int i = 0; i < times.length; i++) {
+                Bitmap candidate = retriever.getFrameAtTime(times[i], options[i]);
+                if (candidate == null) continue;
+                if (frame != null) frame.recycle();
+                frame = candidate;
+                if (!WallpaperThumbnail.flat(frame)) break;
+            }
             if (frame == null) throw new IOException("Cannot preview selected video");
             Bitmap small = Bitmap.createScaledBitmap(frame, 400, 225, true);
             try (FileOutputStream output = new FileOutputStream(preview)) {

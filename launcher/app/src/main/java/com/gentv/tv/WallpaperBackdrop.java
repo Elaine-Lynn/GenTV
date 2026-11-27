@@ -133,8 +133,10 @@ final class WallpaperBackdrop {
         try {
             if (UserWallpaper.isImage(selected))
                 return WallpaperBlur.fromFile(UserWallpaper.image(context, selected));
-            if (UserWallpaper.isVideo(selected))
-                return WallpaperBlur.fromFile(UserWallpaper.videoPreview(context, selected));
+            if (UserWallpaper.isVideo(selected)) {
+                File preview = UserWallpaper.videoPreview(context, selected);
+                return UserWallpaper.previewUsable(preview) ? WallpaperBlur.fromFile(preview) : null;
+            }
             Config config = Config.load(context);
             if (resource == 0 && config.wallpaper != null) {
                 Bitmap local = WallpaperBlur.fromFile(config.wallpaper);

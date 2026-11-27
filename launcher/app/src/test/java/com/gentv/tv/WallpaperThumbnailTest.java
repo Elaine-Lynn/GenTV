@@ -68,4 +68,26 @@ public class WallpaperThumbnailTest {
         assertNull(WallpaperThumbnail.pick(Collections.<File>emptyList(), "a.jpg"));
         assertNull(WallpaperThumbnail.pick(null, "a.jpg"));
     }
+
+    @Test public void blankDecoderFramesAreUniform() {
+        int[] green = new int[144];
+        // The empty frame a TV decoder returned for an imported video: YUV zero reads as dark green.
+        for (int i = 0; i < green.length; i++) green[i] = 0xFF008601 + (i % 3 == 0 ? 0x000300 : 0);
+        assertTrue(WallpaperThumbnail.uniform(green));
+        int[] black = new int[144];
+        Arrays.fill(black, 0xFF000000);
+        assertTrue(WallpaperThumbnail.uniform(black));
+        assertTrue(WallpaperThumbnail.uniform(new int[0]));
+    }
+
+    @Test public void darkOrSoftPicturesAreNotUniform() {
+        int[] gradient = new int[144];
+        // A night sky fading from near black to deep blue still has a visible spread.
+        for (int i = 0; i < gradient.length; i++) gradient[i] = 0xFF000000 | (i / 12) << 16 | (i / 6) << 8 | (i / 3);
+        assertFalse(WallpaperThumbnail.uniform(gradient));
+        int[] spot = new int[144];
+        Arrays.fill(spot, 0xFF202020);
+        spot[70] = 0xFFE0E0E0;
+        assertFalse(WallpaperThumbnail.uniform(spot));
+    }
 }

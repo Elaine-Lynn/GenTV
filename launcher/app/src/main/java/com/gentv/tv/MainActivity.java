@@ -1315,6 +1315,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         endReorder();   // Home or another app while reordering keeps the order so far
         if (wallpaperPlayer != null) {
             wallpaperPlayer.stop();
+            // The playing frame is the real picture; the still saved at import may be a blank decoder frame.
+            if (videoWallpaper != null) WallpaperThumbnail.fromVideoFrame(this, videoWallpaper.thumbnailFrame());
             if (videoWallpaper != null) videoWallpaper.pause();
             remoteWallpaper.stop();
             // Small-heap TVs use the already prepared wallpaper preview for other pages.
