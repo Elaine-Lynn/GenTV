@@ -157,3 +157,16 @@ use it.
 - 来源：`app_icons.py` 拉取当贝桌面的“美化图标”列表（`APP_ICON_SOURCE_URL`，默认 `http://zmapi.dangbei.net/v2/appinfo?2`），只接受 `APP_ICON_IMAGE_HOSTS`（默认 `imgzm.qun7.com`）上的图片并改用 HTTPS 下载；校验包名、PNG/JPEG/WebP 文件头与尺寸，单图上限 2 MiB。请求不携带任何设备信息，客户端也不会直接访问上游。
 - `gentv-app-icons.timer` 每日运行一次，部署时先同步一次（失败不回滚部署）。新索引在全部图片写入后才原子替换；上游不可用或列表为空时保留旧索引，单张下载失败保留该包上一次的图片，不再被引用的旧文件随后删除。
 - 手动同步：`sudo systemctl start gentv-app-icons.service`；本地：`GENTV_STATE_DIR="$PWD/work/wallpaper-state" python3 server/wallpaper/app_icons.py`。
+
+## 分享码
+
+电视通过局域网收到手机发来的链接后，向服务器申请一个 4 位分享码；任何一台 GenTV 输入这个码都能打开该链接。数据保存在 `/var/lib/gentv-tv/share_codes.sqlite3`，由每日备份一并备份。
+
+- `POST /tv/share-codes`，JSON `{"owner":"<64 位十六进制>","name":"…","url":"https://…"}`，返回 201 `{"code","name","url"}`。`owner` 是电视本机随机生成并保存的密钥，服务器只保存其 SHA-256，用来确认删除者；不保存 IP、设备 ID。每台电视最多 4 个分享码（满时 409 `{"error":"full"}`），全站上限 20 万条。
+- `GET /tv/share-codes/<code>` 返回 `{"code","name","url"}`，不存在返回 404。大小写不敏感。
+- `DELETE /tv/share-codes/<code>`，请求头 `X-GenTV-Owner: <owner>`；只有创建它的电视能删除，其它情况一律返回 404。
+- 分配规则：只要还有空闲的 4 位纯数字码就用纯数字；用完后才出现 1 个字母，再用完才 2 个，以此类推。字母不含 I、O。
+- 名称 1–15 个字符，链接仅限 http/https，最长 2048 字符，不允许带用户名密码。
+- 限流：创建和删除每来源每分钟 12 次，查询每分钟 30 次；Nginx 对该路径关闭访问日志，避免分享码进入日志。
+
+4 位纯数字只有一万个，任何人都可以逐个尝试查询，所以分享码适合分享本来就打算公开的链接，不适合私密内容。

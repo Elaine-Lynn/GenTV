@@ -1,9 +1,10 @@
-"""GenTV TV API: read-only wallpaper/releases and anonymous aggregate session counters."""
+"""GenTV TV API: read-only wallpaper/releases, anonymous aggregate session counters and share codes."""
 from contextlib import closing
 import mobile
 import analytics
 import location
 import app_icons
+import share_codes
 from rate_limit import limited
 import hashlib
 import json
@@ -151,6 +152,8 @@ def app(environ, start_response):
         path = path.encode('latin-1').decode('utf-8')
     except (UnicodeEncodeError, UnicodeDecodeError):
         pass
+    if path == '/tv/share-codes' or path.startswith('/tv/share-codes/'):
+        return share_codes.handle(environ, start_response, STATE)
     if path == '/tv/analytics':
         return mobile.handle_analytics(environ,start_response,STATE)
     if path in ('/tv/events','/tv/feedback'):
