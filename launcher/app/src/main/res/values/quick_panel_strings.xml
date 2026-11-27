@@ -16,7 +16,7 @@
     <string name="share_code_download_starting">Connecting to GitHub…</string>
     <string name="share_code_download_reconnecting">Reconnecting… (%1$d/%2$d)</string>
     <string name="share_code_download_progress">%1$s / %2$s</string>
-    <string name="share_code_downloaded">Downloaded</string>
+    <string name="share_code_ready_to_install">Downloaded, ready to install</string>
     <string name="share_code_not_downloaded">Not downloaded</string>
     <string name="share_code_installed">Installed</string>
     <string name="share_code_open_failed">Unable to open this app</string>

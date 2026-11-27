@@ -5,6 +5,9 @@ import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.util.Log;
 
@@ -106,7 +109,6 @@ final class ShareCodeApkRepository {
         }
         File partial = new File(directory, apk.sha + ".part");
         File etagFile = new File(directory, partial.getName() + ".etag");
-        clearDownloads(directory, apkFile, partial, etagFile);
         if (apkFile.isFile()) {
             // Cancellation may happen after the APK has been verified and saved.
             if (apk.sha.equals(readBlobId(apkFile, apk.size))) {
@@ -142,18 +144,13 @@ final class ShareCodeApkRepository {
         return new File(new File(cache, CACHE_DIRECTORY), sha + ".apk");
     }
 
-    /** Removes old downloads while preserving any APK still in use by the installer. */
-    static void clearCache(File cache, File installerApk) {
-        clearDownloads(new File(cache, CACHE_DIRECTORY), installerApk, null, null);
-    }
-
-    private static void clearDownloads(File directory, File apk, File partial, File etag) {
+    /** Removes APKs and download fragments when the shared app list is closed. */
+    static void clearCache(File cache) {
+        File directory = new File(cache, CACHE_DIRECTORY);
         File[] files = directory.listFiles((parent, name) ->
                 name.endsWith(".apk") || name.endsWith(".part") || name.endsWith(".part.etag"));
         if (files == null) return;
-        for (File file : files) {
-            if (!file.equals(apk) && !file.equals(partial) && !file.equals(etag)) deleteCachedApk(file);
-        }
+        for (File file : files) deleteCachedApk(file);
     }
 
     static void deleteCachedApk(File file) {
@@ -201,20 +198,33 @@ final class ShareCodeApkRepository {
         return names;
     }
 
-    static String rememberPackageName(Context context, Apk apk, File file) {
-        String name = archivePackageName(context, file);
-        if (name != null) {
-            // Keep the package mapping after the temporary APK has been deleted.
-            context.getSharedPreferences(PACKAGE_PREFS, Context.MODE_PRIVATE)
-                    .edit().putString(apk.sha, name).apply();
-        }
-        return name;
+    static ApplicationInfo inspectDownload(Context context, Apk apk, File file) {
+        PackageInfo archive = context.getPackageManager().getPackageArchiveInfo(file.getPath(), 0);
+        if (archive == null || archive.applicationInfo == null) return null;
+        // Keep the package mapping after the temporary APK has been deleted.
+        context.getSharedPreferences(PACKAGE_PREFS, Context.MODE_PRIVATE)
+                .edit().putString(apk.sha, archive.packageName).apply();
+        ApplicationInfo app = archive.applicationInfo;
+        app.sourceDir = file.getPath();
+        app.publicSourceDir = file.getPath();
+        return app;
     }
 
-    private static String archivePackageName(Context context, File file) {
-        PackageManager packages = context.getPackageManager();
-        PackageInfo archive = packages.getPackageArchiveInfo(file.getPath(), 0);
-        return archive == null ? null : archive.packageName;
+    @SuppressWarnings("deprecation")
+    static Bitmap readArchiveIcon(Context context, ApplicationInfo app) {
+        if (app == null || app.icon == 0) return null;
+        try {
+            Drawable icon = context.getPackageManager().getResourcesForApplication(app).getDrawable(app.icon);
+            // Draw into a small bitmap so the icon survives deletion of the temporary APK.
+            int size = 96;
+            Bitmap preview = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
+            icon.setBounds(0, 0, size, size);
+            icon.draw(new Canvas(preview));
+            return preview;
+        } catch (PackageManager.NameNotFoundException | RuntimeException error) {
+            Log.w(TAG, "Could not read the downloaded APK icon", error);
+            return null;
+        }
     }
 
     private static String readBlobId(File file, long size) throws InterruptedIOException {
