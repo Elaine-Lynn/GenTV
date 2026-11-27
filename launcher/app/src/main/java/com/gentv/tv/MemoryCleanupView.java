@@ -58,6 +58,11 @@ final class MemoryCleanupView extends View {
         setOnClickListener(v -> { if (finished) close(); });
         setContentDescription(context.getString(R.string.memory_cleaning));
         setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_YES);
+        // Translucent veil in the panel's own shape: the panel's content shows through underneath.
+        android.graphics.drawable.GradientDrawable veil = new android.graphics.drawable.GradientDrawable();
+        veil.setCornerRadius(30f * context.getResources().getDisplayMetrics().density);
+        veil.setColor(0x8C080B12);
+        setBackground(veil);
         // Normalised geometry retains the approved thin-outline silhouette at every resolution.
         rocket.moveTo(0, -110);
         rocket.cubicTo(-43, -65, -40, 12, -20, 62);

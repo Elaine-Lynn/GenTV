@@ -624,41 +624,25 @@ public final class QuickSettingsActivity extends Activity {
             panel.requestLayout();
         }
         android.animation.TimeInterpolator ease = CompatApi.easeOut();
+        // The cleanup is a translucent layer over the panel: what was there stays visible underneath,
+        // only its focus is held until the layer goes away.
         panelScroll.setDescendantFocusability(ViewGroup.FOCUS_BLOCK_DESCENDANTS);
-        if (animateFocus) {
-            panelScroll.animate().cancel();
-            panelScroll.animate()
-                    .alpha(0f)
-                    .scaleX(0.97f)
-                    .scaleY(0.97f)
-                    .setDuration(220)
-                    .setInterpolator(ease)
-                    .start();
-        } else {
-            panelScroll.setAlpha(0f);
-        }
         memoryAnimation = new MemoryCleanupView(this, animateFocus, port, () -> {
-            if (memoryAnimation == null) return;
-            if (!memoryAnimation.succeeded()) getPreferences(MODE_PRIVATE).edit().remove("memory_adb_port").apply();
-            panel.removeView(memoryAnimation);
+            MemoryCleanupView layer = memoryAnimation;
+            if (layer == null) return;
+            if (!layer.succeeded()) getPreferences(MODE_PRIVATE).edit().remove("memory_adb_port").apply();
             memoryAnimation = null;
-            panel.getLayoutParams().height = previousPanelHeight;
-            panel.requestLayout();
-            panelScroll.setDescendantFocusability(ViewGroup.FOCUS_AFTER_DESCENDANTS);
+            layer.setFocusable(false);
+            Runnable removeLayer = () -> {
+                panel.removeView(layer);
+                panel.getLayoutParams().height = previousPanelHeight;
+                panel.requestLayout();
+            };
             if (animateFocus) {
-                panelScroll.animate().cancel();
-                panelScroll.animate()
-                        .alpha(1f)
-                        .scaleX(1f)
-                        .scaleY(1f)
-                        .setDuration(240)
-                        .setInterpolator(ease)
-                        .start();
-            } else {
-                panelScroll.setAlpha(1f);
-                panelScroll.setScaleX(1f);
-                panelScroll.setScaleY(1f);
-            }
+                layer.animate().cancel();
+                layer.animate().alpha(0f).setDuration(200).setInterpolator(ease).withEndAction(removeLayer).start();
+            } else removeLayer.run();
+            panelScroll.setDescendantFocusability(ViewGroup.FOCUS_AFTER_DESCENDANTS);
             if (previousFocus != null) previousFocus.requestFocus();
         });
         panel.addView(memoryAnimation, new FrameLayout.LayoutParams(
