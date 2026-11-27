@@ -2,7 +2,7 @@
 
 自更新的 GitHub APK 镜像、备用 `config.json` 和同步发布流程见 [TV 主备更新](tv-update-backup.md)。
 
-电视包 `com.gentv.tv`，GitHub Release 与升级接口已发布 3.7.18 / code40；手机版 `com.gentv.mobile` 已发布 3.7.4 / code20。两者使用同一正式证书，但应用身份与更新清单独立。
+电视包 `com.gentv.tv`，GitHub Release 与升级接口已发布 3.7.19 / code41；手机版 `com.gentv.mobile` 已发布 3.7.4 / code20。两者使用同一正式证书，但应用身份与更新清单独立。
 
 正式证书 SHA-256 指纹（已用 v3.7.0 发布的 `gentv-tv-3.7.0.apk` 和 `gentv-mobile-3.7.1.apk` 核对）：
 
@@ -11,6 +11,10 @@
 ```
 
 每次发布后用 `apksigner verify --print-certs` 核对公网 APK 的证书与此一致。更换证书时必须同步更新本文件、README 和安装指南中的指纹。
+
+## 电视版 3.7.19
+
+从 `server/sync-live-api` 发布 `v3.7.19`，电视包为 3.7.19 / code41、最低 API 17、正式证书。玻璃控制中心、关于与软件更新，GenTV 服务分配的 4 位分享码，深色壁纸与屏保画廊和全新安装的小猫视频默认壁纸，修复「移至文件夹」并重做文件夹弹窗。更新内容见[3.7.19 更新日志](release-notes-v3.7.19.md)，发布清单见[更新配置](releases/v3.7.19/config.json)。正式 APK 为 6,575,516 字节；正式版单元测试、lintRelease 和仓库检查通过。GitHub Release 由标签工作流创建并逐一比对附件；公开下载 APK、GitHub 备用清单和主服务器清单已核对版本及 SHA-256，旧 3.6.x 通道仍为 3.6.1。正式包已在 Android TV 模拟器全新安装启动；实机覆盖升级和完整自更新流程仍待验收。发布脚本的 5 MB 断言改为只报告大小，与下文大小策略一致。
 
 ## 电视版 3.7.18
 

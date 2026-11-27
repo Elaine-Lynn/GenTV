@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The wallpaper gallery settles in: a soft fade while it eases down from just above its size. -->
+<set xmlns:android="http://schemas.android.com/apk/res/android"
+    android:interpolator="@android:interpolator/decelerate_quint"
+    android:shareInterpolator="true">
+    <alpha android:fromAlpha="0.0" android:toAlpha="1.0" android:duration="340" />
+    <scale android:fromXScale="1.03" android:toXScale="1.0"
+        android:fromYScale="1.03" android:toYScale="1.0"
+        android:pivotX="50%" android:pivotY="50%" android:duration="560" />
+</set>

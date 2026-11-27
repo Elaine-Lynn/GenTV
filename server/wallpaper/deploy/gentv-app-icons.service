@@ -1,0 +1,16 @@
+[Unit]
+Description=Mirror app tile artwork for GenTV
+After=network-online.target
+Wants=network-online.target
+[Service]
+Type=oneshot
+User=www-data
+Group=www-data
+UMask=0022
+ExecStart=/usr/bin/python3 /srv/gentv/wallpaper/current/app_icons.py
+TimeoutStartSec=15min
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+StateDirectory=gentv-tv

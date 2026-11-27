@@ -50,5 +50,7 @@ final class BundledWallpapers {
         preferences.edit().putString(KEY, id)
                 .putLong(Config.SETTINGS_REVISION_KEY,
                         preferences.getLong(Config.SETTINGS_REVISION_KEY, 0) + 1).apply();
+        // The Control Center shows the new pick's thumbnail without waiting to render it.
+        WallpaperThumbnail.prepare(context);
     }
 }

@@ -8,32 +8,62 @@
     <string name="desktop_folder_rename">Rename folder</string>
     <string name="desktop_folder_edit">Choose apps</string>
     <string name="desktop_folder_dissolve">Dissolve folder</string>
-    <string name="desktop_folder_empty">No available apps. Hold OK on the folder to add apps.</string>
+    <string name="desktop_folder_empty">No apps here yet. Choose Manage folder to add some.</string>
     <string name="desktop_original_image">Use original app image</string>
 
     <string name="cloud_settings">Software update</string>
     <string name="cloud_statistics">Share anonymous usage statistics</string>
     <string name="cloud_statistics_hint">Optional: session count, foreground duration and GenTV version only. No device identifiers or app lists. Off by default.</string>
-    <string name="cloud_check_update">Check for updates</string>
-    <string name="cloud_checking">Checking…</string>
-    <string name="cloud_latest">GenTV is up to date.</string>
-    <string name="cloud_update_available">New GenTV version available</string>
-    <string name="cloud_download">Download update</string>
-    <string name="cloud_downloading">Downloading and verifying…</string>
     <string name="cloud_failed">Service unavailable or verification failed. Please try again later.</string>
     <string name="cloud_install_permission">Allow GenTV to install updates, then return and select Install.</string>
-    <string name="cloud_install">Install verified update</string>
     <string name="cloud_install_confirm">Confirm installation in the Android installer.</string>
 
     <string name="cloud_current_version">Current %1$s</string>
-    <string name="cloud_update_title">Software update</string>
-    <string name="cloud_update_intro">Keep GenTV running smoothly with the latest improvements.</string>
     <string name="cloud_later">Later</string>
     <string name="cloud_upgrade_now">Upgrade now</string>
-    <string name="cloud_version_ready">GenTV %1$s is ready. Download and verify the update, then confirm installation on your TV.</string>
     <string name="cloud_unconfigured">This build has no GenTV update service configured.</string>
     <string name="cloud_required">This version requires an update to continue.</string>
     <string name="cloud_stats_on">Anonymous usage statistics · On</string>
     <string name="cloud_stats_off">Anonymous usage statistics · Off</string>
     <string name="hdmi_connected">HDMI connected</string>
+    <string name="update_checking_title">Checking for updates</string>
+    <string name="update_checking_detail">Contacting the GenTV update service…</string>
+    <string name="update_latest_title">You’re up to date</string>
+    <string name="update_latest_detail">GenTV %1$s is the latest version.</string>
+    <string name="update_available_title">GenTV %1$s is available</string>
+    <string name="update_available_detail">The package is verified after it downloads; then confirm the install on your TV.</string>
+    <string name="update_new_version">New %1$s</string>
+    <string name="update_downloading_title">Downloading %1$s</string>
+    <string name="update_downloading_detail">%1$d%% downloaded. The package is verified when it finishes.</string>
+    <string name="update_verifying">Verifying the package…</string>
+    <string name="update_ready_title">Update ready</string>
+    <string name="update_ready_detail">The package is downloaded and verified. Confirm to install.</string>
+    <string name="update_permission_title">One more step</string>
+    <string name="update_check_failed_title">Couldn’t check for updates</string>
+    <string name="update_download_failed_title">Download didn’t finish</string>
+    <string name="update_unconfigured_title">No update service</string>
+    <string name="update_done">Done</string>
+    <string name="update_retry">Try again</string>
+    <string name="update_install_now">Install</string>
+    <string name="folder_name_subtitle">Name the folder, or pick a name below</string>
+    <string name="folder_name_hint">Folder name</string>
+    <string-array name="folder_name_suggestions">
+        <item>Video</item>
+        <item>Games</item>
+        <item>Tools</item>
+        <item>Learning</item>
+        <item>Kids</item>
+        <item>Favourites</item>
+    </string-array>
+    <string name="folder_done">Done</string>
+    <string name="folder_cancel">Cancel</string>
+    <plurals name="folder_app_count">
+        <item quantity="one">%d app</item>
+        <item quantity="other">%d apps</item>
+    </plurals>
+    <string name="folder_move_subtitle">Where should %1$s go?</string>
+    <string name="folder_new_detail">Create and add</string>
+    <string name="folder_manage">Manage folder</string>
+    <string name="folder_dissolve_detail">The folder %1$s is removed and its apps return to Home.</string>
+    <string name="folder_choose_subtitle">Choose the apps for this folder</string>
 </resources>

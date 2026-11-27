@@ -28,8 +28,8 @@ android {
         minSdk 17
         multiDexEnabled true
         targetSdk 34
-        versionCode 40
-        versionName '3.7.18'
+        versionCode 41
+        versionName '3.7.19'
         testInstrumentationRunner 'com.gentv.tv.DesktopIntegration'
         buildConfigField 'boolean', 'CHILD_TIMER_TEST_MODE', 'false'
         buildConfigField 'String', 'API_BASE_URL', '"' + apiBaseUrl + '"'

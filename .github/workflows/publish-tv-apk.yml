@@ -2,7 +2,7 @@ name: Publish signed TV APK
 
 on:
   push:
-    tags: ['v3.7.18']
+    tags: ['v3.7.19']
 
 permissions:
   contents: write
@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ github.token }}
-      RELEASE_TAG: v3.7.18
+      RELEASE_TAG: v3.7.19
     steps:
       - uses: actions/checkout@v4
       - name: Verify release metadata and download signed artifacts
@@ -28,16 +28,16 @@ jobs:
           primary = json.loads((folder / 'config.json').read_text())
           backup = json.loads((folder / 'github-config.json').read_text())
           assert primary['versionName'] == backup['versionName'] == version
-          assert primary['versionCode'] == backup['versionCode'] == 40
+          assert primary['versionCode'] == backup['versionCode'] == 41
           assert primary['packageName'] == backup['packageName'] == 'com.gentv.tv'
           assert primary['sha256'] == backup['sha256']
           assert primary['sizeBytes'] == backup['sizeBytes']
           assert primary['signingCertificateSha256'] == backup['signingCertificateSha256'] == '8d5b5378f9056880f3036d44bc2f4a48322141fbb8d8bc91951d61a4652d997f'
           assert primary['url'] == f'https://api.gentv.app/tv/releases/gentv-tv-{version}.apk'
-          assert backup['url'] == f'https://github.com/Elaine-Lynn/GenTV/releases/download/v{version}/gentv-tv-v{version}-code40.apk'
+          assert backup['url'] == f'https://github.com/Elaine-Lynn/GenTV/releases/download/v{version}/gentv-tv-v{version}-code41.apk'
           PY
-          apk_name="gentv-tv-v${version}-code40.apk"
-          zip_name="gentv-tv-v${version}-code40-licenses.zip"
+          apk_name="gentv-tv-v${version}-code41.apk"
+          zip_name="gentv-tv-v${version}-code41-licenses.zip"
           base_url="https://api.gentv.app/tv/releases"
           mkdir -p release
           cp "$source_dir/github-config.json" release/config.json

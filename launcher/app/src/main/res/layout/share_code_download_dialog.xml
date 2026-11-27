@@ -4,29 +4,34 @@
     android:layout_height="wrap_content"
     android:gravity="center_horizontal"
     android:orientation="vertical"
-    android:padding="24dp">
+    android:paddingStart="26dp"
+    android:paddingTop="28dp"
+    android:paddingEnd="26dp"
+    android:paddingBottom="24dp">
 
     <ImageView
-        android:layout_width="32dp"
-        android:layout_height="32dp"
+        android:id="@+id/share_download_icon"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
         android:importantForAccessibility="no"
-        android:src="@drawable/ic_qs_update" />
+        android:scaleType="fitCenter"
+        android:src="@drawable/ic_share_placeholder_app" />
 
     <TextView
         android:id="@+id/share_download_name"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="14dp"
         android:ellipsize="end"
         android:gravity="center"
         android:maxLines="2"
         android:textColor="#F5F7FA"
-        android:textSize="18sp" />
+        android:textSize="17sp" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="22dp"
         android:baselineAligned="true"
         android:orientation="horizontal">
 
@@ -65,7 +70,7 @@
         android:id="@+id/share_download_cancel"
         android:layout_width="wrap_content"
         android:layout_height="38dp"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="22dp"
         android:background="@drawable/share_code_dialog_button"
         android:focusableInTouchMode="true"
         android:minWidth="96dp"

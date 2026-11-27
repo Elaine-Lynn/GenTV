@@ -34,6 +34,11 @@ final class VideoWallpaperPlayer implements TextureView.SurfaceTextureListener {
     private final int holdWidth;
     private final int holdHeight;
     private final File file;
+    /** The selected user video's saved still, repaired from playback when it is blank; null otherwise. */
+    private final File preview;
+    private static final java.util.concurrent.ExecutorService PREVIEW_WORKER =
+            java.util.concurrent.Executors.newSingleThreadExecutor();
+    private final Runnable repairPreview = this::repairPreview;
     private final TextureView video;
     private final ImageView heldFrame;
     private Bitmap heldBitmap;
@@ -58,6 +63,8 @@ final class VideoWallpaperPlayer implements TextureView.SurfaceTextureListener {
         file = UserWallpaper.isVideo(BundledWallpapers.selected(context))
                 ? UserWallpaper.video(context, BundledWallpapers.selected(context))
                 : dir == null ? null : new File(dir, "wallpaper.mp4");
+        preview = UserWallpaper.isVideo(BundledWallpapers.selected(context))
+                ? UserWallpaper.videoPreview(context, BundledWallpapers.selected(context)) : null;
         video = new TextureView(context);
         heldFrame = new ImageView(context);
         heldFrame.setScaleType(ImageView.ScaleType.CENTER_CROP);
@@ -103,6 +110,7 @@ final class VideoWallpaperPlayer implements TextureView.SurfaceTextureListener {
     }
 
     void stop() {
+        video.removeCallbacks(repairPreview);
         // Keep the last video frame behind Home while another page is open. Without it the
         // bundled still preview flashes until ExoPlayer renders its first frame on return.
         if (heldBitmap == null && active && video.isAvailable() && video.getAlpha() > 0f) {
@@ -152,6 +160,51 @@ final class VideoWallpaperPlayer implements TextureView.SurfaceTextureListener {
         catch (Exception | OutOfMemoryError ignored) { return null; }
     }
 
+    /**
+     * A small software copy of the user video on screen for the Control Center thumbnail, taken before Home
+     * pauses (some TVs return a black bitmap afterwards). Bundled motion wallpapers have their own still.
+     */
+    Bitmap thumbnailFrame() {
+        if (!active || bundledResource != 0) return null;
+        try {
+            if (video.getVisibility() == View.VISIBLE && video.getAlpha() >= 1f && video.isAvailable())
+                return video.getBitmap(WallpaperThumbnail.WIDTH, WallpaperThumbnail.HEIGHT);
+            if (heldBitmap != null && !heldBitmap.isRecycled())
+                return Bitmap.createScaledBitmap(heldBitmap, WallpaperThumbnail.WIDTH, WallpaperThumbnail.HEIGHT, true);
+        } catch (RuntimeException | OutOfMemoryError ignored) { }
+        return null;
+    }
+
+    /**
+     * Replaces a blank still (a flat green or black frame from the TV's decoder at import) with the frame on
+     * screen, so Home, its blurred backdrop and the Control Center no longer flash or show green.
+     */
+    private void repairPreview() {
+        if (closed || !active || preview == null) return;
+        File still = preview;
+        Context app = context.getApplicationContext();
+        PREVIEW_WORKER.execute(() -> {
+            if (UserWallpaper.previewUsable(still)) return;
+            video.post(() -> {
+                if (closed || !active || !video.isAvailable() || video.getAlpha() < 1f) return;
+                Bitmap frame;
+                try { frame = video.getBitmap(960, 540); }
+                catch (RuntimeException | OutOfMemoryError failure) { return; }
+                if (frame == null) return;
+                PREVIEW_WORKER.execute(() -> {
+                    try {
+                        if (UserWallpaper.replacePreview(still, frame)) {
+                            Log.i("GenTV.VideoWallpaper", "Replaced a blank video still from playback");
+                            WallpaperBackdrop.prepare(app);
+                        }
+                    } finally {
+                        frame.recycle();
+                    }
+                });
+            });
+        });
+    }
+
     boolean isActive() { return active; }
     boolean usesSmallHeap() { return constrainedHeap; }
 
@@ -196,6 +249,9 @@ final class VideoWallpaperPlayer implements TextureView.SurfaceTextureListener {
                     if (lastLoopAt == 0) lastLoopAt = SystemClock.elapsedRealtime();
                     video.setAlpha(1f);
                     releaseHeldFrame();
+                    // Past the opening frames, which are often black, check the still Home shows before playback.
+                    video.removeCallbacks(repairPreview);
+                    if (bundledResource == 0 && preview != null) video.postDelayed(repairPreview, 1500);
                 }
                 @Override public void onMediaItemTransition(MediaItem item, int reason) {
                     if (player != next || reason != Player.MEDIA_ITEM_TRANSITION_REASON_REPEAT) return;

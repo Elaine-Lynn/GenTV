@@ -228,6 +228,8 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     /** Packages drawn from their icon when no valid TV banner is available (config.xml icon_tiles). */
     private final Set<String> iconTiles;
     private final List<Entry> items = new ArrayList<>();
+    /** Packages that got an app tile in the last reload(), folder members included (AppIconMirror). */
+    private final Set<String> tilePackages = new HashSet<>();
 
     AppAdapter(Context ctx, TileListener listener, int dockSize, Config cfg) {
         this.ctx = ctx;
@@ -290,6 +292,7 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         Map<String, Cards.Card> cardByPkg = new HashMap<>();
         for (Cards.Card c : cards) cardByPkg.put(c.pkg, c);
         List<Entry> fresh = new ArrayList<>();
+        tilePackages.clear();
         // Some system apps declare two leanback entry points under one name (Sony's Timers & Clock on the
         // BRAVIA VU31), which would show as two identical tiles: keep the first per package and label.
         Set<String> seen = new HashSet<>();
@@ -309,9 +312,14 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             label = DesktopStore.name(ctx, component.flattenToShortString(), label);
             if (!seen.add(component.flattenToShortString())) continue;
             boolean inFolder = grouped.contains(component.flattenToShortString());
-            // Every app on Home uses its TV banner first, including configured and custom-image tiles.
+            tilePackages.add(pkg);
+            // Artwork mirrored on the GenTV server comes before the app's own TV banner, but never over a custom
+            // image the owner chose. Without mirrored artwork every app uses its TV banner first, as before.
             // Folder members only need labels until they are placed on Home again.
-            Drawable banner = inFolder ? null : loadBanner(pm, ri);
+            Drawable mirrored = inFolder ? null : AppIconMirror.banner(ctx, pkg);
+            Drawable banner = mirrored == null ? null : DesktopExtras.image(ctx, component.flattenToShortString());
+            if (mirrored != null && banner == null) banner = mirrored;
+            if (!inFolder && banner == null) banner = loadBanner(pm, ri);
             if (!inFolder && banner == null) banner = DesktopExtras.image(ctx, component.flattenToShortString());
             if (!inFolder && banner == null) banner = bundledBanner(appBanners.get(pkg));
             if (!inFolder && banner == null && iconTiles.contains(pkg)) banner = iconBanner(ri.loadIcon(pm));
@@ -341,8 +349,10 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             fresh.removeIf(e -> members.contains(e.component.flattenToShortString()));
             for (java.util.Iterator<String> it=folders.keys();it.hasNext();) {
                 String key=it.next(); if(DesktopStore.hidden(ctx,key))continue;
-                fresh.add(new Entry(Entry.FOLDER,DesktopStore.name(ctx,key,folders.optJSONObject(key).optString("name")),
-                        ComponentName.unflattenFromString(key),null,CompatApi.drawable(ctx, R.drawable.ic_desktop_folder),null,0));
+                String name=DesktopStore.name(ctx,key,folders.optJSONObject(key).optString("name"));
+                fresh.add(new Entry(Entry.FOLDER,name,ComponentName.unflattenFromString(key),
+                        folderBanner(pm,name,folders.optJSONObject(key).optJSONArray("apps")),
+                        CompatApi.drawable(ctx, R.drawable.ic_desktop_folder),null,0));
             }
         }
         Collections.sort(fresh, (a, b) -> {
@@ -369,6 +379,13 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         }
         overflowItems.clear();
         if(moreAppsEnabled && MoreApps.hasOverflow(fresh.size())) {
+            // A folder is something the owner made on Home: never tuck it away in More apps.
+            List<Entry> late=new ArrayList<>();
+            for(int i=MoreApps.HOME_LIMIT;i<fresh.size();i++) if(fresh.get(i).kind==Entry.FOLDER) late.add(fresh.get(i));
+            if(!late.isEmpty()) {
+                fresh.removeAll(late);
+                fresh.addAll(Math.max(0,Math.min(MoreApps.HOME_LIMIT-late.size(),fresh.size())),late);
+            }
             overflowItems.addAll(fresh.subList(MoreApps.HOME_LIMIT,fresh.size()));
             fresh.subList(MoreApps.HOME_LIMIT,fresh.size()).clear();
         }
@@ -589,18 +606,40 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         });
     }
 
+    /** The folder's Home tile: its first four apps and its name (FolderBanner). */
+    private Drawable folderBanner(PackageManager pm, String name, org.json.JSONArray members) {
+        List<Drawable> icons=new ArrayList<>();
+        int count=members==null?0:members.length();
+        for(int i=0;i<count && icons.size()<4;i++) {
+            ComponentName component=ComponentName.unflattenFromString(members.optString(i));
+            Drawable icon=component==null?null:activityIcon(pm,component);
+            if(icon!=null) icons.add(icon);
+        }
+        return new FolderBanner(name,ctx.getResources().getQuantityString(R.plurals.folder_app_count,count,count),
+                icons,UiFont.get(ctx,R.string.font_medium));
+    }
+
+    private static Drawable activityIcon(PackageManager pm, ComponentName component) {
+        try { return pm.getActivityIcon(component); }
+        catch (PackageManager.NameNotFoundException | RuntimeException missing) { return null; }
+    }
+
     /** Opens the tile's activity by explicit component, with no extras: a card can name nothing else. */
     private void launch(Entry e) {
         if (e.kind == Entry.FOLDER) {
             org.json.JSONObject folders=DesktopStore.inputSettings(ctx).optJSONObject("folders");
             org.json.JSONObject folder=folders==null?null:folders.optJSONObject(e.component.flattenToShortString());
-            if(folder==null)return;
+            if(folder==null || !(ctx instanceof Activity))return;
             List<Entry> available=new ArrayList<>();org.json.JSONArray members=folder.optJSONArray("apps");
             for(int n=0;n<members.length();n++) { Entry member=folderApps.get(members.optString(n));if(member!=null)available.add(member); }
-            android.app.AlertDialog.Builder dialog=new android.app.AlertDialog.Builder(ctx).setTitle(e.label).setNegativeButton(android.R.string.cancel,null);
-            if(available.isEmpty()) dialog.setMessage(R.string.desktop_folder_empty);
-            else dialog.setItems(available.stream().map(a->a.label).toArray(String[]::new),(d,which)->launch(available.get(which)));
-            dialog.show();return;
+            PackageManager pm=ctx.getPackageManager();
+            List<FolderSheet.Row> rows=new ArrayList<>();
+            for(Entry member:available) rows.add(new FolderSheet.Row(activityIcon(pm,member.component),false,member.label,null,false));
+            String key=e.component.flattenToShortString();
+            FolderSheet.grid((Activity)ctx,e.label,
+                    ctx.getResources().getQuantityString(R.plurals.folder_app_count,available.size(),available.size()),
+                    rows,which->launch(available.get(which)),()->DesktopFolders.edit((Activity)ctx,key));
+            return;
         }
         if (e.kind == Entry.SOURCE) {
             if (ctx instanceof MainActivity) ((MainActivity)ctx).openPinnedInput(e.inputId);
@@ -648,6 +687,7 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     @Override public int getItemViewType(int position) { return isLibraryAt(position) ? 1 : 0; }
 
     boolean hasOverflow() { return !overflowItems.isEmpty(); }
+    Set<String> tilePackages() { return Collections.unmodifiableSet(tilePackages); }
 
     boolean containsPackage(String pkg) {
         if(visibleFolderPackages.contains(pkg))return true;

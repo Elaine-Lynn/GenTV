@@ -30,6 +30,7 @@ final class RemoteWallpaper {
     private static final int MAX_IMAGE = 8*1024*1024;
     private final ImageView image, previousImage;
     private final android.content.res.Resources resources;
+    private final Context context;
     private final java.util.function.BooleanSupplier localWallpaperPresent;
     private final boolean reducedMotion;
     private final Handler main = new Handler(Looper.getMainLooper());
@@ -60,7 +61,7 @@ final class RemoteWallpaper {
 
     RemoteWallpaper(Context ctx,FrameLayout root,Config cfg,String endpoint,long interval,boolean localTest,java.util.function.BooleanSupplier localWallpaperPresent) {
         this.endpoint=endpoint;this.interval=interval;this.localTest=localTest;
-        resources=ctx.getResources();this.localWallpaperPresent=localWallpaperPresent;
+        resources=ctx.getResources();context=ctx.getApplicationContext();this.localWallpaperPresent=localWallpaperPresent;
         chosenResource=BundledWallpapers.resource(ctx);
         selectedWallpaper=BundledWallpapers.selected(ctx);
         userVideoPreview=UserWallpaper.isVideo(selectedWallpaper)
@@ -100,9 +101,14 @@ final class RemoteWallpaper {
                     options.inSampleSize = WallpaperSize.sampleSize(options.outWidth, options.outHeight, width, height);
                     options.inPreferredConfig = bitmapConfig;
                     Bitmap still = BitmapFactory.decodeFile(userVideoPreview.getAbsolutePath(), options);
-                    if (still != null) { image.setImageBitmap(still); return; }
+                    if (still != null && !WallpaperThumbnail.flat(still)) { image.setImageBitmap(still); return; }
+                    if (still != null) still.recycle();
                 }
-            } catch (RuntimeException | OutOfMemoryError ignored) { /* Keep the bundled fallback. */ }
+            } catch (RuntimeException | OutOfMemoryError ignored) { /* Fall through to an empty frame. */ }
+            // A missing or blank still (some TV decoders save a flat green frame) would flash before the video's
+            // first frame, as would another picture: show nothing until the video draws.
+            image.setImageDrawable(null);
+            return;
         }
         try {
             Bitmap bitmap=decode(TvCloud.read(resources.openRawResource(
@@ -122,7 +128,8 @@ final class RemoteWallpaper {
     Bitmap blurredFrame() {
         try {
             if (chosenResource==0 && showingFallback && localWallpaperPresent.getAsBoolean()) return null;
-            if (UserWallpaper.isVideo(selectedWallpaper)) return WallpaperBlur.fromFile(userVideoPreview);
+            if (UserWallpaper.isVideo(selectedWallpaper))
+                return UserWallpaper.previewUsable(userVideoPreview) ? WallpaperBlur.fromFile(userVideoPreview) : null;
             if (!showingFallback && !displayed.isEmpty())
                 return WallpaperBlur.fromBytes(cache.read(displayed));
             try (InputStream fallback = resources.openRawResource(
@@ -262,7 +269,7 @@ final class RemoteWallpaper {
                     return;
                 }
                 if(clear) {showFallback();displayed="";shownAt=0;}
-                else if(result!=null) {show(result);displayed=selected;}
+                else if(result!=null) {show(result);displayed=selected;WallpaperThumbnail.prepare(context);}
                 shownAt=SystemClock.elapsedRealtime();schedule();
             });
         });

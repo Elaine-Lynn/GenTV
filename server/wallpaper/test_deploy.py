@@ -11,7 +11,7 @@ class DeploymentRollbackTest(unittest.TestCase):
             for prefix in ('/srv/','/var/','/etc/'):
                 source=source.replace(prefix,str(state)+prefix)
             paths=['/etc/gentv-wallpaper.env','/etc/nginx/sites-available/api.gentv.app','/etc/nginx/snippets/gentv-tv-api.locations.conf','/etc/nginx/snippets/gentv-trusted-proxies.conf','/etc/nginx/conf.d/gentv-limits.conf']
-            paths += ['/etc/systemd/system/'+unit for unit in ('gentv-wallpaper.service','gentv-retention.service','gentv-retention.timer','gentv-backup.service','gentv-backup.timer','gentv-health.service','gentv-health.timer')]
+            paths += ['/etc/systemd/system/'+unit for unit in ('gentv-wallpaper.service','gentv-retention.service','gentv-retention.timer','gentv-backup.service','gentv-backup.timer','gentv-health.service','gentv-health.timer','gentv-app-icons.service','gentv-app-icons.timer')]
             for path in paths:
                 file=state/path.lstrip('/');file.parent.mkdir(parents=True,exist_ok=True);file.write_text('original '+path)
             old=state/'srv/gentv/wallpaper/releases/old';old.mkdir(parents=True)

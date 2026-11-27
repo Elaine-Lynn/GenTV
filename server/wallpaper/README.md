@@ -13,6 +13,10 @@
 - 建议1920×1080横图。添加、删除、覆盖图片后，下次客户端清单刷新自动生效（3.3起最多每6小时检查一次）；版本 URL 使用图片内容的 SHA-256；仅修改文件时间或重新部署相同内容不会让客户端重新下载。
 - 生产Nginx直接服务该专用目录，目录必须只放可公开图片；其余源码保存在Web根目录外。
 
+## 自动识别天气城市（3.7.18 兼容）
+
+电视版 3.7.18 使用的可选高德 IP 定位代理 `GET /tv/location` 与配置见 [高德自动城市配置](../../docs/amap-city-location.md)。之后的版本不再请求它；Key 仅放在服务端环境变量 `AMAP_WEB_SERVICE_KEY` 中。
+
 ## 本地运行与测试
 
 ```sh
@@ -132,7 +136,11 @@ the unverified or test view while a trusted forwarder is unavailable.
 
 The TV wallpaper picker reads `GET /tv/wallpaper?view=catalog`. It returns
 ordered `categories` with localized titles and `items` of kind `image`,
-`video` or `shuffle`; it never lists "coming soon" placeholders. Media paths
+`video` or `shuffle`; it never lists "coming soon" placeholders. Optional
+motion wallpapers in `EXTRA_VIDEOS` are published to the media folder apart
+from source deployments and appear only once both the video and its
+`<name>-preview.jpg` are there. Known stills carry localized titles from
+`WALLPAPER_TITLES`, which the legacy rotation manifest also returns. Media paths
 are relative to the configured API base. A still wallpaper's `preview` is its
 pre-rendered `<name>-preview.jpg` (640x360) when that file is in the media
 folder, otherwise the wallpaper itself; previews are served but never listed as
@@ -141,3 +149,24 @@ wallpapers. Render them with `python3 tools/make_wallpaper_previews.py
 still serves the legacy image rotation manifest. The deployment archive
 includes the default image and its preview, and the kitten loop and thumbnail. Deploy the catalog API before distributing clients that
 use it.
+
+## 应用磁贴图（`/tv/app-icons`）
+
+- `GET /tv/app-icons`：`{"icons":[{"package":"com.dangbeimarket","url":"https://api.gentv.app/tv/app-icons/<sha256>.png","width":640,"height":360}]}`。只列出服务器上已存在的图片，无数据时返回空数组；带 ETag，`Cache-Control: public, max-age=3600`。
+- `GET /tv/app-icons/<sha256>.<png|jpg|webp>`：只读图片，文件名即内容 SHA-256，`immutable` 长缓存。生产由 Nginx 直接从 `/var/lib/gentv-tv/app-icons/files/` 提供。
+- 来源：`app_icons.py` 拉取当贝桌面的“美化图标”列表（`APP_ICON_SOURCE_URL`，默认 `http://zmapi.dangbei.net/v2/appinfo?2`），只接受 `APP_ICON_IMAGE_HOSTS`（默认 `imgzm.qun7.com`）上的图片并改用 HTTPS 下载；校验包名、PNG/JPEG/WebP 文件头与尺寸，单图上限 2 MiB。请求不携带任何设备信息，客户端也不会直接访问上游。
+- `gentv-app-icons.timer` 每日运行一次，部署时先同步一次（失败不回滚部署）。新索引在全部图片写入后才原子替换；上游不可用或列表为空时保留旧索引，单张下载失败保留该包上一次的图片，不再被引用的旧文件随后删除。
+- 手动同步：`sudo systemctl start gentv-app-icons.service`；本地：`GENTV_STATE_DIR="$PWD/work/wallpaper-state" python3 server/wallpaper/app_icons.py`。
+
+## 分享码
+
+电视通过局域网收到手机发来的链接后，向服务器申请一个 4 位分享码；任何一台 GenTV 输入这个码都能打开该链接。数据保存在 `/var/lib/gentv-tv/share_codes.sqlite3`，由每日备份一并备份。
+
+- `POST /tv/share-codes`，JSON `{"owner":"<64 位十六进制>","name":"…","url":"https://…"}`，返回 201 `{"code","name","url"}`。`owner` 是电视本机随机生成并保存的密钥，服务器只保存其 SHA-256，用来确认删除者；不保存 IP、设备 ID。每台电视最多 4 个分享码（满时 409 `{"error":"full"}`），全站上限 20 万条。
+- `GET /tv/share-codes/<code>` 返回 `{"code","name","url"}`，不存在返回 404。大小写不敏感。
+- `DELETE /tv/share-codes/<code>`，请求头 `X-GenTV-Owner: <owner>`；只有创建它的电视能删除，其它情况一律返回 404。
+- 分配规则：只要还有空闲的 4 位纯数字码就用纯数字；用完后才出现 1 个字母，再用完才 2 个，以此类推。字母不含 I、O。
+- 名称 1–15 个字符，链接仅限 http/https，最长 2048 字符，不允许带用户名密码。
+- 限流：创建和删除每来源每分钟 12 次，查询每分钟 30 次；Nginx 对该路径关闭访问日志，避免分享码进入日志。
+
+4 位纯数字只有一万个，任何人都可以逐个尝试查询，所以分享码适合分享本来就打算公开的链接，不适合私密内容。

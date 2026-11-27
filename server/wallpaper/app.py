@@ -1,7 +1,10 @@
-"""GenTV TV API: read-only wallpaper/releases and anonymous aggregate session counters."""
+"""GenTV TV API: read-only wallpaper/releases, anonymous aggregate session counters and share codes."""
 from contextlib import closing
 import mobile
 import analytics
+import location
+import app_icons
+import share_codes
 from rate_limit import limited
 import hashlib
 import json
@@ -19,6 +22,18 @@ STATE = Path(os.environ.get('GENTV_STATE_DIR', '/var/lib/gentv-tv'))
 ALLOWED = {'.jpg', '.jpeg', '.png', '.webp'}
 MAX_BYTES = 8 * 1024 * 1024
 MAX_VIDEO_BYTES = 100 * 1024 * 1024
+WALLPAPER_TITLES = {
+    'alpine-lake': ('高山湖泊', 'Alpine lake'),
+    'autumn': ('秋日', 'Autumn'),
+    'coast': ('海岸', 'Coast'),
+    'desert': ('沙漠', 'Desert'),
+    'forest': ('森林', 'Forest'),
+    'milky-way': ('银河', 'Milky Way'),
+    'winter': ('冬日', 'Winter'),
+}
+
+def wallpaper_titles(path):
+    return WALLPAPER_TITLES.get(path.stem, (path.stem, path.stem))
 
 PREVIEW_SUFFIX = '-preview'
 
@@ -51,8 +66,27 @@ CAT_PREVIEW = 'catWallpaperLoop1080p-preview.jpg'
 AROWANA_VIDEO = 'arowanaWallpaperLoop1080p.mp4'
 AROWANA_PREVIEW = 'arowanaWallpaperLoop1080p-preview.jpg'
 DEFAULT_IMAGE = 'gentv-default.jpg'
-VIDEOS = {CAT_VIDEO, AROWANA_VIDEO}
-RESERVED_IMAGES = {DEFAULT_IMAGE, CAT_PREVIEW, AROWANA_PREVIEW}
+# Optional media is published separately from source deployments. Keep a card hidden
+# until both the video and its still preview are present in the public media directory.
+EXTRA_VIDEOS = (
+    ('pets', 'pet-sunlit-cat', '午后橘猫', 'Sunlit cat', 'pet-sunlit-cat.mp4'),
+    ('pets', 'pet-halloween-cat', '万圣夜小猫', 'Halloween kitten', 'pet-halloween-cat.mp4'),
+    ('pets', 'pet-tea-bear', '茶会小熊', 'Tea-time teddy', 'pet-tea-bear.mp4'),
+    ('pets', 'pet-rainbow-ducks', '彩虹小鸭', 'Rainbow ducklings', 'pet-rainbow-ducks.mp4'),
+    ('nature', 'nature-sunlit-leaves', '绿叶光影', 'Sunlit leaves', 'nature-sunlit-leaves.mp4'),
+    ('nature', 'nature-alpine-lake', '山间湖泊', 'Mountain lake', 'nature-alpine-lake.mp4'),
+    ('dreamy', 'dreamy-sakura-girl', '樱花幻梦', 'Sakura dream', 'dreamy-sakura-girl.mp4'),
+    ('dreamy', 'dreamy-afternoon-girl', '午后时光', 'Afternoon reverie', 'dreamy-afternoon-girl.mp4'),
+    ('dreamy', 'dreamy-purple-girl', '紫夜少女', 'Violet night', 'dreamy-purple-girl.mp4'),
+    ('dreamy', 'dreamy-underwater-girl', '水下幻梦', 'Underwater dream', 'dreamy-underwater-girl.mp4'),
+)
+
+def video_preview(name):
+    return name[:-4] + '-preview.jpg'
+
+VIDEOS = {CAT_VIDEO, AROWANA_VIDEO} | {entry[4] for entry in EXTRA_VIDEOS}
+RESERVED_IMAGES = {DEFAULT_IMAGE, CAT_PREVIEW, AROWANA_PREVIEW} | {
+    video_preview(entry[4]) for entry in EXTRA_VIDEOS}
 
 def catalog():
     def item(id, title, en, kind, **extra):
@@ -64,13 +98,31 @@ def catalog():
     def asset(name):
         return f'wallpapers/{quote(name)}'
 
+    def extra_video_items(category):
+        result = []
+        for group_id, video_id, title, title_en, name in EXTRA_VIDEOS:
+            if group_id != category:
+                continue
+            video, preview = MEDIA / name, MEDIA / video_preview(name)
+            try:
+                if (not video.is_file() or video.is_symlink() or not preview.is_file()
+                        or preview.is_symlink() or not 0 < video.stat().st_size <= MAX_VIDEO_BYTES
+                        or not 0 < preview.stat().st_size <= MAX_BYTES):
+                    continue
+            except OSError:
+                continue
+            result.append(item(video_id, title, title_en, 'video',
+                               path=asset(name), preview=asset(preview.name)))
+        return result
+
     available = set(images())
     stills = [item('default', '默认壁纸', 'Default wallpaper', 'image',
                    path=asset(DEFAULT_IMAGE), preview=asset(preview_name(MEDIA / DEFAULT_IMAGE, available)))]
     for picture in pictures():
         if picture.name in RESERVED_IMAGES:
             continue
-        stills.append(item('image-' + picture.name, picture.stem, picture.stem, 'image',
+        title, title_en = wallpaper_titles(picture)
+        stills.append(item('image-' + picture.name, title, title_en, 'image',
                            path=asset(picture.name), preview=asset(preview_name(picture, available))))
         if len(stills) >= 24:
             break
@@ -79,10 +131,11 @@ def catalog():
             item('cat-loop', '小猫', 'Kitten', 'video', path=asset(CAT_VIDEO),
                  preview=asset(CAT_PREVIEW)),
             item('arowana-loop', '金龙鱼', 'Arowana', 'video', path=asset(AROWANA_VIDEO),
-                 preview=asset(AROWANA_PREVIEW))]),
-        # Nature and Dreamy list their motion wallpapers once the files are deployed; never "coming soon" stand-ins.
-        group('nature', '自然', 'Nature', []),
-        group('dreamy', '唯美', 'Dreamy', []),
+                 preview=asset(AROWANA_PREVIEW)),
+            *extra_video_items('pets')]),
+        # Categories list only wallpapers that are deployed; never "coming soon" stand-ins.
+        group('nature', '自然', 'Nature', extra_video_items('nature')),
+        group('dreamy', '唯美', 'Dreamy', extra_video_items('dreamy')),
         group('images', '图片', 'Pictures', stills),
         group('shuffle', '随机', 'Shuffle', [
             item('shuffle-all', '全部随机', 'Shuffle all', 'shuffle', scope='all'),
@@ -99,10 +152,18 @@ def app(environ, start_response):
         path = path.encode('latin-1').decode('utf-8')
     except (UnicodeEncodeError, UnicodeDecodeError):
         pass
+    if path == '/tv/share-codes' or path.startswith('/tv/share-codes/'):
+        return share_codes.handle(environ, start_response, STATE)
     if path == '/tv/analytics':
         return mobile.handle_analytics(environ,start_response,STATE)
     if path in ('/tv/events','/tv/feedback'):
         return mobile.handle(environ,start_response,STATE)
+    if path == '/tv/location':
+        if method != 'GET':
+            start_response('405 Method Not Allowed', [('Allow', 'GET'), ('Content-Length', '0')]); return []
+        if limited('location', environ):
+            start_response('429 Too Many Requests', [('Retry-After', '60'), ('Content-Length', '0')]); return []
+        return location.handle(environ, start_response)
     if path == '/tv/stats':
         if method != 'POST':
             start_response('405 Method Not Allowed', [('Allow', 'POST'), ('Content-Length', '0')]); return []
@@ -158,9 +219,25 @@ def app(environ, start_response):
                 version = content_version(p)
             except (OSError, ValueError):
                 continue
-            items.append({'id': version, 'url': f'{BASE}/wallpapers/{quote(p.name)}?v={version}'})
-        body = json.dumps({'wallpapers': items, 'intervalSeconds': 120}, separators=(',', ':')).encode()
+            items.append({'id': version, 'title': wallpaper_titles(p)[0],
+                          'url': f'{BASE}/wallpapers/{quote(p.name)}?v={version}'})
+        body = json.dumps({'wallpapers': items, 'intervalSeconds': 120}, ensure_ascii=False, separators=(',', ':')).encode()
         kind = 'application/json; charset=utf-8'; cache = 'public, max-age=60'
+    elif path == '/tv/app-icons':
+        # Tile artwork mirrored by app_icons.py; clients never contact the upstream source.
+        body = json.dumps(app_icons.manifest(BASE, STATE), ensure_ascii=False, separators=(',', ':')).encode()
+        kind = 'application/json; charset=utf-8'; cache = 'public, max-age=3600'
+    elif path.startswith('/tv/app-icons/'):
+        name = path[len('/tv/app-icons/'):]
+        file = app_icons.image_file(name, STATE)
+        try:
+            body = file.read_bytes() if file else b''
+        except OSError:
+            body = b''
+        if not 0 < len(body) <= app_icons.MAX_IMAGE_BYTES:
+            start_response('404 Not Found', [('Content-Length', '0')]); return []
+        # File names are content hashes, so a URL never changes meaning.
+        kind = app_icons.content_type(name); cache = 'public, max-age=31536000, immutable'
     elif path.startswith('/tv/wallpapers/'):
         name = path[len('/tv/wallpapers/'):]
         # WSGI already decodes PATH_INFO. Accept one filename only; never follow links.

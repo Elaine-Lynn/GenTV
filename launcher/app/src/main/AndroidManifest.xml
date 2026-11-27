@@ -141,8 +141,6 @@
             android:exported="false"
             android:excludeFromRecents="true"
             android:screenOrientation="landscape" />
-        <activity android:name=".PersonalizationActivity" android:exported="false"
-            android:excludeFromRecents="true" android:screenOrientation="landscape" />
         <activity android:name=".LocalWallpaperPickerActivity" android:exported="false"
             android:excludeFromRecents="true" android:screenOrientation="landscape" />
         <!-- The system input switcher (com.android.tv.action.VIEW_INPUTS), which is what the remote's Input
@@ -177,7 +175,7 @@
             android:exported="false"
             android:excludeFromRecents="true"
             android:theme="@android:style/Theme.Translucent.NoTitleBar"
-            android:windowSoftInputMode="stateAlwaysVisible|adjustResize" />
+            android:windowSoftInputMode="stateAlwaysHidden" />
         <activity
             android:name=".XghSettingsRedirectActivity"
             android:exported="false"

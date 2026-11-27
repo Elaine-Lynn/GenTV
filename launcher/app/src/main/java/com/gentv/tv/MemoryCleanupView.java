@@ -15,10 +15,13 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.view.animation.LinearInterpolator;
 
-/** Lightweight panel-contained line-art rocket; owns and cancels all animation callbacks. */
+/**
+ * Full-screen line-art rocket that rises from the bottom of the screen on the panel's side, lifts off out of the
+ * top once the cleanup finishes and leaves its result as a small notice in the bottom corner. Owns and cancels all
+ * animation callbacks.
+ */
 final class MemoryCleanupView extends View {
     private static final float TWO_PI = (float) (Math.PI * 2.0);
-    private final Typeface fontLight = Typeface.create("sans-serif-light", Typeface.NORMAL);
     private final Typeface fontRegular = Typeface.create("sans-serif", Typeface.NORMAL);
     private final Paint ink = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint glowPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -40,29 +43,34 @@ final class MemoryCleanupView extends View {
     private boolean finished, disposed, operationDone, departing, success;
     private int exitedProcesses;
     private final int port;
+    /** The quick panel sits on the left edge (rtl_menu_bar): the rocket and notice mirror to that side. */
+    private final boolean leftEdge;
+    /** The quick settings panel: the rocket flies along its horizontal centre. */
+    private final View anchor;
+    private final float density;
+    private final android.graphics.RectF card = new android.graphics.RectF();
     private long reclaimedMb;
     private final Runnable autoClose = this::close;
     private final Runnable beginDeparture = this::finishCleanup;
-    private float cachedGlowW, cachedGlowH;
+    private float cachedGlowRadius;
     private float cachedResultGlowR;
     private boolean cachedResultGlowSuccess;
 
-    MemoryCleanupView(Context context, boolean motion, int port, Runnable dismiss) {
+    MemoryCleanupView(Context context, boolean motion, int port, boolean leftEdge, View anchor,
+                      Runnable dismiss) {
         super(context);
         this.motion = motion;
         this.port = port;
+        this.leftEdge = leftEdge;
+        this.anchor = anchor;
         this.dismiss = dismiss;
+        density = context.getResources().getDisplayMetrics().density;
         setFocusable(true);
         setFocusableInTouchMode(true);
         setClickable(true);
         setOnClickListener(v -> { if (finished) close(); });
         setContentDescription(context.getString(R.string.memory_cleaning));
         setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_YES);
-        // Translucent veil in the panel's own shape: the panel's content shows through underneath.
-        android.graphics.drawable.GradientDrawable veil = new android.graphics.drawable.GradientDrawable();
-        veil.setCornerRadius(30f * context.getResources().getDisplayMetrics().density);
-        veil.setColor(0x8C080B12);
-        setBackground(veil);
         // Normalised geometry retains the approved thin-outline silhouette at every resolution.
         rocket.moveTo(0, -110);
         rocket.cubicTo(-43, -65, -40, 12, -20, 62);
@@ -114,11 +122,11 @@ final class MemoryCleanupView extends View {
             return;
         }
         departureAnimator = ValueAnimator.ofFloat(0f, 1f);
-        departureAnimator.setDuration(success ? 620 : 320);
+        departureAnimator.setDuration(success ? 1100 : 320);
         departureAnimator.setInterpolator(new LinearInterpolator());
         departureAnimator.addUpdateListener(a -> {
             departure = (float) a.getAnimatedValue();
-            if (departure >= .50f && !finished) showResult();
+            if (departure >= .55f && !finished) showResult();
             invalidate();
         });
         departureAnimator.addListener(new android.animation.AnimatorListenerAdapter() {
@@ -144,13 +152,20 @@ final class MemoryCleanupView extends View {
         float w = getWidth();
         float h = getHeight();
         if (w <= 0 || h <= 0) return;
-        float unit = Math.min(w / 360f, h / 460f);
-        float cx = w * 0.5f;
+        float unit = 1.6f * density;
+        // Centred under the quick settings panel; both share the scrim's coordinates.
+        float cx = anchor != null && anchor.getWidth() > 0
+                ? anchor.getLeft() + anchor.getWidth() * 0.5f
+                : leftEdge ? 242f * density : w - 242f * density;
+        // Resting on the bottom edge: the body sits just above it, the plume runs off the screen.
+        float restY = h - 34f * density - 73f * unit;
 
         if (!finished || departing && departure < 1f) {
             float seconds = motion ? (SystemClock.uptimeMillis() - startedAt) / 1000f : 0f;
             float t = departing && success ? .30f + .70f * departure : .30f;
-            float rocketAlpha = 1f - smoothStep(.42f, 1f, departure);
+            // A successful launch stays opaque until it has left the screen; a failure fades where it stands.
+            float rocketAlpha = success ? 1f - smoothStep(.90f, 1f, departure)
+                    : 1f - smoothStep(.10f, 1f, departure);
             if (rocketAlpha < .99f) {
                 CompatApi.saveLayerAlpha(canvas, w, h, Math.round(rocketAlpha * 255f));
             } else canvas.save();
@@ -162,12 +177,13 @@ final class MemoryCleanupView extends View {
             float depart = smootherStep(0.36f, 1.00f, t);
             float departEase = (float) Math.pow(depart, 2.25);
 
-            // Subtle downward thrust compression before lifting smoothly out the top of the panel.
+            // Rises in from below the screen, then a subtle thrust compression before climbing out of the top.
+            float entry = motion ? 1f - smootherStep(0f, .55f, seconds) : 0f;
             float crouch = departing && success
-                    ? .009f * (float) Math.sin(Math.PI * smoothStep(0f, .28f, departure)) : 0f;
-            float altitude = motion
-                    ? (0.45f + crouch - (departing && success ? 0.96f * departEase : 0f))
-                    : 0.45f;
+                    ? 6f * unit * (float) Math.sin(Math.PI * smoothStep(0f, .28f, departure)) : 0f;
+            float travel = restY + 340f * unit;
+            float altitude = restY + entry * (h - restY + 120f * unit) + crouch
+                    - (departing && success ? travel * departEase : 0f);
 
             // Slow breathing while work runs; no launch until the real cleanup callback.
             float shakeEnv = motion ? 1f - smoothStep(0f, .36f, departure) : 0f;
@@ -175,12 +191,12 @@ final class MemoryCleanupView extends View {
                     ? (float) Math.sin(seconds * TWO_PI * .42f) * .65f * shakeEnv
                     : 0f;
 
-            float cy = h * altitude + (motion
+            float cy = altitude + (motion
                     ? (float) Math.sin(seconds * TWO_PI * .55f) * 3f * unit * shakeEnv : 0f);
 
-            // Soft cyan ambient atmosphere inside the right-side glass panel.
+            // Soft cyan glow around the plume.
             float ambientAlpha = (0.15f + 0.22f * ignite + 0.14f * spool) * (1f - 0.72f * smoothStep(0.70f, 1.00f, t));
-            drawAmbientGlow(canvas, cx, Math.min(h * 0.76f, cy + 75f * unit), Math.max(w, h) * 0.54f, ambientAlpha);
+            drawAmbientGlow(canvas, cx, cy + 75f * unit, 230f * unit, ambientAlpha);
 
             canvas.save();
             canvas.translate(cx + shake * unit, cy);
@@ -221,16 +237,9 @@ final class MemoryCleanupView extends View {
 
             canvas.restore();
 
-            // Clean panel caption anchored gently at the bottom while cleaning runs.
-            float captionAlpha = motion
-                    ? .85f * smoothStep(0f, .25f, seconds)
-                    : 0.85f;
-            int captionColor = android.graphics.Color.argb(Math.round(captionAlpha * 255f), 220, 236, 248);
-            drawText(canvas, getResources().getString(R.string.memory_cleaning), cx,
-                    h - 38f * unit, 14f * unit, captionColor, fontRegular);
             canvas.restore();
         }
-        if (finished) drawResult(canvas, w, h, unit);
+        if (finished) drawResult(canvas, w, h);
     }
 
     /**
@@ -330,9 +339,8 @@ final class MemoryCleanupView extends View {
 
     private void drawAmbientGlow(Canvas canvas, float cx, float cy, float radius, float alpha) {
         if (alpha <= 0.01f || radius <= 1f) return;
-        if (cachedGlowW != getWidth() || cachedGlowH != getHeight() || glowPaint.getShader() == null) {
-            cachedGlowW = getWidth();
-            cachedGlowH = getHeight();
+        if (cachedGlowRadius != radius || glowPaint.getShader() == null) {
+            cachedGlowRadius = radius;
             glowPaint.setShader(new RadialGradient(
                     0, 0, radius,
                     new int[]{0x5C48D8F5, 0x222690C8, 0x00000000},
@@ -346,73 +354,88 @@ final class MemoryCleanupView extends View {
         canvas.restore();
     }
 
-    /** Draws the completion summary centered gracefully inside the right-side settings panel. */
-    private void drawResult(Canvas canvas, float w, float h, float unit) {
-        float cx = w * 0.5f;
-        float cy = h * 0.47f + (1f - resultVisibility) * 14f * unit;
+    /** Draws the completion notice as a small glass card in the bottom corner on the panel's side. */
+    private void drawResult(Canvas canvas, float w, float h) {
         int alpha = Math.round(resultVisibility * 255f);
         if (alpha <= 1) return;
-
-        CompatApi.saveLayerAlpha(canvas, w, h, alpha);
-
-        // Soft centered halo behind the completion emblem (shader cached to avoid per-frame allocations).
-        float iconY = cy - 34f * unit;
-        float haloR = 110f * unit;
-        if (cachedResultGlowR != haloR || cachedResultGlowSuccess != success || resultGlowPaint.getShader() == null) {
-            cachedResultGlowR = haloR;
-            cachedResultGlowSuccess = success;
-            int haloColor = success ? 0x3858E6F2 : 0x38FFBE78;
-            resultGlowPaint.setShader(new RadialGradient(0, 0, haloR,
-                    new int[]{haloColor, 0x00000000}, new float[]{0f, 1f}, Shader.TileMode.CLAMP));
-        }
-        canvas.save();
-        canvas.translate(cx, iconY);
-        canvas.drawCircle(0, 0, haloR, resultGlowPaint);
-        canvas.restore();
-
-        // Medallion circle + crisp checkmark / notice glyph.
-        float badgeR = 28f * unit;
-        ink.setStyle(Paint.Style.FILL);
-        ink.setColor(success ? 0x208BEFF2 : 0x20FFCE91);
-        canvas.drawCircle(cx, iconY, badgeR, ink);
-
-        ink.setStyle(Paint.Style.STROKE);
-        ink.setStrokeCap(Paint.Cap.ROUND);
-        ink.setStrokeJoin(Paint.Join.ROUND);
-        ink.setStrokeWidth(1.8f * unit);
-        ink.setColor(success ? 0xFF8BEFF2 : 0xFFFFCE91);
-        canvas.drawCircle(cx, iconY, badgeR, ink);
-
-        ink.setStrokeWidth(2.4f * unit);
-        if (success) {
-            canvas.drawLine(cx - 10f * unit, iconY + 1f * unit, cx - 2.5f * unit, iconY + 8.5f * unit, ink);
-            canvas.drawLine(cx - 2.5f * unit, iconY + 8.5f * unit, cx + 11f * unit, iconY - 7.5f * unit, ink);
-        } else {
-            canvas.drawLine(cx, iconY - 10f * unit, cx, iconY + 2f * unit, ink);
-            canvas.drawPoint(cx, iconY + 9f * unit, ink);
-        }
-
-        // Primary reclaimed memory headline + secondary detail centered below.
-        float maxW = w - 56f * unit;
-        drawCenteredResultLine(canvas, resultText(), cx, cy + 28f * unit, 21f * unit, maxW, 0xFFF5F7FA, fontLight);
+        // 1.4x a regular notice: readable from the sofa without crowding the corner.
+        float d = density * 1.4f;
+        String headline = resultText();
         String detail = success
                 ? getResources().getString(R.string.memory_cleanup_scope, exitedProcesses)
                 : getResources().getString(R.string.memory_cleanup_retry);
-        drawCenteredResultLine(canvas, detail, cx, cy + 54f * unit, 13f * unit, maxW, 0xBFD8E1EC, fontRegular);
+
+        float badgeR = 15f * d;
+        float padStart = 16f * d, gap = 12f * d, padEnd = 20f * d;
+        float maxText = Math.min(w * 0.5f, 420f * d);
+        float headlineSize = fitSize(headline, 17f * d, maxText, fontRegular);
+        float detailSize = fitSize(detail, 12.5f * d, maxText, fontRegular);
+        ink.setTypeface(fontRegular);
+        ink.setTextSize(headlineSize);
+        float textW = ink.measureText(headline);
+        ink.setTextSize(detailSize);
+        textW = Math.max(textW, ink.measureText(detail));
+        float cardW = padStart + badgeR * 2f + gap + textW + padEnd;
+        float cardH = 68f * d;
+        float lift = (1f - resultVisibility) * 14f * d;
+        float right = leftEdge ? 28f * density + cardW : w - 28f * density;
+        float bottom = h - 26f * density + lift;
+        card.set(right - cardW, bottom - cardH, right, bottom);
+
+        CompatApi.saveLayerAlpha(canvas, w, h, alpha);
+
+        float radius = 18f * d;
+        ink.setStyle(Paint.Style.FILL);
+        ink.setColor(0xF0161A23);
+        canvas.drawRoundRect(card, radius, radius, ink);
+        ink.setStyle(Paint.Style.STROKE);
+        ink.setStrokeWidth(Math.max(1f, 0.75f * d));
+        ink.setColor(0x30FFFFFF);
+        canvas.drawRoundRect(card, radius, radius, ink);
+
+        // Medallion circle + crisp checkmark / notice glyph.
+        float bx = card.left + padStart + badgeR;
+        float by = card.centerY();
+        float g = badgeR / 28f;
+        ink.setStyle(Paint.Style.FILL);
+        ink.setColor(success ? 0x208BEFF2 : 0x20FFCE91);
+        canvas.drawCircle(bx, by, badgeR, ink);
+        ink.setStyle(Paint.Style.STROKE);
+        ink.setStrokeCap(Paint.Cap.ROUND);
+        ink.setStrokeJoin(Paint.Join.ROUND);
+        ink.setStrokeWidth(1.5f * d);
+        ink.setColor(success ? 0xFF8BEFF2 : 0xFFFFCE91);
+        canvas.drawCircle(bx, by, badgeR, ink);
+        ink.setStrokeWidth(2.2f * d);
+        if (success) {
+            canvas.drawLine(bx - 10f * g, by + 1f * g, bx - 2.5f * g, by + 8.5f * g, ink);
+            canvas.drawLine(bx - 2.5f * g, by + 8.5f * g, bx + 11f * g, by - 7.5f * g, ink);
+        } else {
+            canvas.drawLine(bx, by - 10f * g, bx, by + 2f * g, ink);
+            canvas.drawPoint(bx, by + 9f * g, ink);
+        }
+
+        float tx = bx + badgeR + gap;
+        drawStartLine(canvas, headline, tx, by - 2f * d, headlineSize, 0xFFF5F7FA);
+        drawStartLine(canvas, detail, tx, by + 17f * d, detailSize, 0xBFD8E1EC);
 
         canvas.restore();
     }
 
-    private void drawCenteredResultLine(Canvas canvas, String text, float cx, float y,
-                                        float size, float maxWidth, int color, Typeface typeface) {
-        ink.setStyle(Paint.Style.FILL);
-        ink.setColor(color);
-        ink.setTextAlign(Paint.Align.CENTER);
+    private float fitSize(String text, float size, float maxWidth, Typeface typeface) {
         ink.setTypeface(typeface);
         ink.setTextSize(size);
-        float textWidth = ink.measureText(text);
-        if (textWidth > maxWidth && textWidth > 0) ink.setTextSize(size * maxWidth / textWidth);
-        canvas.drawText(text, cx, y, ink);
+        float width = ink.measureText(text);
+        return width > maxWidth && width > 0 ? size * maxWidth / width : size;
+    }
+
+    private void drawStartLine(Canvas canvas, String text, float x, float y, float size, int color) {
+        ink.setStyle(Paint.Style.FILL);
+        ink.setColor(color);
+        ink.setTextAlign(Paint.Align.LEFT);
+        ink.setTypeface(fontRegular);
+        ink.setTextSize(size);
+        canvas.drawText(text, x, y, ink);
     }
 
     private void animateResult(float target, long duration, Runnable end) {
@@ -453,15 +476,6 @@ final class MemoryCleanupView extends View {
 
     private String resultText() {
         return getResources().getString(success ? R.string.memory_cleaned : R.string.memory_cleanup_failed, reclaimedMb);
-    }
-
-    private void drawText(Canvas canvas, String text, float x, float y, float size, int color, Typeface typeface) {
-        ink.setStyle(Paint.Style.FILL);
-        ink.setColor(color);
-        ink.setTextSize(size);
-        ink.setTypeface(typeface);
-        ink.setTextAlign(Paint.Align.CENTER);
-        canvas.drawText(text, x, y, ink);
     }
 
     @Override public boolean onKeyDown(int keyCode, KeyEvent event) {

@@ -6,8 +6,6 @@ import android.app.Dialog;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.res.ColorStateList;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.StateListDrawable;
@@ -47,6 +45,7 @@ public final class QuickSettingsActivity extends Activity {
     /** GenTV settings opened for a result (reorder hand-off); the panel must survive until it returns. */
     private boolean awaitingSettings;
     private boolean animateFocus;
+    private boolean keepBackdrop;
     private Typeface fontMedium;
     private Typeface fontRegular;
 
@@ -77,7 +76,6 @@ public final class QuickSettingsActivity extends Activity {
                 final float panelRadius = dpF(30);
         CompatApi.roundClip(glassPanel, panelRadius);
 
-        Bitmap wallpaperPreview = QuickSettingsGlass.takePreview();
         // True ~50% translucent Apple smoked glass directly over the live translucent window.
         glassPanel.setBackground(QuickSettingsGlass.surface(panelRadius, dpF(1), true));
 
@@ -125,8 +123,8 @@ public final class QuickSettingsActivity extends Activity {
                 () -> launch(SystemSettings.intent(this, Settings.ACTION_DISPLAY_SETTINGS)));
         medallion(quickStrip, R.drawable.ic_qs_memory, R.string.quick_memory, this::showMemory);
 
-        // Zone 2: Wallpaper & screensaver hero tile with live thumbnail preview
-        rows.addView(buildWallpaperHero(wallpaperPreview));
+        // Zone 2: Wallpaper & screensaver hero tile with the current wallpaper's cached thumbnail
+        rows.addView(buildWallpaperHero());
 
         // Zone 3: 2x2 core bento control tiles
         // Gen extensions take the wide top tile; GenTV settings sits beside TV settings below it.
@@ -298,8 +296,8 @@ public final class QuickSettingsActivity extends Activity {
         return cell;
     }
 
-    /** Full-width Wallpaper & screensaver hero module with framed live wallpaper thumbnail. */
-    private View buildWallpaperHero(Bitmap livePreview) {
+    /** Full-width Wallpaper & screensaver hero module with the current wallpaper's framed thumbnail. */
+    private View buildWallpaperHero() {
         LinearLayout card = new LinearLayout(this);
         card.setId(View.generateViewId());
         card.setOrientation(LinearLayout.HORIZONTAL);
@@ -334,16 +332,14 @@ public final class QuickSettingsActivity extends Activity {
         titleParams.setMarginEnd(dp(10));
         card.addView(title, titleParams);
 
-        // Miniature framed wallpaper preview pill (live wallpaper when opened from Home)
+        // Miniature framed wallpaper thumbnail, rendered from the wallpaper's source and kept on disk
         FrameLayout thumbFrame = new FrameLayout(this);
         final float thumbRadius = dpF(9);
-                CompatApi.roundClip(thumbFrame, thumbRadius);
+        CompatApi.roundClip(thumbFrame, thumbRadius);
+        thumbFrame.setBackground(roundRect(0x1FFFFFFF, 0, 9));
         ImageView thumb = new ImageView(this);
         thumb.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        Bitmap previewBitmap = livePreview != null ? livePreview : decodeFallbackWallpaper();
-        if (previewBitmap != null) {
-            thumb.setImageBitmap(previewBitmap);
-        }
+        WallpaperThumbnail.load(this, thumb::setImageBitmap);
         thumbFrame.addView(thumb, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
@@ -380,6 +376,7 @@ public final class QuickSettingsActivity extends Activity {
         card.setOnClickListener(v -> {
             v.requestFocusFromTouch();
             launch(new Intent(this, WallpaperGalleryActivity.class));
+            if (animateFocus) overridePendingTransition(R.anim.gallery_enter, R.anim.gallery_panel_exit);
         });
         return card;
     }
@@ -440,22 +437,25 @@ public final class QuickSettingsActivity extends Activity {
         plateParams.topMargin = dp(10);
         plate.setLayoutParams(plateParams);
 
+        // Reading order: share code, startup app, default Home, screen time, update, about.
         LinearLayout r1 = plateRow(plate);
+        utilityItem(r1, R.drawable.ic_qs_share_code, R.string.quick_share_code,
+                () -> {
+                    // The share-code sheet takes over Home's blurred backdrop.
+                    keepBackdrop = true;
+                    startActivity(new Intent(this, ShareCodeActivity.class));
+                    finish();
+                });
         utilityItem(r1, R.drawable.ic_qs_startup, R.string.quick_start_app,
                 () -> OpenOnStart.showPicker(this));
-        utilityItem(r1, R.drawable.ic_qs_home, R.string.quick_default_home,
-                () -> launch(new Intent(this, HomeSettingsActivity.class)));
 
         addHairlineDivider(plate);
 
         LinearLayout r2 = plateRow(plate);
+        utilityItem(r2, R.drawable.ic_qs_home, R.string.quick_default_home,
+                () -> launch(new Intent(this, HomeSettingsActivity.class)));
         utilityItem(r2, R.drawable.ic_qs_shield, R.string.quick_child,
                 () -> launch(new Intent(this, ChildSettingsActivity.class)));
-        utilityItem(r2, R.drawable.ic_qs_share_code, R.string.quick_share_code,
-                () -> {
-                    startActivity(new Intent(this, ShareCodeActivity.class));
-                    finish();
-                });
 
         addHairlineDivider(plate);
 
@@ -554,12 +554,6 @@ public final class QuickSettingsActivity extends Activity {
         anim.animateToFinalPosition(target);
     }
 
-    private Bitmap decodeFallbackWallpaper() {
-        BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inSampleSize = 4;
-        return BitmapFactory.decodeResource(getResources(), R.raw.wallpaper_default, options);
-    }
-
     private int dp(int value) {
         return Math.round(value * getResources().getDisplayMetrics().density);
     }
@@ -626,37 +620,37 @@ public final class QuickSettingsActivity extends Activity {
     private void startMemoryCleanup(int port) {
         if (memoryAnimation != null) return;
         View previousFocus = getCurrentFocus();
-        FrameLayout panel = findViewById(R.id.panel);
+        FrameLayout scrim = findViewById(R.id.scrim);
+        View panel = findViewById(R.id.panel);
         ViewGroup panelScroll = findViewById(R.id.panelScroll);
-        // A match-parent animation must not stretch the wrap-content glass panel.
-        int previousPanelHeight = panel.getLayoutParams().height;
-        if (panel.getHeight() > 0) {
-            panel.getLayoutParams().height = panel.getHeight();
-            panel.requestLayout();
-        }
         android.animation.TimeInterpolator ease = CompatApi.easeOut();
-        // The cleanup is a translucent layer over the panel: what was there stays visible underneath,
-        // only its focus is held until the layer goes away.
+        // The rocket flies over the whole screen from the bottom on the panel's side. The panel stays in place,
+        // dimmed, and its focus is held until the layer goes away.
         panelScroll.setDescendantFocusability(ViewGroup.FOCUS_BLOCK_DESCENDANTS);
-        memoryAnimation = new MemoryCleanupView(this, animateFocus, port, () -> {
+        if (animateFocus) panel.animate().alpha(0.45f).setDuration(200).setInterpolator(ease).start();
+        else panel.setAlpha(0.45f);
+        boolean leftEdge = getResources().getBoolean(R.bool.rtl_menu_bar);
+        memoryAnimation = new MemoryCleanupView(this, animateFocus, port, leftEdge, panel, () -> {
             MemoryCleanupView layer = memoryAnimation;
             if (layer == null) return;
             if (!layer.succeeded()) getPreferences(MODE_PRIVATE).edit().remove("memory_adb_port").apply();
             memoryAnimation = null;
             layer.setFocusable(false);
-            Runnable removeLayer = () -> {
-                panel.removeView(layer);
-                panel.getLayoutParams().height = previousPanelHeight;
-                panel.requestLayout();
-            };
+            Runnable removeLayer = () -> scrim.removeView(layer);
             if (animateFocus) {
                 layer.animate().cancel();
                 layer.animate().alpha(0f).setDuration(200).setInterpolator(ease).withEndAction(removeLayer).start();
-            } else removeLayer.run();
+                panel.animate().alpha(1f).setDuration(200).setInterpolator(ease).start();
+            } else {
+                removeLayer.run();
+                panel.setAlpha(1f);
+            }
             panelScroll.setDescendantFocusability(ViewGroup.FOCUS_AFTER_DESCENDANTS);
             if (previousFocus != null) previousFocus.requestFocus();
         });
-        panel.addView(memoryAnimation, new FrameLayout.LayoutParams(
+        // Above the elevated glass panel, which would otherwise draw over a later sibling.
+        CompatApi.elevation(memoryAnimation, dpF(24));
+        scrim.addView(memoryAnimation, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         if (animateFocus) {
             memoryAnimation.setAlpha(0f);
@@ -676,7 +670,7 @@ public final class QuickSettingsActivity extends Activity {
     }
 
     @Override protected void onStop() {
-        ToolboxBackdrop.visible(false);
+        if (!keepBackdrop) ToolboxBackdrop.visible(false);
         super.onStop();
         // The panel is transient: leaving it for Home, an app or another page closes it, so it never lingers in a
         // background task and resurfaces later. Stay only while a cleanup waits on Android's ADB authorization
@@ -687,25 +681,11 @@ public final class QuickSettingsActivity extends Activity {
 
 
     private void showAbout() {
-        showGlassDialog(
-                R.drawable.ic_qs_info,
-                R.string.quick_about,
-                getString(R.string.quick_about_detail, BuildConfig.VERSION_NAME),
-                android.R.string.ok,
-                null,
-                0
-        );
-    }
-
-    /** Shared with the system Home setup prompts. */
-    private void showGlassDialog(int iconRes, int titleRes, CharSequence message,
-                                 int primaryRes, Runnable primaryAction, int secondaryRes) {
         View previousFocus = getCurrentFocus();
-        Dialog dialog = GlassInfoDialog.create(this, iconRes, titleRes, message,
-                primaryRes, primaryAction, secondaryRes, null);
-        dialog.setOnDismissListener(d -> {
+        android.app.Dialog sheet = AboutSheet.show(this,
+                () -> launch(new Intent(this, CloudSettingsActivity.class)));
+        sheet.setOnDismissListener(d -> {
             if (previousFocus != null) previousFocus.requestFocus();
         });
-        dialog.show();
     }
 }

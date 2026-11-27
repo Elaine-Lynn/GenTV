@@ -37,7 +37,7 @@ final class MemoryCleanup {
                 phase = "kill";
                 String result = adb.shell("am kill-all && echo GENTV_MEMORY_KILL_OK");
                 if (!"GENTV_MEMORY_KILL_OK".equals(result)) throw new java.io.IOException("Cleanup refused");
-                Thread.sleep(900); // Let process exits and memory accounting settle.
+                Thread.sleep(400); // Let process exits and memory accounting settle.
                 phase = "verify";
                 Set<String> after = appProcesses(adb.shell("ps -A -o USER,PID,NAME"));
                 before.removeAll(after);

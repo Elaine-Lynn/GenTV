@@ -23,8 +23,8 @@ done
 sudo -n "$release/venv/bin/pip" install -r "$release/requirements.txt"
 sudo -n chmod -R a+rX "$release"
 previous=$(readlink -f "$base/current")
-files='/etc/gentv-wallpaper.env /etc/systemd/system/gentv-wallpaper.service /etc/systemd/system/gentv-retention.service /etc/systemd/system/gentv-retention.timer /etc/systemd/system/gentv-backup.service /etc/systemd/system/gentv-backup.timer /etc/systemd/system/gentv-health.service /etc/systemd/system/gentv-health.timer /etc/nginx/snippets/gentv-tv-api.locations.conf /etc/nginx/snippets/gentv-trusted-proxies.conf /etc/nginx/conf.d/gentv-limits.conf /etc/nginx/sites-available/api.gentv.app'
-for timer in gentv-retention.timer gentv-backup.timer gentv-health.timer; do
+files='/etc/gentv-wallpaper.env /etc/systemd/system/gentv-wallpaper.service /etc/systemd/system/gentv-retention.service /etc/systemd/system/gentv-retention.timer /etc/systemd/system/gentv-backup.service /etc/systemd/system/gentv-backup.timer /etc/systemd/system/gentv-health.service /etc/systemd/system/gentv-health.timer /etc/systemd/system/gentv-app-icons.service /etc/systemd/system/gentv-app-icons.timer /etc/nginx/snippets/gentv-tv-api.locations.conf /etc/nginx/snippets/gentv-trusted-proxies.conf /etc/nginx/conf.d/gentv-limits.conf /etc/nginx/sites-available/api.gentv.app'
+for timer in gentv-retention.timer gentv-backup.timer gentv-health.timer gentv-app-icons.timer; do
   if sudo -n systemctl is-enabled --quiet "$timer"; then printf '%s\n' "$timer" | sudo -n tee -a "$backup/enabled" >/dev/null; fi
   if sudo -n systemctl is-active --quiet "$timer"; then printf '%s\n' "$timer" | sudo -n tee -a "$backup/active" >/dev/null; fi
 done
@@ -35,7 +35,7 @@ rollback() {
   code=$?
   trap - EXIT HUP INT TERM
   if [ "$code" -ne 0 ]; then
-    for timer in gentv-retention.timer gentv-backup.timer gentv-health.timer; do sudo -n systemctl disable --now "$timer" || true; done
+    for timer in gentv-retention.timer gentv-backup.timer gentv-health.timer gentv-app-icons.timer; do sudo -n systemctl disable --now "$timer" || true; done
     for file in $files; do
       if sudo -n test -e "$backup$file"; then sudo -n cp "$backup$file" "$file"; else sudo -n rm -f "$file"; fi
     done
@@ -56,9 +56,9 @@ trap 'exit 1' HUP INT TERM
 if ! sudo -n test -f /etc/gentv-wallpaper.env; then
   printf '%s\n' 'PUBLIC_BASE_URL=https://api.gentv.app/tv' 'WALLPAPER_DIR=/srv/gentv/wallpaper/media' | sudo -n tee /etc/gentv-wallpaper.env >/dev/null
 fi
-# Preserve private configuration.
+# Preserve private configuration, including the optional AMap Web service key.
 sudo -n chmod 600 /etc/gentv-wallpaper.env
-for unit in gentv-wallpaper.service gentv-retention.service gentv-retention.timer gentv-backup.service gentv-backup.timer gentv-health.service gentv-health.timer; do sudo -n install -m 644 "$release/deploy/$unit" "/etc/systemd/system/$unit"; done
+for unit in gentv-wallpaper.service gentv-retention.service gentv-retention.timer gentv-backup.service gentv-backup.timer gentv-health.service gentv-health.timer gentv-app-icons.service gentv-app-icons.timer; do sudo -n install -m 644 "$release/deploy/$unit" "/etc/systemd/system/$unit"; done
 sudo -n install -m 644 "$release/deploy/nginx-wallpaper.locations.conf" /etc/nginx/snippets/gentv-tv-api.locations.conf
 sudo -n python3 - <<'PYPROXY'
 import ipaddress,json,subprocess
@@ -79,7 +79,9 @@ curl -fsS --retry 5 --retry-connrefused --retry-delay 1 http://127.0.0.1:18765/t
 sudo -n systemctl reload nginx
 curl -fsS --retry 3 https://api.gentv.app/tv/wallpaper >/dev/null
 sudo -n systemctl start gentv-backup.service
-sudo -n systemctl enable --now gentv-retention.timer gentv-backup.timer gentv-health.timer
+sudo -n systemctl enable --now gentv-retention.timer gentv-backup.timer gentv-health.timer gentv-app-icons.timer
+# First mirror of app tile artwork; an unreachable upstream must not undo the deployment.
+sudo -n systemctl start gentv-app-icons.service || printf 'App icon mirror failed; the daily timer will retry.\n' >&2
 sudo -n systemctl is-active gentv-wallpaper
 trap - EXIT HUP INT TERM
 rmdir "$lock"

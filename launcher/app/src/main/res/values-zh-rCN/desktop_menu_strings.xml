@@ -3,4 +3,28 @@
     <string name="desktop_move_folder">移至文件夹</string>
     <string name="desktop_original_image">使用应用原始图标</string>
     <string name="desktop_folder_new">新建文件夹</string>
+    <string name="desktop_folder_rename">重命名文件夹</string>
+    <string name="desktop_folder_edit">选择应用</string>
+    <string name="desktop_folder_dissolve">解散文件夹</string>
+    <string name="desktop_folder_empty">文件夹里还没有应用，选「管理文件夹」来添加。</string>
+    <string name="folder_name_subtitle">给文件夹起个名字，或直接选一个</string>
+    <string name="folder_name_hint">文件夹名称</string>
+    <string-array name="folder_name_suggestions">
+        <item>影音</item>
+        <item>游戏</item>
+        <item>工具</item>
+        <item>学习</item>
+        <item>儿童</item>
+        <item>常用</item>
+    </string-array>
+    <string name="folder_done">完成</string>
+    <string name="folder_cancel">取消</string>
+    <plurals name="folder_app_count">
+        <item quantity="other">%d 个应用</item>
+    </plurals>
+    <string name="folder_move_subtitle">把「%1$s」放进哪个文件夹？</string>
+    <string name="folder_new_detail">新建并放入</string>
+    <string name="folder_manage">管理文件夹</string>
+    <string name="folder_dissolve_detail">文件夹「%1$s」会被移除，里面的应用回到首页。</string>
+    <string name="folder_choose_subtitle">勾选要放进文件夹的应用</string>
 </resources>

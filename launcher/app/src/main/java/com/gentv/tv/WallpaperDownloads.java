@@ -7,6 +7,9 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Which online gallery wallpapers are already on the TV: catalogue item ID to the user wallpaper it was imported
@@ -15,6 +18,9 @@ import java.io.File;
  */
 final class WallpaperDownloads {
     private static final String PREFS = "wallpaper_downloads";
+    /** Every local ID ever imported from the gallery, kept even after its catalogue entry is replaced. */
+    private static final String IMPORTED_PREFS = "wallpaper_downloads_imported";
+    private static final String IMPORTED_KEY = "ids";
 
     private WallpaperDownloads() { }
 
@@ -39,8 +45,30 @@ final class WallpaperDownloads {
         try {
             prefs(context).edit().putString(itemId,
                     new JSONObject().put("id", localId).put("path", path).toString()).commit();
+            SharedPreferences imported = context.getSharedPreferences(IMPORTED_PREFS, Context.MODE_PRIVATE);
+            Set<String> ids = new HashSet<>(imported.getStringSet(IMPORTED_KEY, new HashSet<>()));
+            ids.add(localId);
+            imported.edit().putStringSet(IMPORTED_KEY, ids).commit();
         } catch (JSONException ignored) {
         }
+    }
+
+    /**
+     * Local wallpaper IDs that came from the online gallery, so the custom wallpaper row shows only what the
+     * user added from a file or over the LAN.
+     */
+    static Set<String> onlineIds(Context context) {
+        Set<String> ids = new HashSet<>(context.getSharedPreferences(IMPORTED_PREFS, Context.MODE_PRIVATE)
+                .getStringSet(IMPORTED_KEY, new HashSet<>()));
+        for (Map.Entry<String, ?> entry : prefs(context).getAll().entrySet()) {
+            if (!(entry.getValue() instanceof String)) continue;
+            try {
+                String id = new JSONObject((String) entry.getValue()).optString("id");
+                if (!id.isEmpty()) ids.add(id);
+            } catch (JSONException ignored) {
+            }
+        }
+        return ids;
     }
 
     private static SharedPreferences prefs(Context context) {
