@@ -615,37 +615,37 @@ public final class QuickSettingsActivity extends Activity {
     private void startMemoryCleanup(int port) {
         if (memoryAnimation != null) return;
         View previousFocus = getCurrentFocus();
-        FrameLayout panel = findViewById(R.id.panel);
+        FrameLayout scrim = findViewById(R.id.scrim);
+        View panel = findViewById(R.id.panel);
         ViewGroup panelScroll = findViewById(R.id.panelScroll);
-        // A match-parent animation must not stretch the wrap-content glass panel.
-        int previousPanelHeight = panel.getLayoutParams().height;
-        if (panel.getHeight() > 0) {
-            panel.getLayoutParams().height = panel.getHeight();
-            panel.requestLayout();
-        }
         android.animation.TimeInterpolator ease = CompatApi.easeOut();
-        // The cleanup is a translucent layer over the panel: what was there stays visible underneath,
-        // only its focus is held until the layer goes away.
+        // The rocket flies over the whole screen from the bottom on the panel's side. The panel stays in place,
+        // dimmed, and its focus is held until the layer goes away.
         panelScroll.setDescendantFocusability(ViewGroup.FOCUS_BLOCK_DESCENDANTS);
-        memoryAnimation = new MemoryCleanupView(this, animateFocus, port, () -> {
+        if (animateFocus) panel.animate().alpha(0.45f).setDuration(200).setInterpolator(ease).start();
+        else panel.setAlpha(0.45f);
+        boolean leftEdge = getResources().getBoolean(R.bool.rtl_menu_bar);
+        memoryAnimation = new MemoryCleanupView(this, animateFocus, port, leftEdge, panel, () -> {
             MemoryCleanupView layer = memoryAnimation;
             if (layer == null) return;
             if (!layer.succeeded()) getPreferences(MODE_PRIVATE).edit().remove("memory_adb_port").apply();
             memoryAnimation = null;
             layer.setFocusable(false);
-            Runnable removeLayer = () -> {
-                panel.removeView(layer);
-                panel.getLayoutParams().height = previousPanelHeight;
-                panel.requestLayout();
-            };
+            Runnable removeLayer = () -> scrim.removeView(layer);
             if (animateFocus) {
                 layer.animate().cancel();
                 layer.animate().alpha(0f).setDuration(200).setInterpolator(ease).withEndAction(removeLayer).start();
-            } else removeLayer.run();
+                panel.animate().alpha(1f).setDuration(200).setInterpolator(ease).start();
+            } else {
+                removeLayer.run();
+                panel.setAlpha(1f);
+            }
             panelScroll.setDescendantFocusability(ViewGroup.FOCUS_AFTER_DESCENDANTS);
             if (previousFocus != null) previousFocus.requestFocus();
         });
-        panel.addView(memoryAnimation, new FrameLayout.LayoutParams(
+        // Above the elevated glass panel, which would otherwise draw over a later sibling.
+        CompatApi.elevation(memoryAnimation, dpF(24));
+        scrim.addView(memoryAnimation, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         if (animateFocus) {
             memoryAnimation.setAlpha(0f);
