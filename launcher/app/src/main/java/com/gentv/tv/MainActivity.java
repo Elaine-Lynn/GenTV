@@ -1013,7 +1013,12 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             wallpaperInterval=5000;wallpaperTest=true;
         }
         remoteWallpaper=new RemoteWallpaper(this,root,cfg,wallpaperEndpoint,wallpaperInterval,wallpaperTest,wallpaperPlayer::hasImage);
-        wallpaperPlayer.setOnImageChanged(remoteWallpaper::localWallpaperReady);
+        wallpaperPlayer.setOnImageChanged(() -> {
+            remoteWallpaper.localWallpaperReady();
+            // After the rotation has recorded the shown picture, so the thumbnail matches it.
+            root.post(() -> WallpaperThumbnail.prepare(this));
+        });
+        WallpaperThumbnail.prepare(this);
         videoWallpaper = new VideoWallpaperPlayer(this, root);
         if (blurredWallpaper == null) {
             blurredWallpaper = new ImageView(this);

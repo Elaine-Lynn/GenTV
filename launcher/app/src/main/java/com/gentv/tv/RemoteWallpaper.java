@@ -30,6 +30,7 @@ final class RemoteWallpaper {
     private static final int MAX_IMAGE = 8*1024*1024;
     private final ImageView image, previousImage;
     private final android.content.res.Resources resources;
+    private final Context context;
     private final java.util.function.BooleanSupplier localWallpaperPresent;
     private final boolean reducedMotion;
     private final Handler main = new Handler(Looper.getMainLooper());
@@ -60,7 +61,7 @@ final class RemoteWallpaper {
 
     RemoteWallpaper(Context ctx,FrameLayout root,Config cfg,String endpoint,long interval,boolean localTest,java.util.function.BooleanSupplier localWallpaperPresent) {
         this.endpoint=endpoint;this.interval=interval;this.localTest=localTest;
-        resources=ctx.getResources();this.localWallpaperPresent=localWallpaperPresent;
+        resources=ctx.getResources();context=ctx.getApplicationContext();this.localWallpaperPresent=localWallpaperPresent;
         chosenResource=BundledWallpapers.resource(ctx);
         selectedWallpaper=BundledWallpapers.selected(ctx);
         userVideoPreview=UserWallpaper.isVideo(selectedWallpaper)
@@ -262,7 +263,7 @@ final class RemoteWallpaper {
                     return;
                 }
                 if(clear) {showFallback();displayed="";shownAt=0;}
-                else if(result!=null) {show(result);displayed=selected;}
+                else if(result!=null) {show(result);displayed=selected;WallpaperThumbnail.prepare(context);}
                 shownAt=SystemClock.elapsedRealtime();schedule();
             });
         });

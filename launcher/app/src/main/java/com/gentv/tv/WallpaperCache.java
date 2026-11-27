@@ -59,6 +59,8 @@ final class WallpaperCache {
         return result;
     }
     void remove(String url) throws Exception {new AtomicFile(file(url)).delete();}
+    /** The stored image for a URL without touching it, or null when it is not cached. */
+    File stored(String url) throws Exception {File f=file(url);return f.isFile()?f:null;}
     long used() {
         long total=0;File[] files=directory.listFiles((d,n)->n.endsWith(".img"));
         if(files!=null)for(File f:files)total+=f.length();return total;

@@ -2,7 +2,6 @@ package com.gentv.tv;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.ColorFilter;
 import android.graphics.LinearGradient;
@@ -11,21 +10,15 @@ import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Shader;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.os.SystemClock;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ImageView;
 
 /**
- * Provides the pure live wallpaper thumbnail for the Control Center hero tile and draws the
- * multi-layer Apple translucent smoked glass surface with overhead sheen and directional rim.
+ * Opens the Control Center from Home and draws its multi-layer Apple translucent smoked glass
+ * surface with overhead sheen and directional rim. The wallpaper row's picture is
+ * {@link WallpaperThumbnail}'s cached thumbnail.
  */
 final class QuickSettingsGlass {
     private static java.lang.ref.WeakReference<MainActivity> home = new java.lang.ref.WeakReference<>(null);
-    private static Bitmap pendingPreview;
-    private static long capturedAt;
 
     private QuickSettingsGlass() {}
 
@@ -36,47 +29,7 @@ final class QuickSettingsGlass {
 
     static void open(Activity activity) {
         if (activity instanceof MainActivity) home = new java.lang.ref.WeakReference<>((MainActivity) activity);
-        if (pendingPreview != null) {
-            pendingPreview.recycle();
-            pendingPreview = null;
-        }
-        pendingPreview = extractWallpaperPreview(activity);
-        capturedAt = SystemClock.uptimeMillis();
         activity.startActivity(new Intent(activity, QuickSettingsActivity.class));
-    }
-
-    /** Grab a clean downscaled thumbnail directly from Home's wallpaper layer, free of app tiles. */
-    private static Bitmap extractWallpaperPreview(Activity activity) {
-        View rootView = activity.findViewById(R.id.root);
-        if (!(rootView instanceof ViewGroup)) return null;
-        ViewGroup root = (ViewGroup) rootView;
-        for (int i = root.getChildCount() - 1; i >= 0; i--) {
-            View child = root.getChildAt(i);
-            if (child.getId() == R.id.heroArt || child.getVisibility() != View.VISIBLE) continue;
-            if (child instanceof ImageView) {
-                Drawable d = ((ImageView) child).getDrawable();
-                if (d instanceof BitmapDrawable) {
-                    Bitmap bmp = ((BitmapDrawable) d).getBitmap();
-                    if (bmp != null && !bmp.isRecycled() && bmp.getWidth() > 0 && bmp.getHeight() > 0) {
-                        int targetW = 160;
-                        int targetH = Math.max(1, Math.round(targetW * (float) bmp.getHeight() / bmp.getWidth()));
-                        return Bitmap.createScaledBitmap(bmp, targetW, targetH, true);
-                    }
-                }
-            }
-        }
-        return null;
-    }
-
-    static Bitmap takePreview() {
-        Bitmap preview = pendingPreview;
-        pendingPreview = null;
-        if (preview == null) return null;
-        if (SystemClock.uptimeMillis() - capturedAt > 2000) {
-            preview.recycle();
-            return null;
-        }
-        return preview;
     }
 
     /**
