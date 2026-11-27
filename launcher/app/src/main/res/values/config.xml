@@ -448,10 +448,11 @@
     <integer name="cinematic_scrim">100</integer>
     <integer name="cinematic_art">50</integer>
 
-    <!-- The glow behind the dock in the focused app's colour (red for YouTube, blue for Prime Video). false keeps
-         only background_color or the wallpaper behind everything. Can also be set with "ambient_glow": false in a
-         theme's config.json. -->
-    <bool name="ambient_glow">true</bool>
+    <!-- The glow behind the dock in the focused app's colour (red for YouTube, blue for Prime Video). Off by
+         default: it read as a colour wash over the Home screen whenever focus moved along the first row, so only
+         background_color or the wallpaper shows behind everything. A theme can turn it back on with
+         "ambient_glow": true in its config.json. -->
+    <bool name="ambient_glow">false</bool>
     <!-- The focus highlight glows in the focused app's colour on every tile, as the cinematic shelf does for the
          dock, without cinematic_home. Can also be set with "app_glow": true in a theme's config.json. -->
     <bool name="app_glow">false</bool>
