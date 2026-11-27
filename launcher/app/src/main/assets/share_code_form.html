@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0e1020">
+  <title>GenTV · 把地址发送到电视</title>
+  <style>
+    :root { color-scheme: dark; font-family: system-ui, sans-serif; color: #f7f7fc; background: #0b0b11; }
+    * { box-sizing: border-box; }
+    body {
+      position: relative;
+      isolation: isolate;
+      min-height: 100vh;
+      min-height: 100svh;
+      margin: 0;
+      background: linear-gradient(180deg, #0e1020 0, #1b1530 210px, #2a1c2b 320px, #0b0b11 500px);
+    }
+    body::before {
+      position: absolute;
+      inset: 235px 0 auto;
+      z-index: -1;
+      height: 265px;
+      pointer-events: none;
+      content: "";
+      background: linear-gradient(180deg, #171726, #0b0b11);
+      clip-path: polygon(0 55%, 7% 46%, 18% 53%, 32% 45%, 49% 51%, 60% 35%, 72% 43%, 88% 26%, 95% 34%, 100% 39%, 100% 100%, 0 100%);
+    }
+    .page { display: flex; flex-direction: column; max-width: 500px; min-height: inherit; margin: auto; padding: 28px 24px; }
+    .connection {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      align-self: flex-start;
+      border: 1px solid #ffffff2b;
+      border-radius: 999px;
+      padding: 8px 13px;
+      background: #ffffff0a;
+      font-size: 14px;
+      font-weight: 650;
+    }
+    .connection::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #4cdb85; box-shadow: 0 0 9px #4cdb855c; }
+    main { margin-top: clamp(36px, 7vh, 70px); }
+    h1 { margin: 0 0 10px; font-size: clamp(27px, 7vw, 34px); font-weight: 800; line-height: 1.22; }
+    .intro { margin: 0 0 24px; color: #c8c5d0; font-size: 16px; line-height: 1.55; }
+    form {
+      padding: 24px;
+      border: 1px solid #ffffff38;
+      border-radius: 26px;
+      background: linear-gradient(155deg, #282333bf, #151520 65%);
+      box-shadow: 0 14px 32px #00000033;
+    }
+    form::before { content: ""; display: block; height: 7px; margin-bottom: 20px; border-radius: 999px; background: #0b0b1466; }
+    label { display: flex; justify-content: space-between; gap: 8px; color: #e0dce6; font-size: 15px; font-weight: 650; }
+    small { color: #b4afbd; font-weight: 400; }
+    input, textarea, button { display: block; width: 100%; min-height: 52px; border-radius: 16px; font: inherit; font-size: 16px; }
+    input, textarea { margin: 8px 0 18px; padding: 12px 14px; color: inherit; border: 1px solid #ffffff35; background: #0e0e17; }
+    textarea { min-height: 100px; resize: vertical; font-family: ui-monospace, monospace; line-height: 1.5; overflow-wrap: anywhere; }
+    input::placeholder { color: #a39eac; }
+    input:focus-visible, textarea:focus-visible, button:focus-visible { outline: 2px solid #b6c3ff; outline-offset: 2px; }
+    button { margin-top: 30px; min-height: 58px; padding: 12px; border: 0; background: #fff; color: #11111a; font-size: 17px; font-weight: 800; cursor: pointer; }
+    button:disabled { opacity: .55; cursor: default; }
+    #status { margin: 14px 0 0; color: #ffb5b2; line-height: 1.5; }
+    #status:empty { display: none; }
+    #status.success { color: #6cdb97; }
+    footer { margin-top: auto; padding: 42px 6px 0; color: #b4afbd; text-align: center; font-size: 14px; line-height: 1.5; }
+    @media (max-width: 360px) {
+      .page { padding-inline: 16px; }
+      form { padding: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="connection" id="connection">已连接电视</div>
+    <main>
+      <h1 id="title">把地址发送到电视</h1>
+      <p class="intro" id="intro">粘贴github仓库或网盘分享链接，电视会自动解析出仓库内容。</p>
+      <form id="share" method="post" action="/submit">
+        <input type="hidden" name="token" value="__SESSION_TOKEN__">
+        <label id="url-label" for="url">地址</label>
+        <textarea id="url" name="url" inputmode="url" rows="2" maxlength="2048" required autocapitalize="off" spellcheck="false">https://</textarea>
+        <label for="name"><span id="name-label">名称</span><small id="count" aria-hidden="true">0 / 15</small></label>
+        <input id="name" name="name" type="text" required placeholder="例如：家庭影音库">
+        <button type="submit" id="send">发送到电视</button>
+        <p id="status" role="status"></p>
+      </form>
+    </main>
+    <footer id="notice">此页面由电视在局域网内提供，地址只发送给这台电视。</footer>
+  </div>
+  <script>
+    const english = !navigator.language.toLowerCase().startsWith('zh');
+    const copy = english ? {
+      connection: 'Connected to TV', sent: 'Sent to TV', title: 'Send a link to your TV',
+      intro: 'Paste a GitHub repository or a cloud storage share link. The TV will automatically read the repository contents.',
+      urlLabel: 'Address', nameLabel: 'Name', nameExample: 'e.g. Family media library', send: 'Send to TV',
+      notice: 'This page is hosted on your local network. The address goes directly to this TV.',
+      name: 'Enter a name of 1 to 15 characters.', url: 'Enter a valid HTTP or HTTPS link.',
+      session: 'Open the address currently shown on your TV.',
+      request: 'Could not send. Keep the TV’s Add share code screen open and try again.',
+      storage: 'The TV could not save this link.', full: 'The TV already has four share codes. Delete one to add another.',
+      success: 'Saved on the TV. Share code: '
+    } : {
+      connection: '已连接电视', sent: '已发送到电视', title: '把地址发送到电视',
+      intro: '粘贴github仓库或网盘分享链接，电视会自动解析出仓库内容。',
+      urlLabel: '地址', nameLabel: '名称', nameExample: '例如：家庭影音库', send: '发送到电视',
+      notice: '此页面由电视在局域网内提供，地址只发送给这台电视。',
+      name: '请输入 1 到 15 个字符的名称。', url: '请输入有效的 HTTP 或 HTTPS 链接。',
+      session: '请打开电视当前显示的访问地址。',
+      request: '发送失败，请保持电视的添加页面打开后重试。',
+      storage: '电视暂时无法保存此链接。', full: '电视已保存四个分享码，删除一个后即可添加。',
+      success: '已保存到电视。分享码：'
+    };
+    document.documentElement.lang = english ? 'en' : 'zh-CN';
+    document.title = 'GenTV · ' + copy.title;
+    for (const [id, key] of Object.entries({
+      connection: 'connection', title: 'title', intro: 'intro', 'url-label': 'urlLabel',
+      'name-label': 'nameLabel', send: 'send', notice: 'notice'
+    })) document.getElementById(id).textContent = copy[key];
+
+    const form = document.getElementById('share');
+    const nameInput = form.elements.namedItem('name');
+    const urlInput = form.elements.namedItem('url');
+    const send = document.getElementById('send');
+    const status = document.getElementById('status');
+    nameInput.placeholder = copy.nameExample;
+    urlInput.addEventListener('focus', () => {
+      if (urlInput.value === urlInput.defaultValue) {
+        urlInput.setSelectionRange(urlInput.value.length, urlInput.value.length);
+      }
+    });
+    urlInput.addEventListener('paste', event => {
+      const pasted = event.clipboardData && event.clipboardData.getData('text').trim();
+      if (urlInput.value === urlInput.defaultValue && /^https?:\/\//i.test(pasted || '')) {
+        event.preventDefault();
+        urlInput.value = pasted.slice(0, urlInput.maxLength);
+      }
+    });
+    nameInput.addEventListener('input', () => {
+      document.getElementById('count').textContent = Array.from(nameInput.value.trim()).length + ' / 15';
+    });
+    form.addEventListener('submit', async event => {
+      event.preventDefault();
+      const length = Array.from(nameInput.value.trim()).length;
+      status.classList.remove('success');
+      if (length < 1 || length > 15) {
+        status.textContent = copy.name;
+        nameInput.focus();
+        return;
+      }
+      if (!/^https?:\/\/[^\s/]+[^\s]*$/i.test(urlInput.value.trim())) {
+        status.textContent = copy.url;
+        urlInput.focus();
+        return;
+      }
+      send.disabled = true;
+      status.textContent = '';
+      try {
+        const body = new URLSearchParams(new FormData(form));
+        const response = await fetch('/submit', { method: 'POST', body });
+        const result = await response.text();
+        if (response.ok) {
+          document.getElementById('connection').textContent = copy.sent;
+          status.classList.add('success');
+          status.textContent = copy.success + result;
+          nameInput.readOnly = urlInput.readOnly = true;
+          return;
+        }
+        status.textContent = Object.prototype.hasOwnProperty.call(copy, result) ? copy[result] : copy.request;
+      } catch (error) {
+        status.textContent = copy.request;
+      }
+      send.disabled = false;
+    });
+  </script>
+</body>
+</html>
