@@ -127,14 +127,21 @@ public final class QuickSettingsActivity extends Activity {
         rows.addView(buildWallpaperHero(wallpaperPreview));
 
         // Zone 3: 2x2 core bento control tiles
+        // Gen extensions take the wide top tile; GenTV settings sits beside TV settings below it.
+        boolean extensions = HomeContentRegistry.supported();
         LinearLayout coreRow1 = horizontalRow(rows, 10);
-        bentoTile(coreRow1, R.drawable.ic_qs_sliders, R.string.quick_gentv_settings,
-                () -> openLauncher(null));
+        if (extensions) {
+            bentoTile(coreRow1, R.drawable.ic_qs_extensions, R.string.quick_extensions,
+                    () -> launch(new Intent(this, HomeContentSettingsActivity.class)));
+        } else {
+            bentoTile(coreRow1, R.drawable.ic_qs_sliders, R.string.quick_gentv_settings,
+                    () -> openLauncher(null));
+        }
 
         LinearLayout coreRow2 = horizontalRow(rows, 8);
-        if (HomeContentRegistry.supported()) {
-            bentoTile(coreRow2, R.drawable.ic_qs_extensions, R.string.quick_extensions,
-                    () -> launch(new Intent(this, HomeContentSettingsActivity.class)));
+        if (extensions) {
+            bentoTile(coreRow2, R.drawable.ic_qs_sliders, R.string.quick_gentv_settings,
+                    () -> openLauncher(null));
         }
         bentoTile(coreRow2, R.drawable.ic_qs_system, R.string.tv_settings,
                 () -> launch(SystemSettings.intent(this, Settings.ACTION_SETTINGS)));
