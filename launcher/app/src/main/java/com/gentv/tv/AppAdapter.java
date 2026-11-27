@@ -228,6 +228,8 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     /** Packages drawn from their icon when no valid TV banner is available (config.xml icon_tiles). */
     private final Set<String> iconTiles;
     private final List<Entry> items = new ArrayList<>();
+    /** Packages that got an app tile in the last reload(), folder members included (AppIconMirror). */
+    private final Set<String> tilePackages = new HashSet<>();
 
     AppAdapter(Context ctx, TileListener listener, int dockSize, Config cfg) {
         this.ctx = ctx;
@@ -290,6 +292,7 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         Map<String, Cards.Card> cardByPkg = new HashMap<>();
         for (Cards.Card c : cards) cardByPkg.put(c.pkg, c);
         List<Entry> fresh = new ArrayList<>();
+        tilePackages.clear();
         // Some system apps declare two leanback entry points under one name (Sony's Timers & Clock on the
         // BRAVIA VU31), which would show as two identical tiles: keep the first per package and label.
         Set<String> seen = new HashSet<>();
@@ -309,9 +312,14 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             label = DesktopStore.name(ctx, component.flattenToShortString(), label);
             if (!seen.add(component.flattenToShortString())) continue;
             boolean inFolder = grouped.contains(component.flattenToShortString());
-            // Every app on Home uses its TV banner first, including configured and custom-image tiles.
+            tilePackages.add(pkg);
+            // Artwork mirrored on the GenTV server comes before the app's own TV banner, but never over a custom
+            // image the owner chose. Without mirrored artwork every app uses its TV banner first, as before.
             // Folder members only need labels until they are placed on Home again.
-            Drawable banner = inFolder ? null : loadBanner(pm, ri);
+            Drawable mirrored = inFolder ? null : AppIconMirror.banner(ctx, pkg);
+            Drawable banner = mirrored == null ? null : DesktopExtras.image(ctx, component.flattenToShortString());
+            if (mirrored != null && banner == null) banner = mirrored;
+            if (!inFolder && banner == null) banner = loadBanner(pm, ri);
             if (!inFolder && banner == null) banner = DesktopExtras.image(ctx, component.flattenToShortString());
             if (!inFolder && banner == null) banner = bundledBanner(appBanners.get(pkg));
             if (!inFolder && banner == null && iconTiles.contains(pkg)) banner = iconBanner(ri.loadIcon(pm));
@@ -648,6 +656,7 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     @Override public int getItemViewType(int position) { return isLibraryAt(position) ? 1 : 0; }
 
     boolean hasOverflow() { return !overflowItems.isEmpty(); }
+    Set<String> tilePackages() { return Collections.unmodifiableSet(tilePackages); }
 
     boolean containsPackage(String pkg) {
         if(visibleFolderPackages.contains(pkg))return true;

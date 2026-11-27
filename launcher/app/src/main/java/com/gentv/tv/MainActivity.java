@@ -1273,6 +1273,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         cards = moduleCards ? CardFeature.run(() -> Cards.discover(this, hiddenApps,
                 () -> Cards.load(Cards.storeFile(this)), leanback), none) : none;
         adapter.reload(cards.isEmpty() ? none : CardFeature.run(() -> Cards.shown(cards), none), leanback);
+        // New mirrored tile artwork rebuilds the tiles once; focus is kept, and nothing runs mid-reorder.
+        AppIconMirror.refresh(this, adapter.tilePackages(), () -> {
+            if (!isFinishing() && !reordering) reloadTiles();
+        });
         if(btnLibraryTop!=null)btnLibraryTop.setVisibility(libraryTopConfigured && adapter.hasOverflow()?View.VISIBLE:View.GONE);
         lastFocusedKey = returnKey;
         lastFocused = returnSlot;
