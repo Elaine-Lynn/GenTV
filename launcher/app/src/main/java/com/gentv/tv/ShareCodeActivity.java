@@ -66,6 +66,10 @@ public final class ShareCodeActivity extends Activity {
     private static final String STATE_SAVED_CODE = "savedCode";
     private static final String STATE_PENDING_APK = "pendingApk";
     private static final int REQUEST_INSTALL = 1;
+    private static final int REQUEST_PLAY_SOURCE = 2;
+    private static final String PLAYTV_PACKAGE = "com.ai.playtv";
+    private static final String PLAYTV_IMPORT = "com.ai.playtv.ui.test.sourceentry.ShareSourceImportActivity";
+    private static final String PLAY_SOURCE_ACTION = "com.ai.playtv.action.IMPORT_SHARED_SOURCE";
     private static final int MAX_ICON_PREVIEWS = 32;
     private static final String TAG = "ShareCodeActivity";
 
@@ -90,6 +94,7 @@ public final class ShareCodeActivity extends Activity {
     private View previousPageFocus;
     private ArrayAdapter<ShareCodeApkRepository.Apk> appsAdapter;
     private Dialog deleteDialog;
+    private Dialog sourceChoiceDialog;
     private Dialog downloadDialog;
     private Future<?> catalogTask;
     private Future<?> downloadTask;
@@ -134,7 +139,7 @@ public final class ShareCodeActivity extends Activity {
         if (savedInstanceState == null) clearApkCache();
         entry = new ShareCodeEntryView(this,
                 savedInstanceState == null ? "" : savedInstanceState.getString(STATE_CODE, ""),
-                this::openCode, this::addShareCode, this::openSavedApps, this::confirmDeleteLink);
+                this::openCode, this::addShareCode, this::openSavedLink, this::confirmDeleteLink);
         panel.addView(entry, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         layoutEntryPanel();
@@ -165,6 +170,7 @@ public final class ShareCodeActivity extends Activity {
         catalogWorker.shutdownNow();
         cancelDownload();
         if (deleteDialog != null) deleteDialog.dismiss();
+        if (sourceChoiceDialog != null) sourceChoiceDialog.dismiss();
         if (downloadDialog != null) downloadDialog.dismiss();
         if (isFinishing() && pendingApk == null) clearApkCache();
         super.onDestroy();
@@ -193,7 +199,7 @@ public final class ShareCodeActivity extends Activity {
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
         if (isConfirmKey(event.getKeyCode())) {
-            if (deleteDialog != null || event.getDownTime() <= ignoreConfirmDownTimeThrough) return true;
+            if (deleteDialog != null || sourceChoiceDialog != null || event.getDownTime() <= ignoreConfirmDownTimeThrough) return true;
             if (addPage == null && results == null && handleEntryConfirm(event)) {
                 return true;
             }
@@ -247,7 +253,7 @@ public final class ShareCodeActivity extends Activity {
 
     private void openCode() {
         ShareCodeLinks.Link link = links.find(entry.code());
-        if (link != null) openSavedApps(link);
+        if (link != null) openSavedLink(link);
         else showApps(ShareCodeApkRepository.DEFAULT_REPOSITORY);
     }
 
@@ -304,7 +310,7 @@ public final class ShareCodeActivity extends Activity {
 
     private void showSavedCode(ShareCodeLinks.Link link) {
         savedLink = link;
-        addPage.showSaved(link, () -> openSavedApps(link),
+        addPage.showSaved(link, () -> openSavedLink(link),
                 links.hasRoom() ? this::startReceiver : null, this::finish);
     }
 
@@ -402,8 +408,75 @@ public final class ShareCodeActivity extends Activity {
         }
     }
 
-    private void openSavedApps(ShareCodeLinks.Link link) {
-        showApps(link.url);
+    private void openSavedLink(ShareCodeLinks.Link link) {
+        if (sourceChoiceDialog != null || isFinishing() || isDestroyed()) return;
+        Dialog dialog = new Dialog(this);
+        sourceChoiceDialog = dialog;
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        dialog.setCanceledOnTouchOutside(false);
+        dialog.setOnDismissListener(window -> {
+            ignoreConfirmDownTimeThrough = SystemClock.uptimeMillis();
+            sourceChoiceDialog = null;
+        });
+        LinearLayout content = new LinearLayout(this);
+        content.setOrientation(LinearLayout.VERTICAL);
+        content.setPadding(entry.size(24), entry.size(20), entry.size(24), entry.size(20));
+        content.setBackground(QuickSettingsGlass.dialogSurface(dp(20), dp(1)));
+        TextView prompt = new TextView(this);
+        prompt.setText(R.string.share_code_choose_action);
+        prompt.setTextColor(TEXT_COLOR);
+        prompt.setTextSize(entry.textSize(18));
+        prompt.setTypeface(UiFont.get(this, R.string.font_medium));
+        content.addView(prompt);
+        TextView name = new TextView(this);
+        name.setText(link.name);
+        name.setTextColor(0xFFB4B6BE);
+        name.setTextSize(entry.textSize(14));
+        name.setSingleLine(true);
+        name.setEllipsize(TextUtils.TruncateAt.END);
+        LinearLayout.LayoutParams detail = new LinearLayout.LayoutParams(-1, -2);
+        detail.topMargin = entry.size(8);
+        content.addView(name, detail);
+        Button play = ShareCodeEntryView.button(this, prompt.getTypeface(), getString(R.string.share_code_open_source),
+                entry.textSize(14), entry.size(8), () -> { dialog.dismiss(); openPlaybackSource(link); });
+        LinearLayout.LayoutParams first = new LinearLayout.LayoutParams(-1, entry.size(36));
+        first.topMargin = entry.size(20);
+        content.addView(play, first);
+        Button apps = ShareCodeEntryView.button(this, prompt.getTypeface(), getString(R.string.share_code_open_apps),
+                entry.textSize(14), entry.size(8), () -> { dialog.dismiss(); showApps(link.url); });
+        LinearLayout.LayoutParams next = new LinearLayout.LayoutParams(-1, entry.size(36));
+        next.topMargin = entry.size(8);
+        content.addView(apps, next);
+        Button cancel = ShareCodeEntryView.button(this, prompt.getTypeface(), getString(android.R.string.cancel),
+                entry.textSize(14), entry.size(8), dialog::dismiss);
+        LinearLayout.LayoutParams last = new LinearLayout.LayoutParams(-1, entry.size(36));
+        last.topMargin = entry.size(8);
+        content.addView(cancel, last);
+        long openedAt = SystemClock.uptimeMillis();
+        dialog.setOnKeyListener((window, key, event) ->
+                isConfirmKey(key) && (event.getDownTime() <= openedAt || event.getRepeatCount() > 0 || event.isLongPress()));
+        dialog.setContentView(content);
+        dialog.show();
+        Window window = dialog.getWindow();
+        if (window != null) {
+            window.setBackgroundDrawableResource(android.R.color.transparent);
+            window.setDimAmount(0.42f);
+            window.setLayout(Math.min(getResources().getDisplayMetrics().widthPixels - dp(48), entry.size(360)),
+                    ViewGroup.LayoutParams.WRAP_CONTENT);
+        }
+        play.requestFocusFromTouch();
+    }
+
+    @SuppressWarnings("deprecation")
+    private void openPlaybackSource(ShareCodeLinks.Link link) {
+        Intent intent = new Intent(PLAY_SOURCE_ACTION)
+                .setClassName(PLAYTV_PACKAGE, PLAYTV_IMPORT)
+                .putExtra(Intent.EXTRA_TEXT, link.url);
+        try {
+            startActivityForResult(intent, REQUEST_PLAY_SOURCE);
+        } catch (ActivityNotFoundException | SecurityException error) {
+            Toast.makeText(this, R.string.share_code_playtv_unavailable, Toast.LENGTH_LONG).show();
+        }
     }
 
     private void refreshInstalledApps() {
@@ -915,6 +988,10 @@ public final class ShareCodeActivity extends Activity {
     @SuppressWarnings("deprecation")
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_PLAY_SOURCE) {
+            if (resultCode != RESULT_OK) Toast.makeText(this, R.string.share_code_source_unsupported, Toast.LENGTH_LONG).show();
+            return;
+        }
         if (requestCode != REQUEST_INSTALL) return;
         // Keep the verified APK for the next click until the shared app list closes.
         pendingApk = null;

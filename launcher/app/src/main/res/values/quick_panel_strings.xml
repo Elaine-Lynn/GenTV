@@ -33,6 +33,11 @@
     <string name="share_code_added">Share code added</string>
     <string name="share_code_saved_hint">Saved to My share codes</string>
     <string name="share_code_open_now">Open now</string>
+    <string name="share_code_choose_action">Open shared link</string>
+    <string name="share_code_open_source">Open as a playback source</string>
+    <string name="share_code_open_apps">View shared apps</string>
+    <string name="share_code_playtv_unavailable">Install a compatible PlayTV version to open this source</string>
+    <string name="share_code_source_unsupported">PlayTV could not accept this link. Check its format and HTTPS scheme.</string>
     <string name="share_code_add_more">Add another</string>
     <string name="share_code_return_home">Back to Home</string>
     <string name="share_code_apps">Shared apps</string>

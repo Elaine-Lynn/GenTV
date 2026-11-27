@@ -32,6 +32,11 @@
     <string name="share_code_added">已添加分享码</string>
     <string name="share_code_saved_hint">已保存到「我的分享码」</string>
     <string name="share_code_open_now">立即打开</string>
+    <string name="share_code_choose_action">打开分享链接</string>
+    <string name="share_code_open_source">作为播放源打开</string>
+    <string name="share_code_open_apps">查看分享的应用</string>
+    <string name="share_code_playtv_unavailable">请安装支持此功能的 PlayTV 版本</string>
+    <string name="share_code_source_unsupported">PlayTV 无法接收此链接，请检查链接格式及 HTTPS 协议</string>
     <string name="share_code_add_more">继续添加</string>
     <string name="share_code_return_home">返回首页</string>
     <string name="share_code_apps">分享的应用</string>
