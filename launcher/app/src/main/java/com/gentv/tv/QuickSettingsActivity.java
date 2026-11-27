@@ -439,7 +439,7 @@ public final class QuickSettingsActivity extends Activity {
 
         LinearLayout r1 = plateRow(plate);
         utilityItem(r1, R.drawable.ic_qs_startup, R.string.quick_start_app,
-                () -> OpenOnStart.showPicker(this, null));
+                () -> OpenOnStart.showPicker(this));
         utilityItem(r1, R.drawable.ic_qs_home, R.string.quick_default_home,
                 () -> launch(new Intent(this, HomeSettingsActivity.class)));
 
